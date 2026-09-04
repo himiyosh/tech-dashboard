@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T01:42:55.756Z",
+  "generatedAt": "2026-09-04T06:43:14.313Z",
   "month": "2026-09",
   "count": 59,
   "entries": [
@@ -10,15 +10,19 @@
       "url": "https://qiita.com/emi_ndk/items/4bbad8d7f705d3ae01f6",
       "title": "4経路を塞いでも、2つの穴が残る：Copilotコンテンツ除外の設計を読む",
       "titleJa": "4経路を塞いでも、2つの穴が残る：Copilotコンテンツ除外の設計を読む",
-      "titleEn": "",
+      "titleEn": "GitHub Copilot app and CLI now honor content-exclusion policies on Business and…",
       "lang": "ja",
       "publishedAt": "2026-09-04T01:01:11.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
-        "qiita"
+        "ai-coding-agent",
+        "content-exclusion",
+        "github-copilot",
+        "qiita",
+        "security"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "AIコーディングエージェントに見せたくないコードを、管理者が一元的に除外できる範囲が広がった。 しかし、2026年9月2日にGAとなったGitHub Copilotの新対応は、秘密情報の完全な遮断機構ではない。 4つの利用経路を制御しても、IDEのAgent modeとファイルシステム境界には明示された穴が残る。 GitHubは2026年9月2日、Copilot appとCopilot CLIが、enterprise・organization・repository管理者の設定したcontent exclusion policyを尊重すると発表した。対象はCopilot BusinessとCopilot Enterpriseの2プランである。 重要なのは「対応面が増えた」というニュースそのものではない。除外はどの段階で効き、どこから先は効かないのか。本稿では公式ドキュメントを基に、その信頼境界を分解する。 content exclusionを設定すると、公式ドキュメントは次の4つの効果を挙げている。 つまり制御点は、モデルへ渡すコンテキストを組み立てる手前にある。暗号化、アクセス権の剥奪、リポジトリからの削除ではない。この違いを見落とすと、 .env を除外しただけで秘密管理が完了したと誤認する。 公式仕様から読み取れる処理を、概念的に並べると次のようになる。 最後の2段は、公開資料にある挙動を説明するための概念モデルであり、GitHubが内部実装順を公開したものではない。一方、repository URLをサーバーへ送り、対応するpolicyを受け取る点は公式に明記されている。GitHubによれば、このURLはログに記録されない。 パス照合はRubyの fnmatch 記法を使い、大文字・小文字を区別しない。repository設定では、たとえば次のように指定する。 organization / enterprise設定ではrepository参照をキーにできるほか、 \"*\" を使ってGit管理外を含むファイルシステム上のパスも指定できる。",
@@ -39,14 +43,17 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-multiple-trusted-publishing-configurations-for-npm",
       "title": "Multiple trusted publishing configurations for npm",
-      "titleJa": "",
+      "titleJa": "npm、複数の信頼された公開設定に対応",
       "titleEn": "Multiple trusted publishing configurations for npm",
       "lang": "en",
       "publishedAt": "2026-09-03T20:34:34.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
         "changelog",
-        "github"
+        "github",
+        "npm",
+        "oidc",
+        "trusted-publishing"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -54,7 +61,15 @@
       "archiveTier": "hot",
       "contentSnippet": "We’re continuing to make trusted publishing smoother for npm publishers, guided by maintainers feedback. Three updates to npm publishing are now generally available: A package can now have more than one trusted publishing (OIDC) configuration. Maintainers are no longer limited to one configuration per package to separate workflows with stable, prerelease, or staging versions. Before this, maintainers had to depend on workflow workarounds or keep a long-lived token around for the paths OIDC couldn’t cover. Each configuration is independent and additive, with its own repository, workflow, and environment criteria. You can add, list, and remove them from your package’s settings page. A publish or stage is authorized if the incoming OIDC token matches any one configuration.",
       "feedSnippet": "We’re continuing to make trusted publishing smoother for npm publishers, guided by maintainers feedback. Three updates to npm publishing are now generally available: Multiple trusted publishing configurations per package Staged… The post Multiple trusted publishing configurations for npm appeared first on The GitHub Blog .",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/645960197-3267bb1c-c3c3-4827-af05-a0635a8a43b7.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/645960197-3267bb1c-c3c3-4827-af05-a0635a8a43b7.jpg",
+        "alt": "Multiple trusted publishing configurations for npm",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "168022221eb60d32",
@@ -62,14 +77,18 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-github-actions-early-september-2026-updates",
       "title": "GitHub Actions: Early September 2026 updates",
-      "titleJa": "",
+      "titleJa": "GitHub Actions：2026年9月上旬のアップデート",
       "titleEn": "GitHub Actions: Early September 2026 updates",
       "lang": "en",
       "publishedAt": "2026-09-03T20:30:53.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
+        "api",
         "changelog",
-        "github"
+        "dependabot",
+        "github",
+        "github-actions",
+        "runner-management"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -85,14 +104,16 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-upcoming-deprecation-of-selected-github-copilot-models",
       "title": "Upcoming deprecation of selected GitHub Copilot models",
-      "titleJa": "",
+      "titleJa": "GitHub Copilot、一部モデルの提供を終了へ",
       "titleEn": "Upcoming deprecation of selected GitHub Copilot models",
       "lang": "en",
       "publishedAt": "2026-09-03T19:40:14.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
         "changelog",
-        "github"
+        "copilot-admin",
+        "github",
+        "model-deprecation"
       ],
       "category": "copilot",
       "importance": 2,
@@ -108,14 +129,19 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-github-cli-linux-package-signing-key-expires-september-5",
       "title": "GitHub CLI Linux package signing key expires September 5",
-      "titleJa": "",
+      "titleJa": "GitHub CLIのLinuxパッケージ署名鍵、9月5日に期限切れ",
       "titleEn": "GitHub CLI Linux package signing key expires September 5",
       "lang": "en",
       "publishedAt": "2026-09-03T19:05:40.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
+        "apt",
         "changelog",
-        "github"
+        "github",
+        "github-cli",
+        "linux",
+        "package-signing",
+        "rpm"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -131,14 +157,17 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-gemini-3-8-flash-is-now-available-in-github-copilot",
       "title": "Gemini 3.8 Flash is now available in GitHub Copilot",
-      "titleJa": "",
+      "titleJa": "Gemini 3.8 FlashがGitHub Copilotで利用可能に",
       "titleEn": "Gemini 3.8 Flash is now available in GitHub Copilot",
       "lang": "en",
       "publishedAt": "2026-09-03T18:50:38.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
+        "ai-models",
         "changelog",
-        "github"
+        "github",
+        "google-gemini",
+        "usage-based-billing"
       ],
       "category": "copilot",
       "importance": 2,
@@ -193,10 +222,12 @@
       "publishedAt": "2026-09-03T18:33:16.000Z",
       "collectedAt": "2026-09-03T21:31:34.153Z",
       "tags": [
+        "agent",
         "agent-plugins",
         "cline",
         "cline-hub",
         "mcp",
+        "mcp-server",
         "release"
       ],
       "category": "cline",
@@ -262,6 +293,7 @@
         "local-ai",
         "news",
         "nvidia",
+        "open-model",
         "rtx-spark",
         "windows-pc"
       ],
@@ -281,8 +313,8 @@
       }
     },
     {
-      "id": "b68f08d5b78fdf2b",
-      "source": "github-copilot",
+      "id": "d94b84bc16af2780",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-run-several-agents-at-once/",
       "title": "GitHub Copilot app for Beginners: Run several agents at once",
@@ -292,8 +324,9 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-09-04T01:42:37.842Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
+        "agent",
         "copilot",
         "copilot-agents",
         "github",
@@ -322,15 +355,19 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-03-reopening-copilot-business-and-enterprise-signups",
       "title": "Reopening Copilot Business and Enterprise signups",
-      "titleJa": "",
+      "titleJa": "Copilot BusinessとEnterpriseの登録受付を再開",
       "titleEn": "Reopening Copilot Business and Enterprise signups",
       "lang": "en",
       "publishedAt": "2026-09-03T14:40:43.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
+        "billing",
         "changelog",
+        "copilot-business",
+        "copilot-enterprise",
         "enterprise",
-        "github"
+        "github",
+        "paypal"
       ],
       "category": "copilot",
       "importance": 2,
@@ -477,7 +514,7 @@
       "summaryEn": "GitHub Podcast unpacks nine emerging AI-development terms, from Ralph loops and harness engineering to open weights, helping developers assess evolving practices and labels.",
       "lang": "en",
       "publishedAt": "2026-09-02T21:00:00.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "ai-terminology",
         "developer-workflows",
@@ -488,6 +525,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "It might be overwhelming to see all of the new vocabulary popping up in software development these days thanks to AI tools introducing them… all the time. Some of this new vocab describes useful patterns that people are newly pursuing, others are just fancy names on top of things that already exist, and some are still actively being defined as we speak. In our latest episode of the GitHub Podcast , Marlene Mhangami, GPS, and I talked through some of the AI terms developers are learning right now: loop engineering, Ralph loops, squads, harness engineering, hill climbing, forward deployed engineers, closed models, open weights, and open source models. If you’re a reader instead of a listener, here’s a guide to what those terms mean, why they matter, and how to think about them. Listen to the full episode below!",
       "excerptOrigin": "article",
       "feedSnippet": "From loop engineering to harnesses, squads, and open weights, the GitHub Podcast breaks down the AI terms showing up in developer conversations. The post Decoding the new AI lingo: Loops, harnesses, squads, hill climbing… oh my! appeared first on The GitHub Blog .",
@@ -498,8 +536,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "5d75b87a4c0e26d9",
@@ -507,7 +544,7 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-02-enterprise-managed-settings-support-any-default-model",
       "title": "Enterprise-managed settings support any default model",
-      "titleJa": "",
+      "titleJa": "エンタープライズ管理設定で任意のモデルを既定に指定可能",
       "titleEn": "Enterprise-managed settings support any default model",
       "lang": "en",
       "publishedAt": "2026-09-02T18:51:12.000Z",
@@ -515,7 +552,10 @@
       "tags": [
         "changelog",
         "enterprise",
-        "github"
+        "github",
+        "managed-settings",
+        "model-configuration",
+        "team-management"
       ],
       "category": "copilot",
       "importance": 2,
@@ -531,13 +571,16 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-02-content-exclusions-generally-available-in-copilot-app-and-cli",
       "title": "Content exclusions generally available in Copilot app and CLI",
-      "titleJa": "",
+      "titleJa": "Copilot appとCLIでコンテンツ除外機能を一般提供",
       "titleEn": "Content exclusions generally available in Copilot app and CLI",
       "lang": "en",
       "publishedAt": "2026-09-02T18:14:23.000Z",
       "collectedAt": "2026-09-04T01:42:37.842Z",
       "tags": [
         "changelog",
+        "content-exclusions",
+        "copilot",
+        "copilot-cli",
         "github"
       ],
       "category": "copilot",
@@ -558,7 +601,7 @@
       "titleEn": "Zed Editor Releases v1.18.0",
       "lang": "en",
       "publishedAt": "2026-09-02T18:13:31.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "debugging",
         "editor",
@@ -591,7 +634,7 @@
       "titleEn": "Zed Editor Releases v1.19.0-pre",
       "lang": "en",
       "publishedAt": "2026-09-02T18:09:48.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "call-hierarchy",
         "editor",
@@ -616,8 +659,8 @@
       }
     },
     {
-      "id": "c3242eb99cc5f08b",
-      "source": "github-copilot",
+      "id": "dd3872b4a6c4bf09",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/",
       "title": "How we make AI coding more cost efficient without sacrificing task quality",
@@ -627,7 +670,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-04T01:42:37.842Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -662,7 +705,7 @@
       "titleEn": "Visual Studio Code 1.136 Release Notes",
       "lang": "en",
       "publishedAt": "2026-09-02T17:00:00.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "release",
         "release-notes",
@@ -1087,7 +1130,7 @@
       "titleEn": "Self-hosted machines",
       "lang": "en",
       "publishedAt": "2026-09-02T00:00:00.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "changelog",
         "cloud-agents",
@@ -1757,7 +1800,7 @@
       "titleEn": "Artifact Share CLI adds local preview: browser element feedback triggers edits…",
       "lang": "ja",
       "publishedAt": "2026-09-01T01:03:04.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "ai-agents",
         "artifact-share",
@@ -1773,6 +1816,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "今年の5月ごろから、Artifact Share というサービスを自分で使うためにソース公開で作り続けています。AIエージェントが作ったHTMLやMarkdownをURLで共有するものです。そのCLIに preview というローカルコマンドを追加しました。ブラウザ上でファイルの要素をクリックして指摘を書くと、Claude Code・Codex・Cursor がファイルを直し、ブラウザが自動リロードで結果を見せます。動画が一番早いです。 ここから先は仕組みの話です。サインイン・アップロード不要のローカル機能で、実装は公開しています。 https://github.com/artifactshare/artifactshare/pull/198 preview <file> を実行すると、そのプロセス自体がローカルサーバーになります。 npx @artifactshare/cli preview ./report.html 指摘はまとめて1バッチで送信します。エージェントの1周は「指摘を取りに行く( next ) → 編集・保存 → 結果を報告する( done )」です。 公開URLの発行は viewer の「共有する」を押したときだけ。ローカルの指摘履歴は共有に含まれません。 一番苦労したのがここです。こだわったのは、待っている間も会話セッションを邪魔しないこと。「指摘が届くまで待つ」コマンドをフォアグラウンドで実行させれば確実に動きますが、待っている間ターンが塞がり、エージェントに他の作業を頼めなくなります。理想は、普段どおり会話しながら、指摘が届いた瞬間にエージェントが自分で動き出すこと。ところが、そのために使える仕組みがエージェントごとに違いました。3つで実際に動かして確かめた結果、こう整理できました。 「届くまで待つ」コマンドをフォアグラウンドで実行。ターンは塞がる 仕組みの名前は覚えなくて大丈夫です。以下、それぞれの節の冒頭に「何を使うか」を書いてあります。 使うのは、Bashコマンドをバックグラウンドで実行できる標準機能です。",
+      "excerptOrigin": "article",
+      "feedSnippet": "これはなに？ 今年の5月ごろから、Artifact Share というサービスを自分で使うためにソース公開で作り続けています。AIエージェントが作ったHTMLやMarkdownをURLで共有するものです。そのCLIに preview というローカルコマンドを追加しました。ブラウザ上でファイルの要素をクリックして指摘を書くと、Claude Code・Codex・Cursor がファイルを直し、ブラウザが自動リロードで結果を見せます。動画が一番早いです。 ここから先は仕組みの話です。サインイン・アップロード不要のローカル機能で、実装は公開しています。 https://github.co...",
       "image": {
         "src": "https://res.cloudinary.com/zenn/image/upload/s--17V_2YlN--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E4%25BC%259A%25E8%25A9%25B1%25E3%2582%25BB%25E3%2583%2583%25E3%2582%25B7%25E3%2583%25A7%25E3%2583%25B3%25E3%2582%2592%25E9%2582%25AA%25E9%25AD%2594%25E3%2581%259B%25E3%2581%259A%25E3%2581%25AB%2520Claude%2520Code%2520%252F%2520Codex%2520%252F%2520Cursor%2520%25E3%2582%2592%25E5%25A4%2596%25E9%2583%25A8%25E3%2582%25A4%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2599CLI...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Coji%2520Mizoguchi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EtL0FPaDE0R2pWY2RrNjcwV2NIdGs0anBHa2FGTDAxcERVUVlIX0JYdWE5aDRVNVE9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
         "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--17V_2YlN--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E4%25BC%259A%25E8%25A9%25B1%25E3%2582%25BB%25E3%2583%2583%25E3%2582%25B7%25E3%2583%25A7%25E3%2583%25B3%25E3%2582%2592%25E9%2582%25AA%25E9%25AD%2594%25E3%2581%259B%25E3%2581%259A%25E3%2581%25AB%2520Claude%2520Code%2520%252F%2520Codex%2520%252F%2520Cursor%2520%25E3%2582%2592%25E5%25A4%2596%25E9%2583%25A8%25E3%2582%25A4%25E3%2583%2599%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2599CLI...%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Coji%2520Mizoguchi%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EtL0FPaDE0R2pWY2RrNjcwV2NIdGs0anBHa2FGTDAxcERVUVlIX0JYdWE5aDRVNVE9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
@@ -1780,9 +1825,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "feedSnippet": "これはなに？ 今年の5月ごろから、Artifact Share というサービスを自分で使うためにソース公開で作り続けています。AIエージェントが作ったHTMLやMarkdownをURLで共有するものです。そのCLIに preview というローカルコマンドを追加しました。ブラウザ上でファイルの要素をクリックして指摘を書くと、Claude Code・Codex・Cursor がファイルを直し、ブラウザが自動リロードで結果を見せます。動画が一番早いです。 ここから先は仕組みの話です。サインイン・アップロード不要のローカル機能で、実装は公開しています。 https://github.co...",
-      "excerptOrigin": "article"
+      }
     },
     {
       "id": "c51c8384bc4f1230",
@@ -1794,7 +1837,7 @@
       "titleEn": "Developing Enterprise Frontier Safeguards with our customers",
       "lang": "en",
       "publishedAt": "2026-09-01T00:00:00.000Z",
-      "collectedAt": "2026-09-04T00:49:33.807Z",
+      "collectedAt": "2026-09-04T06:43:00.126Z",
       "tags": [
         "ai-safety",
         "anthropic",

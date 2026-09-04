@@ -124,6 +124,15 @@ export interface NormalizedEntry {
    * it every run. Both markers survive re-collection (entry-merge.ts).
    */
   excerptOrigin?: "article" | "article-unavailable";
+  /**
+   * The feed description exactly as the collector normalized it, kept when
+   * contentSnippet is replaced by article prose. Source-owned decisions
+   * (keyword filters, category, importance, knowledge eligibility) are made
+   * on this text at collection time and must be re-evaluated on the same text
+   * (harness/pipeline/feed-snippet.ts), otherwise the publisher's fail-closed
+   * gate reports category drift for every enriched entry.
+   */
+  feedSnippet?: string;
   /** Long-form magazine-style article body in Japanese (optional). */
   bodyJa?: string;
   /** Long-form magazine-style article body in English (optional). */

@@ -1,4 +1,5 @@
 import type { NormalizedEntry, RawEntry, SourceDefinition } from "../types.ts";
+import { sourceOwnedSnippet } from "./feed-snippet.ts";
 
 export type KeywordFilterEntry = Pick<RawEntry, "title" | "url" | "contentSnippet">;
 export type KeywordFilterDecision =
@@ -12,7 +13,15 @@ export type KeywordFilterDecision =
 
 type KeywordFilterNormalizedEntry = Pick<
   NormalizedEntry,
-  "title" | "url" | "contentSnippet" | "titleJa" | "titleEn" | "summaryJa" | "summaryEn"
+  | "title"
+  | "url"
+  | "contentSnippet"
+  | "excerptOrigin"
+  | "feedSnippet"
+  | "titleJa"
+  | "titleEn"
+  | "summaryJa"
+  | "summaryEn"
 >;
 
 const ASCII_WORD_RE = /^[\x00-\x7F]+$/;
@@ -106,10 +115,14 @@ export function matchingKeyword(
 }
 
 export function keywordFilterEntryFromNormalized(entry: KeywordFilterNormalizedEntry): KeywordFilterEntry {
+  // Filters are a collection-time contract on the feed text: an article
+  // excerpt swapped in later (excerptOrigin "article") is model input, not
+  // source text, so the feed snippet is what gets re-evaluated.
+  const snippet = sourceOwnedSnippet(entry);
   return {
     title: entry.title,
     url: entry.url,
-    ...(entry.contentSnippet ? { contentSnippet: entry.contentSnippet } : {}),
+    ...(snippet ? { contentSnippet: snippet } : {}),
   };
 }
 

@@ -275,6 +275,11 @@ export async function enrichThinExcerpts(
       stats.attempted += 1;
       const excerpt = await fetchArticleExcerpt(entry.url, options);
       if (excerpt && excerpt.length > (entry.contentSnippet?.trim().length ?? 0)) {
+        // Keep the feed text: filters, category, importance and knowledge
+        // eligibility stay evaluated on it (harness/pipeline/feed-snippet.ts).
+        if (entry.feedSnippet === undefined && typeof entry.contentSnippet === "string") {
+          entry.feedSnippet = entry.contentSnippet;
+        }
         entry.contentSnippet = excerpt;
         entry.excerptOrigin = "article";
         stats.enriched += 1;

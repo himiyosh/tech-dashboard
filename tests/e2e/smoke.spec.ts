@@ -2464,7 +2464,7 @@ test.describe("TECH Dashboard smoke", () => {
           "AI 解説本文を準備中",
         );
         await expect(digest.locator(".ed-summary-only-note .i18n-ja")).toContainText(
-          "完了時刻は確約せず",
+          "完了時刻は確約できない",
         );
       } else {
         expect(bodyState).toBe("summary-only");

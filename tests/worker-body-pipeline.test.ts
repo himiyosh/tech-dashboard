@@ -107,36 +107,74 @@ describe("needsBody (LL-115)", () => {
   });
 });
 
-describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
+describe("selectBodyPipelineJobs preferredCandidateIds (pinned body batch)", () => {
   const NOW = Date.parse("2026-09-05T12:00:00.000Z");
 
-  it("ranks this run's body batch 0, unlockable summary-ready entries 1, and leaves the rest unranked", () => {
-    const batchNewest = entry({ id: "batch-newest", publishedAt: "2026-09-04T00:00:00.000Z" });
-    const batchOlder = entry({ id: "batch-older", publishedAt: "2026-09-01T00:00:00.000Z" });
-    const bodied = entry({ id: "bodied", publishedAt: "2026-09-03T00:00:00.000Z" });
-    const unlock = entry({ id: "unlock", contentSnippet: "", publishedAt: "2026-09-02T00:00:00.000Z" });
-    const unlockOlder = entry({ id: "unlock-older", contentSnippet: "", publishedAt: "2026-08-20T00:00:00.000Z" });
-    const pendingSummary = entry({ id: "pending", summaryJa: PENDING_JA, summaryEn: "", publishedAt: "2026-09-05T00:00:00.000Z" });
-    const evicted = entry({ id: "evicted", contentSnippet: "", publishedAt: "2026-09-04T12:00:00.000Z" });
-    const all = [pendingSummary, unlockOlder, bodied, batchOlder, unlock, batchNewest, evicted];
-
-    const rank = bodyBoundExcerptPriority(all, new Set(["bodied"]), { enqueueCap: 2, nowMs: NOW, excludeEntryIds: new Set(["evicted"]) });
-
-    expect(rank.get("batch-newest")).toBe(0);
-    expect(rank.get("batch-older")).toBe(0);
-    expect(rank.get("unlock")).toBe(1);
-    expect(rank.get("unlock-older")).toBe(1);
-    expect(rank.has("bodied")).toBe(false);
-    expect(rank.has("pending")).toBe(false);
-    expect(rank.has("evicted")).toBe(false);
-    // The rank-0 set is exactly what selectBodyJobBatch would enqueue now.
-    const batch = selectBodyJobBatch(all, new Set(["bodied"]), 2, { nowMs: NOW, excludeEntryIds: new Set(["evicted"]) });
-    expect(new Set(batch.jobs.map((job) => job.entry.id))).toEqual(new Set(["batch-newest", "batch-older"]));
+  it("enqueues pinned ids first in order, gated by needsBody and exclusions, and round-robins the rest", () => {
+    const entries = ["a", "b", "c", "d", "e", "pending"].map((id) => entry({ id }));
+    const bodied = entry({ id: "bodied" });
+    const selection = selectBodyPipelineJobs(
+      [...entries, bodied],
+      new Set(["bodied"]),
+      ["pending"],
+      4,
+      { nowMs: NOW, excludeBudgetEvictedIds: ["e"], preferredCandidateIds: ["c", "missing", "bodied", "e", "a", "pending", "c"] },
+    );
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending"]);
+    // pinned: c, a (missing/bodied/e/pending/duplicate skipped), then one round-robin fill.
+    expect(selection.candidateJobs.slice(0, 2).map((job) => job.entry.id)).toEqual(["c", "a"]);
+    expect(selection.candidateJobs).toHaveLength(3);
+    expect(new Set(selection.lookupJobs.map((job) => job.entry.id)).size).toBe(4);
+    expect(selection.candidateJobs.some((job) => ["e", "bodied", "pending"].includes(job.entry.id))).toBe(false);
   });
 
-  it("returns an empty map when nothing is body-bound", () => {
-    expect(bodyBoundExcerptPriority([entry({ id: "bodied" })], new Set(["bodied"]), { enqueueCap: 5 }).size).toBe(0);
-    expect(bodyBoundExcerptPriority([], new Set(), { enqueueCap: 5 }).size).toBe(0);
+  it("pinned ids never exceed the remaining candidate cap", () => {
+    const entries = ["a", "b", "c"].map((id) => entry({ id }));
+    const selection = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["a", "b", "c"] });
+    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
+  const NOW = Date.parse("2026-09-05T12:00:00.000Z");
+  const opts = { lookupCap: 3, previousPendingIds: ["pending-job"], nowMs: NOW, excludeBudgetEvictedIds: ["evicted"] };
+  const batchNewest = entry({ id: "batch-newest", publishedAt: "2026-09-04T00:00:00.000Z" });
+  const batchOlder = entry({ id: "batch-older", publishedAt: "2026-09-01T00:00:00.000Z" });
+  const bodied = entry({ id: "bodied", publishedAt: "2026-09-03T00:00:00.000Z" });
+  const unlock = entry({ id: "unlock", contentSnippet: "", publishedAt: "2026-09-02T00:00:00.000Z" });
+  const unlockOlder = entry({ id: "unlock-older", contentSnippet: "", publishedAt: "2026-08-20T00:00:00.000Z" });
+  const pendingSummary = entry({ id: "pending", summaryJa: PENDING_JA, summaryEn: "", publishedAt: "2026-09-05T00:00:00.000Z" });
+  const evicted = entry({ id: "evicted", contentSnippet: "", publishedAt: "2026-09-04T12:00:00.000Z" });
+  const pendingJob = entry({ id: "pending-job", publishedAt: "2026-09-04T06:00:00.000Z" });
+  // Outside body retention (importance 1, 90 days old): the pipeline can never enqueue it.
+  const stale = entry({ id: "stale", importance: 1, contentSnippet: "", publishedAt: "2026-06-05T00:00:00.000Z", collectedAt: "2026-06-05T01:00:00.000Z" });
+  const all = [stale, pendingSummary, unlockOlder, bodied, batchOlder, unlock, batchNewest, evicted, pendingJob];
+  const present = new Set(["bodied"]);
+
+  it("pins exactly the pipeline's candidate batch as rank 0 and unlockable thin entries as rank 1", () => {
+    const { rank, bodyBatchIds } = bodyBoundExcerptPriority(all, present, opts);
+    expect(new Set(bodyBatchIds)).toEqual(new Set(["batch-newest", "batch-older"]));
+    for (const id of bodyBatchIds) expect(rank.get(id)).toBe(0);
+    expect(rank.get("unlock")).toBe(1);
+    expect(rank.get("unlock-older")).toBe(1);
+    for (const id of ["bodied", "pending", "evicted", "pending-job", "stale"]) expect(rank.has(id)).toBe(false);
+  });
+
+  it("the pinned batch is what selectBodyPipelineJobs enqueues on the pipeline's own inputs", () => {
+    const { bodyBatchIds } = bodyBoundExcerptPriority(all, present, opts);
+    const retained = all.filter((e) => isBodyRetentionEligible(e, NOW));
+    const selection = selectBodyPipelineJobs(retained, present, ["pending-job"], 3, {
+      nowMs: NOW,
+      excludeBudgetEvictedIds: ["evicted"],
+      preferredCandidateIds: bodyBatchIds,
+    });
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending-job"]);
+    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(bodyBatchIds);
+  });
+
+  it("returns nothing when no entry is body-bound", () => {
+    expect(bodyBoundExcerptPriority([entry({ id: "bodied" })], new Set(["bodied"]), { lookupCap: 5, previousPendingIds: [] }).rank.size).toBe(0);
+    expect(bodyBoundExcerptPriority([], new Set(), { lookupCap: 5, previousPendingIds: [] }).bodyBatchIds).toEqual([]);
   });
 });
 

@@ -7,6 +7,7 @@ import { describe, it, expect } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
   bodyBacklogAfterMerge,
+  bodyBoundExcerptPriority,
   bodyEnqueueAllowance,
   isBodyRetentionEligible,
   needsBody,
@@ -103,6 +104,39 @@ describe("needsBody (LL-115)", () => {
         new Set(),
       ),
     ).toBe(false);
+  });
+});
+
+describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
+  const NOW = Date.parse("2026-09-05T12:00:00.000Z");
+
+  it("ranks this run's body batch 0, unlockable summary-ready entries 1, and leaves the rest unranked", () => {
+    const batchNewest = entry({ id: "batch-newest", publishedAt: "2026-09-04T00:00:00.000Z" });
+    const batchOlder = entry({ id: "batch-older", publishedAt: "2026-09-01T00:00:00.000Z" });
+    const bodied = entry({ id: "bodied", publishedAt: "2026-09-03T00:00:00.000Z" });
+    const unlock = entry({ id: "unlock", contentSnippet: "", publishedAt: "2026-09-02T00:00:00.000Z" });
+    const unlockOlder = entry({ id: "unlock-older", contentSnippet: "", publishedAt: "2026-08-20T00:00:00.000Z" });
+    const pendingSummary = entry({ id: "pending", summaryJa: PENDING_JA, summaryEn: "", publishedAt: "2026-09-05T00:00:00.000Z" });
+    const evicted = entry({ id: "evicted", contentSnippet: "", publishedAt: "2026-09-04T12:00:00.000Z" });
+    const all = [pendingSummary, unlockOlder, bodied, batchOlder, unlock, batchNewest, evicted];
+
+    const rank = bodyBoundExcerptPriority(all, new Set(["bodied"]), { enqueueCap: 2, nowMs: NOW, excludeEntryIds: new Set(["evicted"]) });
+
+    expect(rank.get("batch-newest")).toBe(0);
+    expect(rank.get("batch-older")).toBe(0);
+    expect(rank.get("unlock")).toBe(1);
+    expect(rank.get("unlock-older")).toBe(1);
+    expect(rank.has("bodied")).toBe(false);
+    expect(rank.has("pending")).toBe(false);
+    expect(rank.has("evicted")).toBe(false);
+    // The rank-0 set is exactly what selectBodyJobBatch would enqueue now.
+    const batch = selectBodyJobBatch(all, new Set(["bodied"]), 2, { nowMs: NOW, excludeEntryIds: new Set(["evicted"]) });
+    expect(new Set(batch.jobs.map((job) => job.entry.id))).toEqual(new Set(["batch-newest", "batch-older"]));
+  });
+
+  it("returns an empty map when nothing is body-bound", () => {
+    expect(bodyBoundExcerptPriority([entry({ id: "bodied" })], new Set(["bodied"]), { enqueueCap: 5 }).size).toBe(0);
+    expect(bodyBoundExcerptPriority([], new Set(), { enqueueCap: 5 }).size).toBe(0);
   });
 });
 

@@ -225,6 +225,13 @@ export interface EnrichExcerptOptions extends ArticleFetchOptions {
   cap?: number;
   /** URL keys already present in the prior index: everything else is NEW. */
   isPrior: (entry: NormalizedEntry) => boolean;
+  /**
+   * Optional rank for entries that must be enriched before the default
+   * order (lower first; undefined = not prioritized). Used for entries whose
+   * body is generated this run — see bodyBoundExcerptPriority in
+   * body-queue.ts. Ties keep newest-first.
+   */
+  priority?: (entry: NormalizedEntry) => number | undefined;
 }
 
 export interface EnrichExcerptStats {
@@ -234,6 +241,8 @@ export interface EnrichExcerptStats {
   unavailable: number;
   /** Candidates left for a later run because the cap was reached. */
   deferred: number;
+  /** Attempts spent on prioritized (body-bound) entries. */
+  prioritized: number;
 }
 
 export function isThinExcerptCandidate(entry: NormalizedEntry): boolean {
@@ -258,15 +267,29 @@ export async function enrichThinExcerpts(
 ): Promise<EnrichExcerptStats> {
   const cap = Math.max(0, Math.floor(options.cap ?? DEFAULT_ARTICLE_FETCH_CAP));
   const thin = entries.filter(isThinExcerptCandidate);
-  const fresh = thin.filter((entry) => !options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
-  const prior = thin.filter((entry) => options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
-  const queue = [...fresh, ...prior].slice(0, cap);
+  // Body-bound entries first (rank asc, newest first within a rank), then
+  // this run's new entries, then a newest-first backfill of prior entries.
+  const ranked = new Map<NormalizedEntry, number>();
+  if (options.priority) {
+    for (const entry of thin) {
+      const rank = options.priority(entry);
+      if (typeof rank === "number" && Number.isFinite(rank)) ranked.set(entry, rank);
+    }
+  }
+  const prioritized = [...ranked.keys()].sort(
+    (a, b) => ranked.get(a)! - ranked.get(b)! || publishedMs(b) - publishedMs(a),
+  );
+  const rest = thin.filter((entry) => !ranked.has(entry));
+  const fresh = rest.filter((entry) => !options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
+  const prior = rest.filter((entry) => options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
+  const queue = [...prioritized, ...fresh, ...prior].slice(0, cap);
   const stats: EnrichExcerptStats = {
     candidates: thin.length,
     attempted: 0,
     enriched: 0,
     unavailable: 0,
     deferred: Math.max(0, thin.length - queue.length),
+    prioritized: Math.min(prioritized.length, queue.length),
   };
   let cursor = 0;
   const worker = async (): Promise<void> => {

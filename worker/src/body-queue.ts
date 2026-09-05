@@ -16,7 +16,7 @@
  * Cloudflare-type-free so it can be unit-tested directly.
  */
 import type { NormalizedEntry } from "../../harness/types.ts";
-import { hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
+import { hasUsableBilingualSummary, hasUsableGroundedBilingualSummary } from "../../harness/pipeline/summary-quality.ts";
 import { hasSufficientBodySourceGrounding } from "../../harness/pipeline/source-grounding.ts";
 import { type BodyJob } from "./body-generate.ts";
 import { roundRobinStart } from "./summary-queue.ts";
@@ -194,6 +194,55 @@ export function bodyEnqueueAllowance(
   const safeSummary = Math.max(0, Math.floor(summaryEnqueued));
   const safeBody = Math.max(0, Math.floor(configuredBodyCap));
   return Math.min(safeBody, Math.max(0, safeTotal - safeSummary));
+}
+
+export interface BodyBoundExcerptPriorityOpts extends BodyJobSelectionOpts {
+  /** Body jobs the pipeline may enqueue this run (BODY_ENQUEUE_MAX_NEW). */
+  enqueueCap: number;
+}
+
+/**
+ * Ranks entries the article excerpt lane should enrich BEFORE this run's
+ * default order, so bodies are generated from article prose instead of the
+ * 100-300 char feed description that pins the excerpt-proportional body band
+ * at ~330 JA chars:
+ *
+ *   rank 0 — the body jobs the pipeline would select right now, in selection
+ *            order (newest half first, then the round-robin window). Their
+ *            bodies are generated this run, so the excerpt must be rich now.
+ *   rank 1 — entries with a real bilingual summary but no body, whose feed
+ *            excerpt fails hasSufficientBodySourceGrounding (too thin for a
+ *            body). Enrichment is the only thing that can make them
+ *            body-eligible; newest first. Checked with the summary-text gate
+ *            (hasUsableBilingualSummary), not the source-grounded one: a thin
+ *            excerpt is exactly what makes the grounded gate fail here.
+ *
+ * Entries that already have a body, or whose summary is still the pending
+ * fallback, are not ranked:
+ * the lane falls back to its default order for them. Pure and deterministic
+ * for a given nowMs (same round-robin window as the body selection).
+ */
+export function bodyBoundExcerptPriority(
+  entries: readonly NormalizedEntry[],
+  bodiesPresent: ReadonlySet<string>,
+  opts: BodyBoundExcerptPriorityOpts,
+): Map<string, number> {
+  const { enqueueCap, ...selection } = opts;
+  const rank = new Map<string, number>();
+  const batch = selectBodyJobBatch(entries, bodiesPresent, enqueueCap, selection);
+  for (const job of batch.jobs) rank.set(job.entry.id, 0);
+  const unlockable = entries
+    .filter(
+      (entry) =>
+        !rank.has(entry.id) &&
+        !bodiesPresent.has(entry.id) &&
+        !(selection.excludeEntryIds?.has(entry.id) ?? false) &&
+        hasUsableBilingualSummary(entry) &&
+        !hasSufficientBodySourceGrounding(entry),
+    )
+    .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
+  for (const entry of unlockable) rank.set(entry.id, 1);
+  return rank;
 }
 
 export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number): number {

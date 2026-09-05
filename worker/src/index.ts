@@ -45,6 +45,7 @@ import {
   needsBody,
   selectBodyPipelineJobs,
   type BodyPipelineSelection,
+  bodyBoundExcerptPriority,
 } from "./body-queue.ts";
 import {
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
@@ -1260,13 +1261,35 @@ export async function runHarness(
     0,
     Number(env.ARTICLE_FETCH_CAP ?? DEFAULT_ARTICLE_FETCH_CAP),
   );
+  // Body-bound entries jump the queue: the body jobs this run would enqueue,
+  // then summary-ready entries whose thin feed excerpt still fails the body
+  // grounding gate (bodyBoundExcerptPriority). Otherwise the 40-fetch cap is
+  // spent on the newest feed items while the body backlog keeps generating
+  // ~330-char bodies from 200-char descriptions. Read-only view of the
+  // committed bodies.json; any parse problem just disables the priority.
+  let bodyBoundRank = new Map<string, number>();
+  if (env.ENABLE_BODY_QUEUE === "1" && existingBodies?.content) {
+    try {
+      const bodiesPresentEarly = bodiesPresentSet(parseBodies(existingBodies.content));
+      bodyBoundRank = bodyBoundExcerptPriority(qualityFiltered, bodiesPresentEarly, {
+        enqueueCap: Math.max(0, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10)),
+        excludeEntryIds: new Set([...previousBodyPendingIds, ...previousBodyBudgetEvictedIds]),
+      });
+    } catch (error) {
+      console.warn(
+        `[worker] article excerpt priority disabled: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
   const excerptStats = await enrichThinExcerpts(qualityFiltered, {
     cap: Number.isFinite(articleFetchCap) ? articleFetchCap : DEFAULT_ARTICLE_FETCH_CAP,
     isPrior: (entry) => priorUrlKeys.has(entryUrlKey(entry)),
+    priority: (entry) => bodyBoundRank.get(entry.id),
   });
   console.log(
     `[worker] article excerpts: candidates=${excerptStats.candidates} attempted=${excerptStats.attempted}`
-      + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
+      + ` prioritized=${excerptStats.prioritized} enriched=${excerptStats.enriched}`
+      + ` unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
   );
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
@@ -1720,6 +1743,7 @@ export async function runHarness(
     excerptFetched: excerptStats.enriched,
     excerptFetchUnavailable: excerptStats.unavailable,
     excerptFetchDeferred: excerptStats.deferred,
+    excerptFetchPrioritized: excerptStats.prioritized,
     publisherContractFingerprint,
     ...bodyPipeline.health,
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,

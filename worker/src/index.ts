@@ -1249,68 +1249,6 @@ export async function runHarness(
     console.log(`[worker] source keyword filters removed ${filteredByCurrentRules} prior merged entries`);
   }
 
-  // 1.6) Article excerpt lane (bounded): feed descriptions are usually 100-300
-  //      chars, which pins the excerpt-proportional body band at ~330 JA chars.
-  //      Fetch the article page for thin excerpts and replace contentSnippet
-  //      with real article prose (capped at the shared 900), keeping the feed
-  //      text in feedSnippet. Order: this run's body batch first (selected
-  //      here on the body pipeline's own inputs and PINNED into
-  //      runBodyPipeline below, so the enriched entries are the enqueued
-  //      ones), then this run's new entries, then the unlockable backlog
-  //      (summarized but too thin for a body), then prior entries
-  //      newest-first. Every attempt is marked on the entry so failures are
-  //      never retried hourly; failures keep the feed excerpt. Runs BEFORE
-  //      summarize/body so both are generated from the richer material.
-  const priorUrlKeys = new Set(priorEntries.map((entry) => entryUrlKey(entry)));
-  const articleFetchCap = Math.max(
-    0,
-    Number(env.ARTICLE_FETCH_CAP ?? DEFAULT_ARTICLE_FETCH_CAP),
-  );
-  // One clock for the lane's body-batch selection and the pipeline's, so the
-  // round-robin window cannot straddle an hour between the two calls.
-  const bodySelectionNowMs = Date.now();
-  let bodyBound: BodyBoundExcerptPriority = { rank: new Map(), bodyBatchIds: [] };
-  if (env.ENABLE_BODY_QUEUE === "1" && existingBodies?.content) {
-    try {
-      const bodyRetentionDays = Math.max(
-        1,
-        Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
-      );
-      const retainedEarly = qualityFiltered.filter((entry) =>
-        isBodyRetentionEligible(entry, bodySelectionNowMs, bodyRetentionDays),
-      );
-      const presentEarly = bodiesPresentSet(
-        pruneInvalidBodyRecords(
-          parseBodies(existingBodies.content),
-          retainedEarly,
-          new Date(bodySelectionNowMs).toISOString(),
-        ).payload,
-      );
-      bodyBound = bodyBoundExcerptPriority(qualityFiltered, presentEarly, {
-        lookupCap: Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10)),
-        previousPendingIds: previousBodyPendingIds,
-        excludeBudgetEvictedIds: previousBodyBudgetEvictedIds,
-        retentionDays: bodyRetentionDays,
-        nowMs: bodySelectionNowMs,
-        publisherContractFingerprint,
-      });
-    } catch (error) {
-      console.warn(
-        `[worker] article excerpt priority disabled: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-  const excerptStats = await enrichThinExcerpts(qualityFiltered, {
-    cap: Number.isFinite(articleFetchCap) ? articleFetchCap : DEFAULT_ARTICLE_FETCH_CAP,
-    isPrior: (entry) => priorUrlKeys.has(entryUrlKey(entry)),
-    priority: (entry) => bodyBound.rank.get(entry.id),
-  });
-  console.log(
-    `[worker] article excerpts: candidates=${excerptStats.candidates} attempted=${excerptStats.attempted}`
-      + ` bodyBatch=${excerptStats.prioritized}/${bodyBound.bodyBatchIds.length} unlockable=${excerptStats.unlockable}`
-      + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
-  );
-
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
   const PER_SOURCE_CAP = 50;
   // Per-category cap: categories that would otherwise dominate the index
@@ -1361,6 +1299,89 @@ export async function runHarness(
   const sorted = categoryCapped
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt))
     .slice(0, INDEX_LIMIT);
+
+  // 2.5) Article excerpt lane (bounded): feed descriptions are usually 100-300
+  //      chars, which pins the excerpt-proportional body band at ~330 JA chars.
+  //      Fetch the article page for thin excerpts and replace contentSnippet
+  //      with real article prose (capped at the shared 900), keeping the feed
+  //      text in feedSnippet. Runs on the LIVE set (after the per-source /
+  //      category caps and INDEX_LIMIT) so its body-batch selection sees the
+  //      same population runBodyPipeline will. Order: this run's body batch
+  //      first (selected here on the pipeline's own inputs, minus entries
+  //      whose body already sits in KV, and PINNED into runBodyPipeline
+  //      below), then this run's new entries, then the unlockable backlog
+  //      (summarized but too thin for a body), then prior entries
+  //      newest-first. Every attempt is marked on the entry so failures are
+  //      never retried hourly; failures keep the feed excerpt. Runs BEFORE
+  //      summarize/body so both are generated from the richer material.
+  const priorUrlKeys = new Set(priorEntries.map((entry) => entryUrlKey(entry)));
+  const articleFetchCap = Math.max(
+    0,
+    Number(env.ARTICLE_FETCH_CAP ?? DEFAULT_ARTICLE_FETCH_CAP),
+  );
+  // One clock for the lane's body-batch selection and the pipeline's, so the
+  // round-robin window cannot straddle an hour between the two calls.
+  const bodySelectionNowMs = Date.now();
+  let bodyBound: BodyBoundExcerptPriority = { rank: new Map(), bodyBatchIds: [], bodyBatchJobs: [] };
+  // KV records already looked up for the pinned batch (reused by
+  // runBodyPipeline so the pre-lookup costs no extra bridge requests).
+  let prefetchedBodyLookup: { hits: Map<string, BodyCacheEntry>; urls: Set<string> } | undefined;
+  if (env.ENABLE_BODY_QUEUE === "1") {
+    try {
+      const bodyRetentionDays = Math.max(
+        1,
+        Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
+      );
+      // The pipeline never sees dropped-tier entries; neither should the batch.
+      const liveForBodies = sorted.filter((entry) => entry.archiveTier !== "dropped");
+      const retainedEarly = liveForBodies.filter((entry) =>
+        isBodyRetentionEligible(entry, bodySelectionNowMs, bodyRetentionDays),
+      );
+      const presentEarly = bodiesPresentSet(
+        pruneInvalidBodyRecords(
+          parseBodies(existingBodies?.content ?? null),
+          retainedEarly,
+          new Date(bodySelectionNowMs).toISOString(),
+        ).payload,
+      );
+      bodyBound = bodyBoundExcerptPriority(liveForBodies, presentEarly, {
+        lookupCap: Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10)),
+        previousPendingIds: previousBodyPendingIds,
+        excludeBudgetEvictedIds: previousBodyBudgetEvictedIds,
+        retentionDays: bodyRetentionDays,
+        nowMs: bodySelectionNowMs,
+        publisherContractFingerprint,
+      });
+      // A pinned entry whose body already sits in KV (generated by the
+      // consumer, not yet merged) is merged this run, not regenerated:
+      // fetching its article would change nothing, so it leaves rank 0 but
+      // stays pinned for the merge. The lookup is reused by the pipeline.
+      if (bodyBound.bodyBatchJobs.length > 0) {
+        const urls = bodyBound.bodyBatchJobs.map((job) => job.url);
+        const hits = await getBodyCacheEntries(env.SUMMARY_CACHE, urls);
+        prefetchedBodyLookup = { hits, urls: new Set(urls) };
+        for (const job of bodyBound.bodyBatchJobs) {
+          if (isUsableBodyCacheEntry(job, hits.get(job.url), publisherContractFingerprint)) {
+            bodyBound.rank.delete(job.entry.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(
+        `[worker] article excerpt priority disabled: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  const excerptStats = await enrichThinExcerpts(sorted, {
+    cap: Number.isFinite(articleFetchCap) ? articleFetchCap : DEFAULT_ARTICLE_FETCH_CAP,
+    isPrior: (entry) => priorUrlKeys.has(entryUrlKey(entry)),
+    priority: (entry) => bodyBound.rank.get(entry.id),
+  });
+  console.log(
+    `[worker] article excerpts: candidates=${excerptStats.candidates} attempted=${excerptStats.attempted}`
+      + ` bodyBatch=${excerptStats.prioritized}/${bodyBound.bodyBatchIds.length} unlockable=${excerptStats.unlockable}`
+      + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
+  );
 
   const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
@@ -1735,7 +1756,17 @@ export async function runHarness(
       enqueueCap: effectiveBodyEnqueueCap,
       preferredCandidateIds: bodyBound.bodyBatchIds,
       nowMs: bodySelectionNowMs,
+      prefetchedBodyLookup,
     },
+  );
+  // How much of the lane's body batch actually got a body job this run.
+  const pinnedIdSet = new Set(bodyBound.bodyBatchIds);
+  const excerptBodyBatchEnqueued = (bodyPipeline.health.bodyMergePendingIds ?? []).filter((id) =>
+    pinnedIdSet.has(id),
+  ).length;
+  console.log(
+    `[worker] article excerpt body batch: pinned=${bodyBound.bodyBatchIds.length}`
+      + ` fetched=${excerptStats.prioritized} enqueued=${excerptBodyBatchEnqueued}`,
   );
   const health = {
     lastRunAt: new Date().toISOString(),
@@ -1766,6 +1797,8 @@ export async function runHarness(
     excerptFetchDeferred: excerptStats.deferred,
     excerptFetchPrioritized: excerptStats.prioritized,
     excerptFetchUnlockable: excerptStats.unlockable,
+    excerptBodyBatchPinned: bodyBound.bodyBatchIds.length,
+    excerptBodyBatchEnqueued,
     publisherContractFingerprint,
     ...bodyPipeline.health,
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,
@@ -2330,6 +2363,11 @@ export async function runBodyPipeline(
     preferredCandidateIds?: readonly string[];
     /** Shared selection clock (same round-robin window as the lane's selection). */
     nowMs?: number;
+    /**
+     * `b:` KV records the article excerpt lane already read for its pinned
+     * batch: urls in `urls` are not read again (a miss is a miss).
+     */
+    prefetchedBodyLookup?: { hits: ReadonlyMap<string, BodyCacheEntry>; urls: ReadonlySet<string> };
   } = {},
 ): Promise<BodyPipelineResult> {
   const retentionDays = Math.max(
@@ -2337,10 +2375,12 @@ export async function runBodyPipeline(
     Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
   );
   const referenceMs = Date.parse(generatedAt);
+  const retentionNowMs =
+    options.nowMs ?? (Number.isFinite(referenceMs) ? referenceMs : Date.now());
   const retainedEntries = liveEntries.filter((entry) =>
     isBodyRetentionEligible(
       entry,
-      Number.isFinite(referenceMs) ? referenceMs : Date.now(),
+      retentionNowMs,
       retentionDays,
     ),
   );
@@ -2432,9 +2472,18 @@ export async function runBodyPipeline(
 
     // 1) Merge: read `b:` KV for the selected entries and fold any freshly
     //    generated bodies into bodies.json (prune happens in mergeBodies).
-    const hits = selection.lookupJobs.length
-      ? await getBodyCacheEntries(env.SUMMARY_CACHE, selection.lookupJobs.map((j) => j.url))
-      : new Map();
+    const prefetched = options.prefetchedBodyLookup;
+    const urlsToRead = selection.lookupJobs
+      .map((j) => j.url)
+      .filter((url) => !(prefetched?.urls.has(url) ?? false));
+    const freshHits = urlsToRead.length
+      ? await getBodyCacheEntries(env.SUMMARY_CACHE, urlsToRead)
+      : new Map<string, BodyCacheEntry>();
+    const hits = new Map<string, BodyCacheEntry>(freshHits);
+    for (const job of selection.lookupJobs) {
+      const pre = prefetched?.hits.get(job.url);
+      if (pre && !hits.has(job.url)) hits.set(job.url, pre);
+    }
     const newBodies: NewBody[] = [];
     for (const job of selection.lookupJobs) {
       const candidate = hits.get(job.url);

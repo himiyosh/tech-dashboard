@@ -226,10 +226,11 @@ export interface EnrichExcerptOptions extends ArticleFetchOptions {
   /** URL keys already present in the prior index: everything else is NEW. */
   isPrior: (entry: NormalizedEntry) => boolean;
   /**
-   * Optional rank for entries that must be enriched before the default
-   * order (lower first; undefined = not prioritized). Used for entries whose
-   * body is generated this run — see bodyBoundExcerptPriority in
-   * body-queue.ts. Ties keep newest-first.
+   * Optional rank from bodyBoundExcerptPriority (body-queue.ts). Rank <= 0 is
+   * this run's body batch and is enriched before this run's new entries;
+   * rank >= 1 is the unlockable backlog (summarized but too thin for a body)
+   * and is enriched after new entries but before the prior backfill.
+   * undefined / non-finite = default order. Ties keep newest-first.
    */
   priority?: (entry: NormalizedEntry) => number | undefined;
 }

@@ -130,8 +130,18 @@ describe("selectBodyPipelineJobs preferredCandidateIds (pinned body batch)", () 
 
   it("pinned ids never exceed the remaining candidate cap", () => {
     const entries = ["a", "b", "c"].map((id) => entry({ id }));
-    const selection = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["a", "b", "c"] });
-    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(["a", "b"]);
+    const selection = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["c", "b", "a"] });
+    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(["c", "b"]);
+  });
+
+  it("drain estimate covers the whole candidate window even when pinned jobs fill it", () => {
+    const entries = ["a", "b", "c", "d", "e", "f"].map((id) => entry({ id }));
+    const pinnedFull = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["a", "b"] });
+    expect(pinnedFull.candidateJobs.map((job) => job.entry.id)).toEqual(["a", "b"]);
+    expect(pinnedFull.eligibleCount).toBe(6);
+    expect(pinnedFull.drainEstimateHours).toBe(3);
+    const unpinned = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW });
+    expect(unpinned.drainEstimateHours).toBe(3);
   });
 });
 
@@ -146,8 +156,9 @@ describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
   const pendingSummary = entry({ id: "pending", summaryJa: PENDING_JA, summaryEn: "", publishedAt: "2026-09-05T00:00:00.000Z" });
   const evicted = entry({ id: "evicted", contentSnippet: "", publishedAt: "2026-09-04T12:00:00.000Z" });
   const pendingJob = entry({ id: "pending-job", publishedAt: "2026-09-04T06:00:00.000Z" });
-  // Outside body retention (importance 1, 90 days old): the pipeline can never enqueue it.
-  const stale = entry({ id: "stale", importance: 1, contentSnippet: "", publishedAt: "2026-06-05T00:00:00.000Z", collectedAt: "2026-06-05T01:00:00.000Z" });
+  // needsBody-eligible but outside body retention (importance 1, 90 days old):
+  // the pipeline can never enqueue it, so retention alone must exclude it.
+  const stale = entry({ id: "stale", importance: 1, publishedAt: "2026-06-05T00:00:00.000Z", collectedAt: "2026-06-05T01:00:00.000Z" });
   const all = [stale, pendingSummary, unlockOlder, bodied, batchOlder, unlock, batchNewest, evicted, pendingJob];
   const present = new Set(["bodied"]);
 
@@ -174,7 +185,39 @@ describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
 
   it("returns nothing when no entry is body-bound", () => {
     expect(bodyBoundExcerptPriority([entry({ id: "bodied" })], new Set(["bodied"]), { lookupCap: 5, previousPendingIds: [] }).rank.size).toBe(0);
-    expect(bodyBoundExcerptPriority([], new Set(), { lookupCap: 5, previousPendingIds: [] }).bodyBatchIds).toEqual([]);
+    const empty = bodyBoundExcerptPriority([], new Set(), { lookupCap: 5, previousPendingIds: [] });
+    expect(empty.bodyBatchIds).toEqual([]);
+    expect(empty.bodyBatchJobs).toEqual([]);
+  });
+
+  it("exposes the batch as jobs that carry the entry and its url", () => {
+    const { bodyBatchIds, bodyBatchJobs } = bodyBoundExcerptPriority(all, present, opts);
+    expect(bodyBatchJobs.map((job) => job.entry.id)).toEqual(bodyBatchIds);
+    expect(bodyBatchJobs.every((job) => job.url === job.entry.url)).toBe(true);
+  });
+});
+
+describe("runBodyPipeline prefetchedBodyLookup", () => {
+  it("does not read KV again for urls the excerpt lane already looked up, but still reads the rest", async () => {
+    const reads: string[] = [];
+    const kv = {
+      get: async (key: string) => {
+        reads.push(key);
+        return null;
+      },
+      put: async () => {},
+    } as unknown as KeyValueBinding;
+    const entries = ["p1", "p2", "other"].map((id) => entry({ id }));
+    const env = baseEnv({ SUMMARY_CACHE: kv, BODY_LOOKUP_CAP: "3", BODY_ENQUEUE_MAX_NEW: "0" });
+    const prefetchedUrls = new Set(entries.slice(0, 2).map((e) => e.url));
+    const result = await runBodyPipeline(env, entries, null, "2026-09-05T12:00:00.000Z", `sha256:${"a".repeat(64)}`, {
+      preferredCandidateIds: ["p1", "p2"],
+      nowMs: Date.parse("2026-09-05T12:00:00.000Z"),
+      prefetchedBodyLookup: { hits: new Map(), urls: prefetchedUrls },
+    });
+    // Three lookup jobs, two already read by the lane → exactly one KV read.
+    expect(result.health.bodyLookupCount).toBe(3);
+    expect(reads).toHaveLength(1);
   });
 });
 

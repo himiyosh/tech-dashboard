@@ -198,26 +198,48 @@ describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
 });
 
 describe("runBodyPipeline prefetchedBodyLookup", () => {
-  it("does not read KV again for urls the excerpt lane already looked up, but still reads the rest", async () => {
-    const reads: string[] = [];
-    const kv = {
+  const FP = `sha256:${"a".repeat(64)}`;
+  const AT = "2026-09-05T12:00:00.000Z";
+
+  function countingKv(reads: string[]): KeyValueBinding {
+    return {
       get: async (key: string) => {
         reads.push(key);
         return null;
       },
       put: async () => {},
     } as unknown as KeyValueBinding;
-    const entries = ["p1", "p2", "other"].map((id) => entry({ id }));
-    const env = baseEnv({ SUMMARY_CACHE: kv, BODY_LOOKUP_CAP: "3", BODY_ENQUEUE_MAX_NEW: "0" });
-    const prefetchedUrls = new Set(entries.slice(0, 2).map((e) => e.url));
-    const result = await runBodyPipeline(env, entries, null, "2026-09-05T12:00:00.000Z", `sha256:${"a".repeat(64)}`, {
-      preferredCandidateIds: ["p1", "p2"],
-      nowMs: Date.parse("2026-09-05T12:00:00.000Z"),
-      prefetchedBodyLookup: { hits: new Map(), urls: prefetchedUrls },
+  }
+
+  it("reuses the lane's hits without re-reading them, and re-reads its misses", async () => {
+    const reads: string[] = [];
+    const entries = ["hit", "miss", "other"].map((id) => entry({ id }));
+    const env = baseEnv({ SUMMARY_CACHE: countingKv(reads), BODY_LOOKUP_CAP: "3", BODY_ENQUEUE_MAX_NEW: "0" });
+    const hitRecord = {
+      ...bodyGeneratedRecordText("hit"),
+      model: "claude-opus-4.8",
+      cachedAt: AT,
+      publisherContractFingerprint: FP,
+    } as never;
+    const result = await runBodyPipeline(env, entries, null, AT, FP, {
+      preferredCandidateIds: ["hit", "miss"],
+      nowMs: Date.parse(AT),
+      // The lane read both; only "hit" produced a record.
+      prefetchedBodyLookup: { hits: new Map([[entries[0]!.url, hitRecord]]) },
     });
-    // Three lookup jobs, two already read by the lane → exactly one KV read.
+    // Three lookup jobs; the hit is reused, the lane's miss is re-read because
+    // the body consumer may have written it since.
     expect(result.health.bodyLookupCount).toBe(3);
-    expect(reads).toHaveLength(1);
+    expect(reads).toHaveLength(2);
+    expect(result.health.bodyMerged).toBe(1);
+  });
+
+  it("reads everything when the lane handed over nothing", async () => {
+    const reads: string[] = [];
+    const entries = ["a", "b"].map((id) => entry({ id }));
+    const env = baseEnv({ SUMMARY_CACHE: countingKv(reads), BODY_LOOKUP_CAP: "2", BODY_ENQUEUE_MAX_NEW: "0" });
+    await runBodyPipeline(env, entries, null, AT, FP, { nowMs: Date.parse(AT) });
+    expect(reads).toHaveLength(2);
   });
 });
 

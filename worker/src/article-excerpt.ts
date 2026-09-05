@@ -13,10 +13,14 @@
  * Contract:
  * - Pure extraction (`extractArticleText`) has no network and no DOM; it is
  *   regex/heuristic based so it runs identically in Node and Workers.
- * - `enrichThinExcerpts` is bounded per run (ARTICLE_FETCH_CAP), prefers this
- *   run's NEW entries, then backfills prior thin entries newest-first, and
- *   marks every attempt on the entry (`excerptOrigin`) so a failure is never
- *   retried every hour. Failures keep the feed excerpt (fail-open).
+ * - `enrichThinExcerpts` is bounded per run (ARTICLE_FETCH_CAP). Order: this
+ *   run's body batch first (`options.priority` rank <= 0, chosen by
+ *   bodyBoundExcerptPriority on the live set and pinned into runBodyPipeline),
+ *   then this run's NEW entries, then the unlockable backlog (rank >= 1), then
+ *   prior thin entries; ties newest-first. Without `priority` it falls back to
+ *   NEW then prior. Every attempt is marked on the entry (`excerptOrigin`) so
+ *   a failure is never retried every hour. Failures keep the feed excerpt
+ *   (fail-open).
  * - Nothing here is displayed: contentSnippet is model input and grounding
  *   material only (harness/pipeline/normalize.ts documents why).
  */

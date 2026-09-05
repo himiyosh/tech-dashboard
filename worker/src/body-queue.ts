@@ -228,10 +228,14 @@ export interface BodyBoundExcerptPriority {
  *            inputs (retention-eligible entries, the committed bodies.json
  *            after pruneInvalidBodyRecords, previous pending ids, lookupCap,
  *            budget-evicted exclusions, one shared nowMs). The caller pins
- *            this batch into runBodyPipeline (preferredCandidateIds), which
- *            is what makes rank 0 exactly the enqueued set rather than a
- *            prediction that drifts with caps, windows or the lane's own
- *            enrichment.
+ *            this batch into runBodyPipeline (preferredCandidateIds), so the
+ *            enriched entries are the ones enqueued rather than a prediction
+ *            that drifts with caps, windows or the lane's own enrichment.
+ *            Pinned is not identical to enqueued: an entry whose body is
+ *            already in KV is merged instead (the caller drops those from
+ *            rank 0), and the per-run enqueue cap can still truncate the
+ *            batch. health.excerptBodyBatchPinned / excerptBodyBatchEnqueued
+ *            report both numbers.
  *   rank 1 — retention-eligible entries with a real bilingual summary but no
  *            body, whose feed excerpt fails hasSufficientBodySourceGrounding
  *            (too thin for a body); newest first. Enrichment is what can make

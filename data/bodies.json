@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T20:47:05.269Z",
+  "generatedAt": "2026-09-05T22:25:01.217Z",
   "count": 1110,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -41998,82 +41998,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:17:29.736Z"
     },
-    "bda79656119b3b90": {
-      "bodyJa": "## MCPで権限分担\n\nMCPを使い、AIエージェントには参照系の権限だけを渡し、更新・変更はシステムまたは人間に残す設計パターンを解説する。AIの自律性と安全性のバランスを取る実践的な手法として、AWS上で構成し検証している。\n\n## S3の読み書き\n\n題材はS3オブジェクトの読み書きだ。AIエージェントにはバケット内を読む操作を担わせる一方、更新作業は拒否する。バケットの読み取りと書き込みは、システムまたは人が実施する分担となる。\n\n## IAMユーザー\n\n要件を満たすだけなら、S3の読み取り権限を持つIAMユーザーを1つ作る方法でも済むと説明されている。ただし記事ではその方法を採らず、AWS Identity Centerを用いる。単なる読み取り用ユーザーの作成ではなく、MCPを活用した権限分担が検証の中心である。",
-      "bodyEn": "## AI agents\n\nThis article presents an MCP design pattern that gives AI agents read-only permissions while leaving write and update operations to people or the system. The approach matters because it aims to balance AI autonomy with safety by separating lower-risk reference actions from higher-risk changes.\n\n## S3 objects\n\nThe pattern is implemented and tested on AWS using reads and writes of S3 objects as the example. The AI agent is allowed to inspect the contents of a bucket, but attempts to update that content are rejected. A person or the system retains the ability to perform both reads and writes.\n\n## Read-only permissions\n\nThe source notes that the basic requirement could be met by creating a single IAM user with S3 read permissions. However, the article does not use that simpler route and instead describes the division of permissions through an MCP-based setup. The resulting arrangement keeps data modification outside the AI agent’s permitted operations while allowing it to carry out read-only tasks.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "MCPでAIに読み取りだけ渡すって、つまり何？ S3は見られるけど、中身は変えられないの？",
-          "en": "What does it mean to give an AI read-only access through MCP? Can it view S3 contents but not change them?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、その通りじゃよ。AIエージェントはS3バケットを読み取れるが、更新は拒否され、人やシステムが読み書きする設計じゃ。",
-          "en": "According to the article, exactly. The AI agent can read the S3 bucket, but updates are denied, while people or the system handle reading and writing."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ AIに任せるなら、更新までできたほうが便利そうだけど。",
-          "en": "What’s the benefit? If the AI is handling things, wouldn’t letting it make updates be more convenient?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、低リスクの参照はAIに任せ、高リスクの変更は人やシステムに残せる点じゃ。自律性と安全性を両立しやすいんじゃな。",
-          "en": "Simply put, AI handles lower-risk lookups, while people or the system retain control of higher-risk changes. That makes autonomy and safety easier to balance."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ AIには調べてもらい、書き換えは人が判断する。役割を分けるのがポイントなんだね。",
-          "en": "Got it! The AI can look things up, while people decide on changes. The key is splitting those responsibilities."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。記事ではAWS上でS3の読み書きを題材に実際に組んで検証するので、更新拒否が要件どおり働くかが見どころじゃよ。",
-          "en": "That’s right. The article builds and tests this on AWS using S3 reads and writes, so the key point is whether update denial works as intended."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T20:53:01.345Z"
-    },
-    "6b80fc88b1aec8c5": {
-      "bodyJa": "## Memory MCP\n\nClaude CodeのようなAIは、会話が終わるとそれまでのやり取りを覚えていません。そこで、AIに外部機能を追加できるMCPの公式サンプルとして配布されている、会話をまたいだ「記憶」を持たせるサーバーを、AI本体を経由せず直接呼び出して挙動が検証されました。\n\n## 記憶の保存先\n\n同じ名前でもう一度記憶を登録すると、既存内容の上書きやマージは行われず、新しい内容がまるごと無視されると説明されています。また、初期設定では保存先がプロジェクトのフォルダではなく、npm installで作られる場所に置かれます。\n\n## npm install\n\nこのため、npm installを再実行するだけで、保存されていたナレッジグラフの記憶データが消失したとされています。継続的に記憶を保持する運用では、データ永続化に別途対策が必要だと要約されています。",
-      "bodyEn": "## Memory MCP server for Claude\n\nA hands-on test found that reinstalling the Memory MCP server through npm erased its stored knowledge graph data. The result matters because the server is intended to give an AI “memory” across conversations, while an AI such as Claude Code does not retain previous exchanges after a conversation ends.\n\n## Model Context Protocol\n\nThe server is distributed as an official sample of MCP, or Model Context Protocol, a mechanism for adding external capabilities to an AI. The test examined the server directly, without going through the AI itself, to check its behavior.\n\nThe test also found that registering memory again under the same name did not overwrite or merge the existing entry. Instead, the new content was ignored in full.\n\n## Data persistence\n\nUnder the default configuration, the memory was not stored in the project folder. Its storage location was created by npm install, and running npm install again caused the knowledge graph memory data to disappear.\n\nAccording to the existing summary, using the server where persistent memory is required therefore needs a separate data-persistence measure.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Memory MCPサーバーって何？ npm installをやり直すだけで、どうして記憶が消えるの？",
-          "en": "What’s a Memory MCP server? Why would its memory disappear just from running npm install again?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、AIに会話をまたぐ記憶を持たせる仕組みじゃな。記事によれば、初期設定では再インストール時に記憶データが消えたそうじゃ。",
-          "en": "Simply put, it gives AI memory across conversations. According to the article, the default setup lost its stored data after reinstallation."
-        },
-        {
-          "s": "a",
-          "ja": "その記憶は「ナレッジグラフ」なんだよね。それって何で、消えると何が困るの？",
-          "en": "That memory is a “knowledge graph,” right? What is that, and why is losing it a problem?"
-        },
-        {
-          "s": "b",
-          "ja": "知識と知識の関係をつないで保存する形、くらいの意味じゃ。運用で継続的な記憶を頼るなら、全消失は大きな落とし穴になるのう。",
-          "en": "Think of it as storing knowledge together with its relationships. If production relies on that memory persisting, losing everything becomes a serious pitfall."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、初期設定のままでは記憶の永続保存に不安があるんだね。同じ名前で登録し直しても更新されないの？",
-          "en": "So the default setup isn’t reliable for persistent memory. And registering the same name again doesn’t update it either?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、上書きもマージもされず、新しい内容が丸ごと無視されたそうじゃ。運用前に保存先と更新時の挙動を確かめ、永続化対策が必要じゃな。",
-          "en": "According to the article, it neither overwrote nor merged; the new content was entirely ignored. Before production use, verify storage and update behavior, and add persistence safeguards."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T20:53:28.266Z"
-    },
     "f612505288b62a2a": {
       "bodyJa": "## 全職員に提供\n\nOpenAIは2025年8月6日、米国連邦政府の全職員にChatGPTを提供すると発表した。連邦政府全体で利用対象を広げる取り組みで、政府業務の効率化とAI活用の加速が期待される。\n\n## GSAとの連携\n\nOpenAI for Governmentは、U.S. General Services Administration（GSA）との新たなパートナーシップを通じて、この取り組みを開始する。連邦行政機関の職員が、共通してChatGPTを利用できる形となる。\n\n## 今後1年間\n\n提供されるのはChatGPT Enterpriseで、対象期間は今後1年間。連邦行政部門の全職員が、実質的に費用負担のない条件で利用できると説明されている。",
       "bodyEn": "## ChatGPT for federal workforce\n\nOpenAI has announced a partnership with the U.S. General Services Administration to provide ChatGPT access across the U.S. federal workforce. The deal matters because it marks a significant expansion of AI adoption across government agencies, with greater efficiency in government work and faster AI use expected.\n\nOpenAI for Government describes the partnership as a new initiative. Its stated scope covers the entire federal executive branch workforce, extending access across that part of the federal government.\n\n## ChatGPT Enterprise availability\n\nUnder the initiative, ChatGPT Enterprise will be available to the federal executive branch workforce for the next year. The service will be offered at essentially no cost during that period.\n\nThe announcement links this broad availability to the partnership with the GSA. It combines access for the full executive branch workforce with a defined one-year term and an essentially no-cost offer, supporting wider use of ChatGPT across federal government agencies.",
@@ -42149,6 +42073,82 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:13:18.814Z"
+    },
+    "65e3a8e409da5821": {
+      "bodyJa": "## OpenCut classic\n\n63.8k starsを集める動画エディタOpenCutを使い、Claudeに動画編集を行わせる実験が紹介された。現在のOpenCutは書き直し中で、rewrite版はまだhello worldしか表示せず、動画編集の実体はarchivedとなった旧版classicに残っている。\n\n## MCPサーバー\n\nこの実験ではOpenCut classicをforkし、PlaywrightとMCPサーバーを組み合わせている。これにより、Claude CodeからOpenCut classicの動画編集操作を実行できるようにした。実装されたのはopencut-mcp v0.1.0で、ライセンスはMITとされる。\n\n## 4つの罠\n\n実装過程では、Claudeによる動画編集を成立させるうえで4つの具体的な技術課題が判明した。OpenCut classicへのMCP統合と操作経路の構築を通じ、AIエージェントで動画編集を扱う際の実装上の罠を整理した内容となっている。",
+      "bodyEn": "## OpenCut classic\n\nThe author describes an experiment that enables Claude to perform video editing tasks by forking OpenCut classic and integrating an MCP server. The work matters because it documents practical findings for developers building AI-driven video editing workflows.\n\nOpenCut, which has collected 63.8k stars, is currently being rewritten. The rewrite version still displays only “hello world,” while the actual video-editing functionality remains solely in the archived classic version.\n\n## Playwright + MCP server\n\nThe author forked that classic version and made its video-editing controls accessible from Claude Code through Playwright and an MCP server. The resulting implementation is opencut-mcp v0.1.0, released under the MIT license.\n\nThis approach connects Claude Code to the existing editor rather than relying on the incomplete rewrite.\n\n## Four technical pitfalls\n\nThe implementation process revealed four concrete technical pitfalls. The article focuses on those challenges and the lessons learned while integrating the MCP server and enabling Claude to operate the video editor, offering practical guidance for similar AI-driven editing workflows.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "classicをforkして、Claude Codeに動画編集させたって、つまりどういうこと？ MCPも気になる！",
+          "en": "They forked OpenCut classic and got Claude Code to edit video—what does that actually mean? And what’s MCP?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、PlaywrightとMCPサーバーを通じてClaude Codeから編集操作を可能にしたんじゃ。MCPはAIと道具をつなぐ窓口、と考えるとよいぞ。",
+          "en": "The piece says Claude Code controls editing through Playwright and an MCP server. Think of MCP as a doorway connecting an AI to tools."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、AI動画編集を作りたい開発者にとって、操作方法だけでなく「ここで転ぶよ」という地図にもなる感じ？",
+          "en": "So for developers building AI video editing, is this like a map showing both the route and where they might trip?"
+        },
+        {
+          "s": "b",
+          "ja": "まさにそんな位置づけじゃな。紹介されている実験では、実装中に見つかった4つの具体的な技術課題が、開発の手がかりとしてまとめられておる。",
+          "en": "That’s the idea. The experiment documents four concrete technical pitfalls found during implementation, offering practical guidance for developers."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど、Claudeに編集させる仕組みを作りつつ、実用化でハマる点も整理したんだね。",
+          "en": "Got it—they built a way for Claude to edit video while also mapping out the problems that show up in practice."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、現状のrewrite版はまだhello worldだけで、編集の実体はarchivedのclassicにしかないそうじゃ。今回はclassicのforkが前提なのを忘れぬことじゃな。",
+          "en": "One caution: the rewrite currently only shows “hello world,” while actual editing remains in the archived classic version. This project therefore depends on forking classic."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T20:48:01.164Z"
+    },
+    "b00e54e01d20ac8c": {
+      "bodyJa": "## ワールドモデル\n\nAIのワールドモデルは、現実世界を内部でシミュレートする仕組みだ。AIエージェントによる物理的な現実の扱いに関わり、ロボットや自動運転への活用が期待されている。\n\n## 精度と汎化性能\n\n現在の大きな課題は、シミュレーションの精度と汎化性能にある。現実を再現しようとしても、正確さには限界があり、異なる条件へ広く対応できるとは限らない。そのため、あらゆるものをシミュレートできる普遍的な解決策にはまだ遠く、可能なことや未解決の点を分けて捉える必要がある。",
+      "bodyEn": "## World models\n\nWorld models aim to let AI agents simulate physical reality internally. This matters because such simulations are expected to support applications involving robots and autonomous driving.\n\nExperts are examining how these models work and what they can do while emphasizing that their promise exceeds their current capabilities. The central possibility is an AI system able to simulate aspects of the real world for an agent.\n\n## Accuracy and generalization\n\nCurrent world models still face major limitations in accuracy and generalization. These weaknesses prevent them from serving as a universal solution.\n\nTheir potential remains significant, particularly for robots and autonomous driving, but important questions about their capabilities and limits are still unsettled.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "現実世界をAIの中でシミュレートするって、何でも丸ごと再現できるってこと？",
+          "en": "Simulating reality inside AI—does that mean it can recreate basically everything?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、ワールドモデルはAIが物理的な現実を内部で再現する仕組みとされておる。じゃが、何でも完全に再現できるわけではないぞ。",
+          "en": "The piece describes a world model as a way for AI to simulate physical reality internally. But that doesn’t mean it can reproduce everything perfectly."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、ロボットや自動運転が現実で動く前に、頭の中で予行演習する感じ？",
+          "en": "So it’s like robots or self-driving systems rehearsing in their heads before acting in the real world?"
+        },
+        {
+          "s": "b",
+          "ja": "そのイメージに近いのう。ロボットや自動運転への活用が期待されている、と本文では説明されておるよ。",
+          "en": "That’s a helpful way to picture it. The article says world models are expected to be useful for robotics and self-driving applications."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、現実を考えるAIの予行演習場だけど、まだ万能ではないってことだね。",
+          "en": "Oh, so it’s a rehearsal space for AI dealing with reality, but it’s not an all-purpose solution yet."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。精度と汎化性能、つまり未知の状況にも対応する力には大きな限界があり、万能な仕組みにはまだ遠いとされておる。",
+          "en": "Exactly. It still has major limits in accuracy and generalization—handling unfamiliar situations—so the story says it remains far from a universal solution."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T20:48:20.231Z"
     }
   }
 }

@@ -231,7 +231,7 @@ data/
 [4] Fallback + Queue summarize (Claude Sonnet 4.6)
    - Publisher は deterministic fallback で空欄を防ぎ、Queue job を遅延 effects bundle に保存
    - worker-summarizer が 1 message/invocation で Copilot 要約を生成
-   - Article excerpt lane (`worker/src/article-excerpt.ts`): フィード説明文が 450 字未満の entry は元記事ページを取得し、主要テキストを 900 字に揃えて `contentSnippet` に採用する(毎時 `ARTICLE_FETCH_CAP`=40 件、その実行で本文 job になる記事(本文パイプラインと同じ入力で先に選定し、`preferredCandidateIds` として pin する)→新着→要約済みだが抜粋が薄く本文の根拠ゲートを通れない記事→既存 backfill、いずれも新しい順、`bodyBoundExcerptPriority`、`excerptOrigin` で試行を一度だけ記録)。要約・本文の生成とグラウンディング検査はこの抜粋を材料にする
+   - Article excerpt lane (`worker/src/article-excerpt.ts`): フィード説明文が 450 字未満の entry は元記事ページを取得し、主要テキストを 900 字に揃えて `contentSnippet` に採用する(毎時 `ARTICLE_FETCH_CAP`=40 件、その実行で本文 job になる記事(live 集合の確定後に本文パイプラインと同じ入力で先に選定し、KV に本文が既にあるものを除いて取得、`preferredCandidateIds` として pin する)→新着→要約済みだが抜粋が薄く本文の根拠ゲートを通れない記事→既存 backfill、いずれも新しい順、`bodyBoundExcerptPriority`、`excerptOrigin` で試行を一度だけ記録)。要約・本文の生成とグラウンディング検査はこの抜粋を材料にする
    - Hook: JSON schema, summary/body 欠落検出、per-URL KV cache 再利用
    - Verifier: generated body と summary の欠落、model error、cache 不整合を run metadata に記録
    │

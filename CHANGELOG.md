@@ -14,7 +14,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
-- 記事本文抽出レーン(毎時 40 件)の取得順を、本文の生成対象に合わせました。その実行で本文 job になる記事を本文パイプラインと同じ入力(retention・committed bodies・前回 pending・`BODY_LOOKUP_CAP`・同一時刻)で先に選定し、レーンで取得したうえで `preferredCandidateIds` としてパイプラインに pin するため、取得した記事がそのまま生成対象になります。その後に新着、要約済みだが抜粋が薄く本文の根拠ゲートを通れない記事(無制限の backlog でも新着を飢餓させない順序)、既存 backfill の順です。これまでは取得枠が最新のフィード項目に使われ、本文は 200 字前後の説明文から約 330 字で生成され続けていました。health に `excerptFetchPrioritized` / `excerptFetchUnlockable` を追加し、data-schema 検証に整合性ゲートを足しています。
+- 記事本文抽出レーン(毎時 40 件)の取得順を、本文の生成対象に合わせました。レーンを live 集合の確定後(per-source / category cap と INDEX_LIMIT の後)に移し、その実行で本文 job になる記事を本文パイプラインと同じ入力(retention・committed bodies・前回 pending・`BODY_LOOKUP_CAP`・同一時刻)で先に選定し、KV に本文が既にある記事(取り込みのみで再生成されない)を除いて取得したうえで、選定結果を `preferredCandidateIds` としてパイプラインに pin します。取得した記事がそのまま生成対象になり、先読みした KV はパイプラインが再利用するため bridge リクエストは増えません。その後に新着、要約済みだが抜粋が薄く本文の根拠ゲートを通れない記事(無制限の backlog でも新着を飢餓させない順序)、既存 backfill の順です。これまでは取得枠が最新のフィード項目に使われ、本文は 200 字前後の説明文から約 330 字で生成され続けていました。health に `excerptFetchPrioritized` / `excerptFetchUnlockable` / `excerptBodyBatchPinned` / `excerptBodyBatchEnqueued` を追加し、data-schema 検証に整合性ゲートを足しています。
 - Worker の deploy 鮮度ゲート `npm run worker:freshness` を追加しました。Queue consumer(`tech-dashboard-summarizer` / `tech-dashboard-body`)と Free bridge の最新 deploy が、ソースの最新 commit より古い場合に失敗します。2026-08-13〜09-04 の間 consumer が未 deploy のまま放置され、対話生成・本文長の改善・GPT-5.6 チェーンが本番に届いていなかった見落としの再発防止です。リリース手順(README)に手順 0 として組み込みました。
 
 ## 2026-09-04

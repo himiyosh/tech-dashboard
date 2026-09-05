@@ -214,6 +214,8 @@ export interface BodyBoundExcerptPriority {
    * that get enqueued — the batch is pinned, not re-predicted.
    */
   bodyBatchIds: string[];
+  /** The same batch as jobs (for the caller's KV pre-lookup). */
+  bodyBatchJobs: BodyJob[];
 }
 
 /**
@@ -267,7 +269,7 @@ export function bodyBoundExcerptPriority(
     )
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
   for (const entry of unlockable) rank.set(entry.id, 1);
-  return { rank, bodyBatchIds };
+  return { rank, bodyBatchIds, bodyBatchJobs: selection.candidateJobs };
 }
 
 export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number): number {
@@ -358,6 +360,9 @@ export function selectBodyPipelineJobs(
     candidateJobs,
     lookupJobs: [...pendingJobs, ...candidateJobs],
     eligibleCount: candidates.eligibleCount,
-    drainEstimateHours: candidates.drainEstimateHours,
+    // Drain estimate over the full candidate window, not the part left after
+    // the pinned jobs (which would read 0 when the pin fills the window).
+    drainEstimateHours:
+      remainingCandidateCap > 0 ? Math.ceil(candidates.eligibleCount / remainingCandidateCap) : 0,
   };
 }

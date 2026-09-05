@@ -1,8 +1,41 @@
 {
-  "generatedAt": "2026-09-05T15:39:41.051Z",
+  "generatedAt": "2026-09-05T20:47:07.590Z",
   "month": "2026-09",
-  "count": 70,
+  "count": 74,
   "entries": [
+    {
+      "id": "a6d84c8aea3faa89",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/DoroDango/items/87fd1e5331e5496ff206",
+      "title": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+      "titleJa": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+      "titleEn": "Can VS Code Become a Window onto Beach Resorts Worldwide? I Built a Webview Extension That Shows the Sea",
+      "lang": "ja",
+      "publishedAt": "2026-09-05T14:58:01.000Z",
+      "collectedAt": "2026-09-05T16:20:16.290Z",
+      "tags": [
+        "qiita",
+        "vscode",
+        "vscode-extension",
+        "webview"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った VS Code で AI チャットを使う時間が増えて、中央のエディターが空いていることが多くなりました。あの大きなロゴの代わりにカリブの海でも見えたらいいな、と思って作ったのが Ocean Window です。 写真： Cala Macarella / Paul Stephenson / CC BY 2.0 。トリミングと暗いオーバーレイを適用。 最初は VS Code 本体の workbench HTML を書き換えていました。ところが Linux の /usr/share 配下では EACCES 。海を見るために権限を変えてもらうのは面倒です。 0.3.0 で標準の Webview API に作り直しました。本体への書き込みは不要です。 海を表示している間だけタブが1枚出ます。コードや Markdown を開けば閉じ、グループが空になれば戻ってきます。文字の後ろには写真を敷かないので、いつもの配色で作業できます。 const panel = vscode . window . createWebviewPanel ( { viewColumn : group . viewColumn , preserveFocus : true }, { ... getWebviewOptions ( vscode , context ), retainContextWhenHidden : false } preserveFocus: true で、チャットに入力中でも海にフォーカスを持っていかれません。 テキストエディターだけで空きを判定すると、画像や Markdown プレビューを開いていても海が出てしまいます。 TabGroups API でタブの変更を受け取り、グループごとに自分以外のタブがあるかを調べます。あれば海を閉じる。空なら作る。 ただし、手動で閉じた直後に復活すると邪魔です。閉じたグループを覚えておき、ファイルを開いて閉じるか、表示コマンドを実行するまで再表示しません。",
+      "feedSnippet": "VS Code で AI チャットを使う時間が増えて、中央のエディターが空いていることが多くなりました。あの大きなロゴの代わりにカリブの海でも見えたらいいな、と思って作ったのが Ocean Window です。 写真：Cala Macarella / Paul Steph...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDA5NTQ0JTJGcHJvZmlsZS1pbWFnZXMlMkYxNTU2ODE0NTk0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zYTk4ZjI2MmZhODgzZTU1YzMyOWMwZDgwZGJjODIwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De72c8e59d0a46249b364f6e3d5257d73?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJThDJUU0JUI4JTk2JUU3JTk1JThDJUU0JUI4JUFEJUUzJTgxJUFFJUUzJTgzJTkzJUUzJTgzJUJDJUUzJTgzJTgxJUUzJTgzJUFBJUUzJTgyJUJFJUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgxJUFFJUU3JUFBJTkzJUUzJTgxJUFCJUVGJUJDJTlGJTIwV2VidmlldyVFMyU4MSVBNyVFNiVCNSVCNyVFMyU4MiU5MiVFNiU5OCVBMCVFMyU4MSU5OSVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZjNTZkYTY3YmRkZThmMGQ4MmI0OTg2YzIxMzJiMDEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBEb3JvRGFuZ28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yNmNkMGRkODNjYWU1ZDhmMTRiNjkyZDJkOGE2MGY1Ng&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=688f34e3982e5bbb6b5a39aa1e461214",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDA5NTQ0JTJGcHJvZmlsZS1pbWFnZXMlMkYxNTU2ODE0NTk0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zYTk4ZjI2MmZhODgzZTU1YzMyOWMwZDgwZGJjODIwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De72c8e59d0a46249b364f6e3d5257d73?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJThDJUU0JUI4JTk2JUU3JTk1JThDJUU0JUI4JUFEJUUzJTgxJUFFJUUzJTgzJTkzJUUzJTgzJUJDJUUzJTgzJTgxJUUzJTgzJUFBJUUzJTgyJUJFJUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgxJUFFJUU3JUFBJTkzJUUzJTgxJUFCJUVGJUJDJTlGJTIwV2VidmlldyVFMyU4MSVBNyVFNiVCNSVCNyVFMyU4MiU5MiVFNiU5OCVBMCVFMyU4MSU5OSVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZjNTZkYTY3YmRkZThmMGQ4MmI0OTg2YzIxMzJiMDEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBEb3JvRGFuZ28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yNmNkMGRkODNjYWU1ZDhmMTRiNjkyZDJkOGE2MGY1Ng&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=688f34e3982e5bbb6b5a39aa1e461214",
+        "alt": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "3bc5c0edb12d97d2",
       "source": "ollama-releases",
@@ -13,7 +46,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc1",
       "lang": "en",
       "publishedAt": "2026-09-05T00:48:55.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -46,7 +79,7 @@
       "titleEn": "Why Bulk Replacement in a VSCode Extension Causes an `Overlapping ranges` Error",
       "lang": "ja",
       "publishedAt": "2026-09-04T23:43:33.000Z",
-      "collectedAt": "2026-09-05T10:58:44.478Z",
+      "collectedAt": "2026-09-05T16:20:16.290Z",
       "tags": [
         "extension-api",
         "qiita",
@@ -59,8 +92,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "「選択した行から置換ペアを読み取り、指定範囲を一括置換する」VSCodeマクロを作る際、同じ行に複数の置換対象が含まれるケースで Overlapping ranges are not allowed! という実行時エラーに遭遇しました。原因と対処を整理します。 // NG: 置換ペアごとに個別のeditBuilder.replaceを呼ぶ editBuilder . replace ( range , after ); editor.edit() のコールバック内で複数回 editBuilder.replace() を呼ぶ場合、それぞれの Range がドキュメント上で重なっていると Overlapping ranges are not allowed! エラーになります。同じ行に複数の置換対象があると、文字位置がずれて範囲が重複しやすくなります。 2. 解決策：行ごとに全ペアを文字列レベルで適用してから1回だけreplace const line = document . lineAt ( lineNum ); if ( ! before || before === after ) continue ; if ( mode === ReplaceMode . Literal ) { lineText = lineText . split ( before ). join ( after ); lineText = lineText . replace ( regex , after ); if ( lineText !== originalText ) { const range = new vscode . Range ( new vscode . Position ( lineNum , 0 ), new vscode . Position ( lineNum , originalText . length ) editBuilder .",
-      "feedSnippet": "背景 「選択した行から置換ペアを読み取り、指定範囲を一括置換する」VSCodeマクロを作る際、同じ行に複数の置換対象が含まれるケースでOverlapping ranges are not allowed!という実行時エラーに遭遇しました。原因と対処を整理します。 1. ...",
       "excerptOrigin": "article",
+      "feedSnippet": "背景 「選択した行から置換ペアを読み取り、指定範囲を一括置換する」VSCodeマクロを作る際、同じ行に複数の置換対象が含まれるケースでOverlapping ranges are not allowed!という実行時エラーに遭遇しました。原因と対処を整理します。 1. ...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUU4JUE0JTg3JUU2JTk1JUIwJUU3JUFFJTg3JUU2JTg5JTgwJUUzJTgyJTkyJUU0JUI4JTgwJUU2JThCJUFDJUU3JUJEJUFFJUU2JThGJTlCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUE4JTYwT3ZlcmxhcHBpbmclMjByYW5nZXMlNjAlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODElQUIlRTMlODElQUElRTMlODIlOEIlRTclOTAlODYlRTclOTQlQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01ZDFmMmJiNmQxMjQzZDYzYTNkZDFlNmQwOWFmNzJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9ea3588d7d8d8d1b3277cab968516aca",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUU4JUE0JTg3JUU2JTk1JUIwJUU3JUFFJTg3JUU2JTg5JTgwJUUzJTgyJTkyJUU0JUI4JTgwJUU2JThCJUFDJUU3JUJEJUFFJUU2JThGJTlCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUE4JTYwT3ZlcmxhcHBpbmclMjByYW5nZXMlNjAlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODElQUIlRTMlODElQUElRTMlODIlOEIlRTclOTAlODYlRTclOTQlQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01ZDFmMmJiNmQxMjQzZDYzYTNkZDFlNmQwOWFmNzJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9ea3588d7d8d8d1b3277cab968516aca",
@@ -69,6 +102,38 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "ac0dac29cd081df7",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-core%3D%3D1.6.2",
+      "title": "langchain-core==1.6.2",
+      "titleJa": "",
+      "titleEn": "langchain-core==1.6.2",
+      "lang": "en",
+      "publishedAt": "2026-09-04T21:29:44.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain-core==1.6.1 release(core): 1.6.2 ( #40209 ) chore(deps): bump mistune from 3.3.0 to 3.3.3 in /libs/core ( #40150 ) chore(deps): bump tornado from 6.5.7 to 6.5.8 in /libs/core ( #40113 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-core==1.6.2",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "feedSnippet": "Changes since langchain-core==1.6.1 release(core): 1.6.2 ( #40209 ) feat(openai): support async tools ( #40208 ) chore(deps): bump mistune from 3.3.0 to 3.3.3 in /libs/core ( #40150 ) chore(deps): bump tornado from 6.5.7 to 6.5.8 in /libs/core ( #40113 ) fix(core): avoid mutation in google-genai standard content ( #40023 ) fix(core): avoid mutation in bedrock converse standard content ( #40022 )",
+      "excerptOrigin": "article"
     },
     {
       "id": "9eebc5514b1c8809",
@@ -116,7 +181,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc0",
       "lang": "en",
       "publishedAt": "2026-09-04T21:04:48.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "github",
         "ollama",
@@ -185,7 +250,7 @@
       "titleEn": "Zed Editor Releases v1.18.1",
       "lang": "en",
       "publishedAt": "2026-09-04T16:59:05.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "bug-fix",
         "editor",
@@ -245,8 +310,8 @@
       }
     },
     {
-      "id": "855d6eb9ada55a72",
-      "source": "github-copilot",
+      "id": "43dc5941df4bfd39",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/project-hydrafusion-frontier-quality-via-multi-model-orchestration/",
       "title": "Project HydraFusion: Frontier quality via multi-model orchestration",
@@ -256,7 +321,7 @@
       "summaryEn": "GitHub Copilot research preview HydraFusion routes selective coding tasks across models. Offline tests matched or beat the Opus 5 baseline at lower estimated cost, enabling more efficient developer assistance.",
       "lang": "en",
       "publishedAt": "2026-09-04T16:04:14.000Z",
-      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "copilot",
         "github",
@@ -291,7 +356,7 @@
       "titleEn": "Zed Editor Releases v1.19.1-pre",
       "lang": "en",
       "publishedAt": "2026-09-04T16:00:43.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "bug-fix",
         "dev-containers",
@@ -570,7 +635,7 @@
       "titleEn": "Semantic Kernel dotnet-1.80.1",
       "lang": "en",
       "publishedAt": "2026-09-03T18:41:24.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "ci",
@@ -603,7 +668,7 @@
       "titleEn": "Cline Desktop v0.0.23",
       "lang": "en",
       "publishedAt": "2026-09-03T18:33:16.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "agent-plugins",
@@ -637,7 +702,7 @@
       "titleEn": "Ollama Releases v0.33.3",
       "lang": "en",
       "publishedAt": "2026-09-03T17:24:07.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -662,6 +727,38 @@
       "feedSnippet": "What's Changed gemma4 now supports images and audio on MLX engine Report cached prompt tokens Honor GGUF model defined default parameters MLX, MLX-C, llama.cpp update New Contributors @marcelpetrick made their first contribution in #17579 Full Changelog : v0.33.2...v0.33.3"
     },
     {
+      "id": "74f3d1f3f581261a",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain%3D%3D1.4.0",
+      "title": "langchain==1.4.0",
+      "titleJa": "",
+      "titleEn": "langchain==1.4.0",
+      "lang": "en",
+      "publishedAt": "2026-09-03T16:59:55.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain==1.3.18 docs(langchain): runnable langchain.mcp examples ( #39976 ) feat(langchain): langchain.mcp namespace, MCPAdapter ( #39939 ) chore(langchain): bump vcrpy test dependency minimum to >=8.2.0 ( #39942 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain==1.4.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "feedSnippet": "Changes since langchain==1.3.18 docs(langchain): runnable langchain.mcp examples ( #39976 ) feat(langchain): langchain.mcp namespace, MCPAdapter ( #39939 ) perf(anthropic,langchain): omit middleware trace inputs ( #40098 ) fix(langchain): include model destination in agent tool routing ( #38355 ) chore(langchain): bump vcrpy test dependency minimum to &gt;=8.2.0 ( #39942 )",
+      "excerptOrigin": "article"
+    },
+    {
       "id": "87b4f54cb89ae614",
       "source": "nvidia-blog",
       "sourceType": "blog",
@@ -671,7 +768,7 @@
       "titleEn": "Sparks Fly: NVIDIA Accelerates Local AI at IFA 2026",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:59.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "ai-agents",
         "local-ai",
@@ -733,8 +830,8 @@
       "evergreen": true
     },
     {
-      "id": "b68f08d5b78fdf2b",
-      "source": "github-copilot",
+      "id": "d94b84bc16af2780",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-run-several-agents-at-once/",
       "title": "GitHub Copilot app for Beginners: Run several agents at once",
@@ -744,7 +841,7 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "agent",
         "copilot",
@@ -768,6 +865,38 @@
         "source": "og"
       },
       "evergreen": true
+    },
+    {
+      "id": "c401f1c5778c2ea7",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-anthropic%3D%3D1.7.1",
+      "title": "langchain-anthropic==1.7.1",
+      "titleJa": "",
+      "titleEn": "langchain-anthropic==1.7.1",
+      "lang": "en",
+      "publishedAt": "2026-09-03T15:42:02.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain-anthropic==1.7.0 release(anthropic): 1.7.1 ( #40181 ) feat(anthropic): add Claude Fable 5.1 support ( #40106 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-anthropic==1.7.1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "feedSnippet": "Changes since langchain-anthropic==1.7.0 release(anthropic): 1.7.1 ( #40181 ) perf(anthropic,langchain): omit middleware trace inputs ( #40098 ) feat(anthropic): add Claude Fable 5.1 support ( #40106 )",
+      "excerptOrigin": "article"
     },
     {
       "id": "f05bf4ade66fe3ff",
@@ -815,7 +944,7 @@
       "titleEn": "NVIDIA to Acquire Hugging Face",
       "lang": "en",
       "publishedAt": "2026-09-03T11:56:49.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "acquisition",
         "ai-platforms",
@@ -851,7 +980,7 @@
       "summaryEn": "Google Gen AI SDK for Kotlin 1.0 launches as a Kotlin Multiplatform library with Coroutines, Flow streaming, and immutable models, easing Gemini integration for Kotlin developers.",
       "lang": "en",
       "publishedAt": "2026-09-03T09:00:00.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cloud",
         "gemini-api",
@@ -864,9 +993,9 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "contentSnippet": "Integrating modern generative AI capabilities into Kotlin applications shouldn't require juggling raw HTTP clients or bridging disparate Java libraries. Today, we're excited to announce the 1.0 release of the Google Gen AI SDK for Kotlin ( google-genai-kotlin ). You can dive right into the code, explore runnable samples, and star the project today on GitHub at googleapis/kotlin-genai . Built from the ground up as a Kotlin Multiplatform (KMP) library, the SDK brings idiomatic Kotlin paradigms (including first-class Coroutines , asynchronous Flow streaming, and immutable data classes with named and default parameters) to developers targeting both the JVM (backend services, serverless functions, desktop) and Android . The SDK provides a unified surface to interact with both the Gemini Develop",
       "evergreen": true,
-      "knowledgeEligible": false,
-      "contentSnippet": "Integrating modern generative AI capabilities into Kotlin applications shouldn't require juggling raw HTTP clients or bridging disparate Java libraries. Today, we're excited to announce the 1.0 release of the Google Gen AI SDK for Kotlin ( google-genai-kotlin ). You can dive right into the code, explore runnable samples, and star the project today on GitHub at googleapis/kotlin-genai . Built from the ground up as a Kotlin Multiplatform (KMP) library, the SDK brings idiomatic Kotlin paradigms (including first-class Coroutines , asynchronous Flow streaming, and immutable data classes with named and default parameters) to developers targeting both the JVM (backend services, serverless functions, desktop) and Android . The SDK provides a unified surface to interact with both the Gemini Develop"
+      "knowledgeEligible": false
     },
     {
       "id": "ae1e63ecb63e60bb",
@@ -878,7 +1007,7 @@
       "titleEn": "Cline Desktop v0.0.23-beta.1",
       "lang": "en",
       "publishedAt": "2026-09-03T01:46:38.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cline",
         "image-generation",
@@ -910,7 +1039,7 @@
       "titleEn": "v0.33.3-rc2: gemma4: image and audio input support",
       "lang": "en",
       "publishedAt": "2026-09-02T22:07:28.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "ollama",
         "release",
@@ -944,7 +1073,7 @@
       "summaryEn": "GitHub Podcast unpacks nine emerging AI-development terms, from Ralph loops and harness engineering to open weights, helping developers assess evolving practices and labels.",
       "lang": "en",
       "publishedAt": "2026-09-02T21:00:00.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "ai-terminology",
         "developer-workflows",
@@ -1049,7 +1178,7 @@
       "titleEn": "Zed Editor Releases v1.18.0",
       "lang": "en",
       "publishedAt": "2026-09-02T18:13:31.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "debugging",
         "editor",
@@ -1082,7 +1211,7 @@
       "titleEn": "Zed Editor Releases v1.19.0-pre",
       "lang": "en",
       "publishedAt": "2026-09-02T18:09:48.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "call-hierarchy",
         "editor",
@@ -1107,8 +1236,8 @@
       }
     },
     {
-      "id": "c3242eb99cc5f08b",
-      "source": "github-copilot",
+      "id": "dd3872b4a6c4bf09",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/",
       "title": "How we make AI coding more cost efficient without sacrificing task quality",
@@ -1118,7 +1247,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -1153,7 +1282,7 @@
       "titleEn": "Visual Studio Code 1.136 Release Notes",
       "lang": "en",
       "publishedAt": "2026-09-02T17:00:00.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "release",
         "release-notes",
@@ -1185,7 +1314,7 @@
       "titleEn": "Ollama Releases v0.33.3-rc1",
       "lang": "en",
       "publishedAt": "2026-09-02T16:46:04.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "gguf",
         "llama-cpp",
@@ -1220,7 +1349,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-05T10:58:44.478Z",
+      "collectedAt": "2026-09-05T16:20:16.290Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -1322,7 +1451,7 @@
       "titleEn": "Cline Releases v4.1.17",
       "lang": "en",
       "publishedAt": "2026-09-02T05:40:07.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bug-fix",
         "cline",
@@ -1354,7 +1483,7 @@
       "titleEn": "langchain==1.4.0a4",
       "lang": "en",
       "publishedAt": "2026-09-02T05:35:23.000Z",
-      "collectedAt": "2026-09-02T14:46:58.338Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
       "tags": [
         "agent",
         "compatibility",
@@ -1388,7 +1517,7 @@
       "titleEn": "Cline Desktop v0.0.22",
       "lang": "en",
       "publishedAt": "2026-09-02T05:20:48.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cline",
         "history-import",
@@ -1419,7 +1548,7 @@
       "titleEn": "Cline CLI v3.0.61",
       "lang": "en",
       "publishedAt": "2026-09-02T04:49:47.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cli",
         "cline",
@@ -1453,7 +1582,7 @@
       "titleEn": "Cline SDK v0.0.82",
       "lang": "en",
       "publishedAt": "2026-09-02T04:40:16.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bug-fix",
         "capability-mapping",
@@ -1567,7 +1696,15 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "The recent Google for Startups AI Agents Challenge revealed that the most successful multi-agent systems rely on foundational software engineering patterns rather than just raw model power. Winning architectures consistently implemented bidirectional MCP for seamless inter-agent communication, async event buses for parallel execution, strict unified validation for model fallbacks, and tiered routing to minimize expensive inference calls. By prioritizing these structural practices over simple linear prompt chains, developers can build more resilient, low-latency, and cost-effective agentic workflows."
+      "contentSnippet": "The recent Google for Startups AI Agents Challenge revealed that the most successful multi-agent systems rely on foundational software engineering patterns rather than just raw model power. Winning architectures consistently implemented bidirectional MCP for seamless inter-agent communication, async event buses for parallel execution, strict unified validation for model fallbacks, and tiered routing to minimize expensive inference calls. By prioritizing these structural practices over simple linear prompt chains, developers can build more resilient, low-latency, and cost-effective agentic workflows.",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Gemini_Generated_Image_jiisiijiis.2e16d0ba.fill-1200x600.jpg",
+        "origSrc": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Gemini_Generated_Image_jiisiijiis.2e16d0ba.fill-1200x600.jpg",
+        "alt": "4 engineering patterns behind the strongest AI Agents Challenge submissions",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "4775f37e10e56d6a",
@@ -1579,7 +1716,7 @@
       "titleEn": "Self-hosted machines",
       "lang": "en",
       "publishedAt": "2026-09-02T00:00:00.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "changelog",
         "cloud-agents",
@@ -1593,7 +1730,15 @@
       "archiveTier": "hot",
       "contentSnippet": "Cursor は セルフホスト型マシン に対応しており、ツール実行を完全に自社ネットワーク内に留めておけます。 コードベース、ビルド成果物、シークレットはすべて、自社のインフラストラクチャで稼働する内部マシン上に留まり、ツール呼び出しはエージェントがローカルで処理します。 My Machines は、個人のワークフロー向けに 1 台のノート PC または VM をアカウントに接続する仕組みです。 Team pools は、チームまたは企業向けに名前を付けた ワーカー のキューです。リクエストの到着に応じてキャパシティが拡大し、ワーカー が切断されると縮小するため、セルフホスト型マシンを需要に合わせてスケールできます。プールは特定のリポジトリに紐づいていません。プール名を指定すれば、空いている ワーカー がそのリクエストを引き受けます。 さらに、アイドル状態のマシンをハイバネートさせ、フォローアップが届いた際に再接続ウィンドウ内で復帰させることもできます。次のプロンプトに備えて、コストのかかるキャパシティを起動したままにしておく必要はありません。 クラウドエージェントが、AWS Lambda、Coder、Cloudflare、Daytona、Modal、Namespace、Vercel、E2B など、 すでに使っているインフラストラクチャ 上で実行できるようになりました。 セルフホスト型のワーカーが、Linux と Mac でのコンピュータ使用に対応しました。適切なデスクトップパッケージを用意すれば、エージェントがクリックや入力、スクリーンショットの撮影、ブラウザの操作を行えます。そのデスクトップの様子を Cursor から確認したり、操作を引き継いだりすることも可能です。 Cursor は セルフホスト型マシン に対応しており、ツール実行を完全に自社ネットワーク内に留めておけます。 コードベース、ビルド成果物、シークレットはすべて、自社のインフラストラクチャで稼働する内部マシン上に留まり、ツール呼び出しはエージェントがローカルで処理します。",
       "excerptOrigin": "article",
-      "feedSnippet": "Cursor supports self-hosted machines, which let you keep tool execution entirely in your own network."
+      "feedSnippet": "Cursor supports self-hosted machines, which let you keep tool execution entirely in your own network.",
+      "image": {
+        "src": "https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/cursor-run-on-remote-machines-loBz4KzTHKq1RvZG4Ka07UpsCIDYwx.png",
+        "origSrc": "https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/cursor-run-on-remote-machines-loBz4KzTHKq1RvZG4Ka07UpsCIDYwx.png",
+        "alt": "Self-hosted machines",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "a0c3d4289f102bec",
@@ -1605,7 +1750,7 @@
       "titleEn": "v0.33.3-rc0: llama.cpp: version bump b10729 (#18160)",
       "lang": "en",
       "publishedAt": "2026-09-01T23:24:15.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "compatibility",
         "llama-cpp",
@@ -1709,7 +1854,7 @@
       "titleEn": "NVIDIA and CrowdStrike Strengthen Agentic Cybersecurity Frontier",
       "lang": "en",
       "publishedAt": "2026-09-01T21:19:20.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -1725,7 +1870,15 @@
       "archiveTier": "hot",
       "contentSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind , its agentic cybersecurity system developed by the CrowdStrike Cyber Superintelligence Lab. “This is the beginning of a new age of cybersecurity,” Huang told the crowd of 10,000 security professionals. “On the one hand, the adversaries are going to be more armed than ever.",
       "excerptOrigin": "article",
-      "feedSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind, its agentic cybersecurity system developed by the CrowdStrike Cyber […]"
+      "feedSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind, its agentic cybersecurity system developed by the CrowdStrike Cyber […]",
+      "image": {
+        "src": "https://blogs.nvidia.com/wp-content/uploads/2026/09/crowdstrike-nvidia-stage-scaled.jpg",
+        "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/09/crowdstrike-nvidia-stage-scaled.jpg",
+        "alt": "NVIDIA and CrowdStrike Strengthen Agentic Cybersecurity Frontier",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "990c1033d8d5c7de",
@@ -1856,7 +2009,7 @@
       "titleEn": "Meet Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T19:21:24.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "anthropic",
         "claude-fable-5-1",
@@ -1879,7 +2032,7 @@
       "titleEn": "Introducing Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T18:02:31.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "anthropic",
         "claude-fable",
@@ -1902,7 +2055,7 @@
       "titleEn": "langchain==1.4.0a3",
       "lang": "en",
       "publishedAt": "2026-09-01T17:22:31.000Z",
-      "collectedAt": "2026-09-02T14:46:58.338Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
       "tags": [
         "agent",
         "client-side-cache",
@@ -1936,7 +2089,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-05T10:58:44.478Z",
+      "collectedAt": "2026-09-05T16:20:16.290Z",
       "tags": [
         "agent",
         "deepmind",
@@ -2028,7 +2181,7 @@
       "summaryEn": "TabFM adds a foundation model pre-trained by Google Research to BigQuery for churn, purchase-intent, and fraud prediction, helping businesses act on forecasts with less modeling overhead.",
       "lang": "en",
       "publishedAt": "2026-09-01T16:00:00.000Z",
-      "collectedAt": "2026-09-05T15:39:19.402Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bigquery",
         "cloud",
@@ -2041,8 +2194,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Historically, enterprise predictive analytics tasks such as predicting churn, purchase intent, or fraud scoring have meant building custom models using libraries like XGBoost, Random Forest, or Deep Neural Networks (DNNs). While effective, the traditional train-tune-deploy-retrain cycle can be complex and time-consuming. Additionally, the overhead of manual feature engineering, hyperparameter tuning, lengthy and expensive training, and the need for specialized data science skills can lead businesses to underutilize predictive models in their decision-making. Today, we are announcing the TabFM model in BigQuery. Developed by Google Research, TabFM is a state-of-the-art, pre-trained foundation model for regression and classification on tabular data. It leverages in-context learning (ICL) to",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/image1_vsRpJjZ.max-1000x1000.png",
@@ -2051,7 +2202,9 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "cc517143506b143f",
@@ -2250,7 +2403,7 @@
       "titleEn": "Artifact Share CLI adds local preview: browser element feedback triggers edits…",
       "lang": "ja",
       "publishedAt": "2026-09-01T01:03:04.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "ai-agents",
         "artifact-share",
@@ -2287,7 +2440,7 @@
       "titleEn": "Developing Enterprise Frontier Safeguards with our customers",
       "lang": "en",
       "publishedAt": "2026-09-01T00:00:00.000Z",
-      "collectedAt": "2026-09-05T06:56:03.469Z",
+      "collectedAt": "2026-09-05T18:38:23.564Z",
       "tags": [
         "ai-safety",
         "anthropic",

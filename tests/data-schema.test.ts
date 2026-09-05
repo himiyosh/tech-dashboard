@@ -1064,4 +1064,13 @@ describe("article excerpt lane telemetry", () => {
     const unlockable = num("excerptFetchUnlockable") ?? 0;
     expect(prioritized + unlockable).toBeLessThanOrEqual(attempted);
   });
+
+  it("the pinned body batch is at least as large as the part that got a body job", () => {
+    const health = (data as { health?: Record<string, unknown> }).health ?? {};
+    const pinned = health.excerptBodyBatchPinned;
+    const enqueued = health.excerptBodyBatchEnqueued;
+    if (typeof pinned !== "number" || typeof enqueued !== "number") return;
+    expect(enqueued).toBeGreaterThanOrEqual(0);
+    expect(enqueued).toBeLessThanOrEqual(pinned);
+  });
 });

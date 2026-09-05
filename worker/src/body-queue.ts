@@ -196,53 +196,82 @@ export function bodyEnqueueAllowance(
   return Math.min(safeBody, Math.max(0, safeTotal - safeSummary));
 }
 
-export interface BodyBoundExcerptPriorityOpts extends BodyJobSelectionOpts {
-  /** Body jobs the pipeline may enqueue this run (BODY_ENQUEUE_MAX_NEW). */
-  enqueueCap: number;
+export interface BodyBoundExcerptPriorityOpts extends BodyPipelineSelectionOpts {
+  /** BODY_LOOKUP_CAP — the same cap runBodyPipeline hands to selectBodyPipelineJobs. */
+  lookupCap: number;
+  /** health.bodyMergePendingIds from the previous run (already generated; not re-enqueued). */
+  previousPendingIds: readonly string[];
+  /** BODY_RETENTION_DAYS — the gate runBodyPipeline applies before any selection. */
+  retentionDays?: number;
+}
+
+export interface BodyBoundExcerptPriority {
+  /** entry id -> rank (0 = this run's body batch, 1 = unlockable); unranked = default lane order. */
+  rank: Map<string, number>;
+  /**
+   * The body batch in selection order. runBodyPipeline must receive it as
+   * preferredCandidateIds so the entries the lane enriched are the entries
+   * that get enqueued — the batch is pinned, not re-predicted.
+   */
+  bodyBatchIds: string[];
 }
 
 /**
- * Ranks entries the article excerpt lane should enrich BEFORE this run's
- * default order, so bodies are generated from article prose instead of the
+ * Selects, before the article excerpt lane runs, the entries whose excerpt
+ * must be rich NOW, so bodies are generated from article prose instead of the
  * 100-300 char feed description that pins the excerpt-proportional body band
  * at ~330 JA chars:
  *
- *   rank 0 — the body jobs the pipeline would select right now, in selection
- *            order (newest half first, then the round-robin window). Their
- *            bodies are generated this run, so the excerpt must be rich now.
- *   rank 1 — entries with a real bilingual summary but no body, whose feed
- *            excerpt fails hasSufficientBodySourceGrounding (too thin for a
- *            body). Enrichment is the only thing that can make them
- *            body-eligible; newest first. Checked with the summary-text gate
+ *   rank 0 — the body batch: selectBodyPipelineJobs on the pipeline's own
+ *            inputs (retention-eligible entries, the committed bodies.json
+ *            after pruneInvalidBodyRecords, previous pending ids, lookupCap,
+ *            budget-evicted exclusions, one shared nowMs). The caller pins
+ *            this batch into runBodyPipeline (preferredCandidateIds), which
+ *            is what makes rank 0 exactly the enqueued set rather than a
+ *            prediction that drifts with caps, windows or the lane's own
+ *            enrichment.
+ *   rank 1 — retention-eligible entries with a real bilingual summary but no
+ *            body, whose feed excerpt fails hasSufficientBodySourceGrounding
+ *            (too thin for a body); newest first. Enrichment is what can make
+ *            them body-eligible. Checked with the summary-text gate
  *            (hasUsableBilingualSummary), not the source-grounded one: a thin
  *            excerpt is exactly what makes the grounded gate fail here.
  *
- * Entries that already have a body, or whose summary is still the pending
- * fallback, are not ranked:
- * the lane falls back to its default order for them. Pure and deterministic
- * for a given nowMs (same round-robin window as the body selection).
+ * Entries outside body retention (they can never be enqueued), entries with a
+ * body, previous-run pending ids and budget-evicted ids are not ranked.
  */
 export function bodyBoundExcerptPriority(
   entries: readonly NormalizedEntry[],
   bodiesPresent: ReadonlySet<string>,
   opts: BodyBoundExcerptPriorityOpts,
-): Map<string, number> {
-  const { enqueueCap, ...selection } = opts;
+): BodyBoundExcerptPriority {
+  const { lookupCap, previousPendingIds, retentionDays = DEFAULT_BODY_RETENTION_DAYS, ...selectionOpts } = opts;
+  const nowMs = selectionOpts.nowMs ?? Date.now();
+  const retained = entries.filter((entry) => isBodyRetentionEligible(entry, nowMs, retentionDays));
+  const selection = selectBodyPipelineJobs(retained, bodiesPresent, previousPendingIds, lookupCap, {
+    ...selectionOpts,
+    nowMs,
+  });
   const rank = new Map<string, number>();
-  const batch = selectBodyJobBatch(entries, bodiesPresent, enqueueCap, selection);
-  for (const job of batch.jobs) rank.set(job.entry.id, 0);
-  const unlockable = entries
+  const bodyBatchIds = selection.candidateJobs.map((job) => job.entry.id);
+  for (const id of bodyBatchIds) rank.set(id, 0);
+  const skip = new Set<string>([
+    ...previousPendingIds,
+    ...(selectionOpts.excludeBudgetEvictedIds ?? []),
+    ...(selectionOpts.excludeEntryIds ?? []),
+  ]);
+  const unlockable = retained
     .filter(
       (entry) =>
         !rank.has(entry.id) &&
         !bodiesPresent.has(entry.id) &&
-        !(selection.excludeEntryIds?.has(entry.id) ?? false) &&
+        !skip.has(entry.id) &&
         hasUsableBilingualSummary(entry) &&
         !hasSufficientBodySourceGrounding(entry),
     )
     .sort((a, b) => dateMs(b.publishedAt) - dateMs(a.publishedAt));
   for (const entry of unlockable) rank.set(entry.id, 1);
-  return rank;
+  return { rank, bodyBatchIds };
 }
 
 export function bodyBacklogAfterMerge(eligibleCount: number, mergedCount: number): number {
@@ -267,6 +296,12 @@ export interface BodyPipelineSelectionOpts
    * the Web "queued" state a repeating, never-resolving false promise.
    */
   excludeBudgetEvictedIds?: readonly string[];
+  /**
+   * Candidate ids to enqueue first, in order (the article excerpt lane's
+   * body batch, bodyBoundExcerptPriority). Each must still pass needsBody and
+   * not be pending/excluded; the round-robin window only fills what is left.
+   */
+  preferredCandidateIds?: readonly string[];
 }
 
 /**
@@ -281,7 +316,7 @@ export function selectBodyPipelineJobs(
   lookupCap: number,
   opts: BodyPipelineSelectionOpts = {},
 ): BodyPipelineSelection {
-  const { excludeBudgetEvictedIds, ...jobOpts } = opts;
+  const { excludeBudgetEvictedIds, preferredCandidateIds, ...jobOpts } = opts;
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   const pendingJobs: BodyJob[] = [];
   const pendingIds = new Set<string>();
@@ -297,20 +332,35 @@ export function selectBodyPipelineJobs(
   const remainingCandidateCap = Math.max(0, safeLookupCap - pendingJobs.length);
   const excludeIds = new Set(pendingIds);
   for (const id of excludeBudgetEvictedIds ?? []) excludeIds.add(id);
+
+  // Pinned candidates first: the article excerpt lane enriched exactly these
+  // entries earlier in the run, so enqueueing them now is what turns the
+  // richer excerpt into a longer body in the same run. Built from the current
+  // entry objects (which carry the enriched contentSnippet), gated by
+  // needsBody, and never duplicated by the round-robin fill.
+  const preferredJobs: BodyJob[] = [];
+  for (const id of preferredCandidateIds ?? []) {
+    if (preferredJobs.length >= remainingCandidateCap || excludeIds.has(id)) continue;
+    const entry = byId.get(id);
+    if (!entry || !needsBody(entry, bodiesPresent)) continue;
+    excludeIds.add(id);
+    preferredJobs.push(bodyJobForEntry(entry, jobOpts.publisherContractFingerprint));
+  }
   const candidates = selectBodyJobBatch(
     entries,
     bodiesPresent,
-    remainingCandidateCap,
+    Math.max(0, remainingCandidateCap - preferredJobs.length),
     {
       ...jobOpts,
       excludeEntryIds: excludeIds,
     },
   );
+  const candidateJobs = [...preferredJobs, ...candidates.jobs];
 
   return {
     pendingJobs,
-    candidateJobs: candidates.jobs,
-    lookupJobs: [...pendingJobs, ...candidates.jobs],
+    candidateJobs,
+    lookupJobs: [...pendingJobs, ...candidateJobs],
     eligibleCount: candidates.eligibleCount,
     drainEstimateHours: candidates.drainEstimateHours,
   };

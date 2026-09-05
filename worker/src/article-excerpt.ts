@@ -241,8 +241,10 @@ export interface EnrichExcerptStats {
   unavailable: number;
   /** Candidates left for a later run because the cap was reached. */
   deferred: number;
-  /** Attempts spent on prioritized (body-bound) entries. */
+  /** Attempts spent on rank-0 entries (this run's body batch). */
   prioritized: number;
+  /** Attempts spent on rank >= 1 entries (unlockable backlog). */
+  unlockable: number;
 }
 
 export function isThinExcerptCandidate(entry: NormalizedEntry): boolean {
@@ -258,8 +260,12 @@ function publishedMs(entry: NormalizedEntry): number {
 
 /**
  * Replace thin excerpts with article text, in place, within the run budget.
- * New entries first (their summary and body are generated this run), then
- * prior thin entries newest-first so the corpus backfills predictably.
+ * Order: this run's body batch first (options.priority rank <= 0, see
+ * bodyBoundExcerptPriority — those bodies are generated this run), then this
+ * run's new entries (summary this run, body next run), then the unlockable
+ * backlog (rank >= 1: summarized but too thin for a body), then prior thin
+ * entries newest-first. New entries therefore never wait behind the
+ * unbounded backlog; they can only lose slots to the bounded body batch.
  */
 export async function enrichThinExcerpts(
   entries: NormalizedEntry[],
@@ -267,8 +273,10 @@ export async function enrichThinExcerpts(
 ): Promise<EnrichExcerptStats> {
   const cap = Math.max(0, Math.floor(options.cap ?? DEFAULT_ARTICLE_FETCH_CAP));
   const thin = entries.filter(isThinExcerptCandidate);
-  // Body-bound entries first (rank asc, newest first within a rank), then
-  // this run's new entries, then a newest-first backfill of prior entries.
+  // Order: this run's body batch (rank <= 0), then this run's new entries
+  // (their summary is generated this run; their body one run later once it
+  // lands), then the unlockable backlog (rank >= 1, unbounded — it must never
+  // starve new entries), then prior thin entries newest-first.
   const ranked = new Map<NormalizedEntry, number>();
   if (options.priority) {
     for (const entry of thin) {
@@ -282,14 +290,17 @@ export async function enrichThinExcerpts(
   const rest = thin.filter((entry) => !ranked.has(entry));
   const fresh = rest.filter((entry) => !options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
   const prior = rest.filter((entry) => options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
-  const queue = [...prioritized, ...fresh, ...prior].slice(0, cap);
+  const bodyNow = prioritized.filter((entry) => ranked.get(entry)! <= 0);
+  const unlock = prioritized.filter((entry) => ranked.get(entry)! > 0);
+  const queue = [...bodyNow, ...fresh, ...unlock, ...prior].slice(0, cap);
   const stats: EnrichExcerptStats = {
     candidates: thin.length,
     attempted: 0,
     enriched: 0,
     unavailable: 0,
     deferred: Math.max(0, thin.length - queue.length),
-    prioritized: Math.min(prioritized.length, queue.length),
+    prioritized: queue.filter((entry) => (ranked.get(entry) ?? 1) <= 0).length,
+    unlockable: queue.filter((entry) => (ranked.get(entry) ?? 0) > 0).length,
   };
   let cursor = 0;
   const worker = async (): Promise<void> => {

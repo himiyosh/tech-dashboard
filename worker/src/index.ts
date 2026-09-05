@@ -46,6 +46,7 @@ import {
   selectBodyPipelineJobs,
   type BodyPipelineSelection,
   bodyBoundExcerptPriority,
+  type BodyBoundExcerptPriority,
 } from "./body-queue.ts";
 import {
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
@@ -1250,30 +1251,48 @@ export async function runHarness(
 
   // 1.6) Article excerpt lane (bounded): feed descriptions are usually 100-300
   //      chars, which pins the excerpt-proportional body band at ~330 JA chars.
-  //      Fetch the article page for thin excerpts — this run's new entries
-  //      first, then a newest-first backfill of prior entries — and replace
-  //      contentSnippet with real article prose (capped at the shared 900).
-  //      Every attempt is marked on the entry so failures are never retried
-  //      hourly; failures keep the feed excerpt. Runs BEFORE summarize/body so
-  //      new entries are generated from the richer material immediately.
+  //      Fetch the article page for thin excerpts and replace contentSnippet
+  //      with real article prose (capped at the shared 900), keeping the feed
+  //      text in feedSnippet. Order: this run's body batch first (selected
+  //      here on the body pipeline's own inputs and PINNED into
+  //      runBodyPipeline below, so the enriched entries are the enqueued
+  //      ones), then this run's new entries, then the unlockable backlog
+  //      (summarized but too thin for a body), then prior entries
+  //      newest-first. Every attempt is marked on the entry so failures are
+  //      never retried hourly; failures keep the feed excerpt. Runs BEFORE
+  //      summarize/body so both are generated from the richer material.
   const priorUrlKeys = new Set(priorEntries.map((entry) => entryUrlKey(entry)));
   const articleFetchCap = Math.max(
     0,
     Number(env.ARTICLE_FETCH_CAP ?? DEFAULT_ARTICLE_FETCH_CAP),
   );
-  // Body-bound entries jump the queue: the body jobs this run would enqueue,
-  // then summary-ready entries whose thin feed excerpt still fails the body
-  // grounding gate (bodyBoundExcerptPriority). Otherwise the 40-fetch cap is
-  // spent on the newest feed items while the body backlog keeps generating
-  // ~330-char bodies from 200-char descriptions. Read-only view of the
-  // committed bodies.json; any parse problem just disables the priority.
-  let bodyBoundRank = new Map<string, number>();
+  // One clock for the lane's body-batch selection and the pipeline's, so the
+  // round-robin window cannot straddle an hour between the two calls.
+  const bodySelectionNowMs = Date.now();
+  let bodyBound: BodyBoundExcerptPriority = { rank: new Map(), bodyBatchIds: [] };
   if (env.ENABLE_BODY_QUEUE === "1" && existingBodies?.content) {
     try {
-      const bodiesPresentEarly = bodiesPresentSet(parseBodies(existingBodies.content));
-      bodyBoundRank = bodyBoundExcerptPriority(qualityFiltered, bodiesPresentEarly, {
-        enqueueCap: Math.max(0, Number(env.BODY_ENQUEUE_MAX_NEW ?? 10)),
-        excludeEntryIds: new Set([...previousBodyPendingIds, ...previousBodyBudgetEvictedIds]),
+      const bodyRetentionDays = Math.max(
+        1,
+        Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
+      );
+      const retainedEarly = qualityFiltered.filter((entry) =>
+        isBodyRetentionEligible(entry, bodySelectionNowMs, bodyRetentionDays),
+      );
+      const presentEarly = bodiesPresentSet(
+        pruneInvalidBodyRecords(
+          parseBodies(existingBodies.content),
+          retainedEarly,
+          new Date(bodySelectionNowMs).toISOString(),
+        ).payload,
+      );
+      bodyBound = bodyBoundExcerptPriority(qualityFiltered, presentEarly, {
+        lookupCap: Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10)),
+        previousPendingIds: previousBodyPendingIds,
+        excludeBudgetEvictedIds: previousBodyBudgetEvictedIds,
+        retentionDays: bodyRetentionDays,
+        nowMs: bodySelectionNowMs,
+        publisherContractFingerprint,
       });
     } catch (error) {
       console.warn(
@@ -1284,12 +1303,12 @@ export async function runHarness(
   const excerptStats = await enrichThinExcerpts(qualityFiltered, {
     cap: Number.isFinite(articleFetchCap) ? articleFetchCap : DEFAULT_ARTICLE_FETCH_CAP,
     isPrior: (entry) => priorUrlKeys.has(entryUrlKey(entry)),
-    priority: (entry) => bodyBoundRank.get(entry.id),
+    priority: (entry) => bodyBound.rank.get(entry.id),
   });
   console.log(
     `[worker] article excerpts: candidates=${excerptStats.candidates} attempted=${excerptStats.attempted}`
-      + ` prioritized=${excerptStats.prioritized} enriched=${excerptStats.enriched}`
-      + ` unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
+      + ` bodyBatch=${excerptStats.prioritized}/${bodyBound.bodyBatchIds.length} unlockable=${excerptStats.unlockable}`
+      + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
   );
 
   // 2) Cap per source (importance-aware for high-volume sources) then sort newest-first then cap to INDEX_LIMIT.
@@ -1714,6 +1733,8 @@ export async function runHarness(
       previousPendingIds: previousBodyPendingIds,
       previousBudgetEvictedIds: previousBodyBudgetEvictedIds,
       enqueueCap: effectiveBodyEnqueueCap,
+      preferredCandidateIds: bodyBound.bodyBatchIds,
+      nowMs: bodySelectionNowMs,
     },
   );
   const health = {
@@ -1744,6 +1765,7 @@ export async function runHarness(
     excerptFetchUnavailable: excerptStats.unavailable,
     excerptFetchDeferred: excerptStats.deferred,
     excerptFetchPrioritized: excerptStats.prioritized,
+    excerptFetchUnlockable: excerptStats.unlockable,
     publisherContractFingerprint,
     ...bodyPipeline.health,
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,
@@ -2304,6 +2326,10 @@ export async function runBodyPipeline(
     previousPendingIds?: readonly string[];
     previousBudgetEvictedIds?: readonly string[];
     enqueueCap?: number;
+    /** The article excerpt lane's body batch (bodyBoundExcerptPriority); enqueued first. */
+    preferredCandidateIds?: readonly string[];
+    /** Shared selection clock (same round-robin window as the lane's selection). */
+    nowMs?: number;
   } = {},
 ): Promise<BodyPipelineResult> {
   const retentionDays = Math.max(
@@ -2399,6 +2425,8 @@ export async function runBodyPipeline(
       {
         publisherContractFingerprint,
         excludeBudgetEvictedIds: options.previousBudgetEvictedIds ?? [],
+        preferredCandidateIds: options.preferredCandidateIds ?? [],
+        ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
       },
     );
 

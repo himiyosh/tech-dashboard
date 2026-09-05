@@ -184,7 +184,7 @@ describe("enrichThinExcerpts", () => {
       "https://example.com/fresh",
       "https://example.com/prior-new",
     ]);
-    expect(stats).toEqual({ candidates: 4, attempted: 3, enriched: 2, unavailable: 1, deferred: 1, prioritized: 0 });
+    expect(stats).toEqual({ candidates: 4, attempted: 3, enriched: 2, unavailable: 1, deferred: 1, prioritized: 0, unlockable: 0 });
     expect(fresh.excerptOrigin).toBe("article");
     expect(fresh.contentSnippet).toContain(PARA);
     expect(priorNew.excerptOrigin).toBe("article");
@@ -236,16 +236,40 @@ describe("enrichThinExcerpts", () => {
       priority: (candidate) => rank[candidate.id],
     });
 
-    // rank 0 (newest first), then rank 1, then the run's new entry; the plain
-    // prior entry is deferred by the cap.
+    // rank 0 (newest first), then this run's new entry, then rank 1; the
+    // plain prior entry is deferred by the cap.
     expect(calls).toEqual([
       "https://example.com/body-now-newer",
       "https://example.com/body-now",
-      "https://example.com/unlock",
       "https://example.com/fresh",
+      "https://example.com/unlock",
     ]);
-    expect(stats).toEqual({ candidates: 5, attempted: 4, enriched: 4, unavailable: 0, deferred: 1, prioritized: 3 });
+    expect(stats).toEqual({ candidates: 5, attempted: 4, enriched: 4, unavailable: 0, deferred: 1, prioritized: 2, unlockable: 1 });
     expect(priorPlain.excerptOrigin).toBeUndefined();
+  });
+
+  it("never lets the unbounded unlockable backlog starve this run's new entries", async () => {
+    const calls: string[] = [];
+    const fetchImpl = (async (url: string) => {
+      calls.push(url);
+      return htmlResponse(article);
+    }) as unknown as typeof fetch;
+    const backlog = Array.from({ length: 10 }, (_, i) =>
+      entry({ id: `unlock-${i}`, url: `https://example.com/unlock-${i}`, contentSnippet: "feed", publishedAt: `2026-08-${String(10 + i).padStart(2, "0")}T00:00:00.000Z` }),
+    );
+    const bodyNow = entry({ id: "body-now", url: "https://example.com/body-now", contentSnippet: "feed", publishedAt: "2026-07-01T00:00:00.000Z" });
+    const fresh = entry({ id: "fresh", url: "https://example.com/fresh", contentSnippet: "feed", publishedAt: "2026-09-05T00:00:00.000Z" });
+    const priorIds = new Set(["body-now", ...backlog.map((e) => e.id)]);
+
+    const stats = await enrichThinExcerpts([...backlog, fresh, bodyNow], {
+      fetchImpl,
+      cap: 3,
+      isPrior: (candidate) => priorIds.has(candidate.id),
+      priority: (candidate) => (candidate.id === "body-now" ? 0 : candidate.id.startsWith("unlock-") ? 1 : undefined),
+    });
+
+    expect(calls).toEqual(["https://example.com/body-now", "https://example.com/fresh", "https://example.com/unlock-9"]);
+    expect(stats).toEqual({ candidates: 12, attempted: 3, enriched: 3, unavailable: 0, deferred: 9, prioritized: 1, unlockable: 1 });
   });
 
   it("ignores non-finite ranks and keeps the default order without a priority hook", async () => {
@@ -264,6 +288,7 @@ describe("enrichThinExcerpts", () => {
     });
     expect(calls).toEqual(["https://example.com/b", "https://example.com/a"]);
     expect(stats.prioritized).toBe(0);
+    expect(stats.unlockable).toBe(0);
   });
 
   it("does nothing when the cap is zero", async () => {

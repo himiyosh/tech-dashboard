@@ -1044,3 +1044,24 @@ describe("data artifact サイズ予算", () => {
     expect(oversizedArchiveFiles).toEqual([]);
   });
 });
+
+describe("article excerpt lane telemetry", () => {
+  // The lane reports one outcome per attempt and its priority counters are
+  // subsets of the attempts; a counter that could exceed its parent would
+  // hide a broken ordering rather than expose it.
+  it("excerptFetch* counters are internally consistent when present", () => {
+    const health = (data as { health?: Record<string, unknown> }).health ?? {};
+    const num = (key: string): number | undefined =>
+      typeof health[key] === "number" ? (health[key] as number) : undefined;
+    const attempted = num("excerptFetchAttempted");
+    if (attempted === undefined) return;
+    expect(attempted).toBe((num("excerptFetched") ?? 0) + (num("excerptFetchUnavailable") ?? 0));
+    for (const key of ["excerptFetchPrioritized", "excerptFetchUnlockable"]) {
+      const value = num(key);
+      if (value !== undefined) expect(value, key).toBeLessThanOrEqual(attempted);
+    }
+    const prioritized = num("excerptFetchPrioritized") ?? 0;
+    const unlockable = num("excerptFetchUnlockable") ?? 0;
+    expect(prioritized + unlockable).toBeLessThanOrEqual(attempted);
+  });
+});

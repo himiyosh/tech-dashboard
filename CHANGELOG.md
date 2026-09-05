@@ -12,7 +12,9 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ## Unreleased
 
-(なし)
+### 変更
+
+- Worker の deploy 鮮度ゲート `npm run worker:freshness` を追加しました。Queue consumer(`tech-dashboard-summarizer` / `tech-dashboard-body`)と Free bridge の最新 deploy が、ソースの最新 commit より古い場合に失敗します。2026-08-13〜09-04 の間 consumer が未 deploy のまま放置され、対話生成・本文長の改善・GPT-5.6 チェーンが本番に届いていなかった見落としの再発防止です。リリース手順(README)に手順 0 として組み込みました。
 
 ## 2026-09-04
 

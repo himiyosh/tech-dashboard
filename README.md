@@ -439,6 +439,7 @@ npm run publisher:contract -- --dry-run  # CURRENT を確認
 
 fingerprint を変える変更はまずdevelopへ統合し、production Workerはまだ変更しません。develop→mainのrelease PR exact headが確定した後、次の順序を固定します。
 
+0. `npm run worker:freshness -- --ref origin/main` で 3 つの Worker(`tech-dashboard-summarizer` / `tech-dashboard-body` / `tech-dashboard-harness`)の最新 deploy がソースの最新 commit より新しいことを確認する。`STALE` の Worker は必ずこの手順で deploy する(consumer は Pages にも pre-push hook にも自動 deploy されない。2026-08-13〜09-04 は consumer が未 deploy のまま放置され、対話生成と本文長の改善が本番に届かなかった)。
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。
 3. 旧 harness が新 markerとの mismatchで data publishを停止したことを確認する。

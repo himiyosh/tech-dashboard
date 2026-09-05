@@ -255,11 +255,7 @@ export function bodyBoundExcerptPriority(
   const rank = new Map<string, number>();
   const bodyBatchIds = selection.candidateJobs.map((job) => job.entry.id);
   for (const id of bodyBatchIds) rank.set(id, 0);
-  const skip = new Set<string>([
-    ...previousPendingIds,
-    ...(selectionOpts.excludeBudgetEvictedIds ?? []),
-    ...(selectionOpts.excludeEntryIds ?? []),
-  ]);
+  const skip = new Set<string>([...previousPendingIds, ...(selectionOpts.excludeBudgetEvictedIds ?? [])]);
   const unlockable = retained
     .filter(
       (entry) =>

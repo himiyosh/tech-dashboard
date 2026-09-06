@@ -7,6 +7,7 @@ import { describe, it, expect } from "vitest";
 import type { NormalizedEntry } from "../harness/types.ts";
 import {
   bodyBacklogAfterMerge,
+  bodyBoundExcerptPriority,
   bodyEnqueueAllowance,
   isBodyRetentionEligible,
   needsBody,
@@ -103,6 +104,142 @@ describe("needsBody (LL-115)", () => {
         new Set(),
       ),
     ).toBe(false);
+  });
+});
+
+describe("selectBodyPipelineJobs preferredCandidateIds (pinned body batch)", () => {
+  const NOW = Date.parse("2026-09-05T12:00:00.000Z");
+
+  it("enqueues pinned ids first in order, gated by needsBody and exclusions, and round-robins the rest", () => {
+    const entries = ["a", "b", "c", "d", "e", "pending"].map((id) => entry({ id }));
+    const bodied = entry({ id: "bodied" });
+    const selection = selectBodyPipelineJobs(
+      [...entries, bodied],
+      new Set(["bodied"]),
+      ["pending"],
+      4,
+      { nowMs: NOW, excludeBudgetEvictedIds: ["e"], preferredCandidateIds: ["c", "missing", "bodied", "e", "a", "pending", "c"] },
+    );
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending"]);
+    // pinned: c, a (missing/bodied/e/pending/duplicate skipped), then one round-robin fill.
+    expect(selection.candidateJobs.slice(0, 2).map((job) => job.entry.id)).toEqual(["c", "a"]);
+    expect(selection.candidateJobs).toHaveLength(3);
+    expect(new Set(selection.lookupJobs.map((job) => job.entry.id)).size).toBe(4);
+    expect(selection.candidateJobs.some((job) => ["e", "bodied", "pending"].includes(job.entry.id))).toBe(false);
+  });
+
+  it("pinned ids never exceed the remaining candidate cap", () => {
+    const entries = ["a", "b", "c"].map((id) => entry({ id }));
+    const selection = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["c", "b", "a"] });
+    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(["c", "b"]);
+  });
+
+  it("drain estimate covers the whole candidate window even when pinned jobs fill it", () => {
+    const entries = ["a", "b", "c", "d", "e", "f"].map((id) => entry({ id }));
+    const pinnedFull = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW, preferredCandidateIds: ["a", "b"] });
+    expect(pinnedFull.candidateJobs.map((job) => job.entry.id)).toEqual(["a", "b"]);
+    expect(pinnedFull.eligibleCount).toBe(6);
+    expect(pinnedFull.drainEstimateHours).toBe(3);
+    const unpinned = selectBodyPipelineJobs(entries, new Set(), [], 2, { nowMs: NOW });
+    expect(unpinned.drainEstimateHours).toBe(3);
+  });
+});
+
+describe("bodyBoundExcerptPriority (article excerpt lane ordering)", () => {
+  const NOW = Date.parse("2026-09-05T12:00:00.000Z");
+  const opts = { lookupCap: 3, previousPendingIds: ["pending-job"], nowMs: NOW, excludeBudgetEvictedIds: ["evicted"] };
+  const batchNewest = entry({ id: "batch-newest", publishedAt: "2026-09-04T00:00:00.000Z" });
+  const batchOlder = entry({ id: "batch-older", publishedAt: "2026-09-01T00:00:00.000Z" });
+  const bodied = entry({ id: "bodied", publishedAt: "2026-09-03T00:00:00.000Z" });
+  const unlock = entry({ id: "unlock", contentSnippet: "", publishedAt: "2026-09-02T00:00:00.000Z" });
+  const unlockOlder = entry({ id: "unlock-older", contentSnippet: "", publishedAt: "2026-08-20T00:00:00.000Z" });
+  const pendingSummary = entry({ id: "pending", summaryJa: PENDING_JA, summaryEn: "", publishedAt: "2026-09-05T00:00:00.000Z" });
+  const evicted = entry({ id: "evicted", contentSnippet: "", publishedAt: "2026-09-04T12:00:00.000Z" });
+  const pendingJob = entry({ id: "pending-job", publishedAt: "2026-09-04T06:00:00.000Z" });
+  // needsBody-eligible but outside body retention (importance 1, 90 days old):
+  // the pipeline can never enqueue it, so retention alone must exclude it.
+  const stale = entry({ id: "stale", importance: 1, publishedAt: "2026-06-05T00:00:00.000Z", collectedAt: "2026-06-05T01:00:00.000Z" });
+  const all = [stale, pendingSummary, unlockOlder, bodied, batchOlder, unlock, batchNewest, evicted, pendingJob];
+  const present = new Set(["bodied"]);
+
+  it("pins exactly the pipeline's candidate batch as rank 0 and unlockable thin entries as rank 1", () => {
+    const { rank, bodyBatchIds } = bodyBoundExcerptPriority(all, present, opts);
+    expect(new Set(bodyBatchIds)).toEqual(new Set(["batch-newest", "batch-older"]));
+    for (const id of bodyBatchIds) expect(rank.get(id)).toBe(0);
+    expect(rank.get("unlock")).toBe(1);
+    expect(rank.get("unlock-older")).toBe(1);
+    for (const id of ["bodied", "pending", "evicted", "pending-job", "stale"]) expect(rank.has(id)).toBe(false);
+  });
+
+  it("the pinned batch is what selectBodyPipelineJobs enqueues on the pipeline's own inputs", () => {
+    const { bodyBatchIds } = bodyBoundExcerptPriority(all, present, opts);
+    const retained = all.filter((e) => isBodyRetentionEligible(e, NOW));
+    const selection = selectBodyPipelineJobs(retained, present, ["pending-job"], 3, {
+      nowMs: NOW,
+      excludeBudgetEvictedIds: ["evicted"],
+      preferredCandidateIds: bodyBatchIds,
+    });
+    expect(selection.pendingJobs.map((job) => job.entry.id)).toEqual(["pending-job"]);
+    expect(selection.candidateJobs.map((job) => job.entry.id)).toEqual(bodyBatchIds);
+  });
+
+  it("returns nothing when no entry is body-bound", () => {
+    expect(bodyBoundExcerptPriority([entry({ id: "bodied" })], new Set(["bodied"]), { lookupCap: 5, previousPendingIds: [] }).rank.size).toBe(0);
+    const empty = bodyBoundExcerptPriority([], new Set(), { lookupCap: 5, previousPendingIds: [] });
+    expect(empty.bodyBatchIds).toEqual([]);
+    expect(empty.bodyBatchJobs).toEqual([]);
+  });
+
+  it("exposes the batch as jobs that carry the entry and its url", () => {
+    const { bodyBatchIds, bodyBatchJobs } = bodyBoundExcerptPriority(all, present, opts);
+    expect(bodyBatchJobs.map((job) => job.entry.id)).toEqual(bodyBatchIds);
+    expect(bodyBatchJobs.every((job) => job.url === job.entry.url)).toBe(true);
+  });
+});
+
+describe("runBodyPipeline prefetchedBodyLookup", () => {
+  const FP = `sha256:${"a".repeat(64)}`;
+  const AT = "2026-09-05T12:00:00.000Z";
+
+  function countingKv(reads: string[]): KeyValueBinding {
+    return {
+      get: async (key: string) => {
+        reads.push(key);
+        return null;
+      },
+      put: async () => {},
+    } as unknown as KeyValueBinding;
+  }
+
+  it("reuses the lane's hits without re-reading them, and re-reads its misses", async () => {
+    const reads: string[] = [];
+    const entries = ["hit", "miss", "other"].map((id) => entry({ id }));
+    const env = baseEnv({ SUMMARY_CACHE: countingKv(reads), BODY_LOOKUP_CAP: "3", BODY_ENQUEUE_MAX_NEW: "0" });
+    const hitRecord = {
+      ...bodyGeneratedRecordText("hit"),
+      model: "claude-opus-4.8",
+      cachedAt: AT,
+      publisherContractFingerprint: FP,
+    } as never;
+    const result = await runBodyPipeline(env, entries, null, AT, FP, {
+      preferredCandidateIds: ["hit", "miss"],
+      nowMs: Date.parse(AT),
+      // The lane read both; only "hit" produced a record.
+      prefetchedBodyLookup: { hits: new Map([[entries[0]!.url, hitRecord]]) },
+    });
+    // Three lookup jobs; the hit is reused, the lane's miss is re-read because
+    // the body consumer may have written it since.
+    expect(result.health.bodyLookupCount).toBe(3);
+    expect(reads).toHaveLength(2);
+    expect(result.health.bodyMerged).toBe(1);
+  });
+
+  it("reads everything when the lane handed over nothing", async () => {
+    const reads: string[] = [];
+    const entries = ["a", "b"].map((id) => entry({ id }));
+    const env = baseEnv({ SUMMARY_CACHE: countingKv(reads), BODY_LOOKUP_CAP: "2", BODY_ENQUEUE_MAX_NEW: "0" });
+    await runBodyPipeline(env, entries, null, AT, FP, { nowMs: Date.parse(AT) });
+    expect(reads).toHaveLength(2);
   });
 });
 

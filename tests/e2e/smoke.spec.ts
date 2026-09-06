@@ -12,6 +12,7 @@ import {
   ADVERTISING_REQUIRES_CONSENT,
 } from "../../web/src/lib/privacy-consent.ts";
 import { normalizeTagKey } from "../../web/src/lib/tag-normalize.ts";
+import { RELAXED_QUERY_LIMIT, relaxedCjkSearchQueries } from "../../web/src/lib/search-relaxation.ts";
 import { sectionizeBody } from "../../web/src/lib/body-sections.ts";
 import {
   isAddressableDetailEntry,
@@ -8823,11 +8824,12 @@ test.describe("TECH Dashboard smoke", () => {
     }
   });
 
-  test("pagefind retrieval falls back to a query prefix when a long pasted title returns nothing", async ({ page }) => {
+  test("pagefind retrieval falls back to relaxed windows when a long pasted title returns nothing", async ({ page }) => {
     // issue #253 第2形態: title === titleJa の記事でも、タイトル全文クエリは
     // Pagefind の CJK トークナイズ都合で retrieval 自体が 0 件になり得る
-    // (実測: 全文 0 件 / 先頭 12 字では同記事が候補入り)。0 件時のみ接頭辞で
-    // 再取得し、exact 判定は従来どおり全文 query で行うことを固定する。
+    // (実測: 全文 0 件 / 語句の窓なら同記事が候補入り)。緩和クエリ
+    // (web/src/lib/search-relaxation.ts) で追加取得し、exact 判定は従来どおり
+    // 全文 query で行うことを固定する。
     const PASTED_TITLE = "AIにUnityプロジェクトを毎回探索させたくないので、アセット参照MCPを作った検証記事";
     await page.goto("/");
     await expectPagefindReady(page);
@@ -8874,9 +8876,14 @@ test.describe("TECH Dashboard smoke", () => {
       "data-match-scope",
       "title",
     );
-    // 全文 → 0 件 → 接頭辞 fallback の 2 回だけ呼ばれる (短い query では発火しない)。
+    // 全文 → 緩和クエリの順で呼ばれる (短い query では発火しない)。先頭窓は
+    // 従来の接頭辞と同じで、後続は語句単位の窓。
     const calls = await page.evaluate(() => (window as any).__searchCalls);
-    expect(calls).toEqual([PASTED_TITLE, PASTED_TITLE.slice(0, 12)]);
+    const relaxed = relaxedCjkSearchQueries(PASTED_TITLE);
+    expect(relaxed.length).toBeGreaterThan(0);
+    expect(relaxed[0]).toBe([...PASTED_TITLE].slice(0, 12).join(""));
+    expect(calls).toEqual([PASTED_TITLE, ...relaxed]);
+    expect(calls.length).toBeLessThanOrEqual(1 + RELAXED_QUERY_LIMIT);
   });
 
   test("ad slots reveal only on the production host, with exactly one push", async ({

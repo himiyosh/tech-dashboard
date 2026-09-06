@@ -1,8 +1,281 @@
 {
-  "generatedAt": "2026-09-04T23:29:44.351Z",
+  "generatedAt": "2026-09-06T00:19:43.943Z",
   "month": "2026-09",
-  "count": 64,
+  "count": 75,
   "entries": [
+    {
+      "id": "028ed6d8e1c19226",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yusu79/items/9c20fb8ad16e2ed87977",
+      "title": "Markdownの大きな数字を読みやすくするVS Code拡張機能「Markdown Digit Formatter」",
+      "titleJa": "Markdownの大きな数字を読みやすくするVS Code拡張機能「Markdown Digit Formatter」",
+      "titleEn": "Markdown Digit Formatter: A VS Code Extension for Readable Large Numbers",
+      "lang": "ja",
+      "publishedAt": "2026-09-05T17:26:37.000Z",
+      "collectedAt": "2026-09-05T22:24:50.538Z",
+      "tags": [
+        "markdown",
+        "number-formatting",
+        "qiita",
+        "vscode",
+        "vscode-extension"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Markdownで金額や人口、統計値などを扱っていると、次のような大きな数字が読みにくくなることがあります。 桁区切りを手作業で加えることもできますが、表記方法を変えたい場合や、元の数値をそのまま残しておきたい場合には少し面倒です。 そこで作ったのが、VS CodeのMarkdownプレビュー上で数値を読みやすく表示する拡張機能「 Markdown Digit Formatter 」です。 Markdownファイル自体は書き換えず、プレビュー上の表示だけを英語式のカンマ区切りや、日本語・中国語・韓国語などの位取り表記へ変換できます。 VS Codeの拡張機能ビューを開き、 Markdown Digit Formatter を検索してインストールします。 インストール後にMarkdownファイルを開き、通常どおりMarkdownプレビューを表示すれば利用できます。対応するVS Codeのバージョンは1.125以降です。 jp の部分が数値の表示形式です。利用できる識別子は次のとおりです。 数値を一つずつ専用記法で囲まず、通常の文章に含まれる数字を自動変換することもできます。 VS Codeの settings.json へ次のように設定します。 \"markdownDigit.locale\" : \"jp\" , この例では、日本語形式を使い、4桁以上の数字を自動変換します。 自動変換は初期状態では無効です。拡張機能をインストールしただけで既存文書の表示が変わることはありません。 文書先頭のYAML Front Matterを使うと、ワークスペース全体の設定を文書単位で上書きできます。 この設定がある文書では、通常の文章に含まれる4桁以上の数字が日本語形式で表示されます。 たとえば、普段はVS Codeの設定で英語形式を使い、特定の日本語文書だけを jp にする、といった使い分けができます。 文書全体を自動変換している場合でも、従来の記法を使えば、その数字だけ別の形式にできます。 また、特定の数字を変換せず、そのまま表示したい場合は raw を使います。",
+      "feedSnippet": "はじめに Markdownで金額や人口、統計値などを扱っていると、次のような大きな数字が読みにくくなることがあります。 売上は123456789円でした。 桁区切りを手作業で加えることもできますが、表記方法を変えたい場合や、元の数値をそのまま残しておきたい場合には少し面...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTUyOTQlMkZhNGVmY2ZlNGE5MGViMmY2ZWE5MWY2ZTZiNzM3Y2RjZGIyMzVlMTI3JTJGeF9sYXJnZS5wbmclM0YxNjg3MzQ4NDM4P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz02MjU1ODRlYTQxZDZmMzJjZGQ4NGFhMzFhMmU0NzQ5MQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dfd965bfc6c8b50672268d24ea1a892ea?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFya2Rvd24lRTMlODElQUUlRTUlQTQlQTclRTMlODElOEQlRTMlODElQUElRTYlOTUlQjAlRTUlQUQlOTclRTMlODIlOTIlRTglQUElQUQlRTMlODElQkYlRTMlODIlODQlRTMlODElOTklRTMlODElOEYlRTMlODElOTklRTMlODIlOEJWUyUyMENvZGUlRTYlOEIlQTElRTUlQkMlQjUlRTYlQTklOUYlRTglODMlQkQlRTMlODAlOENNYXJrZG93biUyMERpZ2l0JTIwRm9ybWF0dGVyJUUzJTgwJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YTU1YmZhZDNjOTc5NzJmZTlkNmIyYTVlY2RhMzUxN2U&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dXN1NzkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05NTE2NzUyNGJlZTdjZjQxZjZkN2I5ODMzODM0YWJiNA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=6172c7ca02ae99462b0b95bba0e45cff",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzOTUyOTQlMkZhNGVmY2ZlNGE5MGViMmY2ZWE5MWY2ZTZiNzM3Y2RjZGIyMzVlMTI3JTJGeF9sYXJnZS5wbmclM0YxNjg3MzQ4NDM4P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz02MjU1ODRlYTQxZDZmMzJjZGQ4NGFhMzFhMmU0NzQ5MQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dfd965bfc6c8b50672268d24ea1a892ea?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFya2Rvd24lRTMlODElQUUlRTUlQTQlQTclRTMlODElOEQlRTMlODElQUElRTYlOTUlQjAlRTUlQUQlOTclRTMlODIlOTIlRTglQUElQUQlRTMlODElQkYlRTMlODIlODQlRTMlODElOTklRTMlODElOEYlRTMlODElOTklRTMlODIlOEJWUyUyMENvZGUlRTYlOEIlQTElRTUlQkMlQjUlRTYlQTklOUYlRTglODMlQkQlRTMlODAlOENNYXJrZG93biUyMERpZ2l0JTIwRm9ybWF0dGVyJUUzJTgwJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9YTU1YmZhZDNjOTc5NzJmZTlkNmIyYTVlY2RhMzUxN2U&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dXN1NzkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz05NTE2NzUyNGJlZTdjZjQxZjZkN2I5ODMzODM0YWJiNA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=6172c7ca02ae99462b0b95bba0e45cff",
+        "alt": "Markdownの大きな数字を読みやすくするVS Code拡張機能「Markdown Digit Formatter」",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "a6d84c8aea3faa89",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/DoroDango/items/87fd1e5331e5496ff206",
+      "title": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+      "titleJa": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+      "titleEn": "Can VS Code Become a Window onto Beach Resorts Worldwide? I Built a Webview Extension That Shows the Sea",
+      "lang": "ja",
+      "publishedAt": "2026-09-05T14:58:01.000Z",
+      "collectedAt": "2026-09-05T22:24:50.538Z",
+      "tags": [
+        "qiita",
+        "vscode",
+        "vscode-extension",
+        "webview"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った VS Code で AI チャットを使う時間が増えて、中央のエディターが空いていることが多くなりました。あの大きなロゴの代わりにカリブの海でも見えたらいいな、と思って作ったのが Ocean Window です。 写真： Cala Macarella / Paul Stephenson / CC BY 2.0 。トリミングと暗いオーバーレイを適用。 最初は VS Code 本体の workbench HTML を書き換えていました。ところが Linux の /usr/share 配下では EACCES 。海を見るために権限を変えてもらうのは面倒です。 0.3.0 で標準の Webview API に作り直しました。本体への書き込みは不要です。 海を表示している間だけタブが1枚出ます。コードや Markdown を開けば閉じ、グループが空になれば戻ってきます。文字の後ろには写真を敷かないので、いつもの配色で作業できます。 const panel = vscode . window . createWebviewPanel ( { viewColumn : group . viewColumn , preserveFocus : true }, { ... getWebviewOptions ( vscode , context ), retainContextWhenHidden : false } preserveFocus: true で、チャットに入力中でも海にフォーカスを持っていかれません。 テキストエディターだけで空きを判定すると、画像や Markdown プレビューを開いていても海が出てしまいます。 TabGroups API でタブの変更を受け取り、グループごとに自分以外のタブがあるかを調べます。あれば海を閉じる。空なら作る。 ただし、手動で閉じた直後に復活すると邪魔です。閉じたグループを覚えておき、ファイルを開いて閉じるか、表示コマンドを実行するまで再表示しません。",
+      "excerptOrigin": "article",
+      "feedSnippet": "VS Code で AI チャットを使う時間が増えて、中央のエディターが空いていることが多くなりました。あの大きなロゴの代わりにカリブの海でも見えたらいいな、と思って作ったのが Ocean Window です。 写真：Cala Macarella / Paul Steph...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDA5NTQ0JTJGcHJvZmlsZS1pbWFnZXMlMkYxNTU2ODE0NTk0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zYTk4ZjI2MmZhODgzZTU1YzMyOWMwZDgwZGJjODIwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De72c8e59d0a46249b364f6e3d5257d73?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJThDJUU0JUI4JTk2JUU3JTk1JThDJUU0JUI4JUFEJUUzJTgxJUFFJUUzJTgzJTkzJUUzJTgzJUJDJUUzJTgzJTgxJUUzJTgzJUFBJUUzJTgyJUJFJUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgxJUFFJUU3JUFBJTkzJUUzJTgxJUFCJUVGJUJDJTlGJTIwV2VidmlldyVFMyU4MSVBNyVFNiVCNSVCNyVFMyU4MiU5MiVFNiU5OCVBMCVFMyU4MSU5OSVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZjNTZkYTY3YmRkZThmMGQ4MmI0OTg2YzIxMzJiMDEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBEb3JvRGFuZ28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yNmNkMGRkODNjYWU1ZDhmMTRiNjkyZDJkOGE2MGY1Ng&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=688f34e3982e5bbb6b5a39aa1e461214",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDA5NTQ0JTJGcHJvZmlsZS1pbWFnZXMlMkYxNTU2ODE0NTk0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0zYTk4ZjI2MmZhODgzZTU1YzMyOWMwZDgwZGJjODIwMA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De72c8e59d0a46249b364f6e3d5257d73?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJThDJUU0JUI4JTk2JUU3JTk1JThDJUU0JUI4JUFEJUUzJTgxJUFFJUUzJTgzJTkzJUUzJTgzJUJDJUUzJTgzJTgxJUUzJTgzJUFBJUUzJTgyJUJFJUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgxJUFFJUU3JUFBJTkzJUUzJTgxJUFCJUVGJUJDJTlGJTIwV2VidmlldyVFMyU4MSVBNyVFNiVCNSVCNyVFMyU4MiU5MiVFNiU5OCVBMCVFMyU4MSU5OSVFNiU4QiVBMSVFNSVCQyVCNSVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWZjNTZkYTY3YmRkZThmMGQ4MmI0OTg2YzIxMzJiMDEw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBEb3JvRGFuZ28mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yNmNkMGRkODNjYWU1ZDhmMTRiNjkyZDJkOGE2MGY1Ng&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=688f34e3982e5bbb6b5a39aa1e461214",
+        "alt": "VS Codeが世界中のビーチリゾートの窓に？ Webviewで海を映す拡張を作った",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "3bc5c0edb12d97d2",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.34.0-rc1",
+      "title": "Ollama Releases v0.34.0-rc1",
+      "titleJa": "Ollamaがv0.34.0-rc1を公開",
+      "titleEn": "Ollama Releases v0.34.0-rc1",
+      "lang": "en",
+      "publishedAt": "2026-09-05T00:48:55.000Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
+      "tags": [
+        "local-llm",
+        "ollama",
+        "release",
+        "release-candidate"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/29360864?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/29360864?s=60&v=4",
+        "alt": "Ollama Releases v0.34.0-rc1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "excerptOrigin": "article",
+      "feedSnippet": "app: harden Codex desktop proxy handling ( #18244 )"
+    },
+    {
+      "id": "d54fd34e857c1ca7",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/caymezon/items/332a5e176c8d686f3dac",
+      "title": "VSCode拡張機能で複数箇所を一括置換すると`Overlapping ranges`エラーになる理由",
+      "titleJa": "VSCode拡張機能で複数箇所を一括置換すると`Overlapping ranges`エラーになる理由",
+      "titleEn": "Why Bulk Replacement in a VSCode Extension Causes an `Overlapping ranges` Error",
+      "lang": "ja",
+      "publishedAt": "2026-09-04T23:43:33.000Z",
+      "collectedAt": "2026-09-05T22:24:50.538Z",
+      "tags": [
+        "extension-api",
+        "qiita",
+        "text-replacement",
+        "vscode",
+        "vscode-extension"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "「選択した行から置換ペアを読み取り、指定範囲を一括置換する」VSCodeマクロを作る際、同じ行に複数の置換対象が含まれるケースで Overlapping ranges are not allowed! という実行時エラーに遭遇しました。原因と対処を整理します。 // NG: 置換ペアごとに個別のeditBuilder.replaceを呼ぶ editBuilder . replace ( range , after ); editor.edit() のコールバック内で複数回 editBuilder.replace() を呼ぶ場合、それぞれの Range がドキュメント上で重なっていると Overlapping ranges are not allowed! エラーになります。同じ行に複数の置換対象があると、文字位置がずれて範囲が重複しやすくなります。 2. 解決策：行ごとに全ペアを文字列レベルで適用してから1回だけreplace const line = document . lineAt ( lineNum ); if ( ! before || before === after ) continue ; if ( mode === ReplaceMode . Literal ) { lineText = lineText . split ( before ). join ( after ); lineText = lineText . replace ( regex , after ); if ( lineText !== originalText ) { const range = new vscode . Range ( new vscode . Position ( lineNum , 0 ), new vscode . Position ( lineNum , originalText . length ) editBuilder .",
+      "excerptOrigin": "article",
+      "feedSnippet": "背景 「選択した行から置換ペアを読み取り、指定範囲を一括置換する」VSCodeマクロを作る際、同じ行に複数の置換対象が含まれるケースでOverlapping ranges are not allowed!という実行時エラーに遭遇しました。原因と対処を整理します。 1. ...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUU4JUE0JTg3JUU2JTk1JUIwJUU3JUFFJTg3JUU2JTg5JTgwJUUzJTgyJTkyJUU0JUI4JTgwJUU2JThCJUFDJUU3JUJEJUFFJUU2JThGJTlCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUE4JTYwT3ZlcmxhcHBpbmclMjByYW5nZXMlNjAlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODElQUIlRTMlODElQUElRTMlODIlOEIlRTclOTAlODYlRTclOTQlQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01ZDFmMmJiNmQxMjQzZDYzYTNkZDFlNmQwOWFmNzJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9ea3588d7d8d8d1b3277cab968516aca",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUU4JUE0JTg3JUU2JTk1JUIwJUU3JUFFJTg3JUU2JTg5JTgwJUUzJTgyJTkyJUU0JUI4JTgwJUU2JThCJUFDJUU3JUJEJUFFJUU2JThGJTlCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUE4JTYwT3ZlcmxhcHBpbmclMjByYW5nZXMlNjAlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODElQUIlRTMlODElQUElRTMlODIlOEIlRTclOTAlODYlRTclOTQlQjEmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz01ZDFmMmJiNmQxMjQzZDYzYTNkZDFlNmQwOWFmNzJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9ea3588d7d8d8d1b3277cab968516aca",
+        "alt": "VSCode拡張機能で複数箇所を一括置換すると`Overlapping ranges`エラーになる理由",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ac0dac29cd081df7",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-core%3D%3D1.6.2",
+      "title": "langchain-core==1.6.2",
+      "titleJa": "langchain-core 1.6.2 リリース",
+      "titleEn": "langchain-core==1.6.2",
+      "lang": "en",
+      "publishedAt": "2026-09-04T21:29:44.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "dependency-update",
+        "langchain",
+        "maintenance-release",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain-core==1.6.1 release(core): 1.6.2 ( #40209 ) chore(deps): bump mistune from 3.3.0 to 3.3.3 in /libs/core ( #40150 ) chore(deps): bump tornado from 6.5.7 to 6.5.8 in /libs/core ( #40113 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-core==1.6.2",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "feedSnippet": "Changes since langchain-core==1.6.1 release(core): 1.6.2 ( #40209 ) feat(openai): support async tools ( #40208 ) chore(deps): bump mistune from 3.3.0 to 3.3.3 in /libs/core ( #40150 ) chore(deps): bump tornado from 6.5.7 to 6.5.8 in /libs/core ( #40113 ) fix(core): avoid mutation in google-genai standard content ( #40023 ) fix(core): avoid mutation in bedrock converse standard content ( #40022 )",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "9eebc5514b1c8809",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-04-github-copilot-weekly-releases-august-31",
+      "title": "GitHub Copilot weekly releases — August 31",
+      "titleJa": "GitHub Copilot週間リリース — 8月31日",
+      "titleEn": "GitHub Copilot weekly releases — August 31",
+      "lang": "en",
+      "publishedAt": "2026-09-04T21:05:01.000Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "tags": [
+        "ai-models",
+        "changelog",
+        "content-exclusions",
+        "enterprise",
+        "github",
+        "jetbrains",
+        "vscode"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "This week, GitHub Copilot expands model choice and content protections, while VS Code adds new ways to manage agent sessions and get pull requests merge-ready. Claude Fable 5.1 is available to Copilot Pro+, Max, Business, and Enterprise users. Gemini 3.8 Flash is rolling out to Copilot Pro, Pro+, Max, Business, and Enterprise users. For more information, see our list of all supported models . Copilot app and CLI now honor content exclusions, keeping sensitive code out of context across agentic workflows. The GitHub Copilot harness is now generally available in Copilot for JetBrains, providing faster feature delivery and better code quality. For more information, see our previous changelog about the release . Agent Merge is now in public preview and gets your pull request ready to merge by resolving review feedback, failed checks, and merge conflicts.",
+      "excerptOrigin": "article",
+      "feedSnippet": "This week, GitHub Copilot expands model choice and content protections, while VS Code adds new ways to manage agent sessions and get pull requests merge-ready. GitHub Copilot, general Claude Fable… The post GitHub Copilot weekly releases — August 31 appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/Changelog_NewRelease_Unfurl_Centered_GitHubCopilotWeeklyReleaseAugust31.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/Changelog_NewRelease_Unfurl_Centered_GitHubCopilotWeeklyReleaseAugust31.jpg",
+        "alt": "GitHub Copilot weekly releases — August 31",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ab9ad78ac91389c4",
+      "source": "ollama-releases",
+      "sourceType": "release",
+      "url": "https://github.com/ollama/ollama/releases/tag/v0.34.0-rc0",
+      "title": "Ollama Releases v0.34.0-rc0",
+      "titleJa": "Ollamaがv0.34.0-rc0をリリース",
+      "titleEn": "Ollama Releases v0.34.0-rc0",
+      "lang": "en",
+      "publishedAt": "2026-09-04T21:04:48.000Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
+      "tags": [
+        "github",
+        "ollama",
+        "release",
+        "release-candidate"
+      ],
+      "category": "local-llm",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/63033505?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/63033505?s=60&v=4",
+        "alt": "Ollama Releases v0.34.0-rc0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "excerptOrigin": "article",
+      "feedSnippet": "app: add Ollama to ChatGPT Desktop ( #18236 )"
+    },
+    {
+      "id": "d99cbde4ce5ae486",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-04-gpt-6-astra-is-generally-available-in-github-copilot",
+      "title": "GPT-6 Astra is generally available in GitHub Copilot",
+      "titleJa": "GPT-6 AstraがGitHub Copilotで一般提供開始",
+      "titleEn": "GPT-6 Astra is generally available in GitHub Copilot",
+      "lang": "en",
+      "publishedAt": "2026-09-04T18:59:51.000Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "tags": [
+        "agent",
+        "agentic-coding",
+        "changelog",
+        "github",
+        "gpt-6-astra",
+        "openai",
+        "usage-based-billing"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "GPT-6 Astra from OpenAI is now available in GitHub Copilot. OpenAI’s latest general-purpose model, GPT-6 Astra, is designed for long-horizon, autonomous coding and agentic tasks. In our internal testing, GPT-6 Astra stood out for how it works, not just what it produces: it plans and validates as it goes, batches diagnosis with verification, and independently confirms its results before declaring a task done. That translated into stronger performance on long-horizon coding tasks with fewer steps than prior OpenAI models. This model is billed at provider list pricing under usage-based billing. See pricing for GitHub Copilot models and requests for details. GPT-6 Astra is available to Copilot Pro+, Max, Business, and Enterprise users. You can select the model in the model picker in: Rollout will be gradual. Check back soon if you don’t see it yet.",
+      "excerptOrigin": "article",
+      "feedSnippet": "GPT-6 Astra from OpenAI is now available in GitHub Copilot. OpenAI’s latest general-purpose model, GPT-6 Astra, is designed for long-horizon, autonomous coding and agentic tasks. In our internal testing, GPT-6… The post GPT-6 Astra is generally available in GitHub Copilot appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/644376748-4bdb51e3-99a4-40e3-9599-8d077c7abb8a.png",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/644376748-4bdb51e3-99a4-40e3-9599-8d077c7abb8a.png",
+        "alt": "GPT-6 Astra is generally available in GitHub Copilot",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "cbbb7b7d92f444ff",
       "source": "zed-releases",
@@ -13,7 +286,7 @@
       "titleEn": "Zed Editor Releases v1.18.1",
       "lang": "en",
       "publishedAt": "2026-09-04T16:59:05.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "bug-fix",
         "editor",
@@ -35,8 +308,42 @@
         "height": 0,
         "source": "media"
       },
-      "feedSnippet": "Fixed AltGr / diacritic input being swallowed by the integrated terminal on Windows. ( #63763 ) Fixed goToDefinition opening out-of-worktree entries ( #63757 ) Fixed dev container environment variables being logged in full ( #63735 ) Fixed OpenCode Go requests that could fail when Zed omitted the session header. ( #63715 )",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "feedSnippet": "Fixed AltGr / diacritic input being swallowed by the integrated terminal on Windows. ( #63763 ) Fixed goToDefinition opening out-of-worktree entries ( #63757 ) Fixed dev container environment variables being logged in full ( #63735 ) Fixed OpenCode Go requests that could fail when Zed omitted the session header. ( #63715 )"
+    },
+    {
+      "id": "3f71dcf827e17a79",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-04-new-api-endpoint-provides-privacy-safe-star-history-data",
+      "title": "New API endpoint provides privacy-safe star history data",
+      "titleJa": "新しいAPIエンドポイントでプライバシーに配慮したスター履歴データを提供",
+      "titleEn": "New API endpoint provides privacy-safe star history data",
+      "lang": "en",
+      "publishedAt": "2026-09-04T16:43:56.000Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
+      "tags": [
+        "changelog",
+        "github",
+        "privacy",
+        "repository-stars",
+        "rest-api"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Track repository star growth over time with the new star history REST API endpoint without exposing stargazer identities. Earlier this year, stargazer listing endpoints were restricted to admins and collaborators to protect user privacy. Now you can get the insights you need with a privacy-safe alternative. Retrieve historical star counts with timestamps without exposing individual stargazer data. Update tools and integrations that previously tracked star growth before these privacy restrictions took effect. To learn more, see our GitHub REST API docs . If you have any feedback, leave a comment in our Community discussion . GitHub Enterprise Server 3.22 release candidate Discover tips, technical guides, and best practices in our biweekly newsletter just for devs.",
+      "excerptOrigin": "article",
+      "feedSnippet": "Track repository star growth over time with the new star history REST API endpoint without exposing stargazer identities. Earlier this year, stargazer listing endpoints were restricted to admins and collaborators… The post New API endpoint provides privacy-safe star history data appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/JPEG-image-1.jpeg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/JPEG-image-1.jpeg",
+        "alt": "New API endpoint provides privacy-safe star history data",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "43dc5941df4bfd39",
@@ -50,8 +357,9 @@
       "summaryEn": "GitHub Copilot research preview HydraFusion routes selective coding tasks across models. Offline tests matched or beat the Opus 5 baseline at lower estimated cost, enabling more efficient developer assistance.",
       "lang": "en",
       "publishedAt": "2026-09-04T16:04:14.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
+        "copilot",
         "github",
         "github-copilot",
         "multi-model-orchestration",
@@ -61,6 +369,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -70,9 +380,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true,
-      "knowledgeEligible": false
+      }
     },
     {
       "id": "b3860ff03421d355",
@@ -84,7 +392,7 @@
       "titleEn": "Zed Editor Releases v1.19.1-pre",
       "lang": "en",
       "publishedAt": "2026-09-04T16:00:43.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "bug-fix",
         "dev-containers",
@@ -118,7 +426,7 @@
       "titleEn": "GitHub Copilot app and CLI now honor content-exclusion policies on Business and…",
       "lang": "ja",
       "publishedAt": "2026-09-04T01:01:11.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "agent",
         "ai-coding-agent",
@@ -150,13 +458,20 @@
       "sourceType": "blog",
       "url": "https://developers.googleblog.com/driving-developer-excellence-inside-the-program-sprints/",
       "title": "Driving Developer Excellence: Inside the Program Sprints",
-      "titleJa": "",
+      "titleJa": "開発者の卓越性を推進：プログラムスプリントの舞台裏",
       "titleEn": "Driving Developer Excellence: Inside the Program Sprints",
       "lang": "en",
       "publishedAt": "2026-09-04T00:00:00.000Z",
       "collectedAt": "2026-09-04T23:29:24.829Z",
       "tags": [
-        "google"
+        "agent",
+        "agent-gateway",
+        "ai-governance",
+        "developer-experience",
+        "enterprise",
+        "gemini-enterprise",
+        "google",
+        "semantic-governance"
       ],
       "category": "gemini",
       "importance": 1,
@@ -182,7 +497,7 @@
       "titleEn": "Multiple trusted publishing configurations for npm",
       "lang": "en",
       "publishedAt": "2026-09-03T20:34:34.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "changelog",
         "github",
@@ -216,7 +531,7 @@
       "titleEn": "GitHub Actions: Early September 2026 updates",
       "lang": "en",
       "publishedAt": "2026-09-03T20:30:53.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "api",
         "changelog",
@@ -251,7 +566,7 @@
       "titleEn": "Upcoming deprecation of selected GitHub Copilot models",
       "lang": "en",
       "publishedAt": "2026-09-03T19:40:14.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "changelog",
         "copilot-admin",
@@ -285,7 +600,7 @@
       "titleEn": "GitHub CLI Linux package signing key expires September 5",
       "lang": "en",
       "publishedAt": "2026-09-03T19:05:40.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "apt",
         "changelog",
@@ -321,7 +636,7 @@
       "titleEn": "Gemini 3.8 Flash is now available in GitHub Copilot",
       "lang": "en",
       "publishedAt": "2026-09-03T18:50:38.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "ai-models",
         "changelog",
@@ -356,7 +671,7 @@
       "titleEn": "Semantic Kernel dotnet-1.80.1",
       "lang": "en",
       "publishedAt": "2026-09-03T18:41:24.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "ci",
@@ -389,7 +704,7 @@
       "titleEn": "Cline Desktop v0.0.23",
       "lang": "en",
       "publishedAt": "2026-09-03T18:33:16.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "agent-plugins",
@@ -423,7 +738,7 @@
       "titleEn": "Ollama Releases v0.33.3",
       "lang": "en",
       "publishedAt": "2026-09-03T17:24:07.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -448,6 +763,41 @@
       "feedSnippet": "What's Changed gemma4 now supports images and audio on MLX engine Report cached prompt tokens Honor GGUF model defined default parameters MLX, MLX-C, llama.cpp update New Contributors @marcelpetrick made their first contribution in #17579 Full Changelog : v0.33.2...v0.33.3"
     },
     {
+      "id": "74f3d1f3f581261a",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain%3D%3D1.4.0",
+      "title": "langchain==1.4.0",
+      "titleJa": "LangChain 1.4.0",
+      "titleEn": "langchain==1.4.0",
+      "lang": "en",
+      "publishedAt": "2026-09-03T16:59:55.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "langchain",
+        "mcp",
+        "mcp-adapter",
+        "mcp-server",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain==1.3.18 docs(langchain): runnable langchain.mcp examples ( #39976 ) feat(langchain): langchain.mcp namespace, MCPAdapter ( #39939 ) chore(langchain): bump vcrpy test dependency minimum to >=8.2.0 ( #39942 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain==1.4.0",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "feedSnippet": "Changes since langchain==1.3.18 docs(langchain): runnable langchain.mcp examples ( #39976 ) feat(langchain): langchain.mcp namespace, MCPAdapter ( #39939 ) perf(anthropic,langchain): omit middleware trace inputs ( #40098 ) fix(langchain): include model destination in agent tool routing ( #38355 ) chore(langchain): bump vcrpy test dependency minimum to &gt;=8.2.0 ( #39942 )",
+      "excerptOrigin": "article"
+    },
+    {
       "id": "87b4f54cb89ae614",
       "source": "nvidia-blog",
       "sourceType": "blog",
@@ -457,7 +807,7 @@
       "titleEn": "Sparks Fly: NVIDIA Accelerates Local AI at IFA 2026",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:59.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "ai-agents",
         "local-ai",
@@ -507,8 +857,16 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "We’re introducing ZGateway, the proxy we are using to unify traffic through ZippyDB, Meta’s most widely-used key value store. As a bonus, it also enables admission control, load balancing, cross-region resilience, and richer operations. ZippyDB is the most widely used key value store at Meta, backing product metadata, counters, and configuration, and can serve billions [...] Read More... The post ZGateway: Learnings from Putting a Proxy in Front of ZippyDB appeared first on Engineering at Meta ."
+      "contentSnippet": "We’re introducing ZGateway, the proxy we are using to unify traffic through ZippyDB, Meta’s most widely-used key value store. As a bonus, it also enables admission control, load balancing, cross-region resilience, and richer operations. ZippyDB is the most widely used key value store at Meta, backing product metadata, counters, and configuration, and can serve billions [...] Read More... The post ZGateway: Learnings from Putting a Proxy in Front of ZippyDB appeared first on Engineering at Meta .",
+      "image": {
+        "src": "https://engineering.fb.com/wp-content/uploads/2026/09/ZGateway-Hero.png",
+        "origSrc": "https://engineering.fb.com/wp-content/uploads/2026/09/ZGateway-Hero.png",
+        "alt": "ZGateway: Learnings from Putting a Proxy in Front of ZippyDB",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "evergreen": true
     },
     {
       "id": "d94b84bc16af2780",
@@ -522,7 +880,7 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "agent",
         "copilot",
@@ -534,6 +892,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -544,8 +903,41 @@
         "width": 0,
         "height": 0,
         "source": "og"
+      }
+    },
+    {
+      "id": "c401f1c5778c2ea7",
+      "source": "langchain-releases",
+      "sourceType": "release",
+      "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-anthropic%3D%3D1.7.1",
+      "title": "langchain-anthropic==1.7.1",
+      "titleJa": "「langchain-anthropic 1.7.1」リリース",
+      "titleEn": "langchain-anthropic==1.7.1",
+      "lang": "en",
+      "publishedAt": "2026-09-03T15:42:02.000Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
+      "tags": [
+        "agent",
+        "anthropic",
+        "claude-fable-5-1",
+        "langchain",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. There was an error while loading. Please reload this page . There was an error while loading. Please reload this page . This commit was created on GitHub.com and signed with GitHub’s verified signature . Changes since langchain-anthropic==1.7.0 release(anthropic): 1.7.1 ( #40181 ) feat(anthropic): add Claude Fable 5.1 support ( #40106 ) There was an error while loading. Please reload this page . You can’t perform that action at this time.",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "langchain-anthropic==1.7.1",
+        "width": 0,
+        "height": 0,
+        "source": "media"
       },
-      "evergreen": true
+      "feedSnippet": "Changes since langchain-anthropic==1.7.0 release(anthropic): 1.7.1 ( #40181 ) perf(anthropic,langchain): omit middleware trace inputs ( #40098 ) feat(anthropic): add Claude Fable 5.1 support ( #40106 )",
+      "excerptOrigin": "article"
     },
     {
       "id": "f05bf4ade66fe3ff",
@@ -557,7 +949,7 @@
       "titleEn": "Reopening Copilot Business and Enterprise signups",
       "lang": "en",
       "publishedAt": "2026-09-03T14:40:43.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "billing",
         "changelog",
@@ -573,7 +965,15 @@
       "archiveTier": "hot",
       "contentSnippet": "We’re gradually reopening sign-ups for Copilot Business and Copilot Enterprise customers paying by credit card or PayPal over the next couple of weeks. If you’ve been waiting to get started with Copilot, select the plan that fits your needs. If your preferred option isn’t available yet, check back soon. To improve availability and reliability of Copilot services, we’re also strengthening account vetting and updating billing experiences for customers who pay by credit card or PayPal. The following changes will apply to Copilot Business and Copilot Enterprise customers paying via credit card or PayPal: All new Copilot Business or Copilot Enterprise seat assignments will require payment for each seat before users gain Copilot access. At the start of the next billing cycle, all Copilot Business and Copilot Enterprise seats assigned will incur an upfront charge.",
       "excerptOrigin": "article",
-      "feedSnippet": "We’re gradually reopening sign-ups for Copilot Business and Copilot Enterprise customers paying by credit card or PayPal over the next couple of weeks. If you’ve been waiting to get started… The post Reopening Copilot Business and Enterprise signups appeared first on The GitHub Blog ."
+      "feedSnippet": "We’re gradually reopening sign-ups for Copilot Business and Copilot Enterprise customers paying by credit card or PayPal over the next couple of weeks. If you’ve been waiting to get started… The post Reopening Copilot Business and Enterprise signups appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/642300912-4d6b72f4-e34d-4f12-8021-be5d1d83dc93.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/642300912-4d6b72f4-e34d-4f12-8021-be5d1d83dc93.jpg",
+        "alt": "Reopening Copilot Business and Enterprise signups",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "539a24bf93a0589c",
@@ -585,7 +985,7 @@
       "titleEn": "NVIDIA to Acquire Hugging Face",
       "lang": "en",
       "publishedAt": "2026-09-03T11:56:49.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "acquisition",
         "ai-platforms",
@@ -621,7 +1021,7 @@
       "summaryEn": "Google Gen AI SDK for Kotlin 1.0 launches as a Kotlin Multiplatform library with Coroutines, Flow streaming, and immutable models, easing Gemini integration for Kotlin developers.",
       "lang": "en",
       "publishedAt": "2026-09-03T09:00:00.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cloud",
         "gemini-api",
@@ -648,7 +1048,7 @@
       "titleEn": "Cline Desktop v0.0.23-beta.1",
       "lang": "en",
       "publishedAt": "2026-09-03T01:46:38.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cline",
         "image-generation",
@@ -680,7 +1080,7 @@
       "titleEn": "v0.33.3-rc2: gemma4: image and audio input support",
       "lang": "en",
       "publishedAt": "2026-09-02T22:07:28.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "ollama",
         "release",
@@ -714,7 +1114,7 @@
       "summaryEn": "GitHub Podcast unpacks nine emerging AI-development terms, from Ralph loops and harness engineering to open weights, helping developers assess evolving practices and labels.",
       "lang": "en",
       "publishedAt": "2026-09-02T21:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "ai-terminology",
         "developer-workflows",
@@ -725,6 +1125,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "It might be overwhelming to see all of the new vocabulary popping up in software development these days thanks to AI tools introducing them… all the time. Some of this new vocab describes useful patterns that people are newly pursuing, others are just fancy names on top of things that already exist, and some are still actively being defined as we speak. In our latest episode of the GitHub Podcast , Marlene Mhangami, GPS, and I talked through some of the AI terms developers are learning right now: loop engineering, Ralph loops, squads, harness engineering, hill climbing, forward deployed engineers, closed models, open weights, and open source models. If you’re a reader instead of a listener, here’s a guide to what those terms mean, why they matter, and how to think about them. Listen to the full episode below!",
       "excerptOrigin": "article",
       "feedSnippet": "From loop engineering to harnesses, squads, and open weights, the GitHub Podcast breaks down the AI terms showing up in developer conversations. The post Decoding the new AI lingo: Loops, harnesses, squads, hill climbing… oh my! appeared first on The GitHub Blog .",
@@ -735,8 +1136,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "5d75b87a4c0e26d9",
@@ -763,7 +1163,15 @@
       "archiveTier": "hot",
       "contentSnippet": "You can now set your preferred GitHub Copilot model as the default for new conversations through enterprise-managed settings. This lets you choose the default model that best fits your workflows. You can also customize the default by enterprise team, assigning a different default model based on team membership. Set the model key as overridable and update team configuration files in team-mappings.json so that enterprise teams can choose their own preferred default model. All other users inherit your enterprise default. Model defaults in managed settings are generally available with Copilot Business and Copilot Enterprise in the GitHub Copilot app, Copilot CLI, and Visual Studio Code. Learn more in our docs about enterprise managed settings , or join the discussion in the GitHub Community .",
       "excerptOrigin": "article",
-      "feedSnippet": "You can now set your preferred GitHub Copilot model as the default for new conversations through enterprise-managed settings. This lets you choose the default model that best fits your workflows.… The post Enterprise-managed settings support any default model appeared first on The GitHub Blog ."
+      "feedSnippet": "You can now set your preferred GitHub Copilot model as the default for new conversations through enterprise-managed settings. This lets you choose the default model that best fits your workflows.… The post Enterprise-managed settings support any default model appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/645173207-1cda454f-a373-4f47-bdd5-e5475cdd936e.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/645173207-1cda454f-a373-4f47-bdd5-e5475cdd936e.jpg",
+        "alt": "Enterprise-managed settings support any default model",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "ca9b50f84a5ed956",
@@ -791,7 +1199,15 @@
       "archiveTier": "hot",
       "contentSnippet": "The GitHub Copilot app and Copilot CLI now respect content exclusion policies configured by enterprise, organization, and repository administrators. Copilot won’t use excluded files as context, helping you protect sensitive code across agentic workflows. This is available for Copilot Business and Copilot Enterprise customers. To learn more, see our docs about content exclusion . Gemini 3.8 Flash is now available in GitHub Copilot Claude Fable 5.1 is generally available in GitHub Copilot Discover tips, technical guides, and best practices in our biweekly newsletter just for devs.",
       "excerptOrigin": "article",
-      "feedSnippet": "The GitHub Copilot app and Copilot CLI now respect content exclusion policies configured by enterprise, organization, and repository administrators. Copilot won’t use excluded files as context, helping you protect sensitive… The post Content exclusions generally available in Copilot app and CLI appeared first on The GitHub Blog ."
+      "feedSnippet": "The GitHub Copilot app and Copilot CLI now respect content exclusion policies configured by enterprise, organization, and repository administrators. Copilot won’t use excluded files as context, helping you protect sensitive… The post Content exclusions generally available in Copilot app and CLI appeared first on The GitHub Blog .",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/2026-09-01_content-excl.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/2026-09-01_content-excl.jpg",
+        "alt": "Content exclusions generally available in Copilot app and CLI",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "9ddd69492d58528a",
@@ -803,7 +1219,7 @@
       "titleEn": "Zed Editor Releases v1.18.0",
       "lang": "en",
       "publishedAt": "2026-09-02T18:13:31.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "debugging",
         "editor",
@@ -836,7 +1252,7 @@
       "titleEn": "Zed Editor Releases v1.19.0-pre",
       "lang": "en",
       "publishedAt": "2026-09-02T18:09:48.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "call-hierarchy",
         "editor",
@@ -872,7 +1288,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -884,6 +1300,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -894,8 +1311,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6625a77e4710b219",
@@ -907,7 +1323,7 @@
       "titleEn": "Visual Studio Code 1.136 Release Notes",
       "lang": "en",
       "publishedAt": "2026-09-02T17:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "release",
         "release-notes",
@@ -939,7 +1355,7 @@
       "titleEn": "Ollama Releases v0.33.3-rc1",
       "lang": "en",
       "publishedAt": "2026-09-02T16:46:04.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "gguf",
         "llama-cpp",
@@ -974,7 +1390,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-02T22:24:05.210Z",
+      "collectedAt": "2026-09-05T22:24:50.538Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -987,6 +1403,8 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Today, we’re launching our Fairwind Program, a limited access program for governments and trusted partners to use our most advanced cyber defense capabilities. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Defenders wanting to use advanced AI have faced a difficult dilemma: adopt enormous frontier models that could be expensive to deploy and difficult to control across enterprise codebases, or turn to smaller open-weight models that might struggle with complex vulnerability remediation and require teams to build their own tooling and infrastructure from scratch. Until now.",
+      "excerptOrigin": "article",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/gemini-3-8__fairwind-program__blog__header__1.width-1300.png",
         "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/gemini-3-8__fairwind-program__blog__header__1.width-1300.png",
@@ -994,9 +1412,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "contentSnippet": "Today, we’re launching our Fairwind Program, a limited access program for governments and trusted partners to use our most advanced cyber defense capabilities. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Defenders wanting to use advanced AI have faced a difficult dilemma: adopt enormous frontier models that could be expensive to deploy and difficult to control across enterprise codebases, or turn to smaller open-weight models that might struggle with complex vulnerability remediation and require teams to build their own tooling and infrastructure from scratch. Until now.",
-      "excerptOrigin": "article"
+      }
     },
     {
       "id": "5beacdae2f017d2a",
@@ -1023,7 +1439,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’ve built an AI agent that acts as a secondary expert for a given domain, making deep specialist knowledge readily available and preserved for anyone in an organization to access, share, and build upon. This is not a typical domain-specific agent. Its novelty comes from integrating two layers: A structured, auditable knowledge architecture separates what [...] Read More... The post An Organizational Second Brain: Building an AI That Learns From Experts appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/08/Domain-Expert-AI-Hero-1.png",
@@ -1032,7 +1447,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "0ea901f86e2fc43f",
@@ -1076,7 +1492,7 @@
       "titleEn": "Cline Releases v4.1.17",
       "lang": "en",
       "publishedAt": "2026-09-02T05:40:07.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bug-fix",
         "cline",
@@ -1108,7 +1524,7 @@
       "titleEn": "langchain==1.4.0a4",
       "lang": "en",
       "publishedAt": "2026-09-02T05:35:23.000Z",
-      "collectedAt": "2026-09-02T14:46:58.338Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
       "tags": [
         "agent",
         "compatibility",
@@ -1142,7 +1558,7 @@
       "titleEn": "Cline Desktop v0.0.22",
       "lang": "en",
       "publishedAt": "2026-09-02T05:20:48.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cline",
         "history-import",
@@ -1173,7 +1589,7 @@
       "titleEn": "Cline CLI v3.0.61",
       "lang": "en",
       "publishedAt": "2026-09-02T04:49:47.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "cli",
         "cline",
@@ -1207,7 +1623,7 @@
       "titleEn": "Cline SDK v0.0.82",
       "lang": "en",
       "publishedAt": "2026-09-02T04:40:16.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bug-fix",
         "capability-mapping",
@@ -1321,7 +1737,15 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "The recent Google for Startups AI Agents Challenge revealed that the most successful multi-agent systems rely on foundational software engineering patterns rather than just raw model power. Winning architectures consistently implemented bidirectional MCP for seamless inter-agent communication, async event buses for parallel execution, strict unified validation for model fallbacks, and tiered routing to minimize expensive inference calls. By prioritizing these structural practices over simple linear prompt chains, developers can build more resilient, low-latency, and cost-effective agentic workflows."
+      "contentSnippet": "The recent Google for Startups AI Agents Challenge revealed that the most successful multi-agent systems rely on foundational software engineering patterns rather than just raw model power. Winning architectures consistently implemented bidirectional MCP for seamless inter-agent communication, async event buses for parallel execution, strict unified validation for model fallbacks, and tiered routing to minimize expensive inference calls. By prioritizing these structural practices over simple linear prompt chains, developers can build more resilient, low-latency, and cost-effective agentic workflows.",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Gemini_Generated_Image_jiisiijiis.2e16d0ba.fill-1200x600.jpg",
+        "origSrc": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Gemini_Generated_Image_jiisiijiis.2e16d0ba.fill-1200x600.jpg",
+        "alt": "4 engineering patterns behind the strongest AI Agents Challenge submissions",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "4775f37e10e56d6a",
@@ -1333,7 +1757,7 @@
       "titleEn": "Self-hosted machines",
       "lang": "en",
       "publishedAt": "2026-09-02T00:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "changelog",
         "cloud-agents",
@@ -1347,7 +1771,15 @@
       "archiveTier": "hot",
       "contentSnippet": "Cursor は セルフホスト型マシン に対応しており、ツール実行を完全に自社ネットワーク内に留めておけます。 コードベース、ビルド成果物、シークレットはすべて、自社のインフラストラクチャで稼働する内部マシン上に留まり、ツール呼び出しはエージェントがローカルで処理します。 My Machines は、個人のワークフロー向けに 1 台のノート PC または VM をアカウントに接続する仕組みです。 Team pools は、チームまたは企業向けに名前を付けた ワーカー のキューです。リクエストの到着に応じてキャパシティが拡大し、ワーカー が切断されると縮小するため、セルフホスト型マシンを需要に合わせてスケールできます。プールは特定のリポジトリに紐づいていません。プール名を指定すれば、空いている ワーカー がそのリクエストを引き受けます。 さらに、アイドル状態のマシンをハイバネートさせ、フォローアップが届いた際に再接続ウィンドウ内で復帰させることもできます。次のプロンプトに備えて、コストのかかるキャパシティを起動したままにしておく必要はありません。 クラウドエージェントが、AWS Lambda、Coder、Cloudflare、Daytona、Modal、Namespace、Vercel、E2B など、 すでに使っているインフラストラクチャ 上で実行できるようになりました。 セルフホスト型のワーカーが、Linux と Mac でのコンピュータ使用に対応しました。適切なデスクトップパッケージを用意すれば、エージェントがクリックや入力、スクリーンショットの撮影、ブラウザの操作を行えます。そのデスクトップの様子を Cursor から確認したり、操作を引き継いだりすることも可能です。 Cursor は セルフホスト型マシン に対応しており、ツール実行を完全に自社ネットワーク内に留めておけます。 コードベース、ビルド成果物、シークレットはすべて、自社のインフラストラクチャで稼働する内部マシン上に留まり、ツール呼び出しはエージェントがローカルで処理します。",
       "excerptOrigin": "article",
-      "feedSnippet": "Cursor supports self-hosted machines, which let you keep tool execution entirely in your own network."
+      "feedSnippet": "Cursor supports self-hosted machines, which let you keep tool execution entirely in your own network.",
+      "image": {
+        "src": "https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/cursor-run-on-remote-machines-loBz4KzTHKq1RvZG4Ka07UpsCIDYwx.png",
+        "origSrc": "https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/cursor-run-on-remote-machines-loBz4KzTHKq1RvZG4Ka07UpsCIDYwx.png",
+        "alt": "Self-hosted machines",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "a0c3d4289f102bec",
@@ -1359,7 +1791,7 @@
       "titleEn": "v0.33.3-rc0: llama.cpp: version bump b10729 (#18160)",
       "lang": "en",
       "publishedAt": "2026-09-01T23:24:15.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "compatibility",
         "llama-cpp",
@@ -1463,7 +1895,7 @@
       "titleEn": "NVIDIA and CrowdStrike Strengthen Agentic Cybersecurity Frontier",
       "lang": "en",
       "publishedAt": "2026-09-01T21:19:20.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -1479,7 +1911,15 @@
       "archiveTier": "hot",
       "contentSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind , its agentic cybersecurity system developed by the CrowdStrike Cyber Superintelligence Lab. “This is the beginning of a new age of cybersecurity,” Huang told the crowd of 10,000 security professionals. “On the one hand, the adversaries are going to be more armed than ever.",
       "excerptOrigin": "article",
-      "feedSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind, its agentic cybersecurity system developed by the CrowdStrike Cyber […]"
+      "feedSnippet": "“We’re at an inflection point in cybersecurity,” Jensen Huang told a sold-out crowd at CrowdStrike’s Fal.Con 2026 in Las Vegas Tuesday. Attacks are now automated. Defense has to be, too. The NVIDIA founder and CEO joined CrowdStrike CEO and founder George Kurtz to announce CrowdStrike SafeMind, its agentic cybersecurity system developed by the CrowdStrike Cyber […]",
+      "image": {
+        "src": "https://blogs.nvidia.com/wp-content/uploads/2026/09/crowdstrike-nvidia-stage-scaled.jpg",
+        "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/09/crowdstrike-nvidia-stage-scaled.jpg",
+        "alt": "NVIDIA and CrowdStrike Strengthen Agentic Cybersecurity Frontier",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "990c1033d8d5c7de",
@@ -1525,7 +1965,7 @@
       "titleEn": "Inside Meta’s Infrastructure Lab",
       "lang": "en",
       "publishedAt": "2026-09-01T20:24:43.000Z",
-      "collectedAt": "2026-09-04T07:15:07.284Z",
+      "collectedAt": "2026-09-05T13:39:42.241Z",
       "tags": [
         "ai-hardware",
         "infrastructure-lab",
@@ -1572,7 +2012,15 @@
       "archiveTier": "hot",
       "contentSnippet": "You can now set an optional expiration date on an individual user budget, and GitHub removes the budget on that date. This capability is generally available. The user then falls back to the next budget that applies to them (i.e., their cost center per-user budget or otherwise your universal budget). Previously, you had to remove every temporary budget override by hand, creating recurring cleanup work at enterprise scale. No expiration, which is the default and matches current behavior. Expiration at the start of the next billing cycle. Expiration on a specific date. You can change or clear an expiration date at any time. Set an expiration date in your billing settings, or use the expires_at field in the Budgets REST API when you create or update a budget. Expiration dates are available for the GitHub Copilot Business and Copilot Enterprise plans.",
       "feedSnippet": "You can now set an optional expiration date on an individual user budget, and GitHub removes the budget on that date. This capability is generally available. The user then falls… The post Set an expiration date for individual user budgets appeared first on The GitHub Blog .",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://github.blog/wp-content/themes/github-2021-child/dist/img/social-v3-improvements.jpg",
+        "origSrc": "https://github.blog/wp-content/themes/github-2021-child/dist/img/social-v3-improvements.jpg",
+        "alt": "Set an expiration date for individual user budgets",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "1c5077e133e29ff0",
@@ -1610,7 +2058,7 @@
       "titleEn": "Meet Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T19:21:24.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "anthropic",
         "claude-fable-5-1",
@@ -1633,7 +2081,7 @@
       "titleEn": "Introducing Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T18:02:31.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "anthropic",
         "claude-fable",
@@ -1656,7 +2104,7 @@
       "titleEn": "langchain==1.4.0a3",
       "lang": "en",
       "publishedAt": "2026-09-01T17:22:31.000Z",
-      "collectedAt": "2026-09-02T14:46:58.338Z",
+      "collectedAt": "2026-09-05T20:46:53.796Z",
       "tags": [
         "agent",
         "client-side-cache",
@@ -1690,7 +2138,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-02T22:24:05.210Z",
+      "collectedAt": "2026-09-05T22:24:50.538Z",
       "tags": [
         "agent",
         "deepmind",
@@ -1702,6 +2150,8 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
+      "contentSnippet": "Our new agentic feature for video analysis cuts token consumption by up to 88%, reduces costs by up to 66%, and boosts quality by up to 7%. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Google just launched agentic video understanding for Gemini 3.7 Flash, 3.6 Flash, and 3.5 Flash-Lite. This feature allows the model to dynamically scan video segments, which improves accuracy while cutting token usage by up to 88% and costs by up to 66%. You can start using this today by setting your API configuration to \"agentic\" in Google AI Studio or the Gemini Enterprise Agent Platform. Summaries were generated by Google AI. Generative AI is experimental. Today, we’re launching agentic video understanding across our latest models: Gemini 3.7 Flash, 3.6 Flash and 3.5 Flash-Lite.",
+      "excerptOrigin": "article",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/agentic-video___keyword__blog-header.width-1300.png",
         "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/agentic-video___keyword__blog-header.width-1300.png",
@@ -1709,9 +2159,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "contentSnippet": "Our new agentic feature for video analysis cuts token consumption by up to 88%, reduces costs by up to 66%, and boosts quality by up to 7%. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Google just launched agentic video understanding for Gemini 3.7 Flash, 3.6 Flash, and 3.5 Flash-Lite. This feature allows the model to dynamically scan video segments, which improves accuracy while cutting token usage by up to 88% and costs by up to 66%. You can start using this today by setting your API configuration to \"agentic\" in Google AI Studio or the Gemini Enterprise Agent Platform. Summaries were generated by Google AI. Generative AI is experimental. Today, we’re launching agentic video understanding across our latest models: Gemini 3.7 Flash, 3.6 Flash and 3.5 Flash-Lite.",
-      "excerptOrigin": "article"
+      }
     },
     {
       "id": "f32ee84ddfd75184",
@@ -1782,7 +2230,7 @@
       "summaryEn": "TabFM adds a foundation model pre-trained by Google Research to BigQuery for churn, purchase-intent, and fraud prediction, helping businesses act on forecasts with less modeling overhead.",
       "lang": "en",
       "publishedAt": "2026-09-01T16:00:00.000Z",
-      "collectedAt": "2026-09-04T21:06:41.887Z",
+      "collectedAt": "2026-09-05T15:50:52.064Z",
       "tags": [
         "bigquery",
         "cloud",
@@ -2004,7 +2452,7 @@
       "titleEn": "Artifact Share CLI adds local preview: browser element feedback triggers edits…",
       "lang": "ja",
       "publishedAt": "2026-09-01T01:03:04.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "ai-agents",
         "artifact-share",
@@ -2041,7 +2489,7 @@
       "titleEn": "Developing Enterprise Frontier Safeguards with our customers",
       "lang": "en",
       "publishedAt": "2026-09-01T00:00:00.000Z",
-      "collectedAt": "2026-09-04T18:37:48.788Z",
+      "collectedAt": "2026-09-06T00:19:28.909Z",
       "tags": [
         "ai-safety",
         "anthropic",

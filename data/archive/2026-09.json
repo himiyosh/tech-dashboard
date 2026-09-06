@@ -1,8 +1,63 @@
 {
-  "generatedAt": "2026-09-06T13:14:37.746Z",
+  "generatedAt": "2026-09-06T16:31:20.842Z",
   "month": "2026-09",
-  "count": 75,
+  "count": 77,
   "entries": [
+    {
+      "id": "a127ef535623fb17",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/caymezon/items/0209e92bcb653e766752",
+      "title": "VSCode拡張機能でターミナルを「毎回新規作成」せず名前で再利用する",
+      "titleJa": "VSCode拡張機能でターミナルを「毎回新規作成」せず名前で再利用する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-06T11:19:07.000Z",
+      "collectedAt": "2026-09-06T16:31:06.490Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "カーソル行や選択範囲をショートカットキー一発でターミナル実行するVSCodeマクロを作る際、実行のたびに新しいターミナルを作成すると、作業ディレクトリや環境変数がリセットされてしまい不便でした。既存ターミナルの再利用ロジックを紹介します。 function getOrCreateTerminal ( terminalType : TerminalType ): vscode . Terminal { const existingTerminal = vscode . window . terminals . find ( t => t . name === terminalName vscode.window.terminals はVSCode上に現在存在する全ターミナルの配列です。固定の名前（ My Macros - CMD 等）で検索し、見つかればそれを再利用、なければ新規作成します。ユーザーが手動でターミナルを閉じていた場合は自動的に新規作成側に分岐するため、特別なエラーハンドリングは不要です。 const configPath = vscode . workspace . getConfiguration ( ' myMacros ' ). get < string > ( ' gitBashPath ' , '' ); if ( configPath && fs . existsSync ( configPath )) { const defaultPath = ' C: \\\\ Program Files \\\\ Git \\\\ bin \\\\ bash.exe ' ; if ( fs . existsSync ( defaultPath )) { // 3. 代替パス（Program Files (x86)） const altPath = ' C: \\\\ Program Files (x86) \\\\ Git \\\\ bin \\\\ bash.exe ' ; if ( fs .",
+      "feedSnippet": "背景 カーソル行や選択範囲をショートカットキー一発でターミナル実行するVSCodeマクロを作る際、実行のたびに新しいターミナルを作成すると、作業ディレクトリや環境変数がリセットされてしまい不便でした。既存ターミナルの再利用ロジックを紹介します。 1. ターミナル名で既存...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUUzJTgyJUJGJUUzJTgzJUJDJUUzJTgzJTlGJUUzJTgzJThBJUUzJTgzJUFCJUUzJTgyJTkyJUUzJTgwJThDJUU2JUFGJThFJUU1JTlCJTlFJUU2JTk2JUIwJUU4JUE2JThGJUU0JUJEJTlDJUU2JTg4JTkwJUUzJTgwJThEJUUzJTgxJTlCJUUzJTgxJTlBJUU1JTkwJThEJUU1JTg5JThEJUUzJTgxJUE3JUU1JTg2JThEJUU1JTg4JUE5JUU3JTk0JUE4JUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzUxNDYzZjc4NThlOTI2YjE5MWQ0MzQ1YmQyNzQ1MjI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b2e628f2727beaffe0d29be2ee04075d",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUUzJTgxJUE3JUUzJTgyJUJGJUUzJTgzJUJDJUUzJTgzJTlGJUUzJTgzJThBJUUzJTgzJUFCJUUzJTgyJTkyJUUzJTgwJThDJUU2JUFGJThFJUU1JTlCJTlFJUU2JTk2JUIwJUU4JUE2JThGJUU0JUJEJTlDJUU2JTg4JTkwJUUzJTgwJThEJUUzJTgxJTlCJUUzJTgxJTlBJUU1JTkwJThEJUU1JTg5JThEJUUzJTgxJUE3JUU1JTg2JThEJUU1JTg4JUE5JUU3JTk0JUE4JUUzJTgxJTk5JUUzJTgyJThCJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzUxNDYzZjc4NThlOTI2YjE5MWQ0MzQ1YmQyNzQ1MjI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b2e628f2727beaffe0d29be2ee04075d",
+        "alt": "VSCode拡張機能でターミナルを「毎回新規作成」せず名前で再利用する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "6ee6f3e6986a000b",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/heftykoo/items/89626596bf4e2aad8ad5",
+      "title": "VS Code Agent Mergeをいきなり自動化しない。PR修復ループに停止条件を置く",
+      "titleJa": "VS Code Agent Mergeをいきなり自動化しない。PR修復ループに停止条件を置く",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-06T11:08:56.000Z",
+      "collectedAt": "2026-09-06T16:31:06.490Z",
+      "tags": [
+        "agent",
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Code Agent Mergeをいきなり自動化しない。PR修復ループに停止条件を置く agentがreview commentを直した。ところがrequired checkは落ちたまま。次の修正では、最初の依頼に入っていないfileまで変わっている。 PR作成後もagentを動かすなら、こうした場面は珍しくなくなるはずです。自分が怖いのは一回の誤修正より、修復を繰り返すうちに「何を直すPRだったか」が薄れていくことです。 2026年9月2日公開のVS Code 1.136には、Preview機能としてAgent Mergeが入りました。review feedback、failed checks、merge conflictsへの修復とworkflowの再実行を繰り返し、PRをmerge-readyへ近づけます。 便利そうですが、いきなり実repositoryで回し続けるのは避けたい。 merge-ready を目指す修復ループと、teamがmergeを許可する判断は別です。 まず使い捨てPRでblockerを一種類ずつ作り、各cycleの前後を記録する。さらに、回数とscopeに停止条件を置く。自分ならこの順で試します。 次に、検証用repositoryまたはproduction変更を含まないbranchで小さなPRを作ります。設定は次の一行です。 \"chat.agentMerge.enabled\" : true Agents windowで対象sessionを開き、 Enable Agent Merge for Active Session またはtitle barの Agent Merge から有効化します。現時点ではPreviewなので、対応harness、GitHub権限、branch protection、画面上の名称は手元の環境でも確認してください。 初回の目的は自動mergeではありません。agentがどの入力を受け、何を変更し、どの状態で止まるのかを見ることです。最後のmergeは人間が行います。",
+      "feedSnippet": "agentがreview commentを直した。ところがrequired checkは落ちたまま。次の修正では、最初の依頼に入っていないfileまで変わっている。 PR作成後もagentを動かすなら、こうした場面は珍しくなくなるはずです。自分が怖いのは一回の誤修正より、修...",
+      "excerptOrigin": "article"
+    },
     {
       "id": "3bc5c0edb12d97d2",
       "source": "ollama-releases",
@@ -369,8 +424,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -380,7 +433,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "b3860ff03421d355",
@@ -892,7 +947,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -903,7 +957,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -1300,7 +1355,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -1311,7 +1365,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6625a77e4710b219",
@@ -1390,7 +1445,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-05T22:24:50.538Z",
+      "collectedAt": "2026-09-06T16:31:06.490Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -2146,7 +2201,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-05T22:24:50.538Z",
+      "collectedAt": "2026-09-06T16:31:06.490Z",
       "tags": [
         "agent",
         "deepmind",

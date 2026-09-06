@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-06T05:14:02.691Z",
-  "count": 1111,
+  "generatedAt": "2026-09-06T07:07:34.923Z",
+  "count": 1112,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -8967,44 +8967,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事では提供開始が中心で、具体的な機能の詳細までは示されていない点には注意じゃよ。",
           "en": "Exactly. The article focuses on the UK rollout and doesn’t give full details on the individual features, so that’s worth keeping in mind."
-        }
-      ]
-    },
-    "da5ccac64787ac52": {
-      "bodyJa": "AIエージェントと外部ツールをつなぐ標準規格として普及が進むMCP(Model Context Protocol)向けに、サーバー実装を「実際のクライアントと同等の通信」で検証できるテストツール「mcp-testbench」が公開された。モックに頼る従来手法では見落としがちな、接続やプロトコル層の不具合を早期に発見できる点が特徴だ。\n\nMCPはAnthropicが2024年末に提唱した仕様で、AIモデルがファイルやAPI、データベースといった外部リソースへ安全にアクセスするための共通インターフェースを定める。通信はJSON-RPC 2.0をベースとし、標準入出力(stdio)やHTTPベースのトランスポート上で、初期化ハンドシェイクやツール一覧の取得、実行といったやり取りを行う。ClaudeをはじめとするAIクライアントや各種エディタ拡張が対応を進めており、対応サーバーの数も増えている。\n\nこうしたサーバーの開発では、ツール関数の入出力をモック化した単体テストが一般的だ。しかしモックは、あくまでアプリケーション内部のロジックを検証するにとどまり、実際のクライアントとの間で起こる初期化シーケンスの不一致、メッセージのフォーマット崩れ、トランスポート固有の接続断といった問題までは捕捉しにくい。結果として、テストは通るのに実運用のクライアントからは正しく動作しない、という食い違いが生じる可能性がある。\n\nmcp-testbenchは、テスト対象のサーバーに対して本物のMCPクライアントとして接続し、規約に沿った一連のやり取りを再現することで、この空白を埋めようとする。プロトコルレベルでの往復を伴うため、モックでは見えにくい相互運用性の問題を、より早い段階で洗い出せると見られる。\n\n同種の目的では、Anthropicが提供する公式デバッグツール「MCP Inspector」が広く使われているが、こちらは対話的な動作確認に軸足がある。自動テストやCIパイプラインへの組み込みを重視する開発者にとって、mcp-testbenchのようなツールは補完的な選択肢になり得るだろう。MCP対応サーバーが増えるほど、実装の品質と相互運用性を担保する検証基盤の重要性は、今後さらに高まっていくと考えられる。",
-      "bodyEn": "A new open-source utility called mcp-testbench aims to close a gap in how developers verify Model Context Protocol (MCP) servers by exercising them the way a genuine client would, rather than through simplified mocks. According to its author, the tool communicates with a server using the same handshake and message flow as a production MCP client, which makes it possible to surface connection and protocol-level defects that stub-based unit tests tend to overlook. For teams building MCP integrations, this addresses a recurring pain point: code that passes local tests but fails once a real host application tries to connect.\n\nMCP, introduced by Anthropic in late 2024, is an open standard that defines how large language model applications discover and call external tools, read resources, and use prompt templates. It uses a client-server model layered on JSON-RPC, with the host application embedding a client that talks to one or more servers over a transport such as stdio or streamable HTTP. Before any tools can be invoked, the two sides complete an initialization sequence that negotiates protocol versions and capabilities. Because so much depends on this early exchange, a server can be functionally correct at the business-logic level yet still break when the negotiation, message framing, or transport behavior does not match what a real client expects.\n\nThe core argument behind mcp-testbench is that mock-based testing hides exactly these failure modes. When developers write tests that call handler functions directly or replace the transport with an in-memory stub, they validate their own assumptions about the protocol rather than the protocol itself. Mismatches in how a server serializes responses, handles the initialization handshake, reports its tool list, or manages the lifecycle of a session can pass unnoticed until the server is wired into an actual host. By acting as a real client, the testbench appears designed to catch those discrepancies earlier in the development cycle, where they are cheaper to fix.\n\nIn practice, a tool of this kind is likely to drive a server through the full connection sequence, confirm that capability advertisement works, enumerate and call the tools a server exposes, and check that responses conform to the expected schema. Testing at this level can also reveal timing and streaming issues, error-handling paths, and edge cases in how a server behaves when a client sends malformed or unexpected requests. Running these checks in an automated suite, rather than manually, is valuable for continuous integration, where regressions in protocol conformance would otherwise be difficult to detect.\n\nThe tool enters an ecosystem that already includes several complementary options. Anthropic maintains the MCP Inspector, an interactive debugging application that lets developers connect to a server, browse its tools and resources, and issue calls by hand. That interactive approach is well suited to exploration and manual verification, whereas an automated testbench targets repeatable, scripted validation inside a build pipeline. The official MCP software development kits for TypeScript and Python also ship client implementations that developers can script against, so mcp-testbench positions itself as a more focused, testing-oriented layer on top of the same underlying protocol rather than a wholesale replacement for existing SDKs.\n\nThe broader context is the rapid growth of the MCP ecosystem across host applications such as Claude Desktop and various coding tools and IDE integrations. As more servers are published and connected to a wider range of clients, interoperability becomes a practical concern: a server that behaves correctly with one host may still stumble against another that implements the specification more strictly or uses a different transport. Tooling that validates conformance against realistic client behavior helps reduce that fragmentation, and it reflects a maturing phase in which the community is moving from proof-of-concept servers toward production-grade reliability.\n\nAs with any newly released project, prospective users should evaluate how completely mcp-testbench covers the current protocol revision, which transports it supports, and how actively it is maintained, since the MCP specification continues to evolve. Readers interested in adopting it would benefit from consulting the project's documentation directly to confirm its exact feature set and compatibility. Still, the underlying premise is sound: testing an MCP server as a real client, rather than through mocks, is a reasonable way to catch a class of bugs that would otherwise reach production, and it aligns with established testing practices in other protocol-driven domains.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-21T15:16:18.221Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「本物のクライアントとして」テストするって、つまりどういうこと？ モックとは違うの？",
-          "en": "What does testing “as a real client” actually mean? How is that different from using mocks?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、実際のMCPクライアントと同等の通信でサーバーを検証するんじゃ。記事によれば、モックが見逃しやすい接続やプロトコルの問題を探せるぞ。",
-          "en": "Simply put, it checks the server using the same kind of communication as an actual MCP client. According to the article, that can reveal connection and protocol issues mocks often miss."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ ユニットテストが通っていれば十分じゃないの？",
-          "en": "Why is that useful? Aren’t passing unit tests enough?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、テストが通ってもClaudeやCursorにつなぐと壊れる例が挙げられておる。stdoutの余計な出力やツールスキーマの不正などを早めに見つけられるのが利点じゃよ。",
-          "en": "The article says servers can still fail with Claude or Cursor despite passing tests. Catching issues like stray stdout output or invalid tool schemas earlier is the benefit."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ mcp-testbenchは、実際につなぐ場面に近い形で、モックだけでは見えにくい不具合を探す道具なんだね。",
-          "en": "Got it! mcp-testbench tests under conditions closer to a real connection, helping uncover bugs that mocks alone may not expose."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事の要点は、ユニットテストの結果だけで安心せず、実クライアント相当の通信でも確かめることじゃな。",
-          "en": "Exactly. The article’s key point is not to rely only on unit tests, but also verify the server through real-client-equivalent communication."
         }
       ]
     },
@@ -41308,272 +41270,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:33:08.118Z"
     },
-    "43dc5941df4bfd39": {
-      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
-      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
-          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
-          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
-        },
-        {
-          "s": "a",
-          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
-          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
-          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
-          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
-        },
-        {
-          "s": "b",
-          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
-          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:12:32.259Z"
-    },
-    "d94b84bc16af2780": {
-      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
-      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
-          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
-          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
-        },
-        {
-          "s": "a",
-          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
-          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
-        },
-        {
-          "s": "b",
-          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
-          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
-          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
-        },
-        {
-          "s": "b",
-          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
-          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:46:10.596Z"
-    },
-    "dd3872b4a6c4bf09": {
-      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
-      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
-          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
-          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
-        },
-        {
-          "s": "a",
-          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
-          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
-        },
-        {
-          "s": "b",
-          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
-          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
-          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
-        },
-        {
-          "s": "b",
-          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
-          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:50:27.117Z"
-    },
-    "02ed65f309f500b4": {
-      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
-          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
-          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
-          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
-          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
-          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
-          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T18:43:11.880Z"
-    },
-    "71cf0ce453abd7e0": {
-      "bodyJa": "## My workペイン\n\nGitHub Copilotアプリでは、「My work」ペインを使い、複数のCopilotセッションをまとめて追跡できる。並行作業の状態を一元的に確認できるため、初心者が作業を整理する際に役立つ機能として紹介されている。\n\n## セッション管理\n\n「My work」ペインで把握できるのは、現在進行中の作業、すでに完了した作業、次に取り組む作業だ。複数のアクティブなセッションを同時に追い、何が進行中で、何が完了し、何が次に控えているかを見分けやすくする。これにより、複数タスクにまたがるCopilotでの作業を整理しやすいと説明されている。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThe GitHub Copilot app’s My work pane helps beginners manage multiple Copilot sessions. It matters when several tasks are running in parallel and users need a clear view of their status.\n\nThe pane brings session tracking into one place, making it easier to understand ongoing work without checking each session separately.\n\n## Managing your work\n\nMy work shows what is currently in progress, what has been completed, and what is queued next. This allows users juggling multiple sessions to keep track of active tasks and identify the next work item.\n\nBy presenting these stages together, the pane helps users stay organized across parallel Copilot tasks.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Copilotでいくつも作業を並行するとき、普段の管理はどう変わるの？",
-          "en": "If I’m juggling several tasks in Copilot, how does this change the way I manage my work?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、「My work」ペインで進行中・完了・次のタスクをまとめて確認できるんじゃ。複数セッションも追いやすくなるぞ。",
-          "en": "The article says the My work pane puts active, completed, and upcoming tasks in one place, making multiple Copilot sessions easier to track."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！前は複数のセッションをまとめて確認できなかったの？",
-          "en": "Oh, nice! Was there no way to review multiple sessions together before?"
-        },
-        {
-          "s": "b",
-          "ja": "以前は不可能だった、とまでは書かれておらんのう。本文から分かるのは、このペインで並行作業を把握しやすくなることじゃ。",
-          "en": "It doesn’t say that was impossible before. What it does establish is that this pane makes parallel work easier to keep track of."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、作業が増えても「今どこ？」を見失いにくいことだね。初心者にも助かりそう！",
-          "en": "So the big win is not losing track of where everything stands as tasks pile up. That sounds really helpful for beginners!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。紹介されている範囲では、進行中・完了・次のタスクを一目で整理できる点に注目じゃよ。",
-          "en": "Exactly. Based on what’s described, the key point is being able to organize what’s active, finished, and next at a glance."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T22:53:50.918Z"
-    },
-    "2d2903bf6d6bf16f": {
-      "bodyJa": "## キャンバス\n\nチャットは意図を伝えるのに適している一方、エージェントの作業はスクロールの中に埋もれがちだと説明されている。キャンバスは、エージェント型ワークフローを継続的かつ構造化された面に置き、作業を見える形にする手段となる。\n\n## 進捗と軌道修正\n\n作業の状態がチャット履歴だけに残る場合に比べ、キャンバス上ではエージェントの進捗を把握しやすい。ワークフローが可視化されることで、進行中の作業を確認し、必要に応じて軌道修正しやすくなるとされる。\n\n## トークンコスト\n\n構造化されたキャンバスを使うことで、無駄なコンテキストを減らせる。結果として不要なトークン消費が抑えられ、ワークフロー全体のトークンコスト低減につながると説明されている。",
-      "bodyEn": "## Agentic workflows\n\nCanvases can make agentic workflows visible, steerable, and more cost-efficient. This matters because chat is useful for expressing intent, but an agent’s work can become buried in the conversation scroll, making progress harder to follow.\n\n## Visible and steerable\n\nA canvas provides a persistent, structured surface for the workflow. Instead of leaving the agent’s activity embedded in chat history, it makes progress visible and easier to assess. That visibility also helps users steer the workflow and correct its course when needed.\n\nThe canvas therefore serves as a place to see the work as it develops, rather than relying only on a scrolling record of exchanges. According to the source, this structure makes it easier to understand where the agent is in the workflow and to guide what happens next.\n\n## Cost-efficient\n\nKeeping the workflow on a structured surface can also reduce wasted context. By avoiding unnecessary context consumption, canvases can limit unneeded token use and lower overall token costs while supporting the same agentic workflow.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でAIに何段階かの作業を任せるとき、キャンバスがあると普段の何が変わるの？",
-          "en": "When I give AI a multi-step task at work, what changes if I use a canvas?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、流れて消えがちな作業をキャンバス上に整理して残し、進捗を見ながら軌道修正しやすくなるとしておるぞ。",
-          "en": "The article says a canvas keeps the agent’s work organized and visible instead of losing it in the chat scroll, so you can track progress and steer it."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ チャットで途中経過を追うだけじゃ足りないのかな。",
-          "en": "Couldn’t we do that before? Isn’t following the progress in chat enough?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれておらん。本文では、チャットは意図を伝えるのに向く一方、作業がスクロールに埋もれやすいと対比しておるのう。",
-          "en": "It doesn’t say that was impossible. The post contrasts chat, which works well for expressing intent, with agent work that can get buried in the scroll."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど、一番の収穫は、AIの作業を見える場所に置けば、迷走に気づいて無駄を減らせるかもってことだね！",
-          "en": "Got it! My biggest takeaway is that keeping AI work visible could help us catch drift and cut waste."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。そこで挙げられている、不要な文脈を減らして全体のトークンコストを下げる効果にも注目じゃな。",
-          "en": "Exactly. It also highlights reducing wasted context and lowering overall token costs—that’s the next point to watch."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:20:04.037Z"
-    },
-    "9eb4ab95dfb804c7": {
-      "bodyJa": "## GitHub内で完結\n\n本チュートリアルは、4つのGitHubエージェントアプリを使い、機能のスコープ定義からリリースまでのソフトウェアデリバリーワークフローをGitHubに統合する方法を扱う。SDLC全体の作業をGitHubから離れずに進められる点が中心となる。\n\n## 4つの工程\n\n対象となるのは、機能の範囲を定めるスコープ定義、セキュリティの確保、展開、リリースの4段階だ。4つのエージェントアプリがこれらをカバーし、機能を出荷するまでをGitHub内で進める手順として説明されている。一連の流れを同じ場所に統合する構成だ。",
-      "bodyEn": "## Software delivery workflow\n\nThis tutorial explains how to bring a software delivery workflow into GitHub with agent apps. The approach matters because it covers a feature across the full SDLC without requiring users to leave GitHub.\n\n## Four GitHub agent apps\n\nThe tutorial uses four GitHub agent apps to address the workflow. According to the source, these apps can help with four parts of delivering a feature: defining its scope, securing it, rolling it out, and shipping it. Each part remains within GitHub.\n\n## Across the SDLC\n\nThe workflow spans the SDLC from scoping through security and rollout to shipping. The post presents a tutorial for applying the four agent apps across these stages, showing how they fit into the process of taking a feature from scope definition to release without leaving GitHub.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "4つのGitHubエージェントアプリだけで、機能の範囲決めから安全確認、展開、リリースまで進められるの？",
-          "en": "Can four GitHub agent apps really take a feature from scoping and security checks through rollout and release?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、その4段階をGitHubから離れず支援できるとしておる。SDLCとは、ソフトウェアを計画して届けるまでの流れじゃよ。",
-          "en": "That’s what the article describes: support for all four stages without leaving GitHub. SDLC means the overall journey from planning software to delivering it."
-        },
-        {
-          "s": "a",
-          "ja": "つまり開発する人は、工程ごとに別の作業場へ移らず、GitHubという一つの工房で進める感じ？",
-          "en": "So for developers, is it like staying in one GitHub workshop instead of moving to a different workspace for each stage?"
-        },
-        {
-          "s": "b",
-          "ja": "そのたとえに近いのう。本文が示す範囲では、機能を決め、安全にし、展開して出荷する流れをGitHub内につなげられるんじゃ。",
-          "en": "That analogy fits nicely. The post shows a connected GitHub workflow for scoping, securing, rolling out, and shipping a feature."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、4つのエージェントアプリで、機能を届ける一連の作業をGitHubにまとめるんだね！",
-          "en": "Oh, I get it! Four agent apps bring the whole feature-delivery workflow together inside GitHub."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。ただ、紹介では各工程を「支援できる」としており、すべてが自動で完了するとまでは断定しておらん点に注意じゃ。",
-          "en": "Exactly. One nuance: it says the apps can help across those stages; it doesn’t claim the entire process completes automatically."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T23:05:34.400Z"
-    },
     "b0603669185021cb": {
       "bodyJa": "Metaは、レコメンデーションシステムの検索基盤を刷新する新アーキテクチャ「SilverTorch」を発表した。FacebookやInstagramなどで扱うユーザー生成コンテンツ（UGC）の検索コンポーネントを単一の統一アーキテクチャへ集約し、従来比で最大23.7倍の性能向上を実現したとしている。\n\n大規模な推薦システムは一般に、膨大なコンテンツ候補から関連性の高いものを絞り込む「検索（リトリーバル）」と、絞り込んだ候補を精緻に並べ替える「ランキング」という多段階のパイプラインで構成される。検索段階では数十億規模のアイテムを高速に処理する必要があり、近似最近傍探索（ANN）や埋め込みベクトルを用いたembedding検索、逆引きインデックスなど、用途ごとに異なる手法やシステムが併存してきた。これらが個別に最適化・運用されることで、システムは複雑化し、保守コストや一貫性の確保が課題となっていた。\n\nSilverTorchが掲げる「Index as Model（モデルとしてのインデックス）」という発想は、検索インデックスそのものをモデルの一部として扱い、分断されていた各検索コンポーネントを共通の枠組みに統合する点に特徴がある。インデックスの構築から候補生成までを一体的に扱うことで重複する処理を削減し、計算効率と精度の両立を狙うものと見られる。Metaは大幅な性能向上の要因として、こうした統一化によるハードウェア利用効率の改善を挙げている。\n\n検索の効率化は、Metaに限らず業界全体の重要テーマとなっている。GoogleやByteDanceをはじめとする各社も推薦・検索の高速化や生成AIとの融合に取り組んでおり、ベクトル検索ライブラリのFAISS（Meta開発）やScaNNといった周辺ツールも広く利用されている。近年は検索段階に大規模言語モデルや生成的検索（generative retrieval）の手法を取り入れる研究も活発で、SilverTorchもこうした流れの中に位置づけられる可能性がある。\n\nユーザーが体感しやすい変化は限定的かもしれないが、レコメンデーションの応答速度や関連性、そして運用基盤の効率は、サービス品質とインフラコストを左右する重要な要素だ。SilverTorchが示す統一アーキテクチャの考え方は、今後の大規模推薦システム設計に一定の影響を与えると見られる。",
       "bodyEn": "Meta has introduced SilverTorch, a redesigned approach to the retrieval layer of its recommendation systems that the company describes through a concept it calls \"Index as Model.\" The work matters because retrieval—the stage that narrows billions of candidate items down to a manageable shortlist before ranking—sits at the cost and latency center of every large-scale recommendation product, from feeds and reels to search and discovery surfaces. According to Meta's engineering blog, SilverTorch unifies all of the retrieval components used for user-generated content under a single architecture and reports performance improvements of up to 23.7x.\n\nTo understand the change, it helps to recall how modern recommendation systems are typically built. They generally run as a multi-stage funnel: a retrieval or candidate-generation stage first selects a few thousand promising items from a corpus that may contain billions, after which one or more ranking models score and order those candidates for the user. Retrieval has historically relied on embedding-based methods, in which a model maps users and items into a shared vector space, paired with an approximate nearest neighbor (ANN) index that can find similar vectors quickly. In this conventional design, the model that produces embeddings and the index that searches over them are separate systems, often built, tuned, and served by different infrastructure.\n\nThat separation is the friction SilverTorch appears to target. At Meta's scale, user-generated content flows through many distinct retrieval components, each tailored to a particular surface, content type, or signal, and each carrying its own indexing pipeline, storage layout, and serving stack. Maintaining these as independent systems adds engineering overhead, complicates consistency across products, and makes it harder to share optimizations. By bringing them together under one architecture, Meta is aiming to reduce that fragmentation and apply a common set of efficiency techniques across the board.\n\nThe \"Index as Model\" framing is the conceptual core. Traditionally an index is treated as a static data structure that is built offline and queried at serving time, while the model is a separate learned component. Treating the index as a model suggests that the indexing and retrieval logic is expressed and optimized as part of the same computational graph, allowing the system to be co-designed and accelerated together rather than bolted on afterward. This direction is consistent with a broader research trend toward learned and generative retrieval, including ideas such as the differentiable search index, where a single neural model effectively internalizes the corpus and produces relevant identifiers directly. SilverTorch's name also signals a connection to PyTorch, Meta's machine learning framework, implying that retrieval is being implemented in a way that can run efficiently on the same accelerator hardware and tooling used for the rest of the stack.\n\nThe reported 23.7x figure should be read carefully. The summary does not fully specify the baseline or the precise metric, and large headline multipliers in retrieval work usually refer to a specific dimension such as throughput, serving cost, indexing speed, or query latency under particular conditions, rather than a uniform improvement across every workload. Gains of this magnitude are plausible when previously CPU-bound or loosely coupled components are consolidated and moved onto GPU-friendly, unified execution, but the real-world impact will depend on the workload, the surfaces involved, and how the comparison is drawn.\n\nFor context, the wider industry has been converging on related ideas. Meta is the original author of FAISS, a widely used library for similarity search and dense vector indexing, and comparable systems include Google's ScaNN and graph-based methods such as HNSW that underpin many vector databases. The rise of retrieval-augmented generation and embedding-heavy applications has further raised the stakes for fast, cheap nearest-neighbor search, while companies including Google, ByteDance, and others have published work on unifying retrieval and ranking or on generative retrieval as an alternative to classic ANN pipelines. SilverTorch fits squarely within this movement toward tighter integration of models and indexes.\n\nAs with most production-systems disclosures, the blog post is likely to emphasize architecture and outcomes more than reproducible benchmarks, so independent evaluation is not yet possible. Still, the announcement is a useful signal of where large recommendation platforms are heading: away from separately maintained retrieval components and toward unified, model-centric systems where the index itself is treated as a first-class, learnable part of the machine learning stack.",
@@ -41617,44 +41313,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-05T18:40:32.700Z"
-    },
-    "0e3904a50b3ab7fd": {
-      "bodyJa": "## 最初のプロンプト\n\nGitHub Copilotアプリで初めてプロンプトを書く人に向けた入門ガイドだ。最初のタスクを自信を持って始めるために、効果的なプロンプトの書き方を中心に扱っている。\n\n作業の依頼内容を示すプロンプトに加え、開始時にどの情報をコンテキストとして選ぶかまでを解説する構成となっている。\n\n## コンテキストとモデル\n\nガイドでは、最初のタスクに適したコンテキストとモデルの選び方も取り上げる。プロンプトを書き、適切なコンテキストとモデルを選択して作業を始めるまでの流れを、初心者向けに説明している。",
-      "bodyEn": "## Write Your First Prompt\n\nThis beginner’s guide explains how to write an effective first prompt in the GitHub Copilot app. It matters because the guidance is intended to help users begin their first task with confidence.\n\nThe tutorial focuses on getting started with prompt writing rather than assuming prior experience. Its stated scope connects the first prompt with two related decisions: selecting appropriate context and choosing a model before starting the task.\n\n## Choose the Right Context\n\nAccording to the source, choosing the right context and model is part of preparing to begin a first task effectively. The guide presents these choices alongside prompt writing as key elements of the getting-started process.\n\nThe post is framed as a tutorial for beginners and covers prompt engineering within the GitHub Copilot app. Its emphasis remains on writing the initial prompt, making the relevant context and model selections, and confidently moving into the first task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "最初のプロンプトなのに、コンテキストとモデルの二つを考えるんだね。これって大きいこと？",
-          "en": "Even for a first prompt, you’re thinking about both context and the model. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "このガイドでは、その二つを最初の作業へ自信を持って進むための要点として扱っておる。初心者には大事な一歩じゃよ。",
-          "en": "The guide treats both as key to starting your first task with confidence. For a beginner, that’s an important first step."
-        },
-        {
-          "s": "a",
-          "ja": "コンテキストって何？つまり、Copilotにどこまで説明すればいいってこと？",
-          "en": "What’s “context”? Does it mean how much I need to explain to Copilot?"
-        },
-        {
-          "s": "b",
-          "ja": "一般にコンテキストは、依頼を理解するための背景や前提のことじゃ。ここでは、プロンプトに合う文脈を選ぶ話じゃのう。",
-          "en": "Context generally means the background or assumptions needed to understand a request. Here, it’s about choosing context that fits your prompt."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、やりたい作業を書いて、合いそうなコンテキストとモデルを選んで始めてみる！それでいい？",
-          "en": "I’d write what I want to do, pick a fitting context and model, and give it a try. Does that work?"
-        },
-        {
-          "s": "b",
-          "ja": "紹介されている進め方には合っておる。ただし、作業に合うコンテキストとモデルを選ぶのが条件じゃ。",
-          "en": "That matches the approach described. Just remember that the context and model should fit the task you want to start."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T23:08:55.349Z"
     },
     "e33edd69f7816887": {
       "bodyJa": "OpenAIが公開した企業のAI活用に関する調査により、企業でのAI利用が単なる「支援」から、業務を自律的に進める「実行」へと重心を移しつつある実態が示された。質問に答えるアシスタントを超え、タスクを最後までやり遂げるエージェントとしての活用が広がっているという見立てである。\n\n調査で企業導入の中心に挙げられているのが、ChatGPTとCodexだ。ChatGPTは文書作成や情報整理、調査、意思決定の支援など幅広い業務で使われ、Codexはソフトウェア開発の現場でコードの生成や修正といった作業を担う役割が想定される。こうした「エージェント型AI（agentic AI）」は、人間の指示を起点に複数の手順を自ら組み立て、必要なツールを呼び出しながらタスクの完了へと導く点が、従来の一問一答型のチャットとの違いとされる。\n\nとりわけ注目されるのは、AI活用の最前線に立つ「フロンティア企業」ほど採用で大きく先行しているという指摘だ。導入に積極的な企業とそうでない企業との間で、生産性や業務プロセスの差が広がっていく可能性がある。早期に組織へ組み込んだ企業が知見を蓄積し、さらに活用の幅を広げるという循環が生まれていると見られる。\n\n背景には、業界全体でエージェント志向が強まっている状況がある。OpenAIに限らず、AnthropicやGoogle、Microsoftなども、複数ステップの作業を自律的にこなすAIエージェントの開発や提供に注力しており、企業向けの導入支援でも競争が激しくなっている。一方で、自律的にタスクを実行させる以上、権限管理やセキュリティ、出力の検証といった運用面の課題も無視できない。\n\n今回の調査は、AIが「便利な補助ツール」から「業務を回す担い手」へと位置づけを変えつつある転換点を、企業の実例を通じて描いた内容と言える。実際にどの程度の業務が自動化され、どのような成果につながるかは、今後の各社の運用と検証の積み重ねによって明らかになっていくだろう。",
@@ -42155,6 +41813,354 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:54:20.707Z"
+    },
+    "fa91af45787dd3ac": {
+      "bodyJa": "## Daybreak\n\nOpenAIは、サイバーセキュリティ向けプラットフォーム「Daybreak」を発表した。あらゆる規模の組織が高度な脅威から自組織を守れるよう、AIを活用したツール群を提供する取り組みだ。\n\n## 脆弱性への対応\n\n新ツールには「Codex Security」と「GPT-5.5-Cyber」が含まれる。組織が脆弱性を大規模に発見し、検証したうえで修正できるよう支援する。高度な脅威の検出と防御を、組織の規模を問わず後押しするものと説明されている。",
+      "bodyEn": "## Daybreak\n\nOpenAI has launched Daybreak, a cybersecurity initiative built around AI-powered tools for organizations of all sizes. The initiative is designed to help organizations detect and defend against sophisticated threats.\n\nDaybreak provides a cybersecurity platform and tools intended to help organizations protect themselves from advanced threats.\n\n## Codex Security and GPT-5.5-Cyber\n\nThe new Daybreak tools include Codex Security and GPT-5.5-Cyber. OpenAI says the tools are intended to help organizations find, validate, and patch vulnerabilities at scale.",
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-06T05:16:53.906Z"
+    },
+    "83a567f474d4b196": {
+      "bodyJa": "## AIケミスト\n\nOpenAIとMolecule.oneは、GPT-5.4を用いたほぼ自律型のAIケミストが、医薬品化学で重要な反応を改善したと示した。AIによる現実の科学的発見の加速可能性を示す成果とされる。\n\n## 実験の設計と実行\n\nこのAIエージェントは、医薬品合成における難しい化学反応を対象に、改善に向けた実験を自律的に設計し、実行した。その結果、対象反応の改善に成功し、医薬品化学研究を前進させたと説明されている。",
+      "bodyEn": "## Near-autonomous AI chemist\n\nOpenAI and Molecule.one have shown how a near-autonomous AI chemist using GPT-5.4 improved a key drug-making reaction. The result matters because it demonstrates AI’s potential to accelerate real-world scientific discovery and advance medicinal chemistry research.\n\n## Designed and executed experiments\n\nOpenAI’s AI agent independently designed and executed experiments intended to improve a difficult reaction in medicinal chemistry. The work successfully improved the reaction used in pharmaceutical synthesis. By carrying out both experimental design and execution, the near-autonomous agent showed how AI could contribute directly to scientific research involving challenging chemical reactions.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "薬をつくる研究の仕事では、普段の何が変わるの？AIが実験までしてくれるってこと？",
+          "en": "In day-to-day drug research, what actually changes? Does the AI handle the experiments too?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、GPT-5.4を使うAIケミストが実験をほぼ自律的に設計・実行し、難しい反応を改善したのじゃ。研究を速める可能性があるそうじゃよ。",
+          "en": "The article says a GPT-5.4 AI chemist designed and ran experiments near-autonomously, improving a difficult reaction. It suggests this could speed up research."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！じゃあ前は、AIだけで実験を設計して実行し、反応を改善するところまではできなかったの？",
+          "en": "Wow! So before this, couldn’t AI design and run experiments and improve the reaction on its own?"
+        },
+        {
+          "s": "b",
+          "ja": "そこは本文だけでは分からんのう。今回示されたのは、OpenAIとMolecule.oneの仕組みが重要な医薬品製造反応を改善したことじゃ。",
+          "en": "The piece doesn’t establish that comparison, so we can’t tell. What it does show is OpenAI and Molecule.one’s system improving a key drug-making reaction."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、AIが難しい医薬品化学の実験をほぼ自律的に進め、反応を改善できたことだね！",
+          "en": "So the big win is that AI near-autonomously carried out tough medicinal-chemistry experiments and improved the reaction. That’s amazing!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。締めくくりで注目されているのは、この成果が実世界の科学的発見を加速しうる、という可能性じゃな。",
+          "en": "Indeed. The closing point to watch is the potential for this result to accelerate real-world scientific discovery."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-06T05:17:51.610Z"
+    },
+    "855d6eb9ada55a72": {
+      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
+      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
+          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
+          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
+        },
+        {
+          "s": "a",
+          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
+          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
+          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
+          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
+          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:12:32.259Z"
+    },
+    "b68f08d5b78fdf2b": {
+      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
+      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
+          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
+          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
+        },
+        {
+          "s": "a",
+          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
+          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
+        },
+        {
+          "s": "b",
+          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
+          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
+          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
+          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:46:10.596Z"
+    },
+    "c3242eb99cc5f08b": {
+      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
+      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
+          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
+          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
+        },
+        {
+          "s": "a",
+          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
+          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
+        },
+        {
+          "s": "b",
+          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
+          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
+          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
+        },
+        {
+          "s": "b",
+          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
+          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:50:27.117Z"
+    },
+    "614c15e2239ab54e": {
+      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
+      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
+          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
+        },
+        {
+          "s": "b",
+          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
+          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
+        },
+        {
+          "s": "a",
+          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
+          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
+        },
+        {
+          "s": "b",
+          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
+          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
+          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
+          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-08-30T18:43:11.880Z"
+    },
+    "0f7a7d85bd26ee44": {
+      "bodyJa": "## My workペイン\n\nGitHub Copilotアプリでは、「My work」ペインを使い、複数のCopilotセッションをまとめて追跡できる。並行作業の状態を一元的に確認できるため、初心者が作業を整理する際に役立つ機能として紹介されている。\n\n## セッション管理\n\n「My work」ペインで把握できるのは、現在進行中の作業、すでに完了した作業、次に取り組む作業だ。複数のアクティブなセッションを同時に追い、何が進行中で、何が完了し、何が次に控えているかを見分けやすくする。これにより、複数タスクにまたがるCopilotでの作業を整理しやすいと説明されている。",
+      "bodyEn": "## GitHub Copilot app for Beginners\n\nThe GitHub Copilot app’s My work pane helps beginners manage multiple Copilot sessions. It matters when several tasks are running in parallel and users need a clear view of their status.\n\nThe pane brings session tracking into one place, making it easier to understand ongoing work without checking each session separately.\n\n## Managing your work\n\nMy work shows what is currently in progress, what has been completed, and what is queued next. This allows users juggling multiple sessions to keep track of active tasks and identify the next work item.\n\nBy presenting these stages together, the pane helps users stay organized across parallel Copilot tasks.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Copilotでいくつも作業を並行するとき、普段の管理はどう変わるの？",
+          "en": "If I’m juggling several tasks in Copilot, how does this change the way I manage my work?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、「My work」ペインで進行中・完了・次のタスクをまとめて確認できるんじゃ。複数セッションも追いやすくなるぞ。",
+          "en": "The article says the My work pane puts active, completed, and upcoming tasks in one place, making multiple Copilot sessions easier to track."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！前は複数のセッションをまとめて確認できなかったの？",
+          "en": "Oh, nice! Was there no way to review multiple sessions together before?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は不可能だった、とまでは書かれておらんのう。本文から分かるのは、このペインで並行作業を把握しやすくなることじゃ。",
+          "en": "It doesn’t say that was impossible before. What it does establish is that this pane makes parallel work easier to keep track of."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、作業が増えても「今どこ？」を見失いにくいことだね。初心者にも助かりそう！",
+          "en": "So the big win is not losing track of where everything stands as tasks pile up. That sounds really helpful for beginners!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。紹介されている範囲では、進行中・完了・次のタスクを一目で整理できる点に注目じゃよ。",
+          "en": "Exactly. Based on what’s described, the key point is being able to organize what’s active, finished, and next at a glance."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-04T22:53:50.918Z"
+    },
+    "fafa75871b75df2e": {
+      "bodyJa": "## キャンバス\n\nチャットは意図を伝えるのに適している一方、エージェントの作業はスクロールの中に埋もれがちだと説明されている。キャンバスは、エージェント型ワークフローを継続的かつ構造化された面に置き、作業を見える形にする手段となる。\n\n## 進捗と軌道修正\n\n作業の状態がチャット履歴だけに残る場合に比べ、キャンバス上ではエージェントの進捗を把握しやすい。ワークフローが可視化されることで、進行中の作業を確認し、必要に応じて軌道修正しやすくなるとされる。\n\n## トークンコスト\n\n構造化されたキャンバスを使うことで、無駄なコンテキストを減らせる。結果として不要なトークン消費が抑えられ、ワークフロー全体のトークンコスト低減につながると説明されている。",
+      "bodyEn": "## Agentic workflows\n\nCanvases can make agentic workflows visible, steerable, and more cost-efficient. This matters because chat is useful for expressing intent, but an agent’s work can become buried in the conversation scroll, making progress harder to follow.\n\n## Visible and steerable\n\nA canvas provides a persistent, structured surface for the workflow. Instead of leaving the agent’s activity embedded in chat history, it makes progress visible and easier to assess. That visibility also helps users steer the workflow and correct its course when needed.\n\nThe canvas therefore serves as a place to see the work as it develops, rather than relying only on a scrolling record of exchanges. According to the source, this structure makes it easier to understand where the agent is in the workflow and to guide what happens next.\n\n## Cost-efficient\n\nKeeping the workflow on a structured surface can also reduce wasted context. By avoiding unnecessary context consumption, canvases can limit unneeded token use and lower overall token costs while supporting the same agentic workflow.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でAIに何段階かの作業を任せるとき、キャンバスがあると普段の何が変わるの？",
+          "en": "When I give AI a multi-step task at work, what changes if I use a canvas?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、流れて消えがちな作業をキャンバス上に整理して残し、進捗を見ながら軌道修正しやすくなるとしておるぞ。",
+          "en": "The article says a canvas keeps the agent’s work organized and visible instead of losing it in the chat scroll, so you can track progress and steer it."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ チャットで途中経過を追うだけじゃ足りないのかな。",
+          "en": "Couldn’t we do that before? Isn’t following the progress in chat enough?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれておらん。本文では、チャットは意図を伝えるのに向く一方、作業がスクロールに埋もれやすいと対比しておるのう。",
+          "en": "It doesn’t say that was impossible. The post contrasts chat, which works well for expressing intent, with agent work that can get buried in the scroll."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど、一番の収穫は、AIの作業を見える場所に置けば、迷走に気づいて無駄を減らせるかもってことだね！",
+          "en": "Got it! My biggest takeaway is that keeping AI work visible could help us catch drift and cut waste."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。そこで挙げられている、不要な文脈を減らして全体のトークンコストを下げる効果にも注目じゃな。",
+          "en": "Exactly. It also highlights reducing wasted context and lowering overall token costs—that’s the next point to watch."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:20:04.037Z"
+    },
+    "c4c1018ae834ae55": {
+      "bodyJa": "## GitHub内で完結\n\n本チュートリアルは、4つのGitHubエージェントアプリを使い、機能のスコープ定義からリリースまでのソフトウェアデリバリーワークフローをGitHubに統合する方法を扱う。SDLC全体の作業をGitHubから離れずに進められる点が中心となる。\n\n## 4つの工程\n\n対象となるのは、機能の範囲を定めるスコープ定義、セキュリティの確保、展開、リリースの4段階だ。4つのエージェントアプリがこれらをカバーし、機能を出荷するまでをGitHub内で進める手順として説明されている。一連の流れを同じ場所に統合する構成だ。",
+      "bodyEn": "## Software delivery workflow\n\nThis tutorial explains how to bring a software delivery workflow into GitHub with agent apps. The approach matters because it covers a feature across the full SDLC without requiring users to leave GitHub.\n\n## Four GitHub agent apps\n\nThe tutorial uses four GitHub agent apps to address the workflow. According to the source, these apps can help with four parts of delivering a feature: defining its scope, securing it, rolling it out, and shipping it. Each part remains within GitHub.\n\n## Across the SDLC\n\nThe workflow spans the SDLC from scoping through security and rollout to shipping. The post presents a tutorial for applying the four agent apps across these stages, showing how they fit into the process of taking a feature from scope definition to release without leaving GitHub.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "4つのGitHubエージェントアプリだけで、機能の範囲決めから安全確認、展開、リリースまで進められるの？",
+          "en": "Can four GitHub agent apps really take a feature from scoping and security checks through rollout and release?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、その4段階をGitHubから離れず支援できるとしておる。SDLCとは、ソフトウェアを計画して届けるまでの流れじゃよ。",
+          "en": "That’s what the article describes: support for all four stages without leaving GitHub. SDLC means the overall journey from planning software to delivering it."
+        },
+        {
+          "s": "a",
+          "ja": "つまり開発する人は、工程ごとに別の作業場へ移らず、GitHubという一つの工房で進める感じ？",
+          "en": "So for developers, is it like staying in one GitHub workshop instead of moving to a different workspace for each stage?"
+        },
+        {
+          "s": "b",
+          "ja": "そのたとえに近いのう。本文が示す範囲では、機能を決め、安全にし、展開して出荷する流れをGitHub内につなげられるんじゃ。",
+          "en": "That analogy fits nicely. The post shows a connected GitHub workflow for scoping, securing, rolling out, and shipping a feature."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、4つのエージェントアプリで、機能を届ける一連の作業をGitHubにまとめるんだね！",
+          "en": "Oh, I get it! Four agent apps bring the whole feature-delivery workflow together inside GitHub."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。ただ、紹介では各工程を「支援できる」としており、すべてが自動で完了するとまでは断定しておらん点に注意じゃ。",
+          "en": "Exactly. One nuance: it says the apps can help across those stages; it doesn’t claim the entire process completes automatically."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-04T23:05:34.400Z"
+    },
+    "1ee0c39c0381a0f6": {
+      "bodyJa": "## 最初のプロンプト\n\nGitHub Copilotアプリで初めてプロンプトを書く人に向けた入門ガイドだ。最初のタスクを自信を持って始めるために、効果的なプロンプトの書き方を中心に扱っている。\n\n作業の依頼内容を示すプロンプトに加え、開始時にどの情報をコンテキストとして選ぶかまでを解説する構成となっている。\n\n## コンテキストとモデル\n\nガイドでは、最初のタスクに適したコンテキストとモデルの選び方も取り上げる。プロンプトを書き、適切なコンテキストとモデルを選択して作業を始めるまでの流れを、初心者向けに説明している。",
+      "bodyEn": "## Write Your First Prompt\n\nThis beginner’s guide explains how to write an effective first prompt in the GitHub Copilot app. It matters because the guidance is intended to help users begin their first task with confidence.\n\nThe tutorial focuses on getting started with prompt writing rather than assuming prior experience. Its stated scope connects the first prompt with two related decisions: selecting appropriate context and choosing a model before starting the task.\n\n## Choose the Right Context\n\nAccording to the source, choosing the right context and model is part of preparing to begin a first task effectively. The guide presents these choices alongside prompt writing as key elements of the getting-started process.\n\nThe post is framed as a tutorial for beginners and covers prompt engineering within the GitHub Copilot app. Its emphasis remains on writing the initial prompt, making the relevant context and model selections, and confidently moving into the first task.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "最初のプロンプトなのに、コンテキストとモデルの二つを考えるんだね。これって大きいこと？",
+          "en": "Even for a first prompt, you’re thinking about both context and the model. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "このガイドでは、その二つを最初の作業へ自信を持って進むための要点として扱っておる。初心者には大事な一歩じゃよ。",
+          "en": "The guide treats both as key to starting your first task with confidence. For a beginner, that’s an important first step."
+        },
+        {
+          "s": "a",
+          "ja": "コンテキストって何？つまり、Copilotにどこまで説明すればいいってこと？",
+          "en": "What’s “context”? Does it mean how much I need to explain to Copilot?"
+        },
+        {
+          "s": "b",
+          "ja": "一般にコンテキストは、依頼を理解するための背景や前提のことじゃ。ここでは、プロンプトに合う文脈を選ぶ話じゃのう。",
+          "en": "Context generally means the background or assumptions needed to understand a request. Here, it’s about choosing context that fits your prompt."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、やりたい作業を書いて、合いそうなコンテキストとモデルを選んで始めてみる！それでいい？",
+          "en": "I’d write what I want to do, pick a fitting context and model, and give it a try. Does that work?"
+        },
+        {
+          "s": "b",
+          "ja": "紹介されている進め方には合っておる。ただし、作業に合うコンテキストとモデルを選ぶのが条件じゃ。",
+          "en": "That matches the approach described. Just remember that the context and model should fit the task you want to start."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-04T23:08:55.349Z"
     }
   }
 }

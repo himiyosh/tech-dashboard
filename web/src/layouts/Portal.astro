@@ -1603,6 +1603,7 @@ const footerLastRunRelative = footerLastRunAt
                       const seenIds = new Set(
                         primary.map((existing: any) => existing?.id).filter(Boolean),
                       );
+                      const seenResults = new Set<any>(primary);
                       const extra: any[] = [];
                       const relaxedDeadline = performance.now() + 3000;
                       for (const relaxedQuery of relaxedQueries) {
@@ -1614,8 +1615,12 @@ const footerLastRunRelative = footerLastRunAt
                             "The relaxed query took too long to respond.",
                           );
                           for (const candidate of relaxed?.results ?? []) {
-                            if (!candidate?.id || seenIds.has(candidate.id)) continue;
-                            seenIds.add(candidate.id);
+                            // Pagefind always sets an id; fall back to object
+                            // identity so a result without one is still kept.
+                            if (!candidate || seenResults.has(candidate)) continue;
+                            if (candidate.id && seenIds.has(candidate.id)) continue;
+                            if (candidate.id) seenIds.add(candidate.id);
+                            seenResults.add(candidate);
                             extra.push(candidate);
                           }
                         } catch {

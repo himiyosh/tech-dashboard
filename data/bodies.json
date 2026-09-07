@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-06T22:30:34.219Z",
-  "count": 1113,
+  "generatedAt": "2026-09-07T20:13:47.583Z",
+  "count": 1114,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42199,6 +42199,12 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:13:18.814Z"
+    },
+    "89704c9c738b98f5": {
+      "bodyJa": "## 検索漏れの切り分け\n\nVSCodeやCursorで、存在するはずのファイルが検索結果に出ない場合、ファイル自体が消えたとは限りません。主な原因は、.gitignore、VSCode独自の除外設定、検索時の大文字・小文字の区別、単語単位の指定という4つに整理できます。\n\n## .gitignore\n\nVSCodeの検索はデフォルトで.gitignoreの内容を参照し、記載されたファイルやフォルダを検索対象から除外します。設定画面はCtrl + ,で開き、「useIgnoreFiles」を検索して「Search: Use Ignore Files」をオフにします。settings.jsonで指定する場合は、\"search.useIgnoreFiles\": falseと設定します。\n\nこれにより.gitignoreに記載されたファイルも検索できますが、依存関係のファイルなどが結果に増え、ノイズが多くなる点には注意が必要です。\n\n## 除外設定の違い\n\n.gitignoreとは別に、files.excludeとsearch.excludeも確認が必要です。files.excludeはエクスプローラー上での表示自体を隠し、search.excludeは検索結果から対象を除外します。チームで共有している.vscode/settings.jsonに対象フォルダの除外指定が含まれている場合もあるため、個人の設定だけでなく共有設定も確認します。\n\nまた、explorer.excludeGitIgnoreはサイドバーの表示を制御する設定です。検索対象を決めるsearch.useIgnoreFilesとは役割が異なるため、似た名前でも混同しないことが重要です。\n\n## 検索オプション\n\n検索窓の右側にある「大文字と小文字を区別する」がオンの場合、入力した検索語の大小文字が一致しなければヒットしません。「単語単位で検索」がオンの場合も、意図した文字列が単語として一致せず、結果から漏れることがあります。ファイルが見つからないときは、除外設定を変更する前に、この2つのオプションのオン・オフを確認すると素早く切り分けられます。",
+      "bodyEn": "## VSCode Search\n\nExisting files may not appear in VSCode or Cursor search even though they remain available through the explorer. Four main causes can account for these omissions, including ignore-file handling, editor-specific exclusion settings, and search options that change how terms are matched.\n\n## Search: Use Ignore Files\n\nBy default, VSCode search refers to .gitignore and excludes the files and folders listed there from its search scope. To include those items, open the settings screen with Ctrl + , search for “useIgnoreFiles,” and turn off “Search: Use Ignore Files.”\n\nThe same change can be made directly in settings.json by setting “search.useIgnoreFiles” to false. The similarly named explorer.excludeGitIgnore setting serves a different purpose: it controls sidebar visibility rather than search behavior.\n\nDisabling ignore-file handling makes files listed in .gitignore searchable. However, it can also increase noise by including items such as dependency files.\n\n## search.exclude and files.exclude\n\nVSCode has its own exclusion settings in addition to .gitignore. The files.exclude setting hides matching items from the explorer itself, while search.exclude removes matching items only from search results.\n\nThese settings may also be defined in a team’s shared .vscode/settings.json file. If a file or folder is unexpectedly absent, checking the shared configuration can reveal whether a target folder has been excluded unintentionally.\n\nThe distinction helps narrow down the issue: an item hidden by files.exclude affects explorer visibility, whereas search.exclude specifically affects whether it appears among search results.\n\n## Four Reasons\n\nSearch controls on the right side of the search field can also prevent expected matches. If case-sensitive search is enabled, a term with different capitalization will not match. If whole-word search is enabled, a query that does not satisfy that matching condition may also produce no result.\n\nWhen a known file or expected term cannot be found, checking whether these two options are enabled or disabled is a quick diagnostic step. Together with .gitignore handling and VSCode’s exclusion settings, they cover the four main causes described for missing search results.",
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-07T16:10:55.122Z"
     }
   }
 }

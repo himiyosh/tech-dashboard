@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T16:09:48.724Z",
+  "generatedAt": "2026-09-07T20:13:49.757Z",
   "month": "2026-09",
   "count": 80,
   "entries": [
@@ -10,16 +10,21 @@
       "url": "https://qiita.com/yoossh/items/9385303ed109e5b0ca9e",
       "title": "WSL上のROS2を使ってVisual Studio CodeとGazeboでロボットを自動巡回させる",
       "titleJa": "WSL上のROS2を使ってVisual Studio CodeとGazeboでロボットを自動巡回させる",
-      "titleEn": "",
+      "titleEn": "Autonomous Robot Patrols with ROS 2 on WSL, Visual Studio Code, and Gazebo",
       "lang": "ja",
       "publishedAt": "2026-09-07T13:01:03.000Z",
       "collectedAt": "2026-09-07T16:09:35.970Z",
       "tags": [
+        "gazebo",
+        "nav2",
         "qiita",
-        "vscode"
+        "robotics",
+        "ros2",
+        "vscode",
+        "wsl2"
       ],
       "category": "vscode",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "WSL上のROS 2ワークスペースは、Visual Studio CodeのRemote - WSL接続で直接開けます。Linux側のlaunch、YAML、Python、C++を編集し、VS Code統合ターミナルでビルドやトピック・TFの確認まで行えるため、シミュレーションの設定変更とデバッグを同じ環境で完結できます。 今回は、このVisual Studio Code環境において、Gazebo上のUnitree Go2にLivox MID360相当のLiDARを搭載し、FAST-LIOで3D点群地図を保存した後、Nav2で自律走行を行うまでの実験を行いましたので、そのときの手順を整理して紹介します。 3D点群地図の保存にはFAST-LIOを使用します。一方、今回のGazeboシミュレーションでNav2が使用する2D occupancy gridは、Gazeboワールドに配置した障害物の座標から生成した固定地図です。自己位置にはGazeboのground-truthオドメトリを使用するため、Gazebo画面とRViz2のGo2位置を同じ座標系で扱えます。 ここで使用するCHAMP（不要な略語へ展開せず、四足歩行ロボット向けの制御フレームワーク）は、Go2の歩行を担当するソフトウェアです。Nav2から受け取った /cmd_vel の速度指令を歩容計算と関節軌道へ変換し、各脚を動かしてロボットを歩行させます。本記事では、Nav2が経路を計画し、CHAMPがその経路に沿ってGo2を実際に歩かせる役割分担になっています。 なお、本記事はWSL2（Ubuntu 22.04 LTS）、ROS 2 Humble、Unitree Go2（CHAMPコントローラ）、FAST-LIO、Livox-SDK2がセットアップされた環境（ ~/ros2_ws/src 配下に unitree_ros2 、 unitree-go2-ros2-gazebo 、 livox_ros_driver2 、 fast_lio リポジトリが配置済み）を前提としています。 1.",
@@ -49,6 +54,7 @@
         "qiita",
         "search-settings",
         "troubleshooting",
+        "tutorial",
         "vscode",
         "vscode-search"
       ],
@@ -93,7 +99,15 @@
       "archiveTier": "hot",
       "contentSnippet": "VSCodeの全プルダウンメニューを整理していて、 Ctrl+P （ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 ファイル名の一部を入力するだけで、部分一致・あいまい一致（fuzzy検索）でファイル候補が絞り込まれます。フォルダ構造を辿るより高速です。 @ に続けて関数名やクラス名を入力すると、 開いているファイル内 のシンボル一覧から絞り込めます。 Ctrl+Shift+O （エディター内のシンボルへ移動）と同じ機能を、 Ctrl+P から連続して呼び出せる点が地味に便利です。 @ がカレントファイル限定なのに対し、 # はワークスペース全体を対象にシンボルを検索します。「このクラス、どのファイルにあったっけ」を調べる際に、ファイル名が分からなくてもクラス名だけで直接ジャンプできます。 スタックトレースに「line 245」のようなエラー行が出ている場合、 Ctrl+G を別途呼ばなくても Ctrl+P から : と行番号を打つだけでジャンプできます。 Ctrl+P の入力欄で > から始めると、その場で Ctrl+Shift+P （コマンドパレット）と同じ検索に切り替わります。ファイルを探している途中で「あ、コマンドを実行したい」と思ったときに、ダイアログを閉じて開き直す必要がありません。 Ctrl+P は単なるファイル検索ではなく、 @ # : > という4つのプレフィックスで検索対象そのものを切り替えられる、実質5機能を1つのショートカットに集約したUIでした。1つのキーバインドを覚えるだけで複数の操作系統をカバーできるため、覚えるショートカットの総数を減らす効果もあります。メニュー全8カテゴリの網羅的な一覧は元記事にまとめています。",
       "excerptOrigin": "article",
-      "feedSnippet": "背景 VSCodeの全プルダウンメニューを整理していて、Ctrl+P（ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 1. プレフィックスなし：ファジー検索でファ..."
+      "feedSnippet": "背景 VSCodeの全プルダウンメニューを整理していて、Ctrl+P（ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 1. プレフィックスなし：ファジー検索でファ...",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJTYwQ3RybCUyQlAlNjAlRTMlODElQUYlRTglQTglOTglRTUlOEYlQjcxJUU2JTk2JTg3JUU1JUFEJTk3JUUzJTgxJUE3NSVFMyU4MSVBNCVFMyU4MSVBRSVFNiVBNCU5QyVFNyVCNCVBMiVFMyU4MyVBMiVFMyU4MyVCQyVFMyU4MyU4OSVFMyU4MSVBQiVFNSU4QyU5NiVFMyU4MSU5MSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWI3MzNlMDQ3ZDljOThhNDI1OGFlZjZhYjM4ZDc3MmM4&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=34a6a6fde41d5cd081005c2bb0444571",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJTYwQ3RybCUyQlAlNjAlRTMlODElQUYlRTglQTglOTglRTUlOEYlQjcxJUU2JTk2JTg3JUU1JUFEJTk3JUUzJTgxJUE3NSVFMyU4MSVBNCVFMyU4MSVBRSVFNiVBNCU5QyVFNyVCNCVBMiVFMyU4MyVBMiVFMyU4MyVCQyVFMyU4MyU4OSVFMyU4MSVBQiVFNSU4QyU5NiVFMyU4MSU5MSVFMyU4MiU4QiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWI3MzNlMDQ3ZDljOThhNDI1OGFlZjZhYjM4ZDc3MmM4&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=34a6a6fde41d5cd081005c2bb0444571",
+        "alt": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "a127ef535623fb17",
@@ -308,7 +322,7 @@
       "titleEn": "langchain-core==1.6.2",
       "lang": "en",
       "publishedAt": "2026-09-04T21:29:44.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "collectedAt": "2026-09-07T20:13:37.116Z",
       "tags": [
         "agent",
         "dependency-update",
@@ -933,7 +947,7 @@
       "titleEn": "langchain==1.4.0",
       "lang": "en",
       "publishedAt": "2026-09-03T16:59:55.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "collectedAt": "2026-09-07T20:13:37.116Z",
       "tags": [
         "agent",
         "langchain",
@@ -1076,7 +1090,7 @@
       "titleEn": "langchain-anthropic==1.7.1",
       "lang": "en",
       "publishedAt": "2026-09-03T15:42:02.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "collectedAt": "2026-09-07T20:13:37.116Z",
       "tags": [
         "agent",
         "anthropic",
@@ -1685,7 +1699,7 @@
       "titleEn": "langchain==1.4.0a4",
       "lang": "en",
       "publishedAt": "2026-09-02T05:35:23.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "collectedAt": "2026-09-07T20:13:37.116Z",
       "tags": [
         "agent",
         "compatibility",
@@ -2273,7 +2287,7 @@
       "titleEn": "langchain==1.4.0a3",
       "lang": "en",
       "publishedAt": "2026-09-01T17:22:31.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "collectedAt": "2026-09-07T20:13:37.116Z",
       "tags": [
         "agent",
         "client-side-cache",

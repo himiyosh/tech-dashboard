@@ -1,46 +1,46 @@
 {
-  "generatedAt": "2026-09-07T05:22:36.436Z",
+  "generatedAt": "2026-09-07T10:52:43.056Z",
   "count": 1988,
   "health": {
-    "lastRunAt": "2026-09-07T05:22:36.434Z",
-    "batchIndex": 6,
+    "lastRunAt": "2026-09-07T10:52:43.054Z",
+    "batchIndex": 5,
     "batchTotal": 6,
     "sourcesAttempted": 9,
     "sourcesOk": 9,
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 0,
+    "summaryFallbacks": 4,
     "bodyFallbacks": 0,
-    "fallbackTotal": 27,
+    "fallbackTotal": 29,
     "fallbackPercent": 1,
     "kvLookupCap": 35,
-    "kvLookupCount": 0,
+    "kvLookupCount": 2,
     "queueMode": "enabled",
     "queueCap": 35,
     "summaryQueueSnapshotStage": "final-entries",
-    "enqueueCandidates": 0,
-    "summaryQueueBacklog": 0,
-    "summaryQueueEnqueued": 0,
-    "summaryQueueDrainEstimateHours": 0,
+    "enqueueCandidates": 2,
+    "summaryQueueBacklog": 2,
+    "summaryQueueEnqueued": 2,
+    "summaryQueueDrainEstimateHours": 1,
     "summaryQueueStartIndex": 0,
     "summaryQueueCooldownCount": 0,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 3991,
+    "ogCached": 3992,
     "ogNewHits": 1,
-    "excerptFetchCandidates": 1547,
+    "excerptFetchCandidates": 1595,
     "excerptFetchAttempted": 40,
-    "excerptFetched": 40,
-    "excerptFetchUnavailable": 0,
-    "excerptFetchDeferred": 1507,
+    "excerptFetched": 31,
+    "excerptFetchUnavailable": 9,
+    "excerptFetchDeferred": 1555,
     "publisherContractFingerprint": "sha256:27f23813d5e74d6fc80aa3b1b394c1284be9c178637494c3556440c8291f8ac2",
     "bodyQueueMode": "enabled",
-    "bodyEnqueueCap": 35,
+    "bodyEnqueueCap": 33,
     "bodyEnqueueCandidates": 0,
     "bodyEnqueued": 0,
-    "bodyBacklog": 436,
-    "bodyQueueDrainEstimateHours": 13,
+    "bodyBacklog": 434,
+    "bodyQueueDrainEstimateHours": 14,
     "bodyLookupCount": 1,
     "chatLookupCount": 3,
     "bodyPendingLookupCount": 0,
@@ -126,7 +126,6 @@
       "29dfd675f0bf477c",
       "2a0306911e2c3c42",
       "2a6d76489ab5dc8b",
-      "2be7b619c88cd8c5",
       "2c20253c6c5a3afa",
       "2e62a5fb1b7afb28",
       "2eba3bd38fed592a",
@@ -149,7 +148,6 @@
       "3af238ca371f16ca",
       "3bc5936dfe734e73",
       "3bc5c0edb12d97d2",
-      "3c69e3d373a8efd8",
       "3cbbedf46354a300",
       "3ce8d9261e142c20",
       "3ec7d051e8ef2633",
@@ -492,10 +490,72 @@
       "ff6bc71e25a43c58"
     ],
     "enrichmentEnqueueCap": 35,
-    "enrichmentEnqueued": 0,
-    "enrichmentRemaining": 35
+    "enrichmentEnqueued": 2,
+    "enrichmentRemaining": 33
   },
   "entries": [
+    {
+      "id": "89704c9c738b98f5",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/nolanlover0527/items/ef358194bed126f634f8",
+      "title": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
+      "titleJa": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
+      "titleEn": "",
+      "summaryJa": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
+      "summaryEn": "cursor update from qiita-vscode. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-09-07T04:39:16.000Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VSCodeやCursorなどのエディタでファイルを検索したいのに、確かに存在するファイルがヒットしない、という経験はありませんか。 「消えた？」と思ってエクスプローラーから直接探し回った結果、ファイルは間違いなく存在しているのに検索には出てこないということがよくあります。 この記事では、検索に引っかからない主な原因と対処法をまとめます。 VSCodeの検索はデフォルトで .gitignore の内容を参照し、そこに書かれているファイルやフォルダを検索対象から除外します。 対処法として、 Ctrl + , で設定画面を開き「useIgnoreFiles」で検索し、「Search: Use Ignore Files」をオフにします。 settings.json に直接追加する場合は以下の通りです。 \"search.useIgnoreFiles\" : false なお、似た名前の explorer.excludeGitIgnore はサイドバーの表示を制御する別の設定のため、混同しないよう注意してください。 この設定をオフにすると .gitignore に記載されたファイルも検索対象になりますが、依存関係のファイルなどノイズが増える点には注意が必要です。 原因2 search.excludeやfiles.excludeの設定 .gitignore とは別に、VSCode独自の除外設定も存在します。 files.exclude はエクスプローラー上の表示自体を隠す設定で、 search.exclude は検索結果だけを除外する設定です。 チームの共有設定（ .vscode/settings.json ）で意図せず対象フォルダが除外されているケースもあるため、一度確認してみましょう。 検索窓の右側にあるオプションで「大文字と小文字を区別する」や「単語単位で検索」がオンになっていると、意図した検索語と一致せずヒットしないことがあります。 「見つからない」と思ったら、まずはこのオプションのオン・オフを確認するのが近道です。",
+      "feedSnippet": "変更したいファイルが検索に出てこない!! VSCodeやCursorなどのエディタでファイルを検索したいのに、確かに存在するファイルがヒットしない、という経験はありませんか。 「消えた？」と思ってエクスプローラーから直接探し回った結果、ファイルは間違いなく存在しているのに...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDEzMzM4NyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2Nzc2MjEwMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YjQ2YzJjZDAyMTMxMTYxZGVhYzczYWI4OWZhZjQ0MDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY3ZGVlMjYyYjJiNTFiN2ZmYTYyOGI1ODFjNjNkYjAyMzNhODlmMGMzJTJGb3JpZ2luYWwuanBnJTNGMTc1MTk0MTIwOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1mZDY1Mzc0MjdlNzMxMjI5ZDllZWFkYTczZTAyZTQxNg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Ddc55231a24e1021de8fa34a095aad9cb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJUU2JUE0JTlDJUU3JUI0JUEyJUUzJTgxJUE3JUUzJTgwJThDJUUzJTgxJTgyJUUzJTgyJThCJUUzJTgxJUFGJUUzJTgxJTlBJUUzJTgxJUFFJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgwJThEJUUzJTgxJThDJUU1JTg3JUJBJUUzJTgxJUE2JUUzJTgxJTkzJUUzJTgxJUFBJUUzJTgxJTg0NCVFMyU4MSVBNCVFMyU4MSVBRSVFNSU4RSU5RiVFNSU5QiVBMCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTg4ZTM5ZmM2MDBhNzVmYzNmZDZlMGM3M2FiMTMyMDU5&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBub2xhbmxvdmVyMDUyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJhZGQzMzdkMWE0Mzc3MTZiOTVjMmNiNThhODk0ZTQ1&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44Ko44Os44Kv44K55qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f494276a29635d32a13501de91a7e77f",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDEzMzM4NyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2Nzc2MjEwMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YjQ2YzJjZDAyMTMxMTYxZGVhYzczYWI4OWZhZjQ0MDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY3ZGVlMjYyYjJiNTFiN2ZmYTYyOGI1ODFjNjNkYjAyMzNhODlmMGMzJTJGb3JpZ2luYWwuanBnJTNGMTc1MTk0MTIwOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1mZDY1Mzc0MjdlNzMxMjI5ZDllZWFkYTczZTAyZTQxNg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Ddc55231a24e1021de8fa34a095aad9cb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJUU2JUE0JTlDJUU3JUI0JUEyJUUzJTgxJUE3JUUzJTgwJThDJUUzJTgxJTgyJUUzJTgyJThCJUUzJTgxJUFGJUUzJTgxJTlBJUUzJTgxJUFFJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgwJThEJUUzJTgxJThDJUU1JTg3JUJBJUUzJTgxJUE2JUUzJTgxJTkzJUUzJTgxJUFBJUUzJTgxJTg0NCVFMyU4MSVBNCVFMyU4MSVBRSVFNSU4RSU5RiVFNSU5QiVBMCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTg4ZTM5ZmM2MDBhNzVmYzNmZDZlMGM3M2FiMTMyMDU5&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBub2xhbmxvdmVyMDUyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJhZGQzMzdkMWE0Mzc3MTZiOTVjMmNiNThhODk0ZTQ1&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44Ko44Os44Kv44K55qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f494276a29635d32a13501de91a7e77f",
+        "alt": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "ce386e7a1e5fba8a",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/caymezon/items/12b08f5ca2d743f58175",
+      "title": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
+      "titleJa": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
+      "titleEn": "",
+      "summaryJa": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
+      "summaryEn": "vscode update from qiita-vscode. AI summary not yet available; a future Worker run will refresh this entry.",
+      "lang": "ja",
+      "publishedAt": "2026-09-07T02:39:03.000Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VSCodeの全プルダウンメニューを整理していて、 Ctrl+P （ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 ファイル名の一部を入力するだけで、部分一致・あいまい一致（fuzzy検索）でファイル候補が絞り込まれます。フォルダ構造を辿るより高速です。 @ に続けて関数名やクラス名を入力すると、 開いているファイル内 のシンボル一覧から絞り込めます。 Ctrl+Shift+O （エディター内のシンボルへ移動）と同じ機能を、 Ctrl+P から連続して呼び出せる点が地味に便利です。 @ がカレントファイル限定なのに対し、 # はワークスペース全体を対象にシンボルを検索します。「このクラス、どのファイルにあったっけ」を調べる際に、ファイル名が分からなくてもクラス名だけで直接ジャンプできます。 スタックトレースに「line 245」のようなエラー行が出ている場合、 Ctrl+G を別途呼ばなくても Ctrl+P から : と行番号を打つだけでジャンプできます。 Ctrl+P の入力欄で > から始めると、その場で Ctrl+Shift+P （コマンドパレット）と同じ検索に切り替わります。ファイルを探している途中で「あ、コマンドを実行したい」と思ったときに、ダイアログを閉じて開き直す必要がありません。 Ctrl+P は単なるファイル検索ではなく、 @ # : > という4つのプレフィックスで検索対象そのものを切り替えられる、実質5機能を1つのショートカットに集約したUIでした。1つのキーバインドを覚えるだけで複数の操作系統をカバーできるため、覚えるショートカットの総数を減らす効果もあります。メニュー全8カテゴリの網羅的な一覧は元記事にまとめています。",
+      "feedSnippet": "背景 VSCodeの全プルダウンメニューを整理していて、Ctrl+P（ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 1. プレフィックスなし：ファジー検索でファ...",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
     {
       "id": "a127ef535623fb17",
       "source": "qiita-vscode",
@@ -508,7 +568,7 @@
       "summaryEn": "A VSCode extension can find a terminal by its fixed name in vscode.window.terminals and create one only when absent, preserving shell state across repeated macro runs.",
       "lang": "ja",
       "publishedAt": "2026-09-06T11:19:07.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "macros",
         "qiita",
@@ -1521,7 +1581,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’re introducing ZGateway, the proxy we are using to unify traffic through ZippyDB, Meta’s most widely-used key value store. As a bonus, it also enables admission control, load balancing, cross-region resilience, and richer operations. ZippyDB is the most widely used key value store at Meta, backing product metadata, counters, and configuration, and can serve billions [...] Read More... The post ZGateway: Learnings from Putting a Proxy in Front of ZippyDB appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -1532,7 +1591,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "d94b84bc16af2780",
@@ -2110,7 +2170,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -2161,7 +2221,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’ve built an AI agent that acts as a secondary expert for a given domain, making deep specialist knowledge readily available and preserved for anyone in an organization to access, share, and build upon. This is not a typical domain-specific agent. Its novelty comes from integrating two layers: A structured, auditable knowledge architecture separates what [...] Read More... The post An Organizational Second Brain: Building an AI That Learns From Experts appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -2172,7 +2231,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "e78f7fc4abd5798e",
@@ -2881,7 +2941,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "deepmind",
@@ -4810,7 +4870,7 @@
       "summaryEn": "Google released Gemini Omni 1.1 Flash with enhanced developer controls over model behavior and output, giving builders finer-grained tools for production AI applications.",
       "lang": "en",
       "publishedAt": "2026-08-27T16:11:32.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "developer-tools",
@@ -4920,7 +4980,7 @@
       "summaryEn": "Google DeepMind has piloted a double-blind AI evaluation framework where neither evaluators nor model providers know each other's identity, aiming to reduce bias and improve the credibility of AI capability assessments.",
       "lang": "en",
       "publishedAt": "2026-08-27T12:59:16.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-evaluation",
         "benchmark",
@@ -5108,6 +5168,36 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "5c4563820a38c84c",
+      "source": "google-developers",
+      "sourceType": "blog",
+      "url": "https://developers.googleblog.com/decoding-cosmic-signals-with-deep-learning-and-keras/",
+      "title": "Decoding cosmic signals with deep learning and Keras",
+      "titleJa": "深層学習とKerasで宇宙信号を解読する",
+      "titleEn": "Decoding cosmic signals with deep learning and Keras",
+      "summaryJa": "素粒子天体物理学の研究にKerasを用いた深層学習モデルを適用し、宇宙線シグナルの分類精度を大幅に向上させる手法が紹介されている。天文データ解析の自動化・高速化を目指す研究者にとって実践的な参考事例となる。",
+      "summaryEn": "Researchers applied Keras-based deep learning models to astroparticle physics, achieving improved classification of cosmic-ray signals. The approach demonstrates how neural networks can automate and accelerate the analysis of complex astrophysical data.",
+      "lang": "en",
+      "publishedAt": "2026-08-27T00:00:00.000Z",
+      "collectedAt": "2026-09-07T05:22:17.647Z",
+      "tags": [
+        "astroparticle-physics",
+        "deep-learning",
+        "google",
+        "keras",
+        "machine-learning"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Astroparticle physics sits at the exciting intersection of astrophysics and particle physics and studies cosmic messengers: particles such as atomic nuclei, electrons, high-energy photons (light), and neutrinos accelerated in distant, cosmic phenomena and objects such as black holes, neutron stars, active galaxies, and supernovas, as well as other events from the early formation of the universe. By studying these messenger particles, we probe the most energetic and extreme phenomena known, from neutrinos produced in the Sun to the mysterious origins of ultra-high-energy cosmic-rays, and the elusive nature of dark matter and dark energy. Modern astroparticle physics is inherently data-intensive. It relies on gigantic observatories, often spanning thousands of square kilometers, designed to detect rare and tiny signals from the cosmos.",
+      "excerptOrigin": "article",
+      "feedSnippet": "Astroparticle physics sits at the exciting intersection of astrophysics and particle physics and stu...",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "7f071e9ae97b9119",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -5161,36 +5251,6 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "As Claude becomes increasingly capable at scientific research, we are focusing on building products and programs to support the research community. In June, we launched Claude Science , a product that integrates the tools that researchers most commonly use, produces auditable artifacts, and provides flexible access to computing resources. We have also continued to broaden our AI for Science program , which provides free credits to researchers working on high-impact scientific projects. Starting today, we are announcing a significant expansion of these efforts. We are opening 10,000 seats for scientists around the world to access Claude subscriptions for free and at discounted rates for one year through our new Claude team plan for scientists . Standard seats will be free and premium seats...",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "5c4563820a38c84c",
-      "source": "google-developers",
-      "sourceType": "blog",
-      "url": "https://developers.googleblog.com/decoding-cosmic-signals-with-deep-learning-and-keras/",
-      "title": "Decoding cosmic signals with deep learning and Keras",
-      "titleJa": "深層学習とKerasで宇宙信号を解読する",
-      "titleEn": "Decoding cosmic signals with deep learning and Keras",
-      "summaryJa": "素粒子天体物理学の研究にKerasを用いた深層学習モデルを適用し、宇宙線シグナルの分類精度を大幅に向上させる手法が紹介されている。天文データ解析の自動化・高速化を目指す研究者にとって実践的な参考事例となる。",
-      "summaryEn": "Researchers applied Keras-based deep learning models to astroparticle physics, achieving improved classification of cosmic-ray signals. The approach demonstrates how neural networks can automate and accelerate the analysis of complex astrophysical data.",
-      "lang": "en",
-      "publishedAt": "2026-08-27T00:00:00.000Z",
-      "collectedAt": "2026-09-07T05:22:17.647Z",
-      "tags": [
-        "astroparticle-physics",
-        "deep-learning",
-        "google",
-        "keras",
-        "machine-learning"
-      ],
-      "category": "gemini",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Astroparticle physics sits at the exciting intersection of astrophysics and particle physics and studies cosmic messengers: particles such as atomic nuclei, electrons, high-energy photons (light), and neutrinos accelerated in distant, cosmic phenomena and objects such as black holes, neutron stars, active galaxies, and supernovas, as well as other events from the early formation of the universe. By studying these messenger particles, we probe the most energetic and extreme phenomena known, from neutrinos produced in the Sun to the mysterious origins of ultra-high-energy cosmic-rays, and the elusive nature of dark matter and dark energy. Modern astroparticle physics is inherently data-intensive. It relies on gigantic observatories, often spanning thousands of square kilometers, designed to detect rare and tiny signals from the cosmos.",
-      "excerptOrigin": "article",
-      "feedSnippet": "Astroparticle physics sits at the exciting intersection of astrophysics and particle physics and stu...",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -5523,7 +5583,7 @@
       "summaryEn": "Google launched Gemini 3.5 Transcribe, a new model delivering higher-quality speech-to-text conversion, benefiting developers and enterprises building transcription pipelines.",
       "lang": "en",
       "publishedAt": "2026-08-26T17:01:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini-3-5",
@@ -6676,7 +6736,7 @@
       "summaryEn": "Apple launched the M6 chip in the new Mac mini and M5 Ultra in the new Mac Studio, delivering a significant generational leap in both general performance and on-device AI compute capabilities.",
       "lang": "en",
       "publishedAt": "2026-08-25T12:58:13.056Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "apple",
         "apple-silicon",
@@ -7209,7 +7269,6 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Training and serving frontier AI models depends on fast, reliable networks that move data between GPUs without wasting compute cycles. To meet this challenge at scale, Meta designed MetaRoCE – a clean-sheet RDMA transport protocol purpose-built for AI workloads on commodity Ethernet. We’re releasing the MetaRoCE specification, a reference software implementation and a compliance test [...] Read More... The post MetaRoCE: A New RDMA Transport Built for AI-Scale Ethernet appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -7220,7 +7279,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "f03cb9ddcece8aee",
@@ -7248,7 +7308,6 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "MTIA 300 is the first of Meta’s family of in-house training and inference accelerators optimized for training ranking and recommendation models. We’re sharing how MTIA 300’s built-in NIC chiplets allow it to meet the communication needs associated with training recommendation models with superior performance over general-purpose GPUs. By co-designing MTIA’s communication library, HCCL, alongside the [...] Read More... The post MTIA 300: Meta’s First Training Chip with Built-in NICs and Communication-Offloading Engines appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -7259,7 +7318,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "43a5b93c8b1188eb",
@@ -8470,7 +8530,7 @@
       "summaryEn": "The MCP team has published its forward-looking roadmap, outlining priority focus areas for upcoming specification releases, giving developers clear guidance on where the protocol is headed.",
       "lang": "en",
       "publishedAt": "2026-08-22T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -9027,7 +9087,7 @@
       "summaryEn": "Google DeepMind is partnering with game studios to prototype breakthrough AI gameplay experiences, drawing on 15 years of games-based AI research spanning from Atari to EVE Online.",
       "lang": "en",
       "publishedAt": "2026-08-21T11:59:48.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "atari",
         "deepmind",
@@ -11728,45 +11788,6 @@
       "evergreen": true
     },
     {
-      "id": "3c69e3d373a8efd8",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/wa-chan222/items/f029b567ccd4a9d3b03e",
-      "title": "【VS Code】「アクセスが拒否されました。(os error 5)」が発生したときの対処法",
-      "titleJa": "【VS Code】「アクセスが拒否されました。(os error 5)」が発生したときの対処法",
-      "titleEn": "This article explains the cause of the 'Access denied (os error 5)' popup that…",
-      "summaryJa": "VS Codeの自動アップデート時に表示される「アクセスが拒否されました。(os error 5)」エラーの原因と具体的な解決手順を解説した記事。同エラーに遭遇した開発者がすぐに対処できるよう実践的な情報を提供している。",
-      "summaryEn": "This article explains the cause of the 'Access denied (os error 5)' popup that appears during VS Code's automatic update process and provides step-by-step solutions to resolve it.",
-      "lang": "ja",
-      "publishedAt": "2026-08-18T13:43:07.000Z",
-      "collectedAt": "2026-08-19T04:24:29.585Z",
-      "tags": [
-        "auto-update",
-        "os-error-5",
-        "qiita",
-        "troubleshooting",
-        "vscode",
-        "windows"
-      ],
-      "category": "vscode",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "contentSnippet": "【VS Code】「アクセスが拒否されました。(os error 5)」が発生したときの対処法 VS Code（Visual Studio Code）を起動した際、突然「Updater」というタイトルのエラーポップアップが表示されて焦ったことはないでしょうか？ この記事では、VS Code の自動アップデート時に発生する「アクセスが拒否されました。(os error 5)」というエラーの概要と原因、そして具体的な解決手順について解説します。 VS Code の起動時に「アクセスが拒否されました。(os error 5)」エラーが出た方 VS Code を開いたときに、以下のようなエラーダイアログが表示されることがあります。 Please verify there are no Visual Studio Code processes still executing. 要約すると「VS Code を最新版に更新するため古いフォルダを削除しようとしたが、ファイルが使用中のため拒否された」という状態です。 主な原因は、 バックグラウンドで VS Code のプロセス（本体や拡張機能など）が起動したまま残っていること です。 VS Code のウィンドウを閉じたつもりでも、バックグラウンドで言語サーバーや拡張機能（Extension）などの関連プロセスが動き続けていることがあります。 Windows の仕組み上、プロセスが使用中のファイルやフォルダは削除・上書きができません。Updater が古いディレクトリを削除しようとした際、ロックがかかっているため os error 5 （アクセス拒否）が発生します。 以下のいずれかの方法で簡単に解決できます。上から順にお試しください。 裏で残ってしまっているプロセスを確実にリセットする方法です。 エラー画面の 「キャンセル」 ボタンを押してポップアップを閉じます。 再起動後、再度 VS Code を起動します（自動的にアップデート処理が完了します）。",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzc3NzkzNiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTczODMxNzU0Nj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YTBjOGRhYzMxNWQ3YjdlYjZmNDc4YTBjN2JhNzcyMjM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8ec20460de7f07cff2724f470f3973b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwVlMlMjBDb2RlJUUzJTgwJTkxJUUzJTgwJThDJUUzJTgyJUEyJUUzJTgyJUFGJUUzJTgyJUJCJUUzJTgyJUI5JUUzJTgxJThDJUU2JThCJTkyJUU1JTkwJUE2JUUzJTgxJTk1JUUzJTgyJThDJUUzJTgxJUJFJUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgwJTgyJTI4b3MlMjBlcnJvciUyMDUlMjklRTMlODAlOEQlRTMlODElOEMlRTclOTklQkElRTclOTQlOUYlRTMlODElOTclRTMlODElOUYlRTMlODElQTglRTMlODElOEQlRTMlODElQUUlRTUlQUYlQkUlRTUlODclQTYlRTYlQjMlOTUmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1mZDM5MTYzZTA1NWVjN2RlZDgwYTRhNzgwMzY4OTNlMQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB3YS1jaGFuMjIyJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZmRjYTY1Y2NhZDZkN2U3ZGIwMWFiYzZhM2Q2MjJkZWY&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e6bd1dfd6c522827dcbca88ad182e0a7",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzc3NzkzNiUyRnByb2ZpbGUtaW1hZ2VzJTJGMTczODMxNzU0Nj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YTBjOGRhYzMxNWQ3YjdlYjZmNDc4YTBjN2JhNzcyMjM%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8ec20460de7f07cff2724f470f3973b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwVlMlMjBDb2RlJUUzJTgwJTkxJUUzJTgwJThDJUUzJTgyJUEyJUUzJTgyJUFGJUUzJTgyJUJCJUUzJTgyJUI5JUUzJTgxJThDJUU2JThCJTkyJUU1JTkwJUE2JUUzJTgxJTk1JUUzJTgyJThDJUUzJTgxJUJFJUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgwJTgyJTI4b3MlMjBlcnJvciUyMDUlMjklRTMlODAlOEQlRTMlODElOEMlRTclOTklQkElRTclOTQlOUYlRTMlODElOTclRTMlODElOUYlRTMlODElQTglRTMlODElOEQlRTMlODElQUUlRTUlQUYlQkUlRTUlODclQTYlRTYlQjMlOTUmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1mZDM5MTYzZTA1NWVjN2RlZDgwYTRhNzgwMzY4OTNlMQ&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB3YS1jaGFuMjIyJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9ZmRjYTY1Y2NhZDZkN2U3ZGIwMWFiYzZhM2Q2MjJkZWY&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e6bd1dfd6c522827dcbca88ad182e0a7",
-        "alt": "【VS Code】「アクセスが拒否されました。(os error 5)」が発生したときの対処法",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      },
-      "feedSnippet": "はじめに VS Code（Visual Studio Code）を起動した際、突然「Updater」というタイトルのエラーポップアップが表示されて焦ったことはないでしょうか？ この記事では、VS Code の自動アップデート時に発生する「アクセスが拒否されました。(os...",
-      "excerptOrigin": "article"
-    },
-    {
       "id": "662fd350cdd75859",
       "source": "qiita-cursor",
       "sourceType": "blog",
@@ -11884,46 +11905,6 @@
         "source": "og"
       },
       "feedSnippet": "はじめに watsonx Orchestrate の開発をこれから始める方や、すでに開発している方に向けて、IBM Bob で利用できる watsonx Orchestrate ADK Extension を紹介します。 この記事は 2026年8月時点の情報をもとに記述し...",
-      "excerptOrigin": "article"
-    },
-    {
-      "id": "2be7b619c88cd8c5",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/caymezon/items/51558a43b62585f47549",
-      "title": "VSCode拡張機能（TypeScript）の開発環境を作って運用に乗せるまで",
-      "titleJa": "VSCode拡張機能（TypeScript）の開発環境を作って運用に乗せるまで",
-      "titleEn": "A practical guide covering how to set up a TypeScript-based VSCode extension…",
-      "summaryJa": "TypeScriptでVSCodeカスタム拡張機能を開発するための環境構築手順と、日常的な更新フローをまとめた実践ガイド。グローバルツールのセットアップから継続運用までを体系的に解説している。",
-      "summaryEn": "A practical guide covering how to set up a TypeScript-based VSCode extension development environment and establish a sustainable update workflow, from global tool installation to day-to-day operations.",
-      "lang": "ja",
-      "publishedAt": "2026-08-18T10:09:06.000Z",
-      "collectedAt": "2026-08-18T22:09:54.432Z",
-      "tags": [
-        "developer-tools",
-        "nodejs",
-        "qiita",
-        "tutorial",
-        "typescript",
-        "vscode",
-        "vscode-extension"
-      ],
-      "category": "vscode",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "contentSnippet": "VSCodeでカスタムマクロを作りたく、TypeScriptで拡張機能を開発する環境を構築しました。セットアップから日常の更新フローまでをまとめます。 対話式の選択で「New Extension (TypeScript)」を選ぶと、以下の構成が自動生成されます。 ├── .vscode/ # デバッグ設定（launch.json / tasks.json） │ ├── extension.ts # メインエントリーポイント { \"command\" : \"myMacros.openPath\" , \"title\" : \"Open Path Under Cursor\" , \"category\" : \"My Macros\" } { \"command\" : \"myMacros.openPath\" , \"key\" : \"ctrl+shift+f12\" , \"when\" : \"editorTextFocus\" } extension.ts 側でコマンドを実処理に紐付けます。 export function activate ( context : vscode . ExtensionContext ) { const disposable = vscode . commands . registerCommand ( () => { vscode . window . showInformationMessage ( ' Hello World! ' ); } context . subscriptions . push ( disposable ); 開発中 はパッケージ化不要で、 F5 で新しいウィンドウ（Extension Development Host）が起動してすぐテストできます。ログは新ウィンドウで Ctrl+Shift+U → 「Extension Host」から確認できます。",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUVGJUJDJTg4VHlwZVNjcmlwdCVFRiVCQyU4OSVFMyU4MSVBRSVFOSU5NiU4QiVFNyU5OSVCQSVFNyU5MiVCMCVFNSVBMiU4MyVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFOSU4MSU4QiVFNyU5NCVBOCVFMyU4MSVBQiVFNCVCOSU5NyVFMyU4MSU5QiVFMyU4MiU4QiVFMyU4MSVCRSVFMyU4MSVBNyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWE5MmQxOGY4ZjAzZjk1MGVkMTEwYmY3MmZiMmUxMGMw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=93ee4891ceb5e54083a3eb7d88af35c9",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjI3NzE1NjczOSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1iOWQ5ZmE4YzYwN2IyOTVjZTYyMDY3YzFmMjZiNGE1MA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De0a3c9b294160ce4b002c9146196ce1b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUU2JThCJUExJUU1JUJDJUI1JUU2JUE5JTlGJUU4JTgzJUJEJUVGJUJDJTg4VHlwZVNjcmlwdCVFRiVCQyU4OSVFMyU4MSVBRSVFOSU5NiU4QiVFNyU5OSVCQSVFNyU5MiVCMCVFNSVBMiU4MyVFMyU4MiU5MiVFNCVCRCU5QyVFMyU4MSVBMyVFMyU4MSVBNiVFOSU4MSU4QiVFNyU5NCVBOCVFMyU4MSVBQiVFNCVCOSU5NyVFMyU4MSU5QiVFMyU4MiU4QiVFMyU4MSVCRSVFMyU4MSVBNyZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWE5MmQxOGY4ZjAzZjk1MGVkMTEwYmY3MmZiMmUxMGMw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBjYXltZXpvbiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTU2YWY4NjFkZjY3MDBhMjUxMzk1N2E0MjM1ZDczNDJj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=93ee4891ceb5e54083a3eb7d88af35c9",
-        "alt": "VSCode拡張機能（TypeScript）の開発環境を作って運用に乗せるまで",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      },
-      "feedSnippet": "背景 VSCodeでカスタムマクロを作りたく、TypeScriptで拡張機能を開発する環境を構築しました。セットアップから日常の更新フローまでをまとめます。 1. 環境構築は3つのグローバルツールから node --version # v20以上推奨 npm inst...",
       "excerptOrigin": "article"
     },
     {
@@ -15397,7 +15378,7 @@
       "summaryEn": "Google DeepMind announced Gemini 3.7 Flash, a new efficient model in the Gemini lineup designed to deliver fast, capable AI performance across a broad range of tasks.",
       "lang": "en",
       "publishedAt": "2026-08-13T17:04:18.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini-flash",
@@ -16528,9 +16509,9 @@
         "height": 0,
         "source": "og"
       },
-      "evergreen": true,
       "feedSnippet": "Learn how to write your first prompt in the GitHub Copilot app, choose the right context and model, and start your first task with confidence. The post GitHub Copilot app for Beginners: Write your first prompt appeared first on The GitHub Blog .",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "evergreen": true
     },
     {
       "id": "4d90c2275a7b5d33",
@@ -17033,7 +17014,7 @@
       "summaryEn": "Google DeepMind introduced SL2T (sign-language-to-text), a breakthrough model that powers new sign language recognition features aimed at making technology more accessible for Deaf and hard of hearing users.",
       "lang": "en",
       "publishedAt": "2026-08-12T14:01:59.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "accessibility",
         "deaf",
@@ -17196,7 +17177,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "WhatsApp is committed to helping people stay safe while protecting the privacy of their messages. As scam tactics evolve — from impersonation to social engineering to AI-generated lures — we’re always evolving as well, so that our protections stay ahead of scammers while protecting people’s personal messages with end-to-end encryption. Today, we’re sharing an early [...] Read More... The post How We’re Building Scam Alert on WhatsApp With End-to-End Encryption and Verifiability Guarantees appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -17207,7 +17187,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "9af9748a797740b3",
@@ -19955,7 +19936,7 @@
       "category": "mcp",
       "importance": 2,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "GitHub: https://github.com/JVinceW/uasset-reference-memory-mcp はじめに 最近、AIがどんどん強くなってきました。 ゲーム開発でもAIを取り入れる人が増えていて、自分の開発ワークフローの中でも、AIを使う場面が...",
       "bodyJa": "",
       "bodyEn": "",
@@ -21387,7 +21368,7 @@
       "summaryEn": "Google DeepMind's WeatherNext AI model has achieved a breakthrough in tropical cyclone forecasting, surpassing traditional numerical models in track and intensity prediction accuracy.",
       "lang": "en",
       "publishedAt": "2026-08-06T15:06:15.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "climate-ai",
         "cyclone",
@@ -22101,7 +22082,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Every day, Meta’s recommendation platforms handle billions of user interactions, generating rich temporal signals that capture individual preferences and intent across products, ads, and content. In our 2024 post on sequence learning for ads recommendations, we showed how modeling the order and timing of user actions (rather than relying on static, manually engineered sparse features) [...] Read More... The post From User Sequences to Scaling Laws: A Multi-Stage Architecture for Meta’s Ads Ranking appeared first on Engineering at Meta .",
       "bodyJa": "",
       "bodyEn": "",
@@ -22112,7 +22092,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "b62e4bf961f3acc3",
@@ -23397,42 +23378,6 @@
       }
     },
     {
-      "id": "0cebefaa4b4a1b72",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/tino-cuellar",
-      "title": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
-      "titleJa": "ティノ・クエリャル氏がAnthropicの初代最高グローバル渉外責任者に就任",
-      "titleEn": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
-      "summaryJa": "法律・国際安全保障・テクノロジー政策に精通するマリアーノ・フロレンティーノ（ティノ）・クエリャル氏が、Anthropic初の最高グローバル渉外責任者として政策・国際戦略・政府関係を統括する。",
-      "summaryEn": "Anthropic has appointed Mariano-Florentino (Tino) Cuéllar as its first Chief Global Affairs Officer, tasking him with leading policy, international strategy, and government relations as the company's global footprint grows.",
-      "lang": "en",
-      "publishedAt": "2026-08-04T00:00:00.000Z",
-      "collectedAt": "2026-08-27T12:46:47.138Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "global-affairs",
-        "leadership",
-        "policy"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Mariano-Florentino (Tino) Cuéllar will join Anthropic as its first Chief Global Affairs Officer, leading the company’s work on policy, strategic international engagement, and government relationships worldwide. Tino’s career spans law, technology, international security, and publ",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://cdn.sanity.io/images/4zrzovbb/website/6d4a0d28992ade92d6fa63646fd9c9d318245c6c-2400x1260.jpg",
-        "origSrc": "https://cdn.sanity.io/images/4zrzovbb/website/6d4a0d28992ade92d6fa63646fd9c9d318245c6c-2400x1260.jpg",
-        "alt": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "36d8f9b071d2454a",
       "source": "google-developers",
       "sourceType": "blog",
@@ -23468,6 +23413,42 @@
         "src": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Model_Routing_via_API_Gateway___M.2e16d0ba.fill-1200x600.jpg",
         "origSrc": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/Model_Routing_via_API_Gateway___M.2e16d0ba.fill-1200x600.jpg",
         "alt": "Model routing with Google Cloud API Gateway",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "0cebefaa4b4a1b72",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/tino-cuellar",
+      "title": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
+      "titleJa": "ティノ・クエリャル氏がAnthropicの初代最高グローバル渉外責任者に就任",
+      "titleEn": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
+      "summaryJa": "法律・国際安全保障・テクノロジー政策に精通するマリアーノ・フロレンティーノ（ティノ）・クエリャル氏が、Anthropic初の最高グローバル渉外責任者として政策・国際戦略・政府関係を統括する。",
+      "summaryEn": "Anthropic has appointed Mariano-Florentino (Tino) Cuéllar as its first Chief Global Affairs Officer, tasking him with leading policy, international strategy, and government relations as the company's global footprint grows.",
+      "lang": "en",
+      "publishedAt": "2026-08-04T00:00:00.000Z",
+      "collectedAt": "2026-08-27T12:46:47.138Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "global-affairs",
+        "leadership",
+        "policy"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Mariano-Florentino (Tino) Cuéllar will join Anthropic as its first Chief Global Affairs Officer, leading the company’s work on policy, strategic international engagement, and government relationships worldwide. Tino’s career spans law, technology, international security, and publ",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://cdn.sanity.io/images/4zrzovbb/website/6d4a0d28992ade92d6fa63646fd9c9d318245c6c-2400x1260.jpg",
+        "origSrc": "https://cdn.sanity.io/images/4zrzovbb/website/6d4a0d28992ade92d6fa63646fd9c9d318245c6c-2400x1260.jpg",
+        "alt": "Mariano-Florentino (Tino) Cuéllar to join Anthropic as Chief Global Affairs Officer",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -27716,7 +27697,7 @@
       "summaryEn": "Google DeepMind introduced Gemini Robotics ER 2, delivering significant advances in video understanding, tool orchestration, and multi-robot collaboration that enable robots to reason through and solve complex real-world tasks.",
       "lang": "en",
       "publishedAt": "2026-07-30T15:00:59.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini-robotics",
@@ -28479,6 +28460,35 @@
       }
     },
     {
+      "id": "ad11c94d3027c6a8",
+      "source": "google-developers",
+      "sourceType": "blog",
+      "url": "https://developers.googleblog.com/how-to-use-google-microbenchmarks-for-evaluating-tpu-performance/",
+      "title": "How to use Google microbenchmarks for evaluating TPU performance",
+      "titleJa": "GoogleマイクロベンチマークによるTPUパフォーマンス評価の活用方法",
+      "titleEn": "How to use Google microbenchmarks for evaluating TPU performance",
+      "summaryJa": "GoogleはオープンソースのTPUマイクロベンチマークスイートを提供しており、ネットワーク・演算・HBM・ホスト転送・Attentionの各領域で詳細な性能指標を取得しRooflineモデルの構築に活用できる。",
+      "summaryEn": "Google's open-source TPU microbenchmark suite lets developers measure granular performance across compute, memory, and attention components, enabling Roofline model analysis to validate and optimize real-world TPU workloads.",
+      "lang": "en",
+      "publishedAt": "2026-07-30T00:00:00.000Z",
+      "collectedAt": "2026-08-03T23:57:33.677Z",
+      "tags": [
+        "benchmarking",
+        "google",
+        "open-source",
+        "performance",
+        "tpu",
+        "tutorial"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Google's open-source TPU microbenchmark suite provides developers with granular performance metrics across Network, Compute, HBM, Host Transfer, and Attention components to validate real-world hardware capabilities. By leveraging these benchmarks to establish a Roofline model, en",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "895d1cb5aea7a882",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -28505,35 +28515,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "In a review of our cybersecurity evaluation transcripts, we found three incidents in which a Claude model reached the internet from within or while interacting with a third-party evaluation environment, and then gained unauthorized access to the real systems of three different or",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "ad11c94d3027c6a8",
-      "source": "google-developers",
-      "sourceType": "blog",
-      "url": "https://developers.googleblog.com/how-to-use-google-microbenchmarks-for-evaluating-tpu-performance/",
-      "title": "How to use Google microbenchmarks for evaluating TPU performance",
-      "titleJa": "GoogleマイクロベンチマークによるTPUパフォーマンス評価の活用方法",
-      "titleEn": "How to use Google microbenchmarks for evaluating TPU performance",
-      "summaryJa": "GoogleはオープンソースのTPUマイクロベンチマークスイートを提供しており、ネットワーク・演算・HBM・ホスト転送・Attentionの各領域で詳細な性能指標を取得しRooflineモデルの構築に活用できる。",
-      "summaryEn": "Google's open-source TPU microbenchmark suite lets developers measure granular performance across compute, memory, and attention components, enabling Roofline model analysis to validate and optimize real-world TPU workloads.",
-      "lang": "en",
-      "publishedAt": "2026-07-30T00:00:00.000Z",
-      "collectedAt": "2026-08-03T23:57:33.677Z",
-      "tags": [
-        "benchmarking",
-        "google",
-        "open-source",
-        "performance",
-        "tpu",
-        "tutorial"
-      ],
-      "category": "gemini",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Google's open-source TPU microbenchmark suite provides developers with granular performance metrics across Network, Compute, HBM, Host Transfer, and Attention components to validate real-world hardware capabilities. By leveraging these benchmarks to establish a Roofline model, en",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -28965,7 +28946,7 @@
       "summaryEn": "Google DeepMind is releasing Lyria 3.5 in Google Flow Music, bringing meaningful improvements to musicality, lyric generation, vocal quality, and user creative control over AI-generated music.",
       "lang": "en",
       "publishedAt": "2026-07-29T16:02:10.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-music",
         "deepmind",
@@ -30393,7 +30374,7 @@
       "summaryEn": "Google DeepMind unveiled Gemini Robotics 2, a new model enabling robots to coordinate whole-body movements for complex tasks, marking a significant step toward general-purpose robotic intelligence.",
       "lang": "en",
       "publishedAt": "2026-07-28T13:21:37.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "foundation-models",
@@ -30667,7 +30648,7 @@
       "summaryEn": "MCP's 2026-07-28 spec introduces a stateless core, Multi Round-Trip Requests, and header-based routing alongside cacheable list results and an extensions framework, giving developers cleaner primitives for building interoperable servers.",
       "lang": "en",
       "publishedAt": "2026-07-28T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "authorization",
         "mcp",
@@ -31389,6 +31370,37 @@
       "evergreen": true
     },
     {
+      "id": "0ece365f91f83d20",
+      "source": "google-cloud-blog",
+      "sourceType": "blog",
+      "url": "https://cloud.google.com/blog/products/identity-security/cyber-snapshot-report-enterprise-resilience-key-to-toolchain-success/",
+      "title": "Cyber Snapshot Report: Go beyond the toolchain and build enterprise resilience",
+      "titleJa": "Cyber Snapshot Report: ツールチェーンを超えてエンタープライズレジリエンスを構築する",
+      "titleEn": "Cyber Snapshot Report: Go beyond the toolchain and build enterprise resilience",
+      "summaryJa": "Googleの最新レポートは、セキュリティツールの導入だけでなく、組織全体の回復力強化がサイバー防御の鍵であると示している。ツールチェーン依存からの脱却と戦略的なレジリエンス構築の重要性を解説。",
+      "summaryEn": "Google's Cyber Snapshot Report argues that true enterprise security requires building organizational resilience beyond simply deploying security tools. It highlights why a strategy-first approach outperforms toolchain-centric thinking in modern threat environments.",
+      "lang": "en",
+      "publishedAt": "2026-07-27T16:00:00.000Z",
+      "collectedAt": "2026-07-28T15:09:38.078Z",
+      "tags": [
+        "cloud",
+        "cyber-security",
+        "enterprise",
+        "google",
+        "report",
+        "resilience",
+        "security"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "Even as machine-speed attacks dominate the headlines, Mandiant’s view from the frontline reveals that the vast majority of successful intrusions still stem from fundamental human and systemic failures. This operational break-down shows up pointedly in research from the M-Trends 2",
+      "bodyJa": "",
+      "bodyEn": "",
+      "evergreen": true
+    },
+    {
       "id": "96c46f0f4a5411b1",
       "source": "github-copilot",
       "sourceType": "blog",
@@ -31424,37 +31436,6 @@
         "height": 0,
         "source": "og"
       },
-      "evergreen": true
-    },
-    {
-      "id": "0ece365f91f83d20",
-      "source": "google-cloud-blog",
-      "sourceType": "blog",
-      "url": "https://cloud.google.com/blog/products/identity-security/cyber-snapshot-report-enterprise-resilience-key-to-toolchain-success/",
-      "title": "Cyber Snapshot Report: Go beyond the toolchain and build enterprise resilience",
-      "titleJa": "Cyber Snapshot Report: ツールチェーンを超えてエンタープライズレジリエンスを構築する",
-      "titleEn": "Cyber Snapshot Report: Go beyond the toolchain and build enterprise resilience",
-      "summaryJa": "Googleの最新レポートは、セキュリティツールの導入だけでなく、組織全体の回復力強化がサイバー防御の鍵であると示している。ツールチェーン依存からの脱却と戦略的なレジリエンス構築の重要性を解説。",
-      "summaryEn": "Google's Cyber Snapshot Report argues that true enterprise security requires building organizational resilience beyond simply deploying security tools. It highlights why a strategy-first approach outperforms toolchain-centric thinking in modern threat environments.",
-      "lang": "en",
-      "publishedAt": "2026-07-27T16:00:00.000Z",
-      "collectedAt": "2026-07-28T15:09:38.078Z",
-      "tags": [
-        "cloud",
-        "cyber-security",
-        "enterprise",
-        "google",
-        "report",
-        "resilience",
-        "security"
-      ],
-      "category": "gemini",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "hot",
-      "contentSnippet": "Even as machine-speed attacks dominate the headlines, Mandiant’s view from the frontline reveals that the vast majority of successful intrusions still stem from fundamental human and systemic failures. This operational break-down shows up pointedly in research from the M-Trends 2",
-      "bodyJa": "",
-      "bodyEn": "",
       "evergreen": true
     },
     {
@@ -31713,7 +31694,7 @@
       "summaryEn": "The official MCP Ruby SDK hits v1.0 with a stable public API and a 100% Tier 2 conformance pass rate, giving Ruby developers a production-ready foundation for building MCP servers.",
       "lang": "en",
       "publishedAt": "2026-07-27T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -34352,35 +34333,6 @@
       }
     },
     {
-      "id": "e0b50dd0789dfaa7",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-opus-5",
-      "title": "Introducing Claude Opus 5",
-      "titleJa": "Claude Opus 5 発表",
-      "titleEn": "Introducing Claude Opus 5",
-      "summaryJa": "AnthropicがClaudeシリーズの最新フラッグシップモデルであるClaude Opus 5を発表した。高度な推論・理解能力の大幅な向上により、複雑なタスクにおける性能が前世代から飛躍的に改善されている。",
-      "summaryEn": "Anthropic has unveiled Claude Opus 5, its most capable flagship model to date, featuring significant improvements in reasoning and complex task performance that set a new benchmark for the Claude model family.",
-      "lang": "en",
-      "publishedAt": "2026-07-24T00:00:00.000Z",
-      "collectedAt": "2026-09-07T00:25:45.839Z",
-      "tags": [
-        "anthropic",
-        "benchmark",
-        "claude",
-        "claude-opus",
-        "flagship",
-        "model-release"
-      ],
-      "category": "claude",
-      "importance": 3,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Claude Opus 5 is available today. It’s a thoughtful and proactive model that comes close to the frontier intelligence of Claude Fable 5 at half the price. On coding and knowledge work evaluations like Frontier-Bench and GDPval-AA , Opus 5 is the new state-of-the-art, though it remains behind Mythos 5 on cybersecurity tasks.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "e05ddd3a11075a78",
       "source": "google-developers",
       "sourceType": "blog",
@@ -34406,6 +34358,35 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "This second installment explores how Ray’s higher-level libraries—Serve, Data, and Train—abstract the complexities of running AI workloads on Google's TPU slices. Ray Serve uses a simple topology configuration to correctly gang-schedule large multi-host models, while Ray Data eli",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "e0b50dd0789dfaa7",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-opus-5",
+      "title": "Introducing Claude Opus 5",
+      "titleJa": "Claude Opus 5 発表",
+      "titleEn": "Introducing Claude Opus 5",
+      "summaryJa": "AnthropicがClaudeシリーズの最新フラッグシップモデルであるClaude Opus 5を発表した。高度な推論・理解能力の大幅な向上により、複雑なタスクにおける性能が前世代から飛躍的に改善されている。",
+      "summaryEn": "Anthropic has unveiled Claude Opus 5, its most capable flagship model to date, featuring significant improvements in reasoning and complex task performance that set a new benchmark for the Claude model family.",
+      "lang": "en",
+      "publishedAt": "2026-07-24T00:00:00.000Z",
+      "collectedAt": "2026-09-07T00:25:45.839Z",
+      "tags": [
+        "anthropic",
+        "benchmark",
+        "claude",
+        "claude-opus",
+        "flagship",
+        "model-release"
+      ],
+      "category": "claude",
+      "importance": 3,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Claude Opus 5 is available today. It’s a thoughtful and proactive model that comes close to the frontier intelligence of Claude Fable 5 at half the price. On coding and knowledge work evaluations like Frontier-Bench and GDPval-AA , Opus 5 is the new state-of-the-art, though it remains behind Mythos 5 on cybersecurity tasks.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -36046,7 +36027,7 @@
       "summaryEn": "Google has committed $40 million to the Genesis Mission, an initiative aimed at using AI to accelerate breakthroughs across scientific disciplines, signaling a major investment in AI-driven research.",
       "lang": "en",
       "publishedAt": "2026-07-22T13:38:54.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-for-science",
         "deepmind",
@@ -37122,7 +37103,7 @@
       "summaryEn": "Google DeepMind has announced three new Gemini models—3.6 Flash, 3.5 Flash-Lite, and 3.5 Flash Cyber—expanding its Flash family to serve a broader range of performance and efficiency needs.",
       "lang": "en",
       "publishedAt": "2026-07-21T15:16:30.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini-flash",
@@ -38937,35 +38918,6 @@
       "bodyEn": ""
     },
     {
-      "id": "0063d9a373635592",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/rare-disease-research-grants",
-      "title": "Apply for Anthropic’s AI for Science rare disease research grants",
-      "titleJa": "",
-      "titleEn": "Apply for Anthropic’s AI for Science rare disease research grants",
-      "summaryJa": "AnthropicはAI for Scienceプログラムの一環として、希少疾患研究者向けのグラント申請を開始した。Claudeを活用した研究を支援することで、治療法の乏しい疾患の解明加速を目指す。",
-      "summaryEn": "Anthropic has opened applications for AI for Science grants targeting rare disease researchers, offering access to Claude to help accelerate breakthroughs in conditions that lack adequate treatments.",
-      "lang": "en",
-      "publishedAt": "2026-07-20T00:00:00.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
-      "tags": [
-        "ai-for-science",
-        "anthropic",
-        "claude",
-        "grants",
-        "rare-disease",
-        "research"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Last spring, we announced Anthropic’s AI for Science program , an initiative designed to accelerate scientific research and discovery through access to our API. Since launching, we have supported researchers working on a variety of high-impact projects, ranging from drug repurpos",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "895ba81200fdf388",
       "source": "google-developers",
       "sourceType": "blog",
@@ -38991,6 +38943,35 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Ray 2.55 introduces official, first-class support for Google Cloud TPUs, enabling developers to run distributed Python workloads on Google's accelerators using the familiar Ray task-and-actor APIs. To handle the strict networking requirement of keeping multi-host TPU \"slices\" tog",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "0063d9a373635592",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/rare-disease-research-grants",
+      "title": "Apply for Anthropic’s AI for Science rare disease research grants",
+      "titleJa": "",
+      "titleEn": "Apply for Anthropic’s AI for Science rare disease research grants",
+      "summaryJa": "AnthropicはAI for Scienceプログラムの一環として、希少疾患研究者向けのグラント申請を開始した。Claudeを活用した研究を支援することで、治療法の乏しい疾患の解明加速を目指す。",
+      "summaryEn": "Anthropic has opened applications for AI for Science grants targeting rare disease researchers, offering access to Claude to help accelerate breakthroughs in conditions that lack adequate treatments.",
+      "lang": "en",
+      "publishedAt": "2026-07-20T00:00:00.000Z",
+      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "tags": [
+        "ai-for-science",
+        "anthropic",
+        "claude",
+        "grants",
+        "rare-disease",
+        "research"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Last spring, we announced Anthropic’s AI for Science program , an initiative designed to accelerate scientific research and discovery through access to our API. Since launching, we have supported researchers working on a variety of high-impact projects, ranging from drug repurpos",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -41219,7 +41200,7 @@
       "summaryEn": "Google DeepMind introduced Gemini 3.5 Flash Cyber, a model optimized for cybersecurity tasks, offering enhanced reasoning and analysis capabilities tailored to security professionals.",
       "lang": "en",
       "publishedAt": "2026-07-17T15:00:11.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -42304,7 +42285,7 @@
       "summaryEn": "Google DeepMind outlined its bioresilience strategy, detailing how AI can be responsibly applied to detect and mitigate biological threats and pandemic risks. The framework matters as it sets safety boundaries for AI use in sensitive life-science domains.",
       "lang": "en",
       "publishedAt": "2026-07-16T09:30:42.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-safety",
         "bioresilience",
@@ -46491,63 +46472,6 @@
       "bodyEn": ""
     },
     {
-      "id": "4459bb6d04f5a323",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-for-teachers",
-      "title": "Introducing Claude for Teachers",
-      "titleJa": "教師向け Claude のご紹介",
-      "titleEn": "Introducing Claude for Teachers",
-      "summaryJa": "Anthropic が教育者向けに特化した Claude の提供を開始し、授業計画や教材作成などの業務を支援することで教師の負担軽減を目指す。",
-      "summaryEn": "Anthropic launched Claude for Teachers, a dedicated offering designed to help educators with lesson planning, material creation, and classroom tasks, making AI assistance more accessible in education.",
-      "lang": "en",
-      "publishedAt": "2026-07-14T00:00:00.000Z",
-      "collectedAt": "2026-07-21T18:08:31.806Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "education",
-        "product-launch",
-        "release",
-        "teachers"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "We're introducing Claude for Teachers , providing verified K-12 educators in the US free access to premium Claude capabilities, a library of teaching skills, and a direct connection to evidence-based curricula, mapped to academic standards in all 50 states. Decades of research sh",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "856d0cbc94d676b9",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/canadian-ai-research",
-      "title": "Anthropic commits $10 million to Canadian AI research",
-      "titleJa": "AnthropicがカナダのAI研究に1000万ドルを投資",
-      "titleEn": "Anthropic commits $10 million to Canadian AI research",
-      "summaryJa": "AnthropicはカナダのAI研究機関を支援するため1000万ドルの資金提供を発表した。これによりカナダにおけるAI安全性・基礎研究の強化が期待される。",
-      "summaryEn": "Anthropic announced a $10 million commitment to support AI research in Canada, strengthening ties with the Canadian research community and advancing AI safety work.",
-      "lang": "en",
-      "publishedAt": "2026-07-14T00:00:00.000Z",
-      "collectedAt": "2026-07-19T12:51:27.071Z",
-      "tags": [
-        "ai-safety",
-        "anthropic",
-        "canada",
-        "claude",
-        "research-funding"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Le français suit. Canadian institutions and researchers have played a critical role in the modern AI era. During a period of broad skepticism about research into neural networks, the University of Toronto and the Université de Montréal were two of only a handful of institutions t",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "94650efddaeed6b0",
       "source": "google-developers",
       "sourceType": "blog",
@@ -46604,6 +46528,63 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "See how data science teams can use ChatGPT Work to build root-cause briefs, impact readouts, KPI memos, scoped analyses, and dashboard specs from real work inputs.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "4459bb6d04f5a323",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-for-teachers",
+      "title": "Introducing Claude for Teachers",
+      "titleJa": "教師向け Claude のご紹介",
+      "titleEn": "Introducing Claude for Teachers",
+      "summaryJa": "Anthropic が教育者向けに特化した Claude の提供を開始し、授業計画や教材作成などの業務を支援することで教師の負担軽減を目指す。",
+      "summaryEn": "Anthropic launched Claude for Teachers, a dedicated offering designed to help educators with lesson planning, material creation, and classroom tasks, making AI assistance more accessible in education.",
+      "lang": "en",
+      "publishedAt": "2026-07-14T00:00:00.000Z",
+      "collectedAt": "2026-07-21T18:08:31.806Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "education",
+        "product-launch",
+        "release",
+        "teachers"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "We're introducing Claude for Teachers , providing verified K-12 educators in the US free access to premium Claude capabilities, a library of teaching skills, and a direct connection to evidence-based curricula, mapped to academic standards in all 50 states. Decades of research sh",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "856d0cbc94d676b9",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/canadian-ai-research",
+      "title": "Anthropic commits $10 million to Canadian AI research",
+      "titleJa": "AnthropicがカナダのAI研究に1000万ドルを投資",
+      "titleEn": "Anthropic commits $10 million to Canadian AI research",
+      "summaryJa": "AnthropicはカナダのAI研究機関を支援するため1000万ドルの資金提供を発表した。これによりカナダにおけるAI安全性・基礎研究の強化が期待される。",
+      "summaryEn": "Anthropic announced a $10 million commitment to support AI research in Canada, strengthening ties with the Canadian research community and advancing AI safety work.",
+      "lang": "en",
+      "publishedAt": "2026-07-14T00:00:00.000Z",
+      "collectedAt": "2026-07-19T12:51:27.071Z",
+      "tags": [
+        "ai-safety",
+        "anthropic",
+        "canada",
+        "claude",
+        "research-funding"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Le français suit. Canadian institutions and researchers have played a critical role in the modern AI era. During a period of broad skepticism about research into neural networks, the University of Toronto and the Université de Montréal were two of only a handful of institutions t",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -47206,7 +47187,7 @@
       "summaryEn": "Google and DeepMind announced ATL Saathi, a program partnering with India's Atal Tinkering Labs to bring AI-powered mentorship and resources to young student innovators across the country.",
       "lang": "en",
       "publishedAt": "2026-07-13T12:37:28.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "atl-saathi",
         "deepmind",
@@ -51868,6 +51849,35 @@
       "bodyEn": ""
     },
     {
+      "id": "a02db72f421fa686",
+      "source": "google-developers",
+      "sourceType": "blog",
+      "url": "https://developers.googleblog.com/litertjs-googles-high-performance-web-ai-inference/",
+      "title": "LiteRT.js, Google's high performance Web AI Inference",
+      "titleJa": "LiteRT.js：GoogleのハイパフォーマンスWeb AI推論ライブラリ",
+      "titleEn": "LiteRT.js, Google's high performance Web AI Inference",
+      "summaryJa": "GoogleはWebブラウザ上で高速なAI推論を実現するLiteRT.jsを発表した。WebGPUなどを活用しオンデバイスAIをWebアプリへ容易に統合できる点が注目される。",
+      "summaryEn": "Google announced LiteRT.js, a high-performance AI inference library for the web that leverages WebGPU to enable fast, on-device model execution directly in browsers.",
+      "lang": "en",
+      "publishedAt": "2026-07-09T00:00:00.000Z",
+      "collectedAt": "2026-07-16T11:26:23.768Z",
+      "tags": [
+        "google",
+        "inference",
+        "litert",
+        "on-device-ai",
+        "web-ai",
+        "webgpu"
+      ],
+      "category": "gemini",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "We're excited to introduce LiteRT.js, the newest member of the LiteRT family! LiteRT.js is our powerful solution for running machine learning models directly in the browser, extending Google's cross-platform edge AI runtime to the web. Built for JavaScript developers, LiteRT.js d",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "4dec3fa8c27348de",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -51950,35 +51960,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Anthropic's Long-Term Benefit Trust (LTBT) has appointed Dr. Ben Bernanke, a Distinguished Fellow at the Brookings Institution and former Chair of the Federal Reserve, as its newest member. He joins an independent body that works to hold Anthropic to its mission: the responsible ",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "a02db72f421fa686",
-      "source": "google-developers",
-      "sourceType": "blog",
-      "url": "https://developers.googleblog.com/litertjs-googles-high-performance-web-ai-inference/",
-      "title": "LiteRT.js, Google's high performance Web AI Inference",
-      "titleJa": "LiteRT.js：GoogleのハイパフォーマンスWeb AI推論ライブラリ",
-      "titleEn": "LiteRT.js, Google's high performance Web AI Inference",
-      "summaryJa": "GoogleはWebブラウザ上で高速なAI推論を実現するLiteRT.jsを発表した。WebGPUなどを活用しオンデバイスAIをWebアプリへ容易に統合できる点が注目される。",
-      "summaryEn": "Google announced LiteRT.js, a high-performance AI inference library for the web that leverages WebGPU to enable fast, on-device model execution directly in browsers.",
-      "lang": "en",
-      "publishedAt": "2026-07-09T00:00:00.000Z",
-      "collectedAt": "2026-07-16T11:26:23.768Z",
-      "tags": [
-        "google",
-        "inference",
-        "litert",
-        "on-device-ai",
-        "web-ai",
-        "webgpu"
-      ],
-      "category": "gemini",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "We're excited to introduce LiteRT.js, the newest member of the LiteRT family! LiteRT.js is our powerful solution for running machine learning models directly in the browser, extending Google's cross-platform edge AI runtime to the web. Built for JavaScript developers, LiteRT.js d",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -52402,7 +52383,7 @@
       "summaryEn": "Apple has announced increased spending with Broadcom to manufacture billions of additional chips in the United States, signaling a major push toward domestic semiconductor production.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:13.748Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "apple",
         "broadcom",
@@ -53392,6 +53373,35 @@
       "bodyEn": ""
     },
     {
+      "id": "216b12961fef903c",
+      "source": "google-developers",
+      "sourceType": "blog",
+      "url": "https://developers.googleblog.com/we-terminated-a-tpu-mid-training-and-it-recovered-in-seconds-introduction-to-elastic-training-with-maxtext/",
+      "title": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
+      "titleJa": "TPUをトレーニング中に強制停止しても数秒で復旧：MaxTextのエラスティックトレーニング入門",
+      "titleEn": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
+      "summaryJa": "MaxTextにおけるエラスティックトレーニング機能を紹介し、TPUがトレーニング中に停止しても数秒で復旧できる仕組みを解説。大規模LLM学習の信頼性とコスト効率を大幅に向上させる。",
+      "summaryEn": "MaxText now supports elastic training, letting TPU jobs recover from mid-training failures in seconds and greatly improving fault tolerance for large-scale model training.",
+      "lang": "en",
+      "publishedAt": "2026-07-06T00:00:00.000Z",
+      "collectedAt": "2026-07-14T17:01:41.079Z",
+      "tags": [
+        "elastic-training",
+        "fault-tolerance",
+        "google",
+        "llm-training",
+        "maxtext",
+        "tpu"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Distributed AI training is notoriously fragile because losing a single machine typically crashes the entire multi-node job, forcing a time-consuming, full-workload infrastructure restart. To address this, Google’s JAX ecosystem utilizes elastic training via Pathways, which conver",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "accc5aab195019c1",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -53428,35 +53438,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "216b12961fef903c",
-      "source": "google-developers",
-      "sourceType": "blog",
-      "url": "https://developers.googleblog.com/we-terminated-a-tpu-mid-training-and-it-recovered-in-seconds-introduction-to-elastic-training-with-maxtext/",
-      "title": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
-      "titleJa": "TPUをトレーニング中に強制停止しても数秒で復旧：MaxTextのエラスティックトレーニング入門",
-      "titleEn": "We terminated a TPU mid-training and it recovered in seconds:  Introduction to elastic training with MaxText",
-      "summaryJa": "MaxTextにおけるエラスティックトレーニング機能を紹介し、TPUがトレーニング中に停止しても数秒で復旧できる仕組みを解説。大規模LLM学習の信頼性とコスト効率を大幅に向上させる。",
-      "summaryEn": "MaxText now supports elastic training, letting TPU jobs recover from mid-training failures in seconds and greatly improving fault tolerance for large-scale model training.",
-      "lang": "en",
-      "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-07-14T17:01:41.079Z",
-      "tags": [
-        "elastic-training",
-        "fault-tolerance",
-        "google",
-        "llm-training",
-        "maxtext",
-        "tpu"
-      ],
-      "category": "gemini",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Distributed AI training is notoriously fragile because losing a single machine typically crashes the entire multi-node job, forcing a time-consuming, full-workload infrastructure restart. To address this, Google’s JAX ecosystem utilizes elastic training via Pathways, which conver",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "cba740f1d7ffc5ee",
@@ -53562,7 +53543,7 @@
       "summaryEn": "Google DeepMind and acclaimed film studio A24 have formed a first-of-its-kind research partnership, exploring how AI can intersect with cinematic storytelling and creative production in a meaningful way.",
       "lang": "en",
       "publishedAt": "2026-07-03T14:25:43.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "a24",
         "creative-ai",
@@ -54251,7 +54232,7 @@
       "summaryEn": "Google has made Nano Banana 2 Lite and Gemini Omni Flash available for developers, expanding the Gemini model lineup with lightweight and fast options suited for a wider range of applications.",
       "lang": "en",
       "publishedAt": "2026-06-30T16:02:40.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini",
@@ -54356,91 +54337,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "New OpenAI Signals data shows how ChatGPT adoption is growing globally, with users increasing usage, exploring more capabilities, and driving growth across regions and languages.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "72b0bd790788598c",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-sonnet-5",
-      "title": "Introducing Claude Sonnet 5",
-      "titleJa": "Claude Sonnet 5 を発表",
-      "titleEn": "Introducing Claude Sonnet 5",
-      "summaryJa": "Anthropicが新世代AIモデルClaude Sonnet 5を発表。前バージョンと比べてコーディング・推論・指示追従の能力が大幅に向上し、APIを通じて即座に利用可能となった。",
-      "summaryEn": "Anthropic releases Claude Sonnet 5, a significantly upgraded model with enhanced reasoning, coding, and instruction-following capabilities, now available via API and Claude.ai.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-09-01T12:10:29.463Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "claude-sonnet-5",
-        "model-release"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Claude Sonnet 5 is built to be the most agentic Sonnet model yet. It can make plans, use tools like browsers and terminals, and run autonomously at a level that, just a few months ago, required larger and more expensive models. For many developers, the agentic AI era began with Sonnet-class models: Claude Sonnet 3.5, 3.6, and 3.7 were the first models that showed impressive skills in coding and tool use. More recently, though, the clearest gains in agentic capabilities have been in our Opus-class models.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "5f98f193911f5563",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-science-ai-workbench",
-      "title": "Claude Science, an AI workbench for scientists, is now available",
-      "titleJa": "科学者向けAIワークベンチ「Claude Science」が正式公開",
-      "titleEn": "Claude Science, an AI workbench for scientists, is now available",
-      "summaryJa": "AnthropicがAI科学者向けワークベンチ「Claude Science」を正式リリースした。科学研究に特化した機能を備えており、研究者の実験・分析・文献調査の効率化に貢献することが期待されている。",
-      "summaryEn": "Anthropic has launched Claude Science, a dedicated AI workbench for scientists, offering specialized tools to speed up research, data analysis, and discovery.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-07-23T00:31:46.237Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "release",
-        "research",
-        "science",
-        "workbench"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "AI has the potential to dramatically accelerate the pace of scientific discovery and the development of healthcare interventions. Since launching our efforts in the life sciences last fall, we’ve worked to improve our model capabilities, make connections to the scientific ecosyst",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "0986065962c7574b",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/redeploying-fable-5",
-      "title": "Redeploying Fable 5",
-      "titleJa": "Fable 5の再展開",
-      "titleEn": "Redeploying Fable 5",
-      "summaryJa": "AnthropicはClaude搭載のインタラクティブフィクション体験「Fable 5」を再展開し、AIキャラクターの創造的表現と安全性のバランスをどのように実現したかを解説している。",
-      "summaryEn": "Anthropic describes the redeployment of Fable 5, a Claude-powered interactive fiction experience, detailing how creative character expression and safety considerations were balanced to bring it back online.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-08-24T12:21:18.347Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "creative-ai",
-        "fable",
-        "interactive-fiction",
-        "redeployment"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Access to Claude Fable 5 and Mythos 5 is now restored.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -54556,6 +54452,91 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "warm",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "72b0bd790788598c",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-sonnet-5",
+      "title": "Introducing Claude Sonnet 5",
+      "titleJa": "Claude Sonnet 5 を発表",
+      "titleEn": "Introducing Claude Sonnet 5",
+      "summaryJa": "Anthropicが新世代AIモデルClaude Sonnet 5を発表。前バージョンと比べてコーディング・推論・指示追従の能力が大幅に向上し、APIを通じて即座に利用可能となった。",
+      "summaryEn": "Anthropic releases Claude Sonnet 5, a significantly upgraded model with enhanced reasoning, coding, and instruction-following capabilities, now available via API and Claude.ai.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-09-01T12:10:29.463Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "claude-sonnet-5",
+        "model-release"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Claude Sonnet 5 is built to be the most agentic Sonnet model yet. It can make plans, use tools like browsers and terminals, and run autonomously at a level that, just a few months ago, required larger and more expensive models. For many developers, the agentic AI era began with Sonnet-class models: Claude Sonnet 3.5, 3.6, and 3.7 were the first models that showed impressive skills in coding and tool use. More recently, though, the clearest gains in agentic capabilities have been in our Opus-class models.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "5f98f193911f5563",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-science-ai-workbench",
+      "title": "Claude Science, an AI workbench for scientists, is now available",
+      "titleJa": "科学者向けAIワークベンチ「Claude Science」が正式公開",
+      "titleEn": "Claude Science, an AI workbench for scientists, is now available",
+      "summaryJa": "AnthropicがAI科学者向けワークベンチ「Claude Science」を正式リリースした。科学研究に特化した機能を備えており、研究者の実験・分析・文献調査の効率化に貢献することが期待されている。",
+      "summaryEn": "Anthropic has launched Claude Science, a dedicated AI workbench for scientists, offering specialized tools to speed up research, data analysis, and discovery.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-07-23T00:31:46.237Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "release",
+        "research",
+        "science",
+        "workbench"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "AI has the potential to dramatically accelerate the pace of scientific discovery and the development of healthcare interventions. Since launching our efforts in the life sciences last fall, we’ve worked to improve our model capabilities, make connections to the scientific ecosyst",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "0986065962c7574b",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/redeploying-fable-5",
+      "title": "Redeploying Fable 5",
+      "titleJa": "Fable 5の再展開",
+      "titleEn": "Redeploying Fable 5",
+      "summaryJa": "AnthropicはClaude搭載のインタラクティブフィクション体験「Fable 5」を再展開し、AIキャラクターの創造的表現と安全性のバランスをどのように実現したかを解説している。",
+      "summaryEn": "Anthropic describes the redeployment of Fable 5, a Claude-powered interactive fiction experience, detailing how creative character expression and safety considerations were balanced to bring it back online.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-08-24T12:21:18.347Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "creative-ai",
+        "fable",
+        "interactive-fiction",
+        "redeployment"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Access to Claude Fable 5 and Mythos 5 is now restored.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -54858,7 +54839,7 @@
       "summaryEn": "Beta versions of four MCP SDKs—Python, TypeScript, Go, and C#—now support the 2026-07-28 spec release candidate, giving server developers a window to migrate and validate their implementations before the specification is finalized.",
       "lang": "en",
       "publishedAt": "2026-06-29T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "beta",
         "csharp",
@@ -55244,7 +55225,7 @@
       "summaryEn": "Google DeepMind has added computer use capabilities to Gemini 3.5 Flash, enabling the model to autonomously interact with desktop environments and automate complex multi-step tasks.",
       "lang": "en",
       "publishedAt": "2026-06-24T16:30:01.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-agents",
         "automation",
@@ -55536,6 +55517,34 @@
       "evergreen": true
     },
     {
+      "id": "ba546af75496952b",
+      "source": "openai-news",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/omio",
+      "title": "How Omio is building the future of conversational travel",
+      "titleJa": "OmioがOpenAIで会話型旅行の未来を構築する方法",
+      "titleEn": "How Omio is building the future of conversational travel",
+      "summaryJa": "旅行プラットフォームOmioがOpenAIの技術を活用し、自然言語で交通手段を検索・予約できる会話型インターフェースを構築。旅行体験の利便性向上に向けた新たなアプローチを示している。",
+      "summaryEn": "Omio is integrating OpenAI's models to enable conversational travel search and booking, allowing users to find trains, buses, and flights through natural dialogue rather than traditional form-based search.",
+      "lang": "en",
+      "publishedAt": "2026-06-23T00:00:00.000Z",
+      "collectedAt": "2026-09-06T20:54:03.581Z",
+      "tags": [
+        "conversational-ai",
+        "omio",
+        "openai",
+        "product-integration",
+        "travel"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Discover how Omio uses OpenAI to power conversational travel experiences, accelerate product development, and transform into an AI-native company.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "d33cb088918ef6f1",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -55565,34 +55574,6 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Claude Tag is a new way for teams to work with Claude. We’re starting on Slack, which Claude can join as a team member. Grant Claude access to selected channels, and connect it to whichever tools, data-and even codebases-you choose. Then, anyone in the channel can tag @Claude in,",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "ba546af75496952b",
-      "source": "openai-news",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/omio",
-      "title": "How Omio is building the future of conversational travel",
-      "titleJa": "OmioがOpenAIで会話型旅行の未来を構築する方法",
-      "titleEn": "How Omio is building the future of conversational travel",
-      "summaryJa": "旅行プラットフォームOmioがOpenAIの技術を活用し、自然言語で交通手段を検索・予約できる会話型インターフェースを構築。旅行体験の利便性向上に向けた新たなアプローチを示している。",
-      "summaryEn": "Omio is integrating OpenAI's models to enable conversational travel search and booking, allowing users to find trains, buses, and flights through natural dialogue rather than traditional form-based search.",
-      "lang": "en",
-      "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-09-06T20:54:03.581Z",
-      "tags": [
-        "conversational-ai",
-        "omio",
-        "openai",
-        "product-integration",
-        "travel"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Discover how Omio uses OpenAI to power conversational travel experiences, accelerate product development, and transform into an AI-native company.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -56294,7 +56275,7 @@
       "summaryEn": "Continue.dev Releases v2.0.0-vscode",
       "lang": "en",
       "publishedAt": "2026-06-19T00:24:01.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "continue",
         "major-release",
@@ -56331,7 +56312,7 @@
       "summaryEn": "Continue.dev Releases v2.1.0-vscode",
       "lang": "en",
       "publishedAt": "2026-06-19T00:24:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "continue",
         "extension",
@@ -56521,7 +56502,7 @@
       "summaryEn": "The Enterprise-Managed Authorization extension for MCP has reached stable status, letting IT teams centrally provision server access via their identity provider. Employees gain immediate server connectivity at first login, eliminating per-application OAuth flows.",
       "lang": "en",
       "publishedAt": "2026-06-18T17:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "authorization",
         "enterprise",
@@ -57163,39 +57144,6 @@
       "bodyEn": ""
     },
     {
-      "id": "0c002e4942002f64",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem",
-      "title": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
-      "titleJa": "Anthropicがソウルオフィスを開設、韓国AIエコシステム全体で新たなパートナーシップを発表",
-      "titleEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
-      "summaryJa": "Anthropicがソウルにオフィスを開設し、韓国の大企業・スタートアップ・研究機関との新たなパートナーシップを発表した。アジア太平洋地域でのClaude普及と事業拡大を加速させる動きを示している。",
-      "summaryEn": "Anthropic opened its Seoul office and announced new partnerships with Korean enterprises, startups, and researchers, marking a notable step in its Asia-Pacific expansion and broader Claude adoption.",
-      "lang": "en",
-      "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-07-06T08:00:28.608Z",
-      "tags": [
-        "anthropic",
-        "asia-pacific",
-        "claude",
-        "enterprise",
-        "global-expansion",
-        "korea",
-        "partnership",
-        "research",
-        "seoul",
-        "startups"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "We’ve just opened our Seoul office . Alongside it, we’re announcing new partnerships across the Korean AI ecosystem, with the enterprises, startups, and researchers behind some of the most ambitious uses of Claude. We’ve also signed a Memorandum of Understanding (MOU) with Korea’",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "f0a66db346a7675c",
       "source": "google-developers",
       "sourceType": "blog",
@@ -57281,6 +57229,39 @@
       "halfLife": "news",
       "archiveTier": "warm",
       "contentSnippet": "Introducing LifeSciBench, an expert-authored, expert-reviewed benchmark for evaluating how AI systems handle real-world life science research tasks and decisions.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "0c002e4942002f64",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/seoul-office-partnerships-korean-ai-ecosystem",
+      "title": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
+      "titleJa": "Anthropicがソウルオフィスを開設、韓国AIエコシステム全体で新たなパートナーシップを発表",
+      "titleEn": "Anthropic opens Seoul office and announces new partnerships across the Korean AI ecosystem",
+      "summaryJa": "Anthropicがソウルにオフィスを開設し、韓国の大企業・スタートアップ・研究機関との新たなパートナーシップを発表した。アジア太平洋地域でのClaude普及と事業拡大を加速させる動きを示している。",
+      "summaryEn": "Anthropic opened its Seoul office and announced new partnerships with Korean enterprises, startups, and researchers, marking a notable step in its Asia-Pacific expansion and broader Claude adoption.",
+      "lang": "en",
+      "publishedAt": "2026-06-17T00:00:00.000Z",
+      "collectedAt": "2026-07-06T08:00:28.608Z",
+      "tags": [
+        "anthropic",
+        "asia-pacific",
+        "claude",
+        "enterprise",
+        "global-expansion",
+        "korea",
+        "partnership",
+        "research",
+        "seoul",
+        "startups"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "We’ve just opened our Seoul office . Alongside it, we’re announcing new partnerships across the Korean AI ecosystem, with the enterprises, startups, and researchers behind some of the most ambitious uses of Claude. We’ve also signed a Memorandum of Understanding (MOU) with Korea’",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -57387,7 +57368,7 @@
       "summaryEn": "Google DeepMind announced an AI-powered initiative to accelerate UK planning approvals, aiming to cut bureaucratic delays and help address the country's chronic housing shortage.",
       "lang": "en",
       "publishedAt": "2026-06-16T21:29:50.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "google",
@@ -57466,7 +57447,7 @@
       "summaryEn": "Google DeepMind published a framework addressing security risks posed by increasingly autonomous AI agents, outlining threat models and guidelines to ensure safe real-world deployment.",
       "lang": "en",
       "publishedAt": "2026-06-16T15:46:31.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -57722,7 +57703,7 @@
       "summaryEn": "Continue ships v1.2.24 of its VS Code extension, removing the CLI-install banner and the Generate Rule feature while switching onboarding and the new-config template to explicit model definitions for a clearer setup.",
       "lang": "en",
       "publishedAt": "2026-06-15T16:59:46.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding",
         "configuration",
@@ -57761,7 +57742,7 @@
       "summaryEn": "Continue VS Code extension v1.2.23 drops the CLI-install banner and Generate Rule feature while switching onboarding to explicit model definitions instead of Hub slugs, giving developers clearer, more transparent config setups from the start.",
       "lang": "en",
       "publishedAt": "2026-06-15T16:43:38.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding-assistant",
         "continue",
@@ -57802,7 +57783,7 @@
       "summaryEn": "Continue.dev has published v1.3.40-vscode as a pre-release of its VS Code extension, focusing on housekeeping tasks ahead of a stable release, benefiting users awaiting a polished final build.",
       "lang": "en",
       "publishedAt": "2026-06-15T16:31:09.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "continue",
         "extension",
@@ -58267,7 +58248,7 @@
       "summaryEn": "DiffusionGemma applies diffusion-based generation to language modeling, achieving up to 4x faster text output than autoregressive approaches, marking a significant architectural advance for practical LLM deployment.",
       "lang": "en",
       "publishedAt": "2026-06-10T16:24:11.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "diffusion-model",
@@ -58403,7 +58384,7 @@
       "summaryEn": "Google DeepMind announces increased investment in multi-agent AI safety research, addressing the unique risks that emerge when multiple AI agents interact and coordinate autonomously.",
       "lang": "en",
       "publishedAt": "2026-06-10T10:21:19.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "ai-safety",
@@ -58748,7 +58729,7 @@
       "summaryEn": "Google DeepMind introduced Gemini 3.5 Live Translate, enabling fluid real-time voice translation that preserves natural speech patterns, lowering language barriers in live conversations.",
       "lang": "en",
       "publishedAt": "2026-06-09T15:16:25.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini-3-5",
@@ -58778,7 +58759,7 @@
       "summaryEn": "Google released Gemma 4 12B, an open multimodal model that handles text and images within a single encoder-free architecture, lowering deployment complexity for developers.",
       "lang": "en",
       "publishedAt": "2026-06-09T14:10:19.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemma",
@@ -58808,7 +58789,7 @@
       "summaryEn": "Google DeepMind announced initiatives to advance robotics research and development across Europe, highlighting AI-driven investments that aim to accelerate innovation in the field.",
       "lang": "en",
       "publishedAt": "2026-06-09T14:02:33.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "europe",
@@ -58848,7 +58829,7 @@
       "category": "agent-fw",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -59104,7 +59085,7 @@
       "summaryEn": "DeepMind measured the educational impact of AI-assisted learning in Sierra Leone, providing evidence that AI tools can meaningfully improve outcomes in underserved regions.",
       "lang": "en",
       "publishedAt": "2026-06-08T13:04:59.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-for-good",
         "deepmind",
@@ -61101,45 +61082,6 @@
       "bodyEn": ""
     },
     {
-      "id": "11873921a1c006fb",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-opus-4-8",
-      "title": "Introducing Claude Opus 4.8",
-      "titleJa": "Claude Opus 4.8 を発表",
-      "titleEn": "Introducing Claude Opus 4.8",
-      "summaryJa": "AnthropicがClaude Opus 4.8をリリース。前バージョン4.7から複数のベンチマークで性能が向上し、価格据え置きで即日提供されるため、既存ユーザーがコスト増なしに恩恵を受けられる。",
-      "summaryEn": "Claude Opus 4.8 arrives as a benchmark-improved successor to Opus 4.7, offered at the same price point, making it a no-cost upgrade for current users seeking a more capable collaborative model.",
-      "lang": "en",
-      "publishedAt": "2026-05-28T00:00:00.000Z",
-      "collectedAt": "2026-07-01T00:00:08.932Z",
-      "tags": [
-        "anthropic",
-        "benchmark",
-        "benchmark-improvement",
-        "claude",
-        "claude-opus",
-        "model-release",
-        "model-update",
-        "pricing"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "We’re upgrading Claude Opus to a new version: Claude Opus 4.8. It builds on Opus 4.7 with improvements across benchmarks, and is a more effective collaborator. It’s available today for the same price. Opus 4.8 launches alongside several new features. Users on claude.ai now have c",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://cdn.sanity.io/images/4zrzovbb/website/0eaa0ed2dce9810169112e1c77de2585fcf1f5c2-2880x1620.jpg",
-        "origSrc": "https://cdn.sanity.io/images/4zrzovbb/website/0eaa0ed2dce9810169112e1c77de2585fcf1f5c2-2880x1620.jpg",
-        "alt": "Claude Opus 4 8",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "db383336af7480a0",
       "source": "google-developers",
       "sourceType": "blog",
@@ -61205,6 +61147,45 @@
       "archiveTier": "cold",
       "bodyJa": "",
       "bodyEn": ""
+    },
+    {
+      "id": "11873921a1c006fb",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-opus-4-8",
+      "title": "Introducing Claude Opus 4.8",
+      "titleJa": "Claude Opus 4.8 を発表",
+      "titleEn": "Introducing Claude Opus 4.8",
+      "summaryJa": "AnthropicがClaude Opus 4.8をリリース。前バージョン4.7から複数のベンチマークで性能が向上し、価格据え置きで即日提供されるため、既存ユーザーがコスト増なしに恩恵を受けられる。",
+      "summaryEn": "Claude Opus 4.8 arrives as a benchmark-improved successor to Opus 4.7, offered at the same price point, making it a no-cost upgrade for current users seeking a more capable collaborative model.",
+      "lang": "en",
+      "publishedAt": "2026-05-28T00:00:00.000Z",
+      "collectedAt": "2026-07-01T00:00:08.932Z",
+      "tags": [
+        "anthropic",
+        "benchmark",
+        "benchmark-improvement",
+        "claude",
+        "claude-opus",
+        "model-release",
+        "model-update",
+        "pricing"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "We’re upgrading Claude Opus to a new version: Claude Opus 4.8. It builds on Opus 4.7 with improvements across benchmarks, and is a more effective collaborator. It’s available today for the same price. Opus 4.8 launches alongside several new features. Users on claude.ai now have c",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://cdn.sanity.io/images/4zrzovbb/website/0eaa0ed2dce9810169112e1c77de2585fcf1f5c2-2880x1620.jpg",
+        "origSrc": "https://cdn.sanity.io/images/4zrzovbb/website/0eaa0ed2dce9810169112e1c77de2585fcf1f5c2-2880x1620.jpg",
+        "alt": "Claude Opus 4 8",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "3d80b1f3e0166014",
@@ -61583,7 +61564,7 @@
       "summaryEn": "Google DeepMind has launched an accelerator program in Asia Pacific supporting startups using AI to address environmental risks, providing resources and mentorship to drive impactful climate solutions in the region.",
       "lang": "en",
       "publishedAt": "2026-05-21T19:46:42.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "accelerator",
         "asia-pacific",
@@ -61692,7 +61673,7 @@
       "summaryEn": "The release candidate for the next MCP specification introduces a stateless protocol core alongside new constructs like Extensions, Tasks, and MCP Apps, plus tightened authorization and a deprecation policy — giving developers a concrete preview to prepare implementations against.",
       "lang": "en",
       "publishedAt": "2026-05-21T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "extensions",
         "mcp",
@@ -61997,7 +61978,7 @@
       "summaryEn": "DeepMind published research on fast-tracking the identification of genetic factors that can reverse cellular aging, potentially accelerating therapies for age-related diseases.",
       "lang": "en",
       "publishedAt": "2026-05-18T18:21:39.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "aging",
         "biology",
@@ -62196,7 +62177,7 @@
       "summaryEn": "Project Genie now integrates with Google Street View to simulate real-world environments, enabling AI agents to be trained in photorealistic interactive representations of actual places.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:53:18.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-agents",
         "deepmind",
@@ -62226,7 +62207,7 @@
       "summaryEn": "Google DeepMind announced Gemini Omni, a new multimodal model capable of natively processing text, audio, and images together, marking a significant step forward in unified AI understanding.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:50:57.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini",
@@ -62254,7 +62235,7 @@
       "summaryEn": "Google DeepMind announced Antigravity 2.0, bringing significant capability improvements and new features over its predecessor, marking a notable milestone in AI development.",
       "lang": "en",
       "publishedAt": "2026-05-17T19:43:45.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "antigravity",
         "deepmind",
@@ -62280,7 +62261,7 @@
       "summaryEn": "Google DeepMind unveiled Gemini-powered AI experiments and tools aimed at accelerating scientific discovery, marking a significant push to bring frontier AI capabilities directly into researchers' workflows.",
       "lang": "en",
       "publishedAt": "2026-05-17T13:50:34.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemini",
@@ -62309,7 +62290,7 @@
       "summaryEn": "Google DeepMind announced improvements to content provenance tools, making it easier for users to understand whether content was AI-generated or edited, boosting transparency and trust.",
       "lang": "en",
       "publishedAt": "2026-05-17T13:43:50.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-transparency",
         "content-provenance",
@@ -62337,7 +62318,7 @@
       "summaryEn": "Google DeepMind announced a national AI partnership with Singapore to advance research, infrastructure, and talent development, reinforcing the country's position as a regional AI hub.",
       "lang": "en",
       "publishedAt": "2026-05-16T09:13:34.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-policy",
         "deepmind",
@@ -62373,7 +62354,7 @@
       "summaryEn": "DeepMind researchers used AI tools to identify molecular switches that govern the behavior of emerging infectious disease pathogens, potentially accelerating the discovery of new therapeutic targets.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:16:06.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "alphafold",
         "deepmind",
@@ -62410,7 +62391,7 @@
       "summaryEn": "Google DeepMind announced new AI-driven approaches using Gemini to advance aging research, potentially accelerating the discovery of biological aging mechanisms and therapeutic targets.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:08:44.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "aging",
         "biology",
@@ -62448,7 +62429,7 @@
       "summaryEn": "Google DeepMind published research using AI to accelerate the discovery of liver disease mechanisms, potentially identifying new therapeutic targets and speeding up drug development.",
       "lang": "en",
       "publishedAt": "2026-05-16T08:00:15.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "biology",
         "deepmind",
@@ -62485,7 +62466,7 @@
       "summaryEn": "DeepMind unveiled an approach that combines multiple biological toolkits to advance ALS research, potentially accelerating the understanding and treatment of this neurodegenerative disease.",
       "lang": "en",
       "publishedAt": "2026-05-16T07:53:11.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "alphafold",
         "als",
@@ -62522,7 +62503,7 @@
       "summaryEn": "Google DeepMind researchers identified existing approved medicines that could be repurposed to treat liver fibrosis, potentially accelerating therapy delivery while reducing drug development costs.",
       "lang": "en",
       "publishedAt": "2026-05-16T07:40:27.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "alphafold",
         "biomedical-research",
@@ -62559,7 +62540,7 @@
       "summaryEn": "Google's WeatherNext AI forecasting system helped the National Hurricane Center improve track predictions for Hurricane Melissa's historic Jamaica landfall, demonstrating real-world impact of AI in operational meteorology.",
       "lang": "en",
       "publishedAt": "2026-05-16T03:14:17.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "forecasting",
@@ -62596,7 +62577,7 @@
       "summaryEn": "Google DeepMind announced Gemini 3.5, a new frontier model combining advanced reasoning with agentic action capabilities, enabling AI to autonomously execute complex multi-step tasks at scale.",
       "lang": "en",
       "publishedAt": "2026-05-15T22:50:12.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -63079,7 +63060,7 @@
       "summaryEn": "Google DeepMind introduced Co-Scientist, a multi-agent AI system designed to assist researchers by automating hypothesis generation and experimental planning, potentially accelerating the pace of scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-05-12T14:40:07.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "co-scientist",
@@ -63686,7 +63667,7 @@
       "summaryEn": "AlphaEvolve applies Gemini-powered evolutionary search to real-world problems spanning chip design, algorithm optimization, and scientific research, broadening access for researchers and developers.",
       "lang": "en",
       "publishedAt": "2026-05-06T10:43:49.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "algorithm-optimization",
@@ -64233,7 +64214,7 @@
       "summaryEn": "Google DeepMind and Google Research's AI co-clinician is designed to assist doctors with complex diagnoses and treatment plans, enabling AI-augmented clinical care.",
       "lang": "en",
       "publishedAt": "2026-04-30T12:14:15.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-co-clinician",
         "amie",
@@ -64531,7 +64512,7 @@
       "summaryEn": "Google DeepMind announced a strategic partnership with the Republic of Korea, focusing on collaboration in AI research, talent development, and societal applications to advance Korea's AI ecosystem and responsible AI adoption.",
       "lang": "en",
       "publishedAt": "2026-04-27T07:00:06.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-policy",
         "deepmind",
@@ -65119,7 +65100,7 @@
       "summaryEn": "MCP names a Lead Maintainer and welcomes another member into the Core Maintainer group, reinforcing governance to support its growing open-source community.",
       "lang": "en",
       "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "enterprise",
         "mcp",
@@ -65398,7 +65379,7 @@
       "summaryEn": "Google DeepMind explores a reimagined mouse pointer concept designed for AI-driven interaction, updating the decades-old cursor paradigm to better support intelligent agents navigating digital interfaces.",
       "lang": "en",
       "publishedAt": "2026-03-29T10:50:49.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-agents",
         "cursor",
@@ -65435,7 +65416,7 @@
       "summaryEn": "Continue.dev shipped v1.2.22 of its open-source VS Code extension, a routine maintenance release that fixes config.yaml initialization, bumps dev dependencies, and focuses on overall stability.",
       "lang": "en",
       "publishedAt": "2026-03-27T21:38:24.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding",
         "bug-fix",
@@ -65475,7 +65456,7 @@
       "summaryEn": "Continue.dev shipped v1.3.38 of its VS Code extension, a maintenance patch that ensures config.yaml is created and populated when accessed and bumps dev dependencies, improving stability for the open-source AI coding assistant.",
       "lang": "en",
       "publishedAt": "2026-03-27T21:34:07.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding-assistant",
         "config-yaml",
@@ -65514,7 +65495,7 @@
       "summaryEn": "Continue.dev shipped v1.0.67 of its JetBrains IDE plugin, a routine update bundling bug fixes such as redirecting the Winston logger to stderr to prevent IPC stream corruption and ensuring config.yaml exists when accessed.",
       "lang": "en",
       "publishedAt": "2026-03-27T21:22:37.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding",
         "bug-fix",
@@ -65590,7 +65571,7 @@
       "summaryEn": "Continue.dev v1.3.37 for VSCode removes a restriction affecting tool use through Ollama templates, making the capability easier for Ollama developers to access.",
       "lang": "en",
       "publishedAt": "2026-03-27T00:05:47.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding",
         "continue",
@@ -65703,7 +65684,7 @@
       "summaryEn": "Continue.dev shipped v1.3.36 of its open-source AI coding extension for VS Code, a routine maintenance update fixing a StringIndexOutOfBoundsException, test callback types, and critical security vulnerabilities.",
       "lang": "en",
       "publishedAt": "2026-03-26T22:43:05.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "ai-coding",
         "bug-fix",
@@ -66171,7 +66152,7 @@
       "summaryEn": "MCP tool annotations classify tools by four traits: idempotence, destructive potential, read-only operation, and access beyond the local environment. Their limits help implementers assess risk.",
       "lang": "en",
       "publishedAt": "2026-03-16T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -66270,7 +66251,7 @@
       "summaryEn": "MCP extensions add capabilities beyond the core protocol, explaining the layering model and patterns already used by the community to help developers design and adopt extensions.",
       "lang": "en",
       "publishedAt": "2026-03-11T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "developer-guide",
         "mcp",
@@ -66368,7 +66349,7 @@
       "summaryEn": "Model Context Protocol's 2026 roadmap targets scalable transports, agent links, governance, and enterprise use. SEP ranking and participation guidance help builders plan.",
       "lang": "en",
       "publishedAt": "2026-03-09T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "agent-communication",
@@ -66933,7 +66914,7 @@
       "summaryEn": "MCP Apps launches as MCP's inaugural official extension, turning tool results into interactive interfaces inside chats. This lets MCP client users act on results in context.",
       "lang": "en",
       "publishedAt": "2026-01-26T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "interactive-ui",
         "mcp",
@@ -66960,7 +66941,7 @@
       "summaryEn": "MCP's Core Maintainer team is changing for 2026, with members departing and new maintainers joining. The outlook helps developers understand how the project will be governed.",
       "lang": "en",
       "publishedAt": "2026-01-23T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "maintainers",
         "mcp",
@@ -67210,7 +67191,7 @@
       "summaryEn": "MCP's Transport Working Group outlines a path beyond Streamable HTTP, aiming to better support organizations running remote MCP deployments at enterprise scale.",
       "lang": "en",
       "publishedAt": "2025-12-19T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "enterprise",
         "mcp",
@@ -67491,7 +67472,7 @@
       "summaryEn": "MCP is being donated by Anthropic to the new Agentic AI Foundation within the Linux Foundation, enabling vendor-neutral stewardship and long-term protocol development.",
       "lang": "en",
       "publishedAt": "2025-12-09T09:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "agent",
         "agentic-ai-foundation",
@@ -67548,7 +67529,7 @@
       "summaryEn": "The SEP process now uses pull requests in the seps/ directory instead of GitHub Issues. It explains the rationale and revised workflow, helping contributors adapt.",
       "lang": "en",
       "publishedAt": "2025-11-28T11:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "contributor-workflow",
         "github",
@@ -67617,7 +67598,7 @@
       "summaryEn": "MCP's November 2025 specification update is presented alongside a review of the protocol's first year, helping implementers assess its evolution and latest standard.",
       "lang": "en",
       "publishedAt": "2025-11-25T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "anniversary",
         "mcp",
@@ -67645,7 +67626,7 @@
       "summaryEn": "MCP Apps Extension (SEP-1865) proposes a common way to embed interactive UIs in MCP servers. Work with MCP-UI, OpenAI, and Anthropic helps builders offer consistent experiences.",
       "lang": "en",
       "publishedAt": "2025-11-21T22:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "interactive-ui",
         "mcp",
@@ -67672,7 +67653,7 @@
       "summaryEn": "MCP Bundle (.mcpb) is now an MCP project format, packaging local servers for one-click setup on supported clients and improving portability for users.",
       "lang": "en",
       "publishedAt": "2025-11-21T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "developer-tools",
         "mcp",
@@ -67699,7 +67680,7 @@
       "summaryEn": "MCP Server Instructions let servers supply LLMs with guidance on intended usage and tool selection, helping developers make tool calls more reliable and appropriate.",
       "lang": "en",
       "publishedAt": "2025-11-03T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "llm-tool-use",
         "mcp",
@@ -67753,7 +67734,7 @@
       "summaryEn": "MedGemma adds Gemma 3-based 4B and 27B multimodal models and the MedSigLIP image encoder, helping developers fine-tune and run medical image-and-text AI locally.",
       "lang": "en",
       "publishedAt": "2025-10-25T18:02:50.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "deepmind",
         "gemma-3",
@@ -67866,7 +67847,7 @@
       "summaryEn": "The MCP team shared a timeline and priority breakdown for the upcoming protocol specification version, giving developers clarity on what changes to expect and when.",
       "lang": "en",
       "publishedAt": "2025-09-26T18:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -68031,7 +68012,7 @@
       "summaryEn": "MCP Registry launches in preview as an open catalog and API that lets developers browse and discover publicly available MCP servers, lowering the barrier to integrating MCP-based tooling.",
       "lang": "en",
       "publishedAt": "2025-09-08T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "developer-tools",
         "mcp",
@@ -68059,7 +68040,7 @@
       "summaryEn": "The official PHP SDK for MCP has reached general availability, developed in partnership with the PHP Foundation and Symfony, enabling PHP developers to build MCP servers using familiar tooling.",
       "lang": "en",
       "publishedAt": "2025-09-05T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -68191,7 +68172,7 @@
       "summaryEn": "MCP's OAuth 2.1-based authorization framework is refining its client registration approach to handle dynamic, loosely-coupled client-server relationships, enabling more secure and flexible auth flows for AI agents connecting to diverse servers.",
       "lang": "en",
       "publishedAt": "2025-08-22T10:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "authorization",
         "mcp",
@@ -68767,7 +68748,7 @@
       "summaryEn": "MCP prompts and resource templates enable reusable workflow automation, illustrated via a meal-planning walkthrough. Developers building structured, repeatable AI-driven pipelines will find actionable patterns here.",
       "lang": "en",
       "publishedAt": "2025-08-04T17:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "mcp",
         "mcp-prompts",
@@ -68796,7 +68777,7 @@
       "summaryEn": "MCP adopts a formal governance framework centered on Specification Enhancement Proposals (SEPs) and a defined maintainer structure, giving the community a structured path to shape protocol evolution. This benefits developers and enterprises seeking predictable, transparent contribution processes.",
       "lang": "en",
       "publishedAt": "2025-07-31T00:00:00.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "enterprise",
         "governance",
@@ -69071,7 +69052,7 @@
       "summaryEn": "The official MCP blog has launched as a dedicated channel where maintainers and contributors share tutorials, insights, and protocol news, giving developers a direct source for authoritative updates.",
       "lang": "en",
       "publishedAt": "2025-07-02T10:46:28.000Z",
-      "collectedAt": "2026-09-06T22:30:22.587Z",
+      "collectedAt": "2026-09-07T10:52:28.151Z",
       "tags": [
         "announcement",
         "mcp",

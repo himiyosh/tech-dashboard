@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-07T10:52:43.056Z",
+  "generatedAt": "2026-09-07T16:09:48.724Z",
   "month": "2026-09",
-  "count": 79,
+  "count": 80,
   "entries": [
+    {
+      "id": "627c0f6ede13fe09",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yoossh/items/9385303ed109e5b0ca9e",
+      "title": "WSL上のROS2を使ってVisual Studio CodeとGazeboでロボットを自動巡回させる",
+      "titleJa": "WSL上のROS2を使ってVisual Studio CodeとGazeboでロボットを自動巡回させる",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-07T13:01:03.000Z",
+      "collectedAt": "2026-09-07T16:09:35.970Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "WSL上のROS 2ワークスペースは、Visual Studio CodeのRemote - WSL接続で直接開けます。Linux側のlaunch、YAML、Python、C++を編集し、VS Code統合ターミナルでビルドやトピック・TFの確認まで行えるため、シミュレーションの設定変更とデバッグを同じ環境で完結できます。 今回は、このVisual Studio Code環境において、Gazebo上のUnitree Go2にLivox MID360相当のLiDARを搭載し、FAST-LIOで3D点群地図を保存した後、Nav2で自律走行を行うまでの実験を行いましたので、そのときの手順を整理して紹介します。 3D点群地図の保存にはFAST-LIOを使用します。一方、今回のGazeboシミュレーションでNav2が使用する2D occupancy gridは、Gazeboワールドに配置した障害物の座標から生成した固定地図です。自己位置にはGazeboのground-truthオドメトリを使用するため、Gazebo画面とRViz2のGo2位置を同じ座標系で扱えます。 ここで使用するCHAMP（不要な略語へ展開せず、四足歩行ロボット向けの制御フレームワーク）は、Go2の歩行を担当するソフトウェアです。Nav2から受け取った /cmd_vel の速度指令を歩容計算と関節軌道へ変換し、各脚を動かしてロボットを歩行させます。本記事では、Nav2が経路を計画し、CHAMPがその経路に沿ってGo2を実際に歩かせる役割分担になっています。 なお、本記事はWSL2（Ubuntu 22.04 LTS）、ROS 2 Humble、Unitree Go2（CHAMPコントローラ）、FAST-LIO、Livox-SDK2がセットアップされた環境（ ~/ros2_ws/src 配下に unitree_ros2 、 unitree-go2-ros2-gazebo 、 livox_ros_driver2 、 fast_lio リポジトリが配置済み）を前提としています。 1.",
+      "feedSnippet": "WSL上のROS 2ワークスペースは、Visual Studio CodeのRemote - WSL接続で直接開けます。Linux側のlaunch、YAML、Python、C++を編集し、VS Code統合ターミナルでビルドやトピック・TFの確認まで行えるため、シミュレーシ...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9V1NMJUU0JUI4JThBJUUzJTgxJUFFUk9TMiVFMyU4MiU5MiVFNCVCRCVCRiVFMyU4MSVBMyVFMyU4MSVBNlZpc3VhbCUyMFN0dWRpbyUyMENvZGUlRTMlODElQThHYXplYm8lRTMlODElQTclRTMlODMlQUQlRTMlODMlOUMlRTMlODMlODMlRTMlODMlODglRTMlODIlOTIlRTglODclQUElRTUlOEIlOTUlRTUlQjclQTElRTUlOUIlOUUlRTMlODElOTUlRTMlODElOUIlRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05NWFhOTA5Y2RjNjQ5YzQxZmEzOTQ4Mjg4NzAwMzVjMw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=125de9d7ce13018b0344bc4555a8b45c",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9V1NMJUU0JUI4JThBJUUzJTgxJUFFUk9TMiVFMyU4MiU5MiVFNCVCRCVCRiVFMyU4MSVBMyVFMyU4MSVBNlZpc3VhbCUyMFN0dWRpbyUyMENvZGUlRTMlODElQThHYXplYm8lRTMlODElQTclRTMlODMlQUQlRTMlODMlOUMlRTMlODMlODMlRTMlODMlODglRTMlODIlOTIlRTglODclQUElRTUlOEIlOTUlRTUlQjclQTElRTUlOUIlOUUlRTMlODElOTUlRTMlODElOUIlRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05NWFhOTA5Y2RjNjQ5YzQxZmEzOTQ4Mjg4NzAwMzVjMw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=125de9d7ce13018b0344bc4555a8b45c",
+        "alt": "WSL上のROS2を使ってVisual Studio CodeとGazeboでロボットを自動巡回させる",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "89704c9c738b98f5",
       "source": "qiita-vscode",
@@ -10,21 +41,24 @@
       "url": "https://qiita.com/nolanlover0527/items/ef358194bed126f634f8",
       "title": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
       "titleJa": "VSCodeの検索で「あるはずのファイル」が出てこない4つの原因",
-      "titleEn": "",
+      "titleEn": "Four Reasons Existing Files Do Not Appear in VSCode Search",
       "lang": "ja",
       "publishedAt": "2026-09-07T04:39:16.000Z",
-      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "collectedAt": "2026-09-07T16:09:35.970Z",
       "tags": [
         "qiita",
-        "vscode"
+        "search-settings",
+        "troubleshooting",
+        "vscode",
+        "vscode-search"
       ],
       "category": "cursor",
       "importance": 1,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "VSCodeやCursorなどのエディタでファイルを検索したいのに、確かに存在するファイルがヒットしない、という経験はありませんか。 「消えた？」と思ってエクスプローラーから直接探し回った結果、ファイルは間違いなく存在しているのに検索には出てこないということがよくあります。 この記事では、検索に引っかからない主な原因と対処法をまとめます。 VSCodeの検索はデフォルトで .gitignore の内容を参照し、そこに書かれているファイルやフォルダを検索対象から除外します。 対処法として、 Ctrl + , で設定画面を開き「useIgnoreFiles」で検索し、「Search: Use Ignore Files」をオフにします。 settings.json に直接追加する場合は以下の通りです。 \"search.useIgnoreFiles\" : false なお、似た名前の explorer.excludeGitIgnore はサイドバーの表示を制御する別の設定のため、混同しないよう注意してください。 この設定をオフにすると .gitignore に記載されたファイルも検索対象になりますが、依存関係のファイルなどノイズが増える点には注意が必要です。 原因2 search.excludeやfiles.excludeの設定 .gitignore とは別に、VSCode独自の除外設定も存在します。 files.exclude はエクスプローラー上の表示自体を隠す設定で、 search.exclude は検索結果だけを除外する設定です。 チームの共有設定（ .vscode/settings.json ）で意図せず対象フォルダが除外されているケースもあるため、一度確認してみましょう。 検索窓の右側にあるオプションで「大文字と小文字を区別する」や「単語単位で検索」がオンになっていると、意図した検索語と一致せずヒットしないことがあります。 「見つからない」と思ったら、まずはこのオプションのオン・オフを確認するのが近道です。",
-      "feedSnippet": "変更したいファイルが検索に出てこない!! VSCodeやCursorなどのエディタでファイルを検索したいのに、確かに存在するファイルがヒットしない、という経験はありませんか。 「消えた？」と思ってエクスプローラーから直接探し回った結果、ファイルは間違いなく存在しているのに...",
       "excerptOrigin": "article",
+      "feedSnippet": "変更したいファイルが検索に出てこない!! VSCodeやCursorなどのエディタでファイルを検索したいのに、確かに存在するファイルがヒットしない、という経験はありませんか。 「消えた？」と思ってエクスプローラーから直接探し回った結果、ファイルは間違いなく存在しているのに...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDEzMzM4NyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2Nzc2MjEwMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YjQ2YzJjZDAyMTMxMTYxZGVhYzczYWI4OWZhZjQ0MDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY3ZGVlMjYyYjJiNTFiN2ZmYTYyOGI1ODFjNjNkYjAyMzNhODlmMGMzJTJGb3JpZ2luYWwuanBnJTNGMTc1MTk0MTIwOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1mZDY1Mzc0MjdlNzMxMjI5ZDllZWFkYTczZTAyZTQxNg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Ddc55231a24e1021de8fa34a095aad9cb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJUU2JUE0JTlDJUU3JUI0JUEyJUUzJTgxJUE3JUUzJTgwJThDJUUzJTgxJTgyJUUzJTgyJThCJUUzJTgxJUFGJUUzJTgxJTlBJUUzJTgxJUFFJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgwJThEJUUzJTgxJThDJUU1JTg3JUJBJUUzJTgxJUE2JUUzJTgxJTkzJUUzJTgxJUFBJUUzJTgxJTg0NCVFMyU4MSVBNCVFMyU4MSVBRSVFNSU4RSU5RiVFNSU5QiVBMCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTg4ZTM5ZmM2MDBhNzVmYzNmZDZlMGM3M2FiMTMyMDU5&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBub2xhbmxvdmVyMDUyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJhZGQzMzdkMWE0Mzc3MTZiOTVjMmNiNThhODk0ZTQ1&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44Ko44Os44Kv44K55qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f494276a29635d32a13501de91a7e77f",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGNDEzMzM4NyUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc2Nzc2MjEwMT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YjQ2YzJjZDAyMTMxMTYxZGVhYzczYWI4OWZhZjQ0MDU%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY3ZGVlMjYyYjJiNTFiN2ZmYTYyOGI1ODFjNjNkYjAyMzNhODlmMGMzJTJGb3JpZ2luYWwuanBnJTNGMTc1MTk0MTIwOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1mZDY1Mzc0MjdlNzMxMjI5ZDllZWFkYTczZTAyZTQxNg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3Ddc55231a24e1021de8fa34a095aad9cb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlNDb2RlJUUzJTgxJUFFJUU2JUE0JTlDJUU3JUI0JUEyJUUzJTgxJUE3JUUzJTgwJThDJUUzJTgxJTgyJUUzJTgyJThCJUUzJTgxJUFGJUUzJTgxJTlBJUUzJTgxJUFFJUUzJTgzJTk1JUUzJTgyJUExJUUzJTgyJUE0JUUzJTgzJUFCJUUzJTgwJThEJUUzJTgxJThDJUU1JTg3JUJBJUUzJTgxJUE2JUUzJTgxJTkzJUUzJTgxJUFBJUUzJTgxJTg0NCVFMyU4MSVBNCVFMyU4MSVBRSVFNSU4RSU5RiVFNSU5QiVBMCZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTg4ZTM5ZmM2MDBhNzVmYzNmZDZlMGM3M2FiMTMyMDU5&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBub2xhbmxvdmVyMDUyNyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJhZGQzMzdkMWE0Mzc3MTZiOTVjMmNiNThhODk0ZTQ1&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=44Ko44Os44Kv44K55qCq5byP5Lya56S-&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f494276a29635d32a13501de91a7e77f",
@@ -41,12 +75,16 @@
       "url": "https://qiita.com/caymezon/items/12b08f5ca2d743f58175",
       "title": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
       "titleJa": "VSCodeの`Ctrl+P`は記号1文字で5つの検索モードに化ける",
-      "titleEn": "",
+      "titleEn": "VS Code’s Ctrl+P Turns into Five Search Modes with a Single Symbol",
       "lang": "ja",
       "publishedAt": "2026-09-07T02:39:03.000Z",
-      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "collectedAt": "2026-09-07T16:09:35.970Z",
       "tags": [
+        "code-navigation",
+        "keyboard-shortcuts",
+        "productivity",
         "qiita",
+        "quick-open",
         "vscode"
       ],
       "category": "vscode",
@@ -54,8 +92,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "VSCodeの全プルダウンメニューを整理していて、 Ctrl+P （ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 ファイル名の一部を入力するだけで、部分一致・あいまい一致（fuzzy検索）でファイル候補が絞り込まれます。フォルダ構造を辿るより高速です。 @ に続けて関数名やクラス名を入力すると、 開いているファイル内 のシンボル一覧から絞り込めます。 Ctrl+Shift+O （エディター内のシンボルへ移動）と同じ機能を、 Ctrl+P から連続して呼び出せる点が地味に便利です。 @ がカレントファイル限定なのに対し、 # はワークスペース全体を対象にシンボルを検索します。「このクラス、どのファイルにあったっけ」を調べる際に、ファイル名が分からなくてもクラス名だけで直接ジャンプできます。 スタックトレースに「line 245」のようなエラー行が出ている場合、 Ctrl+G を別途呼ばなくても Ctrl+P から : と行番号を打つだけでジャンプできます。 Ctrl+P の入力欄で > から始めると、その場で Ctrl+Shift+P （コマンドパレット）と同じ検索に切り替わります。ファイルを探している途中で「あ、コマンドを実行したい」と思ったときに、ダイアログを閉じて開き直す必要がありません。 Ctrl+P は単なるファイル検索ではなく、 @ # : > という4つのプレフィックスで検索対象そのものを切り替えられる、実質5機能を1つのショートカットに集約したUIでした。1つのキーバインドを覚えるだけで複数の操作系統をカバーできるため、覚えるショートカットの総数を減らす効果もあります。メニュー全8カテゴリの網羅的な一覧は元記事にまとめています。",
-      "feedSnippet": "背景 VSCodeの全プルダウンメニューを整理していて、Ctrl+P（ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 1. プレフィックスなし：ファジー検索でファ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "feedSnippet": "背景 VSCodeの全プルダウンメニューを整理していて、Ctrl+P（ファイルに移動）が単なるファイル検索以上の機能を持っていることを再確認しました。入力欄の先頭に付ける記号によって検索モードが切り替わる仕組みを整理します。 1. プレフィックスなし：ファジー検索でファ..."
     },
     {
       "id": "a127ef535623fb17",
@@ -1513,7 +1551,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "collectedAt": "2026-09-07T16:09:35.970Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -2269,7 +2307,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-07T10:52:28.151Z",
+      "collectedAt": "2026-09-07T16:09:35.970Z",
       "tags": [
         "agent",
         "deepmind",

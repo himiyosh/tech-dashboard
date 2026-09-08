@@ -1,22 +1,56 @@
 {
-  "generatedAt": "2026-09-08T19:03:29.184Z",
+  "generatedAt": "2026-09-08T22:05:55.424Z",
   "month": "2026-09",
-  "count": 83,
+  "count": 87,
   "entries": [
+    {
+      "id": "cca2e704afb6cdb3",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yutoinu/items/9db07177664b6a299593",
+      "title": "Pixiv小説をVSCodeで書きやすくするための拡張機能を作ってみた",
+      "titleJa": "Pixiv小説をVSCodeで書きやすくするための拡張機能を作ってみた",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-08T16:47:22.000Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "趣味でPixiv小説を使い、二次創作怪文書を投稿しているのですが、Pixivの小説投稿画面って使いにくくないですか？ Pixivの小説では、markdownで”#”で表すような章立てであったり、アスタリスク2個で表すような 太字 の機能がPixiv小説記法として入力することができます。 実際の記法については 公式FAQ を参照いただきたいのですが、タグによって、太字や改ページが挿入できます。 適当に何個かタグをまとめて使ってる 怪文書 の画面を抜き出してきました。 ボタンから、自動でタグ挿入してくれる機能もあって便利なのですが、タグの強調表示がなく、編集がし辛いです。 また、自動保存機能もなく、下書きのバージョニング管理などはできず、セッション切れで下書きが消えてしまうといった痛い失敗も経験してるので、個人的にはここはプレビューと最終確認の場にしています。 ということで、エディタに不満があるなら作ればいいじゃんってことで、VSCode用のPixiv小説記法に対応する拡張機能を作ってみました。 Pixivには小説として解説記事を書いたのですが、創作者仲間からこの記事はPixivじゃなくてQiita向きだろとツッコミが入ったので、Qiitaに上げることにしました。 が、VSCode拡張機能なんて作ったことのないエンジニアには、3まで実装する元気がなく、2で力尽きました。 色々Qiitaの先駆者やら生成AIやらに力を借りることでなんとか実装できました。 まずは何かしらで空の拡張機能プロジェクトを作成し、そこから色々足していきました。 まず、エディタはPixivNovelからpnovelとかいう拡張子をPixiv小説型式の言語として認識てもらうことにしました。 まずは、.pnovelファイルをPixiv拡張として認識するように package.json を改造します。 次に、タグを関数として予測入力してくれるように、 extentions.js に羅列しました。",
+      "feedSnippet": "Pixiv小説公式エディタへの不満 こんにちは。Yutoinuです。 趣味でPixiv小説を使い、二次創作怪文書を投稿しているのですが、Pixivの小説投稿画面って使いにくくないですか？ Pixivの小説では、markdownで”#”で表すような章立てであったり、アスタリ...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZjZDQ0ZTNmNWFlZWVhZjVlYmExZTI3MjRhOTYzNDg2Mj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGYyNTY1N2JkM2Y5MzEwZTBkMzY0M2U0Zjg1ODBlMzQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db6e9ee390afa750a2683e89dd6361c47?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UGl4aXYlRTUlQjAlOEYlRTglQUElQUMlRTMlODIlOTJWU0NvZGUlRTMlODElQTclRTYlOUIlQjglRTMlODElOEQlRTMlODIlODQlRTMlODElOTklRTMlODElOEYlRTMlODElOTklRTMlODIlOEIlRTMlODElOUYlRTMlODIlODElRTMlODElQUUlRTYlOEIlQTElRTUlQkMlQjUlRTYlQTklOUYlRTglODMlQkQlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02YWFkYzhjZjQ1NTZmNDZmYzg2ODdhZTMyZTMyZTJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dXRvaW51JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NDRjZTYzMDI1YTUyYzUzZTE5YjM3ZTQ3NmRmMjY3MzA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=7cea06eb5639a2fbc11028e7d71b1470",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZjZDQ0ZTNmNWFlZWVhZjVlYmExZTI3MjRhOTYzNDg2Mj9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGYyNTY1N2JkM2Y5MzEwZTBkMzY0M2U0Zjg1ODBlMzQ%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db6e9ee390afa750a2683e89dd6361c47?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9UGl4aXYlRTUlQjAlOEYlRTglQUElQUMlRTMlODIlOTJWU0NvZGUlRTMlODElQTclRTYlOUIlQjglRTMlODElOEQlRTMlODIlODQlRTMlODElOTklRTMlODElOEYlRTMlODElOTklRTMlODIlOEIlRTMlODElOUYlRTMlODIlODElRTMlODElQUUlRTYlOEIlQTElRTUlQkMlQjUlRTYlQTklOUYlRTglODMlQkQlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz02YWFkYzhjZjQ1NTZmNDZmYzg2ODdhZTMyZTMyZTJiZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5dXRvaW51JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NDRjZTYzMDI1YTUyYzUzZTE5YjM3ZTQ3NmRmMjY3MzA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=7cea06eb5639a2fbc11028e7d71b1470",
+        "alt": "Pixiv小説をVSCodeで書きやすくするための拡張機能を作ってみた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "8cea66eacbf5db55",
       "source": "github-changelog",
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-08-automatic-dependabot-access-to-github-hosted-registries",
       "title": "Automatic Dependabot access to GitHub-hosted registries",
-      "titleJa": "",
+      "titleJa": "GitHubホスト型レジストリへのDependabotの自動アクセス",
       "titleEn": "Automatic Dependabot access to GitHub-hosted registries",
       "lang": "en",
       "publishedAt": "2026-09-08T16:46:05.000Z",
       "collectedAt": "2026-09-08T19:03:05.725Z",
       "tags": [
         "changelog",
-        "github"
+        "dependabot",
+        "github",
+        "github-packages",
+        "package-registry"
       ],
       "category": "tech-news",
       "importance": 2,
@@ -33,6 +67,76 @@
         "height": 0,
         "source": "og"
       }
+    },
+    {
+      "id": "d23dd886f18e938f",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/sion_neko/items/19dd86d357f3b545982d",
+      "title": "Claude Code の 改行がShift+Enter でできない！",
+      "titleJa": "Claude Code の 改行がShift+Enter でできない！",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-08T16:24:02.000Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Claude Code の 改行がShift+Enter でできない！ 私の環境では、VSCodeでCLI版の Claude Code を使っていると、 Shift+Enter が改行にならずそのまま送信されてしまっていた。 もう一つの改行キー Ctrl+J も、VSCode のショートカット(パネル表示トグル)に吸われてしまっていた。 VSCode や Cursor なら /terminal-setup を実行すれば自動で設定される。 それ以外（Antigravity など VSCode フォーク系）は対応ターミナルとして認識されず弾かれるので、手動で入れる。 コマンドパレット →「基本設定: キーボードショートカット (JSON)」で keybindings.json を開き、以下を追加する。 \"command\" : \"workbench.action.terminal.sendSequence\" ,",
+      "feedSnippet": "状況 私の環境では、VSCodeでCLI版の Claude Code を使っていると、Shift+Enter が改行にならずそのまま送信されてしまっていた。 もう一つの改行キー Ctrl+J も、VSCode のショートカット(パネル表示トグル)に吸われてしまっていた。 ...",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "1977714ee001b1f3",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/aktsmm/items/991bbe68fd5998526516",
+      "title": "AI に公式ドキュメントを調べてもらう: ドキュメント検索 MCP 8 選と使い分け",
+      "titleJa": "AI に公式ドキュメントを調べてもらう: ドキュメント検索 MCP 8 選と使い分け",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-08T14:53:12.000Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
+      "tags": [
+        "mcp-server",
+        "qiita",
+        "vscode"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "こんにちは、MCP を増やす前に「何を調べたいんだっけ？」と立ち止まるようになったアーキテクトのやまぱん！です 😅 補足コメントや質問、 いいね、拡散 、ぜひお願いします 🥺！ AI に技術の質問をしたとき、学習済みの知識だけでなく、いま公開されている公式ドキュメントを確認してから答えてほしいことがあります。 そんなときに使えるのが、各社のドキュメント検索用 Model Context Protocol（MCP）サーバーです。この記事では MCP の基本を短く整理し、私が 2026/09/08 時点で確認した 8 系統を紹介します。あわせて、AWS が現在移行先として案内している AWS MCP Server も参考枠で整理します。 AWS は現行の AWS MCP Server への移行を推奨していますが、AWS アカウントなしの調査用途なら AWS Knowledge MCP Server も選択肢です Model Context Protocol（MCP）は、AI アプリケーションを外部システムへ接続するためのオープンな標準です。 公式ドキュメントでは、USB-C のような共通の接続口に例えられています。AI クライアントごとに個別連携を作り直す代わりに、MCP に対応したサーバーを複数の対応クライアントから利用できます。 MCP Server が公開できる代表的な機能は、次の 3 種類です。 つまり、MCP はドキュメント検索専用の仕組みではありません。検索は MCP の用途の 1 つです。 MCP Server は 1 本の分類だけでは整理できません。私は次の 4 軸で見ると分かりやすいと考えています。 たとえば Google Developer Knowledge MCP Server は、Google 公式、ドキュメント検索、Streamable HTTP、API キー認証という複数の属性を持ちます。「MCP には 4 種類ある」という意味ではなく、4 つの観点で確認するという整理です。",
+      "feedSnippet": "こんにちは、MCP を増やす前に「何を調べたいんだっけ？」と立ち止まるようになったアーキテクトのやまぱん！です 😅 補足コメントや質問、いいね、拡散、ぜひお願いします 🥺！ 間違っていたら 優しく 教えてください！ AI に技術の質問をしたとき、学習済みの知識だけでなく、い...",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "8d5d77c9cc63259a",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/akira_papa_AI/items/f7167edc9b0f32135694",
+      "title": "Claude CodeのVS Code拡張でREADMEを説明させる — 最初の1タスクを10分で動かす",
+      "titleJa": "Claude CodeのVS Code拡張でREADMEを説明させる — 最初の1タスクを10分で動かす",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-08T13:44:29.000Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Codeを使っていて、AIエージェントをまだ動かしたことがない方向けです。 この記事ではClaude CodeのVS Code拡張から、練習用READMEの Status: ready を説明させます。 前提はVS Code 1.94.0以上と、利用可能なClaudeまたはAnthropic Consoleのアカウントです。 この記事の更新日は2026年9月8日です。画面や要件は変わることがあるので、最後に載せた公式ドキュメントも合わせて確認してください。 ゴールは、VS Codeの中でClaude Codeへ次の依頼を1回送り、練習用READMEの内容を回答してもらうことです。 README.mdを読んでください。Statusの値と、その意味を日本語で1文だけ説明してください。ファイルは変更しないでください。 成功したかどうかは、回答に次の2点が含まれていれば判断できます。 文章が完全に同じである必要はありません。まずは「AIがファイルを読み、質問に沿って答えた」と目で確認できれば十分です。 Claude Codeは、ファイルを読み、必要に応じて編集やコマンド実行まで行える AIエージェント です。AIエージェントとは、質問に答えるだけでなく、与えられた目的に向けてツールを使いながら作業できるAI、と考えると分かりやすいです。 今回使うVS Code拡張は、そのClaude Codeをエディタの横にあるチャットパネルから使う機能です。 VS Code は、コードや文章ファイルを編集するアプリです。拡張機能を追加すると、編集中の画面を離れずにClaudeへ相談できます。 公式ドキュメントによると、拡張のチャットパネルにはClaude CodeのCLIが同梱されています。CLIは「ターミナルで文字を打って操作する方式」のことです。そのため、今回のパネル操作だけなら、ターミナル用の claude コマンドを別に入れる必要はありません。 一方、VS Code内のターミナルで claude コマンドを直接使いたい場合は、スタンドアロン版CLIの導入が別途必要です。",
+      "feedSnippet": "Claude CodeのVS Code拡張でREADMEを説明させる — 最初の1タスクを10分で動かす VS Codeを使っていて、AIエージェントをまだ動かしたことがない方向けです。 この記事ではClaude CodeのVS Code拡張から、練習用READMEのSt...",
+      "excerptOrigin": "article"
     },
     {
       "id": "627c0f6ede13fe09",
@@ -525,14 +629,17 @@
       "sourceType": "changelog",
       "url": "https://github.blog/changelog/2026-09-04-new-customer-portal-help-github-com",
       "title": "New customer portal help.github.com",
-      "titleJa": "",
+      "titleJa": "新しいカスタマーポータル「help.github.com」",
       "titleEn": "New customer portal help.github.com",
       "lang": "en",
       "publishedAt": "2026-09-04T17:08:10.000Z",
       "collectedAt": "2026-09-08T19:03:05.725Z",
       "tags": [
         "changelog",
-        "github"
+        "copilot-search",
+        "customer-portal",
+        "github",
+        "github-support"
       ],
       "category": "copilot",
       "importance": 2,
@@ -635,8 +742,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -646,7 +751,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "b3860ff03421d355",
@@ -1158,7 +1265,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -1169,7 +1275,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -1566,7 +1673,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -1577,7 +1683,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6625a77e4710b219",
@@ -1656,7 +1763,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-07T16:09:35.970Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -2412,7 +2519,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-07T16:09:35.970Z",
+      "collectedAt": "2026-09-08T22:05:41.376Z",
       "tags": [
         "agent",
         "deepmind",

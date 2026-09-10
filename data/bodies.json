@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-10T01:45:22.676Z",
-  "count": 1114,
+  "generatedAt": "2026-09-10T06:44:39.841Z",
+  "count": 1122,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -41674,158 +41674,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:13:18.814Z"
     },
-    "cdd2d487e21168f9": {
-      "bodyJa": "## Ollamaモデル\n\nOllama v0.34.0では、OllamaモデルをChatGPT Desktopから直接利用できるようになった。既存のデスクトップ上の作業フローを維持しながら、オープンモデルを実行できる点が中心的な変更となる。\n\nChatGPT Desktop内でOllamaモデルを扱えるため、モデルを利用する際に従来の作業の流れを変える必要がない。Ollamaのモデル利用とChatGPT Desktopでの操作を直接つなぐ機能として提供される。\n\n## MacOSで設定\n\nChatGPT Desktopから利用するための設定は、MacOS版のOllamaアプリから行える。設定の提供場所がOllamaアプリ内にまとめられており、デスクトップ環境でオープンモデルを使うための準備を進められる。\n\n## 構造化出力\n\nApple Siliconでは、構造化出力のパフォーマンスが改善された。決められた構造に沿った出力を扱う処理が高速化され、ChatGPT Desktopとの直接利用とは別に、Ollamaの出力処理にも改善が加えられている。\n\n## 応答の圧縮\n\nOpenAI互換クライアントについては、ツール検索と応答の圧縮が新たにサポートされた。また、圧縮された応答を経由した場合でも、画像が正しく機能するよう修正されている。今回の変更には、モデルの接続だけでなく、応答や画像を扱う処理の改善も含まれる。",
-      "bodyEn": "## Ollama Models in ChatGPT Desktop\n\nOllama v0.34.0 enables Ollama models to be used directly in ChatGPT Desktop. The change matters because users can keep their existing desktop workflow while running open models.\n\nThe release connects that workflow to Ollama models rather than requiring users to move away from ChatGPT Desktop. It is specifically presented as a way to make open models easier to use within an existing desktop setup.\n\n## Setup From the Ollama App\n\nSetup for the ChatGPT Desktop integration is available from the Ollama app on macOS. The release information does not describe additional setup options or availability beyond the macOS app.\n\nOnce configured through that app, Ollama models can be accessed directly in ChatGPT Desktop. This setup is the mechanism provided by the release for maintaining the existing workflow while using local models.\n\n## Structured Output Performance\n\nThe release also improves structured output performance on Apple Silicon. According to the announcement, structured outputs are now faster on that hardware.\n\nThis performance change accompanies the ChatGPT Desktop integration rather than replacing it. Together, the updates address both access to Ollama models from the desktop workflow and structured output speed on Apple Silicon.\n\n## Tool Search and Response Compaction\n\nOllama v0.34.0 adds support for OpenAI-compatible client tool search and response compaction. It also fixes image handling through compacted responses, allowing images to work correctly when responses have been compacted.\n\nThe listed full changelog spans v0.33.3 through v0.34.0-rc1.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "普段ChatGPT Desktopで作業してる人は、Ollama v0.34.0で何が変わるの？アプリを行き来しなくてよくなる？",
-          "en": "What changes for people who normally work in ChatGPT Desktop with Ollama v0.34.0? Does it mean less switching between apps?"
-        },
-        {
-          "s": "b",
-          "ja": "今回の説明では、OllamaのローカルモデルをChatGPT Desktopから直接使えるんじゃ。macOS版Ollamaアプリで設定し、今の流れを保てるぞ。",
-          "en": "This release lets you use Ollama’s local models directly in ChatGPT Desktop. The setup is in the macOS Ollama app, so you can keep your existing workflow."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、前は直接使えなかったの？Apple Siliconで速くなったというのも、今までとの違い？",
-          "en": "Oh, so direct use wasn’t possible before? And is the Apple Silicon speedup another change from the previous version?"
-        },
-        {
-          "s": "b",
-          "ja": "リリース文が明記するのは、今回から直接利用できることじゃ。以前の具体的な手順は不明じゃが、Apple Siliconの構造化出力は高速化されたぞ。",
-          "en": "The release states that direct use is now available, but it doesn’t describe the old process. It also says structured output is faster on Apple Silicon."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、macOSで今の作業の流れを崩さず、Ollamaのモデルを使いやすくなったことだね！",
-          "en": "So the biggest win is using Ollama models on macOS without disrupting the desktop workflow you already have. Nice!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃのう。更新内容では、OpenAI互換クライアントのツール検索と応答圧縮への対応、圧縮後も画像が正しく動く点も押さえたいのう。",
-          "en": "Exactly. The update also adds tool search and response compaction for OpenAI-compatible clients, plus correct image handling through compacted responses."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-09T23:37:40.472Z"
-    },
-    "75caf2211ca028a9": {
-      "bodyJa": "## ライブチャット\n\nCline Desktop v0.0.24が2026年9月9日に公開された。ライブチャットの文字列が二重に表示される問題と、処理の途中でメッセージが欠落する問題を修正し、実行中や再開、予約実行のセッションを正確に追えるようにしたリリースだ。\n\n## 2つのHub接続\n\n二重表示の原因は、sidecarが持つ2つのHub接続にあった。ClineCore自身のクライアントとobserverクライアントが、どちらも同じセッションのイベントを受信していたため、各差分が2回描画される場合があった。\n\n特に、タスクを開いた時点ですでに進行している実行、再開された実行、予約実行など、最初にローカルから送信せずにストリーミングが始まるセッションで問題が発生していた。\n\n## observerを制御\n\n修正後は、ClineCoreが対象セッションを購読している場合、observer側で受け取った同じイベントをスキップする。購読状態はタイマーから推測するのではなく、ClineCoreへ直接問い合わせて判断する方式に改められた。\n\nこれにより、長いコマンド、最初のトークンが返るまで時間がかかる状況、回答されていないツール承認があっても、ClineCore側のイベントより先に重複した内容が表示されることを防ぐ。\n\n## sidecarの交換\n\nライブwebviewの動作中にsidecarが交換されるケースにも対応した。対象には、クラッシュ後の再生成、Hubのdrain-and-replace、古いsidecarの交換が含まれる。こうした交換時にはストリームカウンターが1から再開しており、処理途中のメッセージ欠落につながる問題があった。v0.0.24ではこの点も修正され、利用者が一連の会話を追えるようになった。",
-      "bodyEn": "## Cline Desktop v0.0.24\n\nCline Desktop v0.0.24 fixes live chat text appearing twice and messages being dropped during a turn. The changes matter for users following sessions that are already in flight, have been resumed, or were started as scheduled runs.\n\n## Two Hub sockets\n\nThe duplication came from the sidecar having two Hub sockets that both receive events for the same session. One belongs to ClineCore’s own client, while the other belongs to the observer client.\n\nWhen a session began streaming without a local send occurring first, both connections could contribute the same updates. This affected runs already in progress when a user opened the task, as well as resumed and scheduled runs. In those cases, every streamed delta was rendered twice, producing duplicated live chat text.\n\n## Observer client\n\nThe observer client’s copy is now skipped whenever ClineCore is subscribed to the session. That subscription state is requested directly instead of being inferred from a timer.\n\nThe direct check is intended to prevent timing conditions from allowing the observer’s duplicate update to appear before the ClineCore copy. The fix covers situations involving long commands, slow first tokens, and tool approvals that remain unanswered. These conditions can delay activity, but they can no longer allow a duplicate to slip through because of timer-based inference.\n\n## Live webview\n\nThe release also addresses messages being lost in the middle of a turn. A related case occurred when the sidecar was replaced while a webview remained live. The identified replacement scenarios include crash-respawn, Hub drain-and-replace, and a stale-sidecar swap.\n\nUnder those conditions, the replacement sidecar’s stream counter restarted at 1. Version 0.0.24 fixes the live-stream handling so users can reliably follow in-flight, resumed, and scheduled runs without duplicated text or messages disappearing during the turn.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事で長いコマンドを動かしたり、返事を待ったりするとき、普段の使い方は何が変わるの？",
-          "en": "When I’m running a long command or waiting for a response at work, what changes in everyday use?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、実行中・再開・予約実行のセッションでも、会話の重複や欠落を避けて正確に追えるようになったそうじゃ。",
-          "en": "The article says you can now reliably follow chats without duplicated or missing text, even during in-flight, resumed, or scheduled runs."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ どうして文字が重なったり、メッセージが消えたりしたの？",
-          "en": "Wasn’t that possible before? Why did text get duplicated or messages disappear?"
-        },
-        {
-          "s": "b",
-          "ja": "説明では、2つのHub接続が同じイベントを受けて二重表示し、処理途中のメッセージが欠ける場合もあったのじゃ。",
-          "en": "The release explains that two Hub connections received the same events, causing duplicate text, while some messages could also be lost mid-turn."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、途中から開いた作業や再開した作業でも、会話を信頼して追えることなんだね！",
-          "en": "So the big win is being able to trust the conversation even when I open a running task midway or resume one. Nice!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。今回の変更では、ClineCoreの接続をタイマーで推測せず直接確認し、重複を防ぐ仕組みにした点も注目じゃよ。",
-          "en": "Exactly. This update also directly checks whether ClineCore is subscribed instead of guessing with a timer, which is the key detail to note."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-09T23:38:24.981Z"
-    },
-    "6649c1bd9f8e1c25": {
-      "bodyJa": "Ollama v0.34.0-rc3が、v0.34.0に向けた第3のリリース候補版として公開された。正式版に先立ち、候補ビルドを検証したいローカルLLM利用者にとって重要なリリースとなる。\n\n## 第3候補版\n\nバージョン名の「rc3」が示す通り、今回公開されたのはv0.34.0の第3リリース候補版だ。正式版そのものではなく、その公開前に利用者が候補ビルドを試すための位置付けとなっている。リリース候補を対象に検証したい場合は、正式版の公開を待たずにv0.34.0-rc3を確認できる。\n\n## 候補ビルド\n\n主な対象は、ローカルLLMの利用環境で候補ビルドをテストしたい利用者だ。v0.34.0として確定した版ではないため、今回の公開で確認できるのは第3候補版の状態となる。正式版に先立つビルドを使って検証できる点が、このリリースの中心的な意味とされている。\n\n## 変更内容\n\nv0.34.0-rc3に含まれる具体的な変更内容は示されていない。新機能、修正点、動作上の差異などの詳細は確認できないため、今回の公開だけを根拠に、従来のビルドとの違いや追加された機能を特定することはできない。明確になっているのは、v0.34.0の第3リリース候補版が利用可能になったことだ。\n\n## リリース情報\n\n公開日時は2026年9月9日。リリースに関連するコミットはGitHub.com上で作成され、GitHubの検証済み署名が付いている。一方、ページには読み込みエラーや再読み込みを促す表示もあり、詳細な変更情報までは提示されていない。今回のリリースは、候補版そのものを検証する用途に焦点を当てて捉える必要がある。",
-      "bodyEn": "## Third release candidate\n\nOllama v0.34.0-rc3 is available as the third release candidate for v0.34.0. Published on September 9, 2026, it matters primarily to local LLM users who want to test the candidate build before the formal v0.34.0 release.\n\nThe designation identifies this build specifically as the third release candidate. The release information does not present it as the completed v0.34.0 version.\n\n## Candidate build\n\nThe release is chiefly relevant as a build that can be evaluated ahead of the formal version. Local LLM users interested in candidate testing can use v0.34.0-rc3 for that purpose.\n\nBeyond its status as the third candidate, no technical additions, fixes, behavioral changes, or other modifications are listed. The available information therefore supports identifying the release and its place in the v0.34.0 candidate sequence, but not describing differences from other builds.\n\n## Verified signature\n\nThe associated commit was created on GitHub.com and signed with GitHub’s verified signature. That is the only additional technical detail presented alongside the release information.\n\nThe page also displayed repeated loading errors and prompts to reload. It included session notices for signing in, signing out, and switching accounts in another tab or window, as well as a notice that an action could not be performed at that time.\n\n## Local LLM users\n\nFor local LLM users, the practical focus of this release is candidate-build testing. Because no specific changes are listed, the release information does not provide a basis for attributing any particular new feature, correction, performance difference, or other technical change to v0.34.0-rc3.\n\nIts stated significance is narrower: it makes the third v0.34.0 release candidate available to users who want to test it before the formal release.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "v0.34.0-rc3って、なぜ「第3のリリース候補」なの？正式版とは違うの？",
-          "en": "Why is v0.34.0-rc3 called the third release candidate? Is it different from the final release?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、v0.34.0に向けた3番目の候補版じゃ。一般にリリース候補は、正式版の前に検証するためのビルドを指すんじゃよ。",
-          "en": "The article identifies it as the third candidate for v0.34.0. In general, a release candidate is a build tested before the final release."
-        },
-        {
-          "s": "a",
-          "ja": "本番前の試作品を手元で動かす感じ？ローカルLLMを使う人が先に試すためのものなんだね。",
-          "en": "So it’s like trying a pre-release version in your own setup? It’s for local LLM users who want an early test, right?"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。伝えられている範囲では、正式版に先立って候補ビルドを検証したいローカルLLM利用者に役立つものじゃな。",
-          "en": "Exactly. From what’s described, it mainly helps local LLM users who want to test the candidate build before the final release."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、正式版前のOllamaを試す人向けの3つ目の候補版なんだね。へえ、分かった！",
-          "en": "So it’s Ollama’s third candidate build for people testing ahead of the final release. Got it!"
-        },
-        {
-          "s": "b",
-          "ja": "ただし、今回確認できる内容には具体的な変更点が示されておらん。何が変わったかまでは断定できんのう。",
-          "en": "One caution, though: no specific changes are listed here, so we can’t say exactly what has changed."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-09T23:38:40.890Z"
-    },
-    "3efce9b99de4a5ab": {
-      "bodyJa": "## Ollama\n\nOllama v0.34.0-rc2が、リリース候補版として2026年9月8日に公開された。安定版に先立って次期バージョンを確認し、既存環境との比較や導入判断、事前検証に利用できる更新となる。\n\nローカルLLM利用者にとっては、正式な導入を決める前に評価できる点が重要だ。すぐに導入するための安定版ではなく、次期バージョンをあらかじめ確かめるための位置付けとして公開されている。\n\n## リリース候補版\n\nバージョン表記はv0.34.0-rc2で、「rc2」は今回の公開物がリリース候補版であることを示している。利用者はこの版を通じて、安定版より前の段階で次期バージョンを確認できる。\n\n確認の目的として挙げられているのは、既存環境との比較、導入するかどうかの判断、そして事前検証だ。現在利用している環境を比較対象にしながら、次期バージョンを評価する機会になる。\n\n## 事前検証\n\n導入判断の前に試せるため、利用者は既存環境と照らし合わせながら検証を進められる。単に新しいバージョン番号を確認するだけでなく、次期バージョンを実際の判断材料として扱うための公開と説明されている。\n\n今回のv0.34.0-rc2は、ローカルLLM利用者が安定版の公開に先立って評価を行うための更新である。既存環境との比較結果や事前検証を踏まえ、導入の可否を考える用途が中心となる。",
-      "bodyEn": "## Ollama v0.34.0-rc2\n\nOllama v0.34.0-rc2 is now available as a release candidate. Published on September 8, 2026, the update matters for local LLM users who want to evaluate the upcoming version before deciding whether to deploy it.\n\nIts release-candidate status places it ahead of the stable version. That gives users an opportunity to examine the next Ollama version in advance rather than waiting for the stable release.\n\n## Upcoming version\n\nThe release is intended for advance evaluation. Local LLM users can use v0.34.0-rc2 to check the upcoming version and compare it with their existing environment.\n\nThis comparison can help users assess the update in the context of what they already run. The release candidate therefore provides a specific version that can be examined before a deployment decision is made.\n\n## Deciding on deployment\n\nOllama v0.34.0-rc2 can support preliminary validation before deployment. Users considering the next version can evaluate the release candidate first, compare it with their current setup, and use those findings when deciding whether to introduce the update.\n\nThe release is consequently positioned as an opportunity for assessment rather than as the stable version itself. Its immediate role is to let users review the upcoming release early and conduct checks relevant to their own environment.\n\n## GitHub’s verified signature\n\nThe associated commit was created on GitHub.com and signed with GitHub’s verified signature. The source page also displayed repeated loading errors and prompts to reload, alongside session messages related to signing in, signing out, and switching accounts in another tab or window.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "v0.34.0-rc2が安定版より先に公開されたんだね。これって大きいこと？",
-          "en": "Ollama v0.34.0-rc2 is out ahead of the stable release. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、次の版を早めに確かめられる更新と位置づけておる。既存環境との比較や導入判断に使える点が大きいのう。",
-          "en": "The article frames it as an early chance to evaluate the upcoming version. That matters for comparing it with an existing setup and deciding whether to deploy."
-        },
-        {
-          "s": "a",
-          "ja": "「リリース候補版」って、つまりどういうこと？もう完成版なの？",
-          "en": "What exactly is a “release candidate”? Is it already the finished version?"
-        },
-        {
-          "s": "b",
-          "ja": "安定版になる前の、確認用の候補版という意味じゃ。今回の内容では、正式採用の前に事前検証できる段階として扱われておるよ。",
-          "en": "It means a candidate being checked before the stable release. Here, it’s presented as a version users can test before committing to deployment."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら今のローカルLLM環境と比べて、導入するか決める材料にしたいな。早めに触れるのは助かりそう！",
-          "en": "I’d compare it with my current local LLM setup and use that to decide on deployment. Getting an early look sounds useful!"
-        },
-        {
-          "s": "b",
-          "ja": "よい使い方じゃな。ただし、まだ安定版ではないので、この記事が示す通り事前検証として受け止めるのが現実的じゃよ。",
-          "en": "That’s a sensible approach. Just remember it isn’t the stable release yet, so the piece suggests treating it as a pre-deployment evaluation."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-09T23:39:11.294Z"
-    },
     "1fd6b30858369688": {
       "bodyJa": "## 公式ドキュメント\n\nAIに技術的な質問をする際、学習済みの知識だけでなく、現在公開されている公式ドキュメントを確認したうえで回答させたい場合がある。そこで接続先となるのが、各社が提供するドキュメント検索用のModel Context Protocol（MCP）サーバーだ。\n\n## MCPの基本\n\nMCPは、AIアプリケーションを外部システムへ接続するためのオープンな標準である。公式ドキュメントでは、複数の機器で共通して使えるUSB-Cのような接続口に例えられている。AIクライアントごとに個別の連携を作り直すのではなく、MCP対応サーバーを複数の対応クライアントから利用できる点が特徴となる。\n\nMCP Serverは複数種類の機能を公開でき、ドキュメント検索はその用途の一つにすぎない。そのため、MCPそのものと、ドキュメント検索向けMCPサーバーは分けて捉える必要がある。\n\n## 4軸での確認\n\nドキュメント検索向けMCPサーバーは、単一の分類だけでは整理しにくいため、4つの観点から確認する方法が示されている。たとえばGoogle Developer Knowledge MCP Serverは、Google公式、ドキュメント検索、Streamable HTTP、APIキー認証という複数の属性を持つ。\n\nこれはMCPを4種類に分けるという意味ではない。どの公式情報を扱うのか、何に使うのか、どの方式で接続するのか、どのように認証するのかといった属性を組み合わせ、調査目的に合う接続先を見極めるための整理である。\n\n## AWSの選択肢\n\n2026/09/08時点では、ドキュメント検索向けMCPサーバーとして8系統が確認されている。AWSについては、現行のAWS MCP Serverへの移行が推奨されている。一方、AWSアカウントなしで公式情報を調査する用途では、AWS Knowledge MCP Serverも選択肢とされている。",
       "bodyEn": "## Official Documentation\n\nAI users may want technical answers based not only on learned knowledge, but also on official documentation that is currently published. Eight documentation-search Model Context Protocol server families are compared to help users choose a connection suited to what they want to investigate.\n\nThe central recommendation is to pause before adding another MCP server and first identify the information being sought. Documentation search is one MCP use case, rather than the protocol’s sole purpose.\n\n## Model Context Protocol\n\nModel Context Protocol, or MCP, is an open standard for connecting AI applications to external systems. Official documentation compares it to a common connection point such as USB-C.\n\nInstead of rebuilding a separate integration for every AI client, an MCP-compatible server can be used from multiple compatible clients. MCP servers can expose several kinds of capabilities, with documentation search representing one of those capabilities.\n\nThis distinction matters when selecting among the eight server families: the relevant question is not simply whether something is an MCP server, but whether its role and connection characteristics fit the intended research task.\n\n## Four Perspectives\n\nMCP servers cannot be organized adequately through a single classification. The comparison therefore examines them through four perspectives rather than claiming that MCP itself has four types.\n\nGoogle Developer Knowledge MCP Server illustrates this approach because it has several attributes at once: it is associated with official Google information, provides documentation search, uses Streamable HTTP, and uses API key authentication. These attributes describe different aspects of the same server.\n\nLooking across multiple perspectives allows users seeking current official information to compare possible sources according to their research purpose.\n\n## AWS MCP Server\n\nThe comparison also includes AWS MCP Server as a reference because AWS currently recommends migrating to it. That migration guidance is presented alongside the eight documentation-search server families.\n\nFor research use without an AWS account, AWS Knowledge MCP Server remains an option. The choice therefore depends on the intended investigation and whether an AWS account is available, while the current AWS MCP Server is the migration destination recommended by AWS.",
@@ -41864,310 +41712,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-09T00:49:03.819Z"
     },
-    "855d6eb9ada55a72": {
-      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
-      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
-          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
-          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
-        },
-        {
-          "s": "a",
-          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
-          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
-          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
-          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
-        },
-        {
-          "s": "b",
-          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
-          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:12:32.259Z"
-    },
-    "b68f08d5b78fdf2b": {
-      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
-      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
-          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
-          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
-        },
-        {
-          "s": "a",
-          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
-          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
-        },
-        {
-          "s": "b",
-          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
-          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
-          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
-        },
-        {
-          "s": "b",
-          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
-          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:46:10.596Z"
-    },
-    "c3242eb99cc5f08b": {
-      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
-      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
-          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
-          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
-        },
-        {
-          "s": "a",
-          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
-          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
-        },
-        {
-          "s": "b",
-          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
-          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
-          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
-        },
-        {
-          "s": "b",
-          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
-          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:50:27.117Z"
-    },
-    "614c15e2239ab54e": {
-      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
-          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
-          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
-          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
-          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
-          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
-          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T18:43:11.880Z"
-    },
-    "0f7a7d85bd26ee44": {
-      "bodyJa": "## My workペイン\n\nGitHub Copilotアプリでは、「My work」ペインを使い、複数のCopilotセッションをまとめて追跡できる。並行作業の状態を一元的に確認できるため、初心者が作業を整理する際に役立つ機能として紹介されている。\n\n## セッション管理\n\n「My work」ペインで把握できるのは、現在進行中の作業、すでに完了した作業、次に取り組む作業だ。複数のアクティブなセッションを同時に追い、何が進行中で、何が完了し、何が次に控えているかを見分けやすくする。これにより、複数タスクにまたがるCopilotでの作業を整理しやすいと説明されている。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThe GitHub Copilot app’s My work pane helps beginners manage multiple Copilot sessions. It matters when several tasks are running in parallel and users need a clear view of their status.\n\nThe pane brings session tracking into one place, making it easier to understand ongoing work without checking each session separately.\n\n## Managing your work\n\nMy work shows what is currently in progress, what has been completed, and what is queued next. This allows users juggling multiple sessions to keep track of active tasks and identify the next work item.\n\nBy presenting these stages together, the pane helps users stay organized across parallel Copilot tasks.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Copilotでいくつも作業を並行するとき、普段の管理はどう変わるの？",
-          "en": "If I’m juggling several tasks in Copilot, how does this change the way I manage my work?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、「My work」ペインで進行中・完了・次のタスクをまとめて確認できるんじゃ。複数セッションも追いやすくなるぞ。",
-          "en": "The article says the My work pane puts active, completed, and upcoming tasks in one place, making multiple Copilot sessions easier to track."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！前は複数のセッションをまとめて確認できなかったの？",
-          "en": "Oh, nice! Was there no way to review multiple sessions together before?"
-        },
-        {
-          "s": "b",
-          "ja": "以前は不可能だった、とまでは書かれておらんのう。本文から分かるのは、このペインで並行作業を把握しやすくなることじゃ。",
-          "en": "It doesn’t say that was impossible before. What it does establish is that this pane makes parallel work easier to keep track of."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、作業が増えても「今どこ？」を見失いにくいことだね。初心者にも助かりそう！",
-          "en": "So the big win is not losing track of where everything stands as tasks pile up. That sounds really helpful for beginners!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。紹介されている範囲では、進行中・完了・次のタスクを一目で整理できる点に注目じゃよ。",
-          "en": "Exactly. Based on what’s described, the key point is being able to organize what’s active, finished, and next at a glance."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T22:53:50.918Z"
-    },
-    "fafa75871b75df2e": {
-      "bodyJa": "## キャンバス\n\nチャットは意図を伝えるのに適している一方、エージェントの作業はスクロールの中に埋もれがちだと説明されている。キャンバスは、エージェント型ワークフローを継続的かつ構造化された面に置き、作業を見える形にする手段となる。\n\n## 進捗と軌道修正\n\n作業の状態がチャット履歴だけに残る場合に比べ、キャンバス上ではエージェントの進捗を把握しやすい。ワークフローが可視化されることで、進行中の作業を確認し、必要に応じて軌道修正しやすくなるとされる。\n\n## トークンコスト\n\n構造化されたキャンバスを使うことで、無駄なコンテキストを減らせる。結果として不要なトークン消費が抑えられ、ワークフロー全体のトークンコスト低減につながると説明されている。",
-      "bodyEn": "## Agentic workflows\n\nCanvases can make agentic workflows visible, steerable, and more cost-efficient. This matters because chat is useful for expressing intent, but an agent’s work can become buried in the conversation scroll, making progress harder to follow.\n\n## Visible and steerable\n\nA canvas provides a persistent, structured surface for the workflow. Instead of leaving the agent’s activity embedded in chat history, it makes progress visible and easier to assess. That visibility also helps users steer the workflow and correct its course when needed.\n\nThe canvas therefore serves as a place to see the work as it develops, rather than relying only on a scrolling record of exchanges. According to the source, this structure makes it easier to understand where the agent is in the workflow and to guide what happens next.\n\n## Cost-efficient\n\nKeeping the workflow on a structured surface can also reduce wasted context. By avoiding unnecessary context consumption, canvases can limit unneeded token use and lower overall token costs while supporting the same agentic workflow.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でAIに何段階かの作業を任せるとき、キャンバスがあると普段の何が変わるの？",
-          "en": "When I give AI a multi-step task at work, what changes if I use a canvas?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、流れて消えがちな作業をキャンバス上に整理して残し、進捗を見ながら軌道修正しやすくなるとしておるぞ。",
-          "en": "The article says a canvas keeps the agent’s work organized and visible instead of losing it in the chat scroll, so you can track progress and steer it."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ チャットで途中経過を追うだけじゃ足りないのかな。",
-          "en": "Couldn’t we do that before? Isn’t following the progress in chat enough?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれておらん。本文では、チャットは意図を伝えるのに向く一方、作業がスクロールに埋もれやすいと対比しておるのう。",
-          "en": "It doesn’t say that was impossible. The post contrasts chat, which works well for expressing intent, with agent work that can get buried in the scroll."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど、一番の収穫は、AIの作業を見える場所に置けば、迷走に気づいて無駄を減らせるかもってことだね！",
-          "en": "Got it! My biggest takeaway is that keeping AI work visible could help us catch drift and cut waste."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。そこで挙げられている、不要な文脈を減らして全体のトークンコストを下げる効果にも注目じゃな。",
-          "en": "Exactly. It also highlights reducing wasted context and lowering overall token costs—that’s the next point to watch."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:20:04.037Z"
-    },
-    "c4c1018ae834ae55": {
-      "bodyJa": "## GitHub内で完結\n\n本チュートリアルは、4つのGitHubエージェントアプリを使い、機能のスコープ定義からリリースまでのソフトウェアデリバリーワークフローをGitHubに統合する方法を扱う。SDLC全体の作業をGitHubから離れずに進められる点が中心となる。\n\n## 4つの工程\n\n対象となるのは、機能の範囲を定めるスコープ定義、セキュリティの確保、展開、リリースの4段階だ。4つのエージェントアプリがこれらをカバーし、機能を出荷するまでをGitHub内で進める手順として説明されている。一連の流れを同じ場所に統合する構成だ。",
-      "bodyEn": "## Software delivery workflow\n\nThis tutorial explains how to bring a software delivery workflow into GitHub with agent apps. The approach matters because it covers a feature across the full SDLC without requiring users to leave GitHub.\n\n## Four GitHub agent apps\n\nThe tutorial uses four GitHub agent apps to address the workflow. According to the source, these apps can help with four parts of delivering a feature: defining its scope, securing it, rolling it out, and shipping it. Each part remains within GitHub.\n\n## Across the SDLC\n\nThe workflow spans the SDLC from scoping through security and rollout to shipping. The post presents a tutorial for applying the four agent apps across these stages, showing how they fit into the process of taking a feature from scope definition to release without leaving GitHub.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "4つのGitHubエージェントアプリだけで、機能の範囲決めから安全確認、展開、リリースまで進められるの？",
-          "en": "Can four GitHub agent apps really take a feature from scoping and security checks through rollout and release?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、その4段階をGitHubから離れず支援できるとしておる。SDLCとは、ソフトウェアを計画して届けるまでの流れじゃよ。",
-          "en": "That’s what the article describes: support for all four stages without leaving GitHub. SDLC means the overall journey from planning software to delivering it."
-        },
-        {
-          "s": "a",
-          "ja": "つまり開発する人は、工程ごとに別の作業場へ移らず、GitHubという一つの工房で進める感じ？",
-          "en": "So for developers, is it like staying in one GitHub workshop instead of moving to a different workspace for each stage?"
-        },
-        {
-          "s": "b",
-          "ja": "そのたとえに近いのう。本文が示す範囲では、機能を決め、安全にし、展開して出荷する流れをGitHub内につなげられるんじゃ。",
-          "en": "That analogy fits nicely. The post shows a connected GitHub workflow for scoping, securing, rolling out, and shipping a feature."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、4つのエージェントアプリで、機能を届ける一連の作業をGitHubにまとめるんだね！",
-          "en": "Oh, I get it! Four agent apps bring the whole feature-delivery workflow together inside GitHub."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。ただ、紹介では各工程を「支援できる」としており、すべてが自動で完了するとまでは断定しておらん点に注意じゃ。",
-          "en": "Exactly. One nuance: it says the apps can help across those stages; it doesn’t claim the entire process completes automatically."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T23:05:34.400Z"
-    },
-    "1ee0c39c0381a0f6": {
-      "bodyJa": "## 最初のプロンプト\n\nGitHub Copilotアプリで初めてプロンプトを書く人に向けた入門ガイドだ。最初のタスクを自信を持って始めるために、効果的なプロンプトの書き方を中心に扱っている。\n\n作業の依頼内容を示すプロンプトに加え、開始時にどの情報をコンテキストとして選ぶかまでを解説する構成となっている。\n\n## コンテキストとモデル\n\nガイドでは、最初のタスクに適したコンテキストとモデルの選び方も取り上げる。プロンプトを書き、適切なコンテキストとモデルを選択して作業を始めるまでの流れを、初心者向けに説明している。",
-      "bodyEn": "## Write Your First Prompt\n\nThis beginner’s guide explains how to write an effective first prompt in the GitHub Copilot app. It matters because the guidance is intended to help users begin their first task with confidence.\n\nThe tutorial focuses on getting started with prompt writing rather than assuming prior experience. Its stated scope connects the first prompt with two related decisions: selecting appropriate context and choosing a model before starting the task.\n\n## Choose the Right Context\n\nAccording to the source, choosing the right context and model is part of preparing to begin a first task effectively. The guide presents these choices alongside prompt writing as key elements of the getting-started process.\n\nThe post is framed as a tutorial for beginners and covers prompt engineering within the GitHub Copilot app. Its emphasis remains on writing the initial prompt, making the relevant context and model selections, and confidently moving into the first task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "最初のプロンプトなのに、コンテキストとモデルの二つを考えるんだね。これって大きいこと？",
-          "en": "Even for a first prompt, you’re thinking about both context and the model. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "このガイドでは、その二つを最初の作業へ自信を持って進むための要点として扱っておる。初心者には大事な一歩じゃよ。",
-          "en": "The guide treats both as key to starting your first task with confidence. For a beginner, that’s an important first step."
-        },
-        {
-          "s": "a",
-          "ja": "コンテキストって何？つまり、Copilotにどこまで説明すればいいってこと？",
-          "en": "What’s “context”? Does it mean how much I need to explain to Copilot?"
-        },
-        {
-          "s": "b",
-          "ja": "一般にコンテキストは、依頼を理解するための背景や前提のことじゃ。ここでは、プロンプトに合う文脈を選ぶ話じゃのう。",
-          "en": "Context generally means the background or assumptions needed to understand a request. Here, it’s about choosing context that fits your prompt."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、やりたい作業を書いて、合いそうなコンテキストとモデルを選んで始めてみる！それでいい？",
-          "en": "I’d write what I want to do, pick a fitting context and model, and give it a try. Does that work?"
-        },
-        {
-          "s": "b",
-          "ja": "紹介されている進め方には合っておる。ただし、作業に合うコンテキストとモデルを選ぶのが条件じゃ。",
-          "en": "That matches the approach described. Just remember that the context and model should fit the task you want to start."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T23:08:55.349Z"
-    },
     "cb1330a46978958b": {
       "bodyJa": "MicrosoftはスタートアップがAI開発基盤「Foundry」で利用できるAIモデルの選択肢を拡大し、Fireworks AIのモデルを新たに加えた。創業者が自社製品に組み込むモデルをより柔軟に選べるようにする狙いがあると見られる。\n\n近年のAIアプリケーション開発では、単一のモデルに固定するのではなく、用途やコスト、応答速度、精度に応じて複数のモデルを使い分ける「マルチモデル」の考え方が広がっている。Microsoftのプラットフォームは、こうしたモデルの選定や展開、運用を一元的に扱う基盤と位置づけられており、今回の拡大はその品ぞろえを厚くする取り組みといえる。\n\nFireworks AIは、オープンなモデルを含む多様なAIモデルを高速に推論実行するためのサービスを手がける企業として知られる。今回の統合により、Foundryを使うスタートアップは、既存の選択肢に加えてFireworks AI経由のモデルにもアクセスできるようになるとみられる。ただし、具体的な提供条件や対象範囲については、公表された情報の範囲で確認する必要がある。\n\nスタートアップにとって、利用できるモデルが増えることは、特定ベンダーへの過度な依存(ロックイン)を避けたり、限られた予算のなかで性能とコストの折り合いをつけたりするうえで意味を持つ。開発初期の段階からモデルを比較・切り替えできる環境は、プロダクトの方向転換が多い新興企業と相性がよいと考えられる。\n\nこうした「モデルの選択肢」は、クラウド各社の競争軸の一つになっている。AmazonはAWSのBedrock、GoogleはVertex AIを通じて複数のモデルを提供しており、Microsoftも自社基盤で多様なモデルをそろえることで、開発者やスタートアップの取り込みを図る構図がうかがえる。生成AIの領域では新しいモデルが次々と登場しており、基盤側がいかに幅広い選択肢を素早く取り込めるかが、利用者にとっての価値を左右しやすい。今回のFireworks AI追加は、その流れに沿った一手と位置づけられる。",
       "bodyEn": "Microsoft has broadened the range of artificial intelligence models available to startups building on its Foundry platform, adding support for Fireworks AI among the newly accessible options. Detailed on the company's Source blog, the change is aimed at giving early-stage founders more flexibility when choosing the models that power their products. It also reflects a wider industry shift toward multi-model development environments rather than reliance on a single provider.\n\nFoundry is Microsoft's platform for building, evaluating and deploying AI applications, functioning as both a model catalog and a runtime where developers can access, test and operate different systems through a shared set of tools. By expanding the selection, Microsoft appears to be positioning Foundry as a flexible hub where teams can mix and match models instead of committing to one vendor from the start. For startups, that choice can matter both technically and commercially, because model quality, latency and cost vary considerably across tasks such as text generation, coding, retrieval and reasoning.\n\nThe inclusion of Fireworks AI is notable because the company is known primarily as an inference platform optimized for running open and specialized models quickly and at scale. Startups often need to balance response speed against operating expense, and having access to providers focused on efficient inference can help teams tune that trade-off. While the announcement centers on adding this option within Foundry, the broader signal is that founders are being offered more paths to production rather than a single default engine.\n\nThis expansion fits into Microsoft's longstanding effort to court startups. Through programs such as Microsoft for Startups Founders Hub, the company has offered credits, technical resources and access to its cloud and AI services, and Foundry is increasingly the surface through which those AI capabilities are delivered. Making a wider set of models available lowers a practical barrier for small teams, who may lack the resources to integrate and maintain multiple external providers on their own. Offering these options within one environment can reduce that engineering overhead.\n\nThe move is best understood against the competitive backdrop of cloud AI platforms. Amazon's Bedrock and Google's Vertex AI Model Garden both emphasize model choice as a core selling point, letting customers select among first-party and third-party systems within a managed service. Microsoft's own strategy has evolved from a close association with OpenAI's models toward a more open catalog that also includes offerings from other developers. Adding Fireworks AI is consistent with that direction, and it suggests Microsoft is likely to keep broadening the roster to remain competitive with rival platforms that market breadth of selection.\n\nFor founders, the practical appeal of a multi-model approach is the ability to match a model to a specific workload. A team might use one system for high-volume, latency-sensitive features and another for more complex reasoning, or switch providers as pricing and capabilities change. This flexibility can also serve as a hedge against vendor lock-in, since applications designed to run across several models are, in principle, easier to migrate. Realizing those benefits still depends on the underlying tooling, evaluation support and how consistently the models can be swapped in practice.\n\nIt is worth noting that the specifics of pricing, regional availability and the full list of newly supported models were not detailed in the material summarized here, and would need to be confirmed through Microsoft's official documentation. The central, verifiable point is that Foundry's model selection for startups has grown to include Fireworks AI, expanding the options available to builders rather than introducing an entirely new product line.\n\nTaken together, the update is an incremental but meaningful step in how Microsoft packages AI for smaller companies. As the ecosystem of foundation and specialized models continues to expand, the value of a platform is shifting toward how easily developers can compare, deploy and manage those models in one place. By widening Foundry's catalog, Microsoft appears to be betting that choice and interoperability, backed by its cloud infrastructure and startup programs, will be a key draw for the next generation of AI-native companies.",
@@ -42205,6 +41749,702 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-29T14:44:17.617Z"
+    },
+    "44150d59d1712db4": {
+      "bodyJa": "## 4つの新機能\n\nAppleはiPhone Duoの発表イベントで、SiriのAI Audio Intelligenceに関する新機能を発表した。AIによる「ambient listening」と利用者のプライバシーをどう両立させるかを文書で示した点が重要で、生音声の扱いを判断する材料となる。\n\n発表されたのは、Siri Recap、Live Rewind、Sound Recognition、Music Recognitionの4機能だ。いずれもAudio Intelligenceの新しいリスニング機能として挙げられている。Appleはこれらの発表と同時に、音声を扱う機能とプライバシーの関係を説明する文書を公開した。\n\n## 生音声へのアクセス\n\n文書で示された中心的な説明は、AppleがAudio Intelligenceを利用するユーザーの生音声を取得できないというものだ。対象として明記されているのは「raw audio」、つまり加工されていない生の音声データである。\n\nAppleは、AIによる「ambient listening」を採用しながらも、自社が利用者の生音声へアクセスできない設計だと説明している。音声を扱う新機能の提供にあたり、プライバシー保護の根拠を生音声へのアクセス可否という形で示したことになる。\n\n## プライバシー判断\n\n今回の文書は、新機能の追加だけを知らせるものではなく、Audio Intelligenceとプライバシーを両立させる考え方を示している。Siri Recapなどの機能を確認する際には、機能名やAIという表現に加え、Appleが生音声を取得できないとする説明が重要な判断材料になる。\n\n利用者は、リスニング機能が音声を扱うことと、Appleがその生音声へアクセスできることを分けて捉え、文書に示されたプライバシー保護の主張を確認できる。",
+      "bodyEn": "## New Audio Intelligence Features\n\nApple has announced new Siri AI Audio Intelligence features and published a document addressing how they protect privacy. The document matters because its claim that Apple cannot retrieve users’ raw audio gives users a basis for judging the privacy of features built around listening.\n\nThe features announced at Wednesday’s iPhone Duo launch event include Siri Recap, Live Rewind, Sound Recognition, and Music Recognition. Apple presented them as additions to Audio Intelligence.\n\n## AI Ambient Listening\n\nAlongside the feature announcement, Apple released a document explaining how it plans to balance AI “ambient listening” with users’ privacy. The privacy question is directly connected to the listening functions included in Audio Intelligence, making the document part of Apple’s presentation of the new features.\n\nThe central claim in the document is specific: Apple says it cannot access users’ raw audio from the new Audio Intelligence features. This focuses the privacy explanation on whether the company can retrieve the original audio associated with those features.\n\n## Users’ Raw Audio\n\nApple’s statement about raw audio applies to the newly announced Audio Intelligence functions: Siri Recap, Live Rewind, Sound Recognition, and Music Recognition. According to the document, the design prevents Apple from retrieving users’ raw audio while these listening features are offered.\n\nThat claim is the main privacy standard users can evaluate when considering the announcement. The document connects the new listening capabilities with a stated limit on Apple’s access, allowing users to assess the privacy protection presented alongside Audio Intelligence.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段の生活では何が変わるの？スマホが周りの音を聞いて、何かしてくれるってこと？",
+          "en": "What changes in everyday life? Does this mean the phone can listen to nearby audio and do something with it?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、Siriでの振り返り、ライブ巻き戻し、音や音楽の認識に関わる4機能が加わるんじゃ。音を扱う選択肢が増えるのう。",
+          "en": "The piece says four features are being added, covering Siri recaps, live rewind, and sound or music recognition. So users will have more ways to work with audio."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、前はできなかったの？ずっと聞く仕組みなら、生の音声まで送られそうで心配だな。",
+          "en": "Oh, couldn’t it do that before? If it’s always listening, I’d worry that my raw audio might get sent somewhere."
+        },
+        {
+          "s": "b",
+          "ja": "新機能とは書かれておるが、従来との詳しい比較までは示されておらん。Appleの説明では、生音声を取得できない設計じゃよ。",
+          "en": "They’re described as new, but there’s no detailed comparison with the previous setup. Apple says the system is designed so it cannot retrieve users’ raw audio."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、便利そうな聞き取り機能と、生音声をAppleに取られない仕組みを一緒に確認できることだね。",
+          "en": "So the big takeaway is that we can examine both the useful listening features and the protections meant to keep raw audio from Apple."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。公開された文書で、周囲の音を聞くAIとプライバシーをどう両立する計画なのかを読み、使うか判断できる点に注目じゃ。",
+          "en": "Exactly. The published document explains how Apple plans to balance ambient-listening AI with privacy, giving users something concrete to review before deciding whether to use it."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:46:47.310Z"
+    },
+    "c55aacfa487b75f6": {
+      "bodyJa": "## v1.17.0公開\n\nOpenHands v1.17.0が2026年9月9日にリリースされた。ダッシュボードの表示、自動化の制御、クラウドでのLLMプロバイダー接続、会話の整理などが拡張され、利用者の可視性と運用性を高める更新となっている。\n\n## マニフェスト宣言値\n\nダッシュボードのカードと行に、マニフェストで宣言された値の記述を表示できるようになった。ダッシュボード上で確認可能な情報が増え、宣言されている値を画面から把握しやすくなる。\n\n会話パネルには、会話タグとフィルタリングが追加された。タグを使って会話を分類し、条件に応じて表示対象を絞り込める。また、メッセージにカーソルを合わせるとタイムスタンプが表示される。\n\n## 自動化の管理\n\n自動化実行のUIは、タスクの結果を認識する形に変更された。自動化の編集モーダルでは、カスタムcron式を編集できるようになり、既存の自動化設定を画面上で扱える。\n\n自動化の権限は、閲覧と管理に分割された。あわせて、作成者向けの例外経路も設けられている。権限を一括で扱うのではなく、閲覧と管理を区別して設定できる点が変更点となる。\n\n## クラウドと会話\n\nクラウドでは、LLMプロバイダーとの接続が有効化された。Agent Canvas向けには、クラウド設定への統一された入口が追加され、設定画面へアクセスする経路がまとめられた。\n\nさらに、ローカルのAgent Canvas Plannerもサポートされた。クラウド接続、設定入口、ローカルPlanner対応が加わり、Agent Canvasに関する設定と利用範囲が拡張されている。",
+      "bodyEn": "## Dashboard cards and rows\n\nOpenHands v1.17.0 adds interface and control improvements intended to increase visibility and help teams operate agents more effectively. The release was published on September 9, 2026.\n\nDashboard cards and rows can now show value statements declared in manifests. This brings those declared values directly into dashboard views, making them visible where users review cards and rows rather than limiting the change to a separate interface.\n\n## Conversation tags and filtering\n\nThe conversation panel now supports conversation tags and filtering. These additions provide another way to organize and narrow the conversations displayed in the panel.\n\nThe release also adds message timestamps that appear on hover. Together, the conversation changes expand the information and controls available within the conversation panel without changing the main dashboard features.\n\n## Automation controls\n\nThe automation run interface is now aware of task outcomes. OpenHands v1.17.0 also allows users to edit a custom cron expression from the edit-automation modal, bringing that setting into the existing automation editing flow.\n\nAutomation permissions have been divided into separate view and manage permissions. The change includes a creator escape hatch, as described in the release announcement. These permission changes provide more specific controls for users who need to view automations and those who need to manage them.\n\n## Cloud and Agent Canvas\n\nThe release enables LLM provider connections on cloud. According to the release summary, cloud LLM connections are among the changes designed to improve how teams operate agents.\n\nAgent Canvas receives a unified cloud settings entrypoint, consolidating access to cloud settings through one entrypoint for that interface. OpenHands v1.17.0 also adds support for a local Agent Canvas Planner. These updates cover both cloud configuration access and local Planner support within Agent Canvas.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ダッシュボードに「マニフェスト宣言値」が出るって、それって何が見えるようになるの？",
+          "en": "The dashboard now shows “manifest-declared values”—what exactly will people be able to see?"
+        },
+        {
+          "s": "b",
+          "ja": "このリリースでは、カードや行に宣言値を表示するのじゃ。マニフェストは設定を宣言するもの、くらいの意味じゃよ。",
+          "en": "The release says dashboard cards and rows now show those declared values. Think of a manifest as a place where settings are declared."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、運用チームが棚のラベルを見るように設定を確かめ、会話もタグで探しやすくなるってこと？",
+          "en": "So it’s like labels on shelves: teams can check settings and find conversations more easily with tags?"
+        },
+        {
+          "s": "b",
+          "ja": "更新内容を見る限り、そうじゃ。会話整理に加え、クラウドのLLM接続や自動化設定を扱うチームの運用を助ける変更じゃよ。",
+          "en": "That’s the idea. From the listed changes, conversation tools, cloud LLM connections, and automation controls should help teams operate agents more effectively."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど、設定や会話を見つけやすくして、チームがエージェントを運用しやすくする更新なんだね！",
+          "en": "Got it—this update makes settings and conversations easier to find, helping teams operate agents more smoothly!"
+        },
+        {
+          "s": "b",
+          "ja": "リリース項目では、自動化権限が閲覧と管理に分かれ、作成者向けの例外もある点は確認したいのう。",
+          "en": "One detail to note: the release list splits automation permissions into view and manage, with an exception for creators. That change is worth checking carefully."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:47:31.514Z"
+    },
+    "329062f5909e1694": {
+      "bodyJa": "## Kotlin 1.0\n\nGoogleは、Agent Development Kit（ADK）for Kotlin 1.0を正式に公開した。Python版とJava版のADKコアとの完全な機能同等性を実現し、Kotlinで実運用向けのAIエージェントを構築しやすくするリリースとなる。\n\n## KMPとKSP\n\nADK for KotlinはKotlin Multiplatform（KMP）を基盤とし、Kotlinらしい記述によるAIエージェント開発を可能にする。関数呼び出しにはKotlin Symbol Processing（KSP）を活用しており、リフレクションを使わず、型安全に関数を扱える点が特徴だ。型に基づいて呼び出しを構成できるため、Kotlinの開発手法に沿った形でエージェントの機能を組み立てられる。\n\n## 複数エージェント\n\n複数のAIエージェントを連携させるマルチエージェント開発に対応し、高度なオーケストレーション機能も備える。処理の途中に人間の確認や判断を組み込むhuman-in-the-loopワークフローに加え、コンテキストを圧縮する機能も提供される。これらを組み合わせ、エージェント間の処理や人間が関与する流れを構成できる。\n\n## Android向け拡張\n\nAndroidを重視した拡張機能群も導入された。LiteRT-LMを介したローカルモデルの統合、Firebase AIによるクラウド推論、Roomを利用したセッションの永続化、AppSearchを使ったセマンティックメモリーに対応する。モバイル開発者は、ローカルとクラウドのモデル利用、セッションの保存、意味に基づく記憶をADK for Kotlin上で組み合わせ、Android向けAIエージェントを構築できる。",
+      "bodyEn": "## ADK for Kotlin 1.0\n\nGoogle has officially released version 1.0 of the Agent Development Kit for Kotlin, aimed at building production-ready AI agents in Kotlin, Android, and other Kotlin environments. The release matters because its core capabilities now have full feature parity with the Python and Java ADK cores, supporting idiomatic multi-agent AI development.\n\nThis parity brings Kotlin developers the core functionality available in the Python and Java counterparts while retaining a Kotlin-focused development model.\n\n## Kotlin Multiplatform and KSP\n\nADK for Kotlin is built on Kotlin Multiplatform. Its orchestration capabilities can therefore be used within the KMP model for developing AI agents.\n\nThe framework also uses Kotlin Symbol Processing for function calling. This approach provides zero-reflection, type-safe function calls, combining KSP-based processing with Kotlin’s type system rather than relying on reflection.\n\n## Multi-agent orchestration\n\nThe release supports coordination across multiple AI agents. Its advanced orchestration capabilities also include human-in-the-loop workflows, allowing human participation to be incorporated into agent processes.\n\nContext compaction is another part of the orchestration feature set. Together, multi-agent coordination, human-in-the-loop workflows, and context compaction form the release’s main capabilities for production-oriented agent development.\n\n## Android-first extensions\n\nADK for Kotlin 1.0 includes a suite of Android-first extensions for mobile developers. These integrations cover local and cloud-based AI capabilities as well as storage for agent sessions and memory.\n\nDevelopers can integrate local models through LiteRT-LM and use Firebase AI for cloud reasoning. Room provides session persistence, while AppSearch powers semantic memory. These Android integrations complement the framework’s KMP foundation, KSP-based function calling, and multi-agent orchestration capabilities.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1.0でPython版とJava版の中核機能に完全に並んだって、これって大きいこと？",
+          "en": "Version 1.0 now matches the core features of the Python and Java editions. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、Kotlinでも同等の中核機能を使い、複数のAIエージェントを連携できる節目として扱っておる。実運用を目指す開発者には大きな変化じゃな。",
+          "en": "The article frames it as a milestone: Kotlin now gets the same core capabilities, including multi-agent development. For builders aiming at production use, that’s a substantial step."
+        },
+        {
+          "s": "a",
+          "ja": "KSPの「ゼロリフレクションで型安全な関数呼び出し」って、つまりどういうこと？",
+          "en": "What does KSP’s “zero-reflection, type-safe function calling” actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "発表文では、KSPでコードの型に沿って関数をつなぎ、実行時のリフレクションを使わない仕組みじゃ。値の種類の食い違いを避けやすくする考え方じゃよ。",
+          "en": "The announcement describes KSP connecting functions according to their code types without runtime reflection. In everyday terms, it helps avoid mismatches between the kinds of values being passed around."
+        },
+        {
+          "s": "a",
+          "ja": "僕ならAndroidアプリでローカルモデルを動かして、会話も次回に残したいな。できる？",
+          "en": "I’d use it in an Android app with a local model and keep the conversation for next time. Can it do that?"
+        },
+        {
+          "s": "b",
+          "ja": "紹介されている範囲では、LiteRT-LMでローカルモデル、Roomでセッション保存を組み合わせられるぞ。クラウド推論ならFirebase AI、意味記憶ならAppSearchも選べるのう。",
+          "en": "Within what’s described, yes: LiteRT-LM supports local models, and Room handles session persistence. Firebase AI is available for cloud reasoning, while AppSearch provides semantic memory."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:48:00.388Z"
+    },
+    "763193ff6d192573": {
+      "bodyJa": "## SWE-bench\n\nAIコーディングエージェントを改善するには、総合的な性能だけでなく、処理の途中で論理がどこから崩れたのかを確かめられる評価が重要になる。SWE-benchのようなエンドツーエンドのベンチマークは広範な性能スコアを示す一方、実行にコストと時間がかかり、根本原因の診断には不足する場合がある。\n\n## 行動評価\n\nそこで導入するのが、エージェントの個別の中間動作を対象とした行動評価だ。これは高速かつ局所的に実行できる単体テスト形式の評価であり、最終文字列が期待値と一致したかだけを見るのではなく、処理の過程で特定の動作が行われたかを検証する。結果だけでは見えにくい論理上の問題を、より細かな単位で切り分けられる。\n\n## ツール呼び出し\n\n具体的な評価対象には、エージェントが意図したツールを呼び出したか、必要なファイル変更を行ったかといった動作が含まれる。こうした離散的な中間アクションごとにマイクロチェックを設けることで、失敗した箇所を局所的に確認できる。最終結果の不一致だけを手掛かりにするよりも、どの動作で問題が起きたのかを診断しやすくなる。\n\n## 回帰防止\n\n行動評価は、SWE-benchなどのマクロなベンチマークを置き換えるものではなく、両者を併用する設計とされる。総合指標で広い性能を確認しながら、低コストなマイクロチェックで個別動作を確かめることで、システムプロンプトの反復やモデルのアップグレードを進めやすくなる。更新時にも既存の動作が後退していないかを検証でき、回帰のリスクを抑えながら変更を重ねられる。",
+      "bodyEn": "## Behavioral evaluations\n\nAI coding agent harnesses can use behavioral evaluations to make testing more diagnostic and iteration safer. These fast, local, unit-style tests focus on discrete intermediate actions, helping developers identify where an agent’s logic broke down rather than relying only on a broad final performance score.\n\nEnd-to-end benchmarks such as SWE-bench provide broad performance scores for AI agents. However, they are often expensive and slow, and they can lack the root-cause diagnostics needed to explain a failure precisely. A benchmark result may show overall performance without revealing which part of the agent’s behavior caused the problem.\n\n## Discrete intermediate actions\n\nBehavioral evaluations address that limitation by asserting on specific actions performed during a task. The checks can verify that an agent made particular tool calls or applied expected file modifications. This shifts the evaluation target from only the final result to the individual behaviors that contributed to it.\n\nThese tests are described as micro-checks because they are local and inexpensive. Rather than depending on final string equality, they inspect meaningful intermediate actions. That narrower scope enables faster diagnosis when an agent does not behave as intended, because developers can examine the specific tool use or file edit that failed an assertion.\n\n## Micro-checks alongside macro benchmarks\n\nBehavioral tests are intended to complement, rather than replace, end-to-end benchmarks. Engineering teams can use macro benchmarks such as SWE-bench for broad performance measurement while using micro-checks to investigate behavior at a more detailed level.\n\nBuilding both forms of evaluation into an AI coding agent harness supports repeated changes to the system. Teams can iterate on system prompts and upgrade models while checking discrete behaviors for regressions. The broad benchmark tracks overall performance, while the local behavioral evaluations provide the faster root-cause information needed to understand where logic changed or broke down.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "SWE-benchで総合点が出るのに、どうして小さなテストも必要なの？",
+          "en": "If SWE-bench already gives an overall score, why do we need smaller tests too?"
+        },
+        {
+          "s": "b",
+          "ja": "総合評価は広く測れる一方、遅くてコストがかかり、失敗原因を特定しにくいと本文は指摘しておる。そこで途中の動作を個別に確かめるんじゃ。",
+          "en": "The piece says broad benchmarks can be slow, costly, and poor at pinpointing failures. So developers also test individual actions along the way."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、完成品だけを見るより、料理の途中で手順を一つずつ確認する感じ？開発チームが直す場所を見つけやすくなるのかな。",
+          "en": "So it’s like checking each cooking step instead of only tasting the finished dish? Does that help engineering teams find what to fix?"
+        },
+        {
+          "s": "b",
+          "ja": "そういうイメージじゃよ。ツール呼び出しやファイル変更を小さく検証すれば、どこで論理が崩れたかを追いやすいと説明されておる。",
+          "en": "That’s the idea. The article describes checking tool calls and file edits in small tests, making it easier to trace where the agent’s logic failed."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、総合点と途中の動作チェックを組み合わせて、原因を早く探す仕組みなんだね！",
+          "en": "Oh, so the system combines overall scores with checks on intermediate actions to find problems faster!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。小さな検証だけに頼らず総合指標と併用し、プロンプトやモデルの更新で性能が後戻りするのを防ぐ狙いじゃ。",
+          "en": "Exactly. The proposed approach pairs micro-checks with broad benchmarks, aiming to prevent regressions when prompts or models are updated."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:48:00.529Z"
+    },
+    "f447960fac4fc169": {
+      "bodyJa": "## WeatherNext\n\nGoogle DeepMindのAIモデルWeatherNextは、熱帯サイクロンの進路、強度、風の構造の予測で最先端の精度を達成したとされる。平均して警告につながる予測精度を従来より1日分先まで伸ばした点が、今回の成果の中心だ。\n\n## サイクロン予測\n\n熱帯サイクロンはハリケーンや台風とも呼ばれ、地球上で最も破壊的な気象現象の一つである。過去50年間に世界で70万人以上の死亡と1.4兆ドルの経済損失をもたらしたと説明されている。危険なサイクロンがどのように発達するかを予測することは長年の課題であり、警告を適時かつ正確に出す予報担当者にとって、1時間ごとの違いが重要になる。\n\n## 3日予報の精度\n\nWeatherNextの3日予報は、従来モデルが2日先まで提供できた予測と同程度の精度に達した。つまり、同等の予測精度を平均でさらに1日先まで維持したことになる。進路と強度の予測精度では従来の数値モデルを上回り、風の構造も含めた予測で最先端の精度を示したという。3日先の結果を従来モデルの2日先の結果と比較している点が、精度向上の具体的な意味となる。\n\n## オープンソース\n\nこの成果はNatureに掲載された論文で示され、モデルはオープンソースとして公開される。サイクロン予測では時間が重要であり、WeatherNextは予報担当者に平均で追加の1日分の警告時間を与えられる正確な予測を可能にすると説明されている。",
+      "bodyEn": "## Accurate Cyclone Forecasts\n\nWeatherNext is an AI model designed to improve tropical cyclone forecasting, including predictions of how dangerous cyclones develop. Its accuracy matters because timely warnings are a race against time, and every additional hour can help forecasters respond to these destructive weather phenomena.\n\nTropical cyclones, also known as hurricanes or typhoons, have been responsible for more than 700,000 deaths and $1.4 trillion in economic losses globally over the past 50 years. Forecasting their development accurately and early therefore remains a significant challenge.\n\n## Track, Intensity, and Wind Structure\n\nAccording to a paper published in Nature, WeatherNext achieved state-of-the-art accuracy in predicting a cyclone’s track, intensity, and wind structure. Google DeepMind says the model surpassed traditional numerical models in the accuracy of track and intensity predictions, establishing a new standard for weather forecasting.\n\nThese capabilities address several distinct aspects of cyclone behavior. Track forecasts indicate where a cyclone is expected to move, while intensity predictions address how strong it may become. WeatherNext also predicts wind structure, extending its forecasting beyond location and overall strength.\n\n## An Extra Day of Warning\n\nThe central result is an additional day of predictive accuracy. On average, WeatherNext’s three-day forecasts were as accurate as the forecasts prior models could provide for only the next two days.\n\nThis does not simply describe a longer forecast window. It means that the model maintained the level of accuracy previously associated with a shorter time horizon while looking one day further ahead. The announcement says this improvement can give forecasters an extra day of warning.\n\n## Open Sourcing the Model\n\nGoogle DeepMind is now open sourcing WeatherNext. The release follows the reported results for cyclone track, intensity, and wind-structure prediction, making the model available after its performance was presented in Nature.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "3日先の予測が、従来モデルの2日先と同じ精度だって！ 1日増えるのは大きいこと？",
+          "en": "A three-day forecast is now as accurate as older models’ two-day forecast! Is gaining a whole day really that significant?"
+        },
+        {
+          "s": "b",
+          "ja": "本文では、平均で丸1日分の予測精度が増したとしておる。進路・強度・風の構造でも最高水準という位置づけじゃ。",
+          "en": "The article says it adds a full day of predictive accuracy on average. It also describes the model as state of the art for track, intensity, and wind structure."
+        },
+        {
+          "s": "a",
+          "ja": "従来の「数値モデル」って何？ AIの予測とは違うの？",
+          "en": "What exactly is a “numerical model”? How is that different from an AI forecast?"
+        },
+        {
+          "s": "b",
+          "ja": "数値モデルは一般に、気象の変化を数式で計算する仕組みじゃ。今回はAIモデルが、その従来方式を精度で上回ったとされておる。",
+          "en": "A numerical model generally calculates weather changes with equations. Here, the paper reports that the AI model outperformed that traditional approach in forecasting accuracy."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、警告が1日早く届いたら、そのぶん早めに備えを始めたいな。へえ、すごい！",
+          "en": "If a warning reached me a day earlier, I’d use that time to start preparing sooner. That’s amazing!"
+        },
+        {
+          "s": "b",
+          "ja": "その受け止め方が現実的じゃ。ただし1日分というのは平均で、毎回必ず早まる保証ではない点には気をつけたいのう。",
+          "en": "That’s a practical way to see it. Still, the extra day is an average, so it doesn’t mean every forecast will always provide exactly one more day."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:48:37.758Z"
+    },
+    "74a62df0fc1d00bc": {
+      "bodyJa": "## AIだけの限界\n\nAIが生成する粗悪なコンテンツや憎悪を含む投稿が、ソーシャルメディアの安全性と価値を脅かしている。対策としてAIによるコンテンツモデレーションが広がる一方、さらにAIを投入するだけでは問題を悪化させる可能性があり、人間による監督が欠かせないと指摘されている。\n\n## 人が生む価値\n\nソーシャルメディアは、人々が自らの経験や知識を共有する場になり得る。その価値が最もよく表れるのは、利用者が本物で有益なコンテンツを投稿するときだ。独自の思考が込められたブログ記事や、PCの組み立て方を紹介する役立つ動画などが、その例として挙げられている。\n\nこうした投稿の価値は、内容だけでなく、その背後にいる人によって支えられている。真正性を守る作業を主としてAIツールに任せると、ソーシャルメディアを有意義なものにしている人間の存在を見落とすことになる。\n\n## AI生成の害\n\nAIを使ってAI生成の害や憎悪を含むコンテンツに対処する考え方は、問題と同種の手段で問題に立ち向かうものだ。しかし、AIだけではコミュニティを十分に保護できないと専門家は主張している。重要なのはAIの追加そのものではなく、人間がモデレーションに関わり続けることだとされる。\n\n## 人間の監督\n\n人間によるモデレーションの現場として、Redditコミュニティ「r/AskHistorians」のモデレーター向けSlackチャンネルが挙げられている。4月には、このチャンネルは普段から活発だった。ソーシャルプラットフォームの安全性と価値を保つうえで、AI主導の仕組みだけに依存せず、人間の監督を残す重要性が改めて示されている。",
+      "bodyEn": "## Protecting Social Media Communities\n\nAI-generated low-value material and hateful content can threaten the safety and value of social media platforms. Although AI-driven moderation is becoming widespread, relying on AI alone may make these problems worse rather than adequately protecting communities from AI-generated harm.\n\nThe central issue is not simply whether AI can identify or remove content. It is whether platforms can preserve the authenticity and human participation that make social communities valuable while responding to harmful or low-quality material.\n\n## Authentic, Valuable Content\n\nAt its best, social media gives people a place to share experiences and knowledge. It comes closest to that ideal when users contribute authentic and valuable material, such as a uniquely thoughtful blog post or a helpful video explaining how to build a PC.\n\nPrimarily assigning the preservation of that authenticity to AI tools overlooks the people behind the content. If the value of a community comes from what its users know, experience, and choose to share, moderation cannot be treated only as an automated content-processing task.\n\nAdding more AI to address AI slop also follows a “fight fire with fire” approach that may intensify the underlying problem. The use of AI as a moderation tool does not by itself ensure that a platform will retain the qualities that made its community worthwhile.\n\n## Human Oversight Remains Essential\n\nExperts argue that human oversight continues to be essential as AI-driven moderation spreads across social platforms. AI alone cannot adequately defend communities against harms produced by AI, particularly when moderation is also meant to maintain authentic and useful participation.\n\nHuman moderation therefore remains important alongside automated systems. The activity surrounding moderators is reflected in the r/AskHistorians Reddit community, whose moderators had a Slack channel that was usually busy in April.\n\nThe broader limitation is clear: protecting a social media community involves more than applying AI to unwanted content. It also requires attention to the human contributions, judgment, and oversight at the center of the community itself.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIの迷惑コンテンツをAIで取り締まると、かえって悪化することもあるの？ それってなぜ？",
+          "en": "Can using AI to police AI-generated junk actually make things worse? Why would that happen?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、AIだけでは低品質な生成物や憎悪的な投稿を十分に抑えられず、人の監督が欠かせないとしておるんじゃ。",
+          "en": "The piece says AI alone can’t adequately contain low-quality generated material and hateful content. Human oversight still matters, my young friend."
+        },
+        {
+          "s": "a",
+          "ja": "公園を監視ロボットだけに任せず、人も見回る感じかな？ 投稿する人や読む人を守るため？",
+          "en": "So it’s like not leaving a park entirely to patrol robots—people still make rounds too? That helps both posters and readers?"
+        },
+        {
+          "s": "b",
+          "ja": "そんなイメージじゃ。本文が重視するのは、体験や知識を共有する人と、その人らしい価値ある投稿を支えることなんじゃよ。",
+          "en": "That’s a good analogy. The article emphasizes supporting the people who share experiences and knowledge, along with the authentic, valuable posts they create."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、コミュニティを守る主役はAIだけじゃなく、人でもあるんだね。",
+          "en": "So AI isn’t the only guardian of a community—people are essential too."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃのう。記事の注意点は、AIを増やせば解決するとは限らず、AI生成の害を悪化させる場合もあることじゃ。",
+          "en": "Exactly. Its warning is that adding more AI isn’t automatically a solution; in some cases, it may worsen the harm caused by AI-generated content."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-10T01:48:33.612Z"
+    },
+    "43dc5941df4bfd39": {
+      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
+      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
+          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
+          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
+        },
+        {
+          "s": "a",
+          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
+          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
+          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
+          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
+          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:12:32.259Z"
+    },
+    "d94b84bc16af2780": {
+      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
+      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
+          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
+          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
+        },
+        {
+          "s": "a",
+          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
+          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
+        },
+        {
+          "s": "b",
+          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
+          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
+          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
+          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:46:10.596Z"
+    },
+    "dd3872b4a6c4bf09": {
+      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
+      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
+          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
+          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
+        },
+        {
+          "s": "a",
+          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
+          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
+        },
+        {
+          "s": "b",
+          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
+          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
+          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
+        },
+        {
+          "s": "b",
+          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
+          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:50:27.117Z"
+    },
+    "02ed65f309f500b4": {
+      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
+      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
+          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
+        },
+        {
+          "s": "b",
+          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
+          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
+        },
+        {
+          "s": "a",
+          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
+          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
+        },
+        {
+          "s": "b",
+          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
+          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
+          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
+          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-08-30T18:43:11.880Z"
+    },
+    "71cf0ce453abd7e0": {
+      "bodyJa": "## My workペイン\n\nGitHub Copilotアプリでは、「My work」ペインを使い、複数のCopilotセッションをまとめて追跡できる。並行作業の状態を一元的に確認できるため、初心者が作業を整理する際に役立つ機能として紹介されている。\n\n## セッション管理\n\n「My work」ペインで把握できるのは、現在進行中の作業、すでに完了した作業、次に取り組む作業だ。複数のアクティブなセッションを同時に追い、何が進行中で、何が完了し、何が次に控えているかを見分けやすくする。これにより、複数タスクにまたがるCopilotでの作業を整理しやすいと説明されている。",
+      "bodyEn": "## GitHub Copilot app for Beginners\n\nThe GitHub Copilot app’s My work pane helps beginners manage multiple Copilot sessions. It matters when several tasks are running in parallel and users need a clear view of their status.\n\nThe pane brings session tracking into one place, making it easier to understand ongoing work without checking each session separately.\n\n## Managing your work\n\nMy work shows what is currently in progress, what has been completed, and what is queued next. This allows users juggling multiple sessions to keep track of active tasks and identify the next work item.\n\nBy presenting these stages together, the pane helps users stay organized across parallel Copilot tasks.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Copilotでいくつも作業を並行するとき、普段の管理はどう変わるの？",
+          "en": "If I’m juggling several tasks in Copilot, how does this change the way I manage my work?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、「My work」ペインで進行中・完了・次のタスクをまとめて確認できるんじゃ。複数セッションも追いやすくなるぞ。",
+          "en": "The article says the My work pane puts active, completed, and upcoming tasks in one place, making multiple Copilot sessions easier to track."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！前は複数のセッションをまとめて確認できなかったの？",
+          "en": "Oh, nice! Was there no way to review multiple sessions together before?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は不可能だった、とまでは書かれておらんのう。本文から分かるのは、このペインで並行作業を把握しやすくなることじゃ。",
+          "en": "It doesn’t say that was impossible before. What it does establish is that this pane makes parallel work easier to keep track of."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、作業が増えても「今どこ？」を見失いにくいことだね。初心者にも助かりそう！",
+          "en": "So the big win is not losing track of where everything stands as tasks pile up. That sounds really helpful for beginners!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。紹介されている範囲では、進行中・完了・次のタスクを一目で整理できる点に注目じゃよ。",
+          "en": "Exactly. Based on what’s described, the key point is being able to organize what’s active, finished, and next at a glance."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-04T22:53:50.918Z"
+    },
+    "91b9443623bc1c70": {
+      "bodyJa": "## AI「侍読」\n\n「侍読（じどく）」は、孫たちの読書を支えるため、自宅のリビングで本を読む人の隣に座る存在として設計されたAIアシスタントだ。答えを先回りして教えるのではなく、必要なときだけ応答し、聞かれなければ黙っている控えめな振る舞いを目指している。\n\n## ClaudeとRAG\n\n実装では、ローカルLLMにおける日本語の自然さと、複雑な指示への追従力のトレードオフが技術的な壁になった。さらに、プライバシーと性能をどう両立させるかも課題となり、最終的にはClaudeとRAGを組み合わせることで、実用的なシステムを実現したとされる。\n\n## Open Notebook\n\nシステムの構成要素には、自己ホスト型のOpen Notebookが含まれる。こうした構成を用いながら、ローカルLLMだけでは解消しにくかった品質面の限界に対応し、読書中の問いに必要な範囲で答える「侍読」の設計へつなげている。",
+      "bodyEn": "## AI reading companion\n\nA developer built an AI reading companion called “Jidoku” for their grandchild. The project matters because it is designed to support reading without simply supplying answers: the AI should respond only when needed and otherwise remain quiet.\n\nJidoku is intended to sit alongside a reader at home while they read a book. Its deliberately restrained behavior requires the system to follow nuanced instructions rather than answer every possible question.\n\n## Local LLM limitations\n\nDuring implementation, the developer encountered a recurring trade-off in operating local LLMs. The system needed both natural Japanese and the ability to follow complex instructions, but achieving both proved difficult.\n\nThe project also exposed a tension between privacy and output quality. These limits became a technical obstacle to making the reading companion practical while preserving its intended behavior.\n\n## Claude with RAG\n\nThe developer ultimately addressed the dilemma by integrating Claude with a RAG pipeline. According to the account, this combination produced a practical system while resolving the limitations encountered with local LLM operation.\n\nThe resulting implementation centers on Claude and retrieval-augmented generation as the solution to the project’s requirements for quality, instruction following, and reading support.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "家で子どもが本を読む時間に、普段の何が変わるの？「侍読」はずっと話しかけてくるAIなのかな。",
+          "en": "What changes during a child’s everyday reading time at home? Does Jidoku keep talking to them the whole time?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事で目指したのは、本の隣で、聞かれたときだけ答える「侍読」じゃ。答えを先回りせず、読書を控えめに支えるAIなんじゃよ。",
+          "en": "The article’s goal is Jidoku, a companion that responds only when asked. Rather than jumping in with answers, it quietly supports the child’s reading."
+        },
+        {
+          "s": "a",
+          "ja": "へえ。じゃあ、前のローカルLLMでは、そういう控えめな読書相手はできなかったの？何が違ったのかな。",
+          "en": "Oh, interesting. So couldn’t the earlier local LLM serve as that kind of quiet reading companion? What was different?"
+        },
+        {
+          "s": "b",
+          "ja": "書かれている範囲では、不可能というより、自然な日本語と複雑な指示への追従の両立に壁があったんじゃ。Claudeと、関連資料を探して答えに使うRAGで実用化したのう。",
+          "en": "It wasn’t described as impossible; local LLMs struggled to balance natural Japanese with complex instructions. The developer made it practical with Claude and RAG, which retrieves relevant material for answers."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、ローカルLLMの弱点を見極めて、ClaudeとRAGの組み合わせで実用的な形にできたことなんだね！",
+          "en": "My big takeaway is that they identified the local LLM’s weaknesses and built a practical system by combining Claude with RAG!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。この体験談で次に注目したいのは、ClaudeとRAGでプライバシーと性能の両立をどう図ったかじゃよ。",
+          "en": "Exactly. The next point to examine is how the Claude-and-RAG setup tries to balance privacy with performance."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:58:24.488Z"
+    },
+    "209ebcd031886625": {
+      "bodyJa": "## ミーティング自動化\n\nClaude CodeとMCPサーバーを活用し、ミーティング内容を自動でドキュメント化するワークフローの構築方法を扱う。議事録作成の手間を省き、個人の生産性向上につなげる実践的な仕組みとして紹介されている。\n\n## ノート自動生成\n\nGoogle Calendarからスケジュールを取得し、その内容をタスクへ追記する。さらに、ミーティング終了後にはノートを自動生成する。予定の取得とタスクへの反映だけでなく、終了後の記録作成までを一連のワークフローとして自動化する構成だ。",
+      "bodyEn": "## Meeting automation\n\nThis article explains how to build a workflow using Claude Code and an MCP server to automate meeting documentation. The workflow is designed to reduce manual note-taking effort and improve personal productivity. It also retrieves schedules from Google Calendar and adds them to tasks.\n\n## Automatically document meeting content\n\nAfter a meeting ends, the workflow automatically generates notes that document its content, extending the automation beyond schedule retrieval and task updates. The practical mechanism covers meeting-related automation from obtaining calendar schedules through creating post-meeting documentation. The article presents this workflow as the third entry in the Personal OS series.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "予定を取るだけじゃなく、会議後のノート生成まで自動になるんだ！これって大きい変化？",
+          "en": "Wow, it goes beyond fetching schedules and generates notes after meetings too! Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、議事録を手で作る負担を減らし、個人の生産性を高める仕組みとして位置づけておるよ。",
+          "en": "The article presents it as a way to cut manual note-taking and improve personal productivity. That could be quite a meaningful change."
+        },
+        {
+          "s": "a",
+          "ja": "そこで使う「MCPサーバー」って何？つまりどういう役割なの？",
+          "en": "What’s an “MCP server” here? What does it actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "一般には、AIと外部の情報や機能をつなぐ窓口のようなものじゃ。ここではClaude Codeとの連携に使われておる。",
+          "en": "Generally, it’s like a gateway connecting AI to outside information or tools. In this workflow, it works with Claude Code."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、会議が終わったらノートができている状態にしたいな。メモをまとめる手間が減りそう！",
+          "en": "I’d love to finish a meeting and already have the notes waiting. That sounds like much less cleanup!"
+        },
+        {
+          "s": "b",
+          "ja": "それが狙いじゃな。ただし紹介されているのは、Claude CodeとMCPサーバーで連携を組み、Google Calendarの予定取得からノート生成まで自動化する形じゃよ。",
+          "en": "That’s the goal. The setup described relies on a Claude Code and MCP server workflow, covering everything from Google Calendar schedule retrieval to note generation."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:58:41.174Z"
+    },
+    "0e6583e8c61c9e32": {
+      "bodyJa": "## MCP記憶サーバー\n\nAIエージェントの長期記憶を、MCP（Model Context Protocol）サーバーとして切り出す設計を扱う。実運用で得られた3つの設計パターンを、TypeScriptによる実装とともに示し、運用時に直面した課題と解決策を具体的なコードで解説する内容だ。\n\n## 複数エージェント\n\n前提となる長期記憶は「Markdownファイル＋git」で実装されている。ブログ担当、QC担当、デプロイ担当という複数のAIエージェントを運用する中で、記憶を特定のクライアント実装に閉じ込めないことがMCP化の動機とされる。MCPサーバーにすることで、Claude Code、Claude Desktop、自作のAPIクライアントのいずれからも、同じ記憶を読み書きできる。",
+      "bodyEn": "## AI Agent Memory Servers\n\nThe article presents three battle-tested design patterns for building AI agent memory servers with MCP. The patterns matter because they come from operating multiple agents and are supported by TypeScript implementations based on production experience.\n\nThe earlier approach implemented long-term agent memory with Markdown files and git. This follow-up instead addresses separating the memory store into an MCP server.\n\n## Model Context Protocol\n\nThe stated motivation for adopting MCP is to avoid confining memory to one client implementation. The operating environment includes separate AI agents responsible for blogging, quality control, and deployment, all of which need access to memory.\n\nRunning the store as an MCP server allows the same memory to be read and written from Claude Code, Claude Desktop, and a custom API client.\n\n## Three Design Patterns\n\nThe three design patterns reflect challenges encountered during actual operation. The article pairs those patterns with solutions shown through concrete TypeScript code, focusing specifically on the design of an MCP-based memory server rather than keeping agent memory embedded within a particular client.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "記憶をMCPサーバーとして切り出すって、それって何？ AIエージェントの記憶を別の場所に置くの？",
+          "en": "What does it mean to split memory out into an MCP server? Is the AI agent’s memory stored somewhere separate?"
+        },
+        {
+          "s": "b",
+          "ja": "MCPはAIと外部の仕組みをつなぐ共通の窓口、くらいの意味じゃ。この記事では、複数のAIエージェントが同じ記憶を読み書きできる形にしておる。",
+          "en": "Think of MCP as a shared doorway connecting AI to outside systems. Here, it lets multiple AI agents read and write the same memory."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、ブログ担当やQC担当、デプロイ担当が、同じ共有ノートを別々の入口から使う感じ？",
+          "en": "So it’s like the blog, QC, and deployment agents all using the same shared notebook through different entrances?"
+        },
+        {
+          "s": "b",
+          "ja": "まさにそんなイメージじゃよ。本文では、Claude CodeやClaude Desktop、自作のAPIクライアントから同じ記憶を扱えるとしておる。",
+          "en": "That’s the idea. The piece says the same memory can be accessed from Claude Code, Claude Desktop, or a custom API client."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、記憶を特定のクライアントに閉じ込めず、みんなで共有できる設計なんだね！",
+          "en": "Oh, I get it—the memory isn’t trapped inside one client, and different agents can share it!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。ただし実運用では課題もあり、そこで固まった3つの設計パターンをTypeScriptの具体的なコードとともに示すのが今回の中心じゃ。",
+          "en": "Right. But production brought real challenges, so the focus is on three design patterns that emerged from those issues, shown with concrete TypeScript code."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:58:43.106Z"
+    },
+    "482f1b9777924530": {
+      "bodyJa": "## AIアナリスト\n\n無料の財務データAPIとClaudeを組み合わせ、日本株の決算書を自動解析する「AIアナリスト」の構築方法を扱う。スクリーニング後、投資判断に必要となる決算の中身を、有価証券報告書から読み取る仕組みだ。\n\n## 3つの分析エンジン\n\nPiotroski F-Score、Altman Z''、DCFの3つをPythonで実装し、各エンジンの分析結果をClaudeへ渡す。Claudeはそれらをまとめ、統合レポートを生成する。解説には、実際に毎日動いているシステムのコードが用いられている。\n\n## 数字を作らせない\n\n実装では、生XBRLを直接パースしない判断や、欠損データへの対処も取り上げる。さらに、LLMに数字を作らせないプロンプト設計、無料の財務データAPIにある1日100コールの制限も考慮し、個人投資家が財務分析を低コストで自動化する流れを示している。",
+      "bodyEn": "## Japanese Stock AI Analyst\n\nThis practical guide explains how to build an AI analyst that reads Japanese companies’ earnings materials using Claude and free financial data APIs. The approach matters because screening can narrow the field, but evaluating a company requires examining the contents of its financial results.\n\nThe system is designed to automate financial analysis for individual investors at minimal cost, replacing the manual work of reading securities reports.\n\n## Three Analysis Engines\n\nThe implementation uses Python to create three analysis engines: the Piotroski F-Score, Altman Z'', and DCF. Their outputs are passed to Claude, which generates an integrated report interpreting the combined results.\n\nThe guide uses code from a system that is actually running every day, presenting the process from financial-data analysis through report generation.\n\n## Financial Data APIs\n\nThe implementation avoids parsing raw XBRL directly and addresses how to work with missing data. It also covers prompt design intended to prevent the LLM from inventing numbers.\n\nThe guide further explains how the system operates within a limit of 100 API calls per day, keeping the automated analysis compatible with the stated usage constraint.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "3つの分析エンジンをPythonで動かして、Claudeが統合レポートを作るんだね。これって大きいこと？",
+          "en": "Three analysis engines run in Python, then Claude turns the results into one report. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、計算と文章化を分け、実際に毎日動くコードまで示しておる。個人でも決算分析を自動化できる形にした点が大きいのう。",
+          "en": "The article separates calculation from writing and even shows code from a system that runs daily. The key achievement is making automated earnings analysis practical for individuals."
+        },
+        {
+          "s": "a",
+          "ja": "その分析に出てくるDCFって何？つまりどういうこと？",
+          "en": "What’s DCF, one of those analysis methods? What does it actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "DCFは、将来生み出すお金をもとに企業の価値を考える方法じゃ。ここではPiotroski F-ScoreやAltman Z''と並ぶ分析エンジンの一つじゃよ。",
+          "en": "DCF estimates a company’s value from the money it may generate in the future. Here, it’s one of three engines alongside the Piotroski F-Score and Altman Z''."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、気になる日本株を絞ったあと、決算を読む前の確認役として使ってみたいな。数字までまとめてくれたら助かりそう！",
+          "en": "I’d use it after narrowing down Japanese stocks, as a first pass before reading the earnings reports myself. Having the numbers organized would be handy!"
+        },
+        {
+          "s": "b",
+          "ja": "よい使い方じゃ。ただし本文では、欠損データへの対処や1日100コールの制限、LLMに数字を作らせない設計も重要としておるぞ。",
+          "en": "That sounds sensible. Still, the guide stresses handling missing data, staying within 100 calls per day, and designing prompts so the LLM doesn’t invent numbers."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:59:03.996Z"
+    },
+    "be820e25ead24e80": {
+      "bodyJa": "## OpenHands cloud\n\nOpenHands cloud 1.46.0が2026年7月10日にリリースされた。クラウド版の定期アップデートで、機能改善と不具合修正が含まれる。\n\n## アーカイブ\n\napp-serverでは、最終アーカイブのマニフェストを充実させる変更が加えられ、初期スナップショットが削除された。アーカイブに関する最終的な情報の扱いを見直す機能変更として示されている。\n\n## BYORキー\n\nenterpriseでは、BYORキーのエイリアスパターンを設定可能にする機能が追加された。また、frontendの不具合修正として、SMTP環境変数への言及に関する変更も挙げられている。",
+      "bodyEn": "## What's Changed\n\nOpenHands cloud version 1.46.0 was released on July 10, 2026. The update matters as the latest set of incremental feature improvements and bug fixes for the cloud-hosted platform.\n\nThe changes cover the app server, enterprise configuration, and the frontend. The release identifies two features alongside a frontend fix.\n\n## Features\n\nThe app-server change enriches final archive manifests and removes initial snapshots. The release attributes this work to @simonrosenberg in #15058.\n\nFor enterprise use, the BYOR key alias pattern is now configurable. That change is attributed to @tofarr in #15232.\n\n## Bug Fixes\n\nThe listed frontend fix mentions SMTP environment variables. The available release description does not provide further technical detail about that correction.\n\nTogether, these changes make up the OpenHands cloud 1.46.0 release, combining archive-manifest and snapshot changes with configurable enterprise key alias patterns and a frontend-related SMTP environment-variable fix.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1.46.0が2026年7月10日に出たんだね。これって大きい更新なの？",
+          "en": "Version 1.46.0 landed on July 10, 2026. Is this a big update?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、クラウド版の定期更新として機能改善と修正が入った位置づけじゃ。大刷新というより積み重ね型じゃのう。",
+          "en": "The article frames it as a routine cloud update with improvements and fixes. Think steady refinement rather than a sweeping overhaul."
+        },
+        {
+          "s": "a",
+          "ja": "「最終アーカイブのマニフェストを充実させる」って、つまりどういうこと？",
+          "en": "What does “enrich final archive manifests” actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "マニフェストは、アーカイブの中身を示す一覧のようなものじゃ。今回、それをより充実させたと説明されておるよ。",
+          "en": "A manifest is like an inventory of what an archive contains. This release says that final inventory has been made more informative."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、僕なら完成後のアーカイブを確認するときに使ってみたいな。前より分かりやすいかもね。",
+          "en": "Nice! I’d use that when checking a completed archive. It might be easier to understand now."
+        },
+        {
+          "s": "b",
+          "ja": "そう期待できるかもしれんのう。ただ、記載はマニフェストの充実と初期スナップショット削除までで、具体的な中身は示されておらんのじゃ。",
+          "en": "That may be a fair hope. Still, the release only mentions richer manifests and removing initial snapshots; it doesn’t spell out the exact details."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:59:32.387Z"
+    },
+    "25273430064f1ed6": {
+      "bodyJa": "## Cursor 3.11\n\n2026年7月10日にリリースされたCursor 3.11は、AIエージェントとの協働体験を変えるアップデートとされる。中心となるのは、サイドチャット機能とクラウドエージェント向けの新フックだ。\n\n## サイドチャット\n\n新コマンド「/side」により、メインのエージェント会話を止めず、別の質問を並行して進められる。「/btw」もサイドチャット機能として示されている。新フックの追加と合わせ、AI支援コーディングを使う開発者のワークフローの柔軟性が高まったと説明されている。",
+      "bodyEn": "## Side chats\n\nCursor 3.11, released on July 10, 2026, adds side chats and new hooks for cloud agents. The update expands workflow flexibility for developers using AI-assisted coding.\n\nThe new /side command opens a side chat, allowing developers to ask questions in parallel without stopping the main conversation with the AI agent. The side-chat feature is associated with both /side and /btw.\n\n## New hooks for cloud agents\n\nCursor 3.11 also adds new hooks for cloud agents. Together with side chats, these hooks are presented as changes that increase the flexibility of development workflows and alter how users collaborate with AI agents.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Cursor 3.11で、メインの会話を止めずに別の質問もできるようになったんだね。これって大きいこと？",
+          "en": "Cursor 3.11 lets you ask another question without stopping the main conversation. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、AIエージェントとの協働体験を大きく変える目玉機能と位置づけておる。質問を並行できる変化じゃよ。",
+          "en": "The piece presents it as a major shift in working with AI agents. You can ask questions in parallel without interrupting the main task."
+        },
+        {
+          "s": "a",
+          "ja": "サイドチャットって、つまりどういうこと？「/side」を入れると何が起きるの？",
+          "en": "So what exactly is a side chat? What happens when I enter “/side”?"
+        },
+        {
+          "s": "b",
+          "ja": "一般には、脇に別の会話を開くような意味じゃ。ここでは「/side」や「/btw」で、メインとは別に質問できる仕組みを指すぞ。",
+          "en": "Generally, it means opening a separate conversation alongside the main one. Here, “/side” or “/btw” starts that extra chat for another question."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ僕なら、メインで作業を頼みつつ、気になった用語をサイドで質問したいな。流れを止めなくてよさそう！",
+          "en": "Then I’d keep the main task running and use the side chat to ask about unfamiliar terms. That sounds much less disruptive!"
+        },
+        {
+          "s": "b",
+          "ja": "よい使い方じゃのう。紹介された範囲ではCursor 3.11で使え、クラウドエージェント向けの新フックも加わっておるぞ。",
+          "en": "That’s a sensible use. As described, it’s available in Cursor 3.11, which also adds new hooks for cloud agents."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:59:47.671Z"
+    },
+    "f092f5c9854f3002": {
+      "bodyJa": "## Grok 4.5\n\nGrok 4.5のベンチマーク上の急上昇が実態を伴うのか、公開情報から評価手法とモデル構造を検証する。数値の伸びだけでなく、性能をどう測ったかが焦点となる。\n\n## CursorBench\n\nGrok 4.5はGrok 4の改良版ではなく、SpaceXの計算資源とCursorの訓練基盤・データ資産が合流した初のモデルと説明されている。\n\n一方、CursorBenchでは、Cursorコードベースの過去スナップショットが訓練データに混入し、評価上有利になっていたとされる。この条件を踏まえ、性能の実態と誇張のリスクを切り分けている。",
+      "bodyEn": "## Benchmark Gains\n\nGrok 4.5’s sharp benchmark rise raises the question of whether it reflects genuine progress or hype. The article assesses publicly available information about evaluation methods and model architecture to clarify the performance claims and the risk of exaggeration.\n\n## Model Architecture\n\nThe article describes Grok 4.5 not as an improved Grok 4, but as the first model combining SpaceX computing resources with Cursor’s training infrastructure and data assets.\n\nIt also reports that CursorBench favored the model because historical snapshots of the Cursor codebase had entered the training data. This potential evaluation advantage is central to judging what the benchmark gains actually demonstrate.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Grok 4.5って、Grok 4の改良版じゃなくて、SpaceXとCursorの資産が合流した最初のモデルなの？ つまり別系統？",
+          "en": "Grok 4.5 isn’t just an upgraded Grok 4, but the first model combining SpaceX and Cursor resources? So is it more like a different lineage?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、SpaceXの計算資源とCursorの訓練基盤・データ資産が合流した初のモデルと整理しておる。単なる改良版とは構造が違う、という話じゃ。",
+          "en": "That’s how the article frames it: the first model bringing together SpaceX compute and Cursor’s training infrastructure and data assets. It’s structurally different from a routine upgrade."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ性能を見極めたい人には、点数だけでなく「試験問題と勉強材料が重なってないか」も確かめる感じで役立つの？",
+          "en": "So for anyone judging its performance, this helps them check not only the score, but whether the test material overlapped with what the model studied?"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。本文では、CursorBenchの過去スナップショットが訓練データに混ざり、有利になっていたとされる。急上昇を額面どおり受け取らない助けになるのう。",
+          "en": "Exactly. The piece says past CursorBench codebase snapshots entered the training data and gave the model an advantage. That helps readers avoid taking the benchmark jump at face value."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、Grok 4.5の躍進が本物かは、点数だけじゃなく評価方法やモデルの成り立ちまで見ないと判断できないんだね。",
+          "en": "Got it: to judge whether Grok 4.5’s leap is real, we need to examine not just the scores, but also the evaluation method and how the model was built."
+        },
+        {
+          "s": "b",
+          "ja": "その通りじゃ。公開情報から実力と誇張のリスクを切り分けようとしており、躍進を全面否定も全面肯定もせず読むのが大切じゃよ。",
+          "en": "Right. Based on public information, the article separates genuine capability from hype risk. The sensible takeaway is neither total dismissal nor unquestioning acceptance."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T16:00:01.483Z"
+    },
+    "78150571013650fa": {
+      "bodyJa": "大規模言語モデル(LLM)を使う開発現場では、API利用料を抑えるためにトークン数の削減が定番の手法となっている。ところが、ツール「Fable5」が備える「トークン節約」オプションを有効にしても、実際にはコストが減るどころか増加していた——ある技術ブログの実測レポートが、この直感に反する挙動を明らかにした。API利用者がコスト最適化を語る際に見落としがちな落とし穴として注目に値する。\n\nそもそもLLMの課金は、入力トークンと出力トークンそれぞれに単価が設定され、両者の合計で決まるのが一般的だ。プロンプトを短くすれば入力側のコストは下がるはずだが、モデルの応答は入力の削り方に敏感で、文脈が不足すると出力が冗長になったり、意図した答えにたどり着くまでのやり取りが増えたりする。今回のレポートは、節約モードが内部的にプロンプトを圧縮・再構成する過程で、こうした副作用を招いていた可能性を指摘している。\n\n具体的な要因として挙げられているのは、節約処理そのものが追加の推論や前処理を要し、その分のトークンが上乗せされる点だ。加えて、圧縮によって文脈が欠落した結果、モデルが確信を得られずに出力が長くなる、あるいは再試行が発生するといった連鎖が起きると、削減したはずの入力トークンを出力側の増加が上回ってしまう。節約の狙いと実際の課金構造がかみ合っていなかったと見られる。\n\nこの問題は、プロンプトキャッシュとの相性という観点でも示唆に富む。AnthropicやOpenAIが提供するプロンプトキャッシュは、同一の前置き部分を繰り返し送る際に入力コストを大幅に下げる仕組みだが、節約モードがプロンプトを毎回書き換えてしまうと、キャッシュのヒット条件が崩れて割引が効かなくなる恐れがある。良かれと思った最適化が、別の最適化を無効化する典型例と言える。\n\n教訓は明快だ。トークン最適化は名称や設定項目の印象で判断せず、実際のワークロードで入力・出力の双方を計測して初めて評価できる。特にエージェント的に多段のやり取りを行う用途では、一回あたりの削減が全体では逆効果になる場合がある。コスト管理を重視する開発者ほど、公式の料金体系とキャッシュ機構を踏まえたうえで、A/B的な実測を習慣づけることが求められそうだ。",
+      "bodyEn": "Cost control is one of the most persistent concerns for developers building on large language model APIs, yet the very features marketed to reduce spending do not always behave as advertised. A recent hands-on report on Fable5 makes this point sharply: enabling the platform's built-in token-saving options produced larger bills rather than smaller ones. The author reached this conclusion not through theory but through repeated real-world measurements, comparing runs with the setting on and off. For teams that treat such toggles as a safe default, the finding is a reminder that cost behavior in modern LLM pipelines is frequently counterintuitive.\n\nThe central claim is that Fable5's token-saving mode reshapes each request before it reaches the model, and that this reshaping carries its own overhead. Rather than simply trimming text, the option appears to introduce a preprocessing step that summarizes or compresses context. That compression is itself performed by a model call, which consumes input and output tokens, and it runs on every request rather than once. When the underlying task is small, the fixed cost of compression can easily exceed whatever savings it produces on the main prompt. The report frames this as the primary mechanism behind the higher charges, though the exact internal steps are inferred from observed billing rather than published documentation.\n\nA second factor is the interaction with prompt caching. Many providers, including Anthropic's Claude family that the article references, offer substantial discounts when a large, stable block of context is reused across calls. Caching works only when the prefix of the prompt stays byte-for-byte identical. If a token-saving layer rewrites or reorders the context dynamically, it is likely to invalidate the cache on each turn, forcing the system to pay full price for input that would otherwise have been heavily discounted. In that scenario a feature intended to save money can quietly defeat a much larger and more reliable saving that was already in place.\n\nOutput-side effects may compound the problem. When context is aggressively pruned, the model can lose information it needs and respond with clarifying questions, longer hedged answers, or partially incorrect output that triggers a retry. Because output tokens are typically billed at a higher rate than input tokens on most APIs, even a modest increase in generated text can outweigh the input reduction. The report suggests that some of Fable5's observed cost growth traces back to this pattern of the model working harder, or being called more times, to recover context that was removed for the sake of economy.\n\nNone of this makes token reduction a bad idea in principle. The lesson is narrower: optimizations must be measured against the specific workload and the specific pricing model, not assumed. Techniques that genuinely help in many settings include trimming conversation history intelligently, moving static instructions into a cached prefix, choosing a smaller model for routine subtasks, and batching requests where latency allows. Each of these has trade-offs, and the balance shifts with prompt length, request frequency, and how much of the context is reused. A setting that helps a long-running agent with a huge shared system prompt may hurt a stateless endpoint that sends short one-off queries.\n\nThe broader context here is an industry-wide push toward cost transparency and tooling. Providers now publish detailed token accounting, and third-party observability tools increasingly break down spending by request, cache hit rate, and input versus output tokens. That instrumentation is what made the Fable5 finding possible, and it is what any team should apply before trusting a cost feature. The prerequisite concept is straightforward but easy to overlook: on token-billed APIs, total cost is a product of token count and per-token price across several distinct categories, and a change that reduces one category can inflate another.\n\nThe practical takeaway from the report is to benchmark rather than assume. Running a representative sample of real traffic with a feature on and off, then reading the itemized token counts, remains the only dependable way to know whether an optimization actually optimizes. As the Fable5 case illustrates, a label that promises savings is not evidence of savings, and in some configurations the honest measurement points the other way.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-11T05:42:06.373Z"
+    },
+    "974ffffa37305059": {
+      "bodyJa": "## 設定ファイル\n\nAIコーディング支援ツールでは、.cursorrulesやCLAUDE.md、copilot-instructions.mdの書き方が出力を左右するとされる。重要なのは、設定を用意するだけでなく、指示が実際に守られる量へ絞ることだ。\n\n## よく見る失敗\n\nよくある失敗は二つある。何も書かず、デフォルトのまま使って「精度が低い」と捉えること。もう一つは、ネットで拾ったルール集をすべて貼り付け、情報過多によって指示がかえって守られにくくなることだ。CursorやClaude Codeの出力への不満も、その大半はモデル性能ではなく文脈に関わると説明されている。\n\n## 1画面の運用\n\n対策として示されるのが、設定ファイルを1画面に収める簡潔な記述だ。実際の運用で残った「効く書き方」を基準にし、設定ファイルを育てていく。ルールを増やすこと自体を目的にせず、モデルが従いやすい形に絞り、指示の実効性を高めるという運用論である。",
+      "bodyEn": "## Overly Verbose Files\n\nThe article examines how configuration files for AI coding tools can affect instruction-following. It argues that overly verbose .cursorrules and CLAUDE.md files can make instructions less reliable, making concise configuration important in day-to-day use.\n\nTwo common failures are identified. Some users leave configuration files unwritten and use the defaults before concluding that accuracy is low. Others paste in entire collections of rules found online, creating so many instructions that the model is less likely to follow them.\n\n## A Single Screen\n\nThe recommended approach is to keep the configuration file concise enough to fit on a single screen. According to the article, limiting the amount of information in .cursorrules, CLAUDE.md, or copilot-instructions.md improves the practical effectiveness of the included instructions.\n\n## Configuration Files\n\nRather than treating configuration as a one-time collection of every possible rule, the article advocates an operational approach based on the writing patterns that remain effective in actual use. It also describes a method for gradually developing the configuration file and provides a complete template.",
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-05T16:00:20.072Z"
     }
   }
 }

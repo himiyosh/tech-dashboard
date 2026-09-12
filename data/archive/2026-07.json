@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T21:45:32.540Z",
+  "generatedAt": "2026-09-12T23:30:12.189Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -2967,7 +2967,7 @@
       "sourceType": "blog",
       "url": "https://qiita.com/heftykoo/items/540f260588400a616043",
       "title": "coding agent のログを全部保存する前に、session stream を review できる単位に切る",
-      "titleJa": "coding agent のセッションストリームを review しやすい単位に分割してからログを保存する",
+      "titleJa": "coding agent のログを全部保存する前に、session stream を review できる単位に切る",
       "titleEn": "Long overnight coding agent runs produce logs so large they become unreadable",
       "summaryJa": "一晩動かした coding agent のログは膨大になり、翌朝には読み返せない状態になる。セッションストリームを意味のある単位に切り分けてから保存することで、レビューを現実的なものにする手法を解説している。",
       "summaryEn": "Long overnight coding agent runs produce logs so large they become unreadable. This article explains how to slice the session stream into reviewable chunks before saving, making post-run inspection practical.",
@@ -2987,7 +2987,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "coding agent を一晩走らせると、ログはちゃんと残る。問題は、そのログを翌朝だれも読まないことだ。正確には、読めない。 prompt、response、tool call、approval 待ち、runtime error、token usage。全部を一つの t..."
+      "contentSnippet": "coding agent を一晩走らせると、ログはちゃんと残る。問題は、そのログを翌朝だれも読まないことだ。正確には、読めない。 prompt、response、tool call、approval 待ち、runtime error、token usage。全部を一つの transcript として保存すると、「何が起きたか」は残る。でも「どこを見ればいいか」が消える。これは地味にきつい。 この記事では model 比較はしない。agent の作業をあとから review できるようにするために、session stream をどういう粒度で切るかだけを書く。 message ID だけで頑張ると、途中でつらくなる。たとえば npm test が timeout した turn と、その前に agent が書き換えた file diff と、その後の retry を同じ message 履歴から探すことになる。 GitHub Copilot の agent session streaming は、prompt / response / tool call などの session activity を streaming endpoint や REST API で見られる方向に寄っている。Vercel eve の Agent Runs も、run の中で turn、model call、tool call、runtime error を追える。 見る単位は「長い chat」ではなく「session の中で起きた event」になってきている。 最初から observability 基盤を作ろうとすると重い。まずは自分の team で normalize する event を決めるくらいでいい。 ここで tool_call_failed をただの response に混ぜない。approval 待ちも error ではない。review で見たいものは、chat UI で自然に見えるものとは少し違う。 token usage も欲しくなる。",
+      "feedSnippet": "coding agent を一晩走らせると、ログはちゃんと残る。問題は、そのログを翌朝だれも読まないことだ。正確には、読めない。 prompt、response、tool call、approval 待ち、runtime error、token usage。全部を一つの t...",
+      "excerptOrigin": "article"
     },
     {
       "id": "80e0e1d8c48a30f0",
@@ -3014,7 +3016,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "VS Code の GitHub Copilot で「コミットメッセージ生成」が失敗する場合の対処法 VS Code の GitHub Copilot Chat で「コミットメッセージの書き方をチームのルールに揃えたい」と settings.json にカスタム指示を設定した途端、生成ボタンを押しても結果が返ってこなくなった、ということはありませんか。 実はこれ、設定ミスではなく既知の不具合です。原因は settings.json の以下のような個別設定にあります。 \"github.copilot.chat.commitMessageGeneration"
+      "contentSnippet": "VS Code の GitHub Copilot Chat で「コミットメッセージの書き方をチームのルールに揃えたい」と settings.json にカスタム指示を設定した途端、生成ボタンを押しても結果が返ってこなくなった、ということはありませんか。 実はこれ、設定ミスではなく既知の不具合です。原因は settings.json の以下のような個別設定にあります。 \"github.copilot.chat.commitMessageGeneration.instructions\" : [ { \"text\" : \"Use conventional commits...\" } 対処法は、この設定値を空にするまたは削除すること です。指示の中身がどんな内容でも関係なく、値が入っているだけで失敗します。 VS Code の「出力(Output)」パネルで GitHub Copilot Chat のログを見ると、以下のエラーが記録されています。 ccreq:xxxxxxxx.copilotmd | promptFiltered | gpt-4o-mini-2024-07-18 | 1141ms | [gitCommitMessageGenerator] GitHub にリクエストを送る際、 commitMessageGeneration.instructions に設定した内容(テキスト直書き・ .md ファイル参照どちらでも)がバックエンドのコンテンツフィルターに引っかかり、 promptFiltered として弾かれてしまうバグです。",
+      "feedSnippet": "VS Code の GitHub Copilot で「コミットメッセージ生成」が失敗する場合の対処法 VS Code の GitHub Copilot Chat で「コミットメッセージの書き方をチームのルールに揃えたい」と settings.json にカスタム指示を設定した途端、生成ボタンを押しても結果が返ってこなくなった、ということはありませんか。 実はこれ、設定ミスではなく既知の不具合です。原因は settings.json の以下のような個別設定にあります。 \"github.copilot.chat.commitMessageGeneration",
+      "excerptOrigin": "article"
     },
     {
       "id": "bdb2277648b2886c",
@@ -3040,7 +3044,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "GitHub Copilotでは、利用するモデルを固定する方法と、Autoモードに任せる方法があります。 高性能モデルを固定しておけば、常に良い結果が得られるようにも見えます。一方、組織全体で利用枠を共有している場合、モデルの選び方によって消費量に大きな差が出る可能性があり..."
+      "contentSnippet": "GitHub Copilotの利用データを分析したら、Claude Sonnet固定はAutoの約2.4〜2.8倍消費していた GitHub Copilotでは、利用するモデルを固定する方法と、Autoモードに任せる方法があります。 高性能モデルを固定しておけば、常に良い結果が得られるようにも見えます。一方、組織全体で利用枠を共有している場合、モデルの選び方によって消費量に大きな差が出る可能性があります。 そこで、所属する開発チームの連続する2か月分の利用データを分析し、Autoモードとモデル固定時の傾向を比較しました。 Autoでも必要に応じてSonnetが選択されているため、 通常はAutoを利用し、明確な目的がある場合だけ高性能モデルへ切り替える ほうが、開発効率と利用枠を両立しやすいと考えています。 対象は、GitHub Copilotの連続する2か月分の組織内利用データです。 生成コードの品質、タスク完了時間、修正量などは計測していないため、Autoとモデル固定の品質差までは評価していません。 2か月分の結果を、公開可能な範囲で丸めると次のようになります。 モデル固定は、中央値だけを見るとAutoより低くなっています。 モデル固定時は、中央値付近の値は比較的小さい一方で、一部に数千単位のスパイクが含まれていました。 そのため、中央値だけを見ると消費量が小さく見えますが、少数の大きな値によって平均値は大きく押し上げられます。 今回のデータにはリクエスト内容が含まれていないため、どのような処理がスパイクを引き起こしたかまでは判断できません。 ただし、組織全体の利用枠を見るうえでは、平均値や中央値だけでなく、最大値や上位の高消費リクエストも確認する必要があると分かります。 Autoモードで実際に選択されていた主なモデルは、次のとおりです。 2か月とも、最も多く選択されていたのはGPT-5.3-Codexでした。 Autoモード内の選択結果を、Claude Sonnet 4.6とそれ以外に分けると次のようになります。",
+      "feedSnippet": "GitHub Copilotでは、利用するモデルを固定する方法と、Autoモードに任せる方法があります。 高性能モデルを固定しておけば、常に良い結果が得られるようにも見えます。一方、組織全体で利用枠を共有している場合、モデルの選び方によって消費量に大きな差が出る可能性があり...",
+      "excerptOrigin": "article"
     },
     {
       "id": "d95eb62efc620019",
@@ -3069,7 +3075,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "近年、AIエージェントツールの選択肢が増え、Claude CodeだけでなくCodexやCursorなど複数のツールを使うようになりました。ただ、ツールごとに設定ファイルの置き場所が別々なため、同じ内容をそれぞれのファイルに書き写すことになります。別のAIエージェントに切り替えたときにruleやskillが反映されておらず、作業をやり直すこともありました。 この困りごとを解決できないかなと考えていたときに、Xでたまたま見かけたのがrulesyncというCLIツールでした。 rulesyncとは rulesyncは、.rulesync/ディレクトリに書いた"
+      "contentSnippet": "近年、AIエージェントツールの選択肢が増え、Claude CodeだけでなくCodexやCursorなど複数のツールを使うようになりました。ただ、ツールごとに設定ファイルの置き場所が別々なため、同じ内容をそれぞれのファイルに書き写すことになります。別のAIエージェントに切り替えたときにruleやskillが反映されておらず、作業をやり直すこともありました。 この困りごとを解決できないかなと考えていたときに、Xでたまたま見かけたのがrulesyncというCLIツールでした。 rulesyncは、 .rulesync/ ディレクトリに書いた内容を正本として、各AIエージェントツール向けの設定ファイルを生成してくれるCLIツールです。 たとえばClaude Code、Codex、Cursorの3つを使って作業していたとすると、skillは次のパスに置くことになります。 Claude Code → .claude/skills/<name>/SKILL.md Codex → .agents/skills/<name>/SKILL.md Cursor → .cursor/skills/<name>/SKILL.md 中身は同じファイルです。置き場所が違うだけなので、skillを1つ直すたびに3箇所へコピペして回ることになります。同じことがrule( CLAUDE.md や AGENTS.md )でも起きます。 rulesyncを使うと、書く場所は .rulesync/ だけになります。 rulesync generate を1回叩けば、これらのパスにそれぞれの形式で配ってくれるので、直すのは .rulesync/ 側だけで済みます。 rulesyncなしでは中身が同じSKILL.mdを3箇所に置くことになり、1つ直すたびに3箇所ぶんコピペが発生します。rulesyncありなら .rulesync/ に1箇所書いてコマンドを1回叩くだけで、各ツールのパスへ自動で配られます。 配れるのはruleだけではありません。",
+      "feedSnippet": "近年、AIエージェントツールの選択肢が増え、Claude CodeだけでなくCodexやCursorなど複数のツールを使うようになりました。ただ、ツールごとに設定ファイルの置き場所が別々なため、同じ内容をそれぞれのファイルに書き写すことになります。別のAIエージェントに切り替えたときにruleやskillが反映されておらず、作業をやり直すこともありました。 この困りごとを解決できないかなと考えていたときに、Xでたまたま見かけたのがrulesyncというCLIツールでした。 rulesyncとは rulesyncは、.rulesync/ディレクトリに書いた",
+      "excerptOrigin": "article"
     },
     {
       "id": "99fa31b9cd2cf573",
@@ -31251,7 +31259,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-12T17:29:13.324Z",
+      "collectedAt": "2026-09-12T23:29:52.758Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -37450,7 +37458,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-12T17:29:13.324Z",
+      "collectedAt": "2026-09-12T23:29:52.758Z",
       "tags": [
         "mcp",
         "mcp-server",

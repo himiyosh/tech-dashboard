@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T06:37:15.082Z",
+  "generatedAt": "2026-09-12T11:20:44.736Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -625,8 +625,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "excerptOrigin": "article-unavailable"
+      "excerptOrigin": "article-unavailable",
+      "evergreen": true
     },
     {
       "id": "def78e43152d6ece",
@@ -1006,7 +1006,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "! TL;DR — 3つの原則 「賢いプロンプトを書く」のではなく、ガードレール付きの自律ループを設計する AIに作業を任せ、失敗を検知してAI自身が改善ループを回す 完了判定は主観ではなく、機械的な証拠（テスト・lint・E2E）で行う 項目 内容 対象読者 開発業務でAIを日常的に使っている人、作業の委譲方法に悩んでいる人 スコープ AIに作業を任せる際の設計原則と実践手順。モデル選定やプロンプトの文体論は扱わない 読む順番 概念の理解 → 1〜4章 / すぐ実践 → 7章と11章 情報の鮮度 ツール情報は2026年7月時点 1. 課題：な..."
+      "contentSnippet": "AIに作業を任せる際の設計原則と実践手順。モデル選定やプロンプトの文体論は扱わない 2022〜2024年は Prompt Engineering （指示の書き方）が中心でした。しかし本番運用では、次のような限界が露呈しています。 その結果、業界の焦点は Prompt → Context → Harness → Loop という4層構造へと移行しています。これらは競合する概念ではなく、 同じスタックの異なるレイヤー です。 Agent = Model + Harness — エージェントの価値はモデル単体ではなく、周辺のHarnessで決まります。（ LangChain 、 martinfowler.com の Harness Engineering で体系化） Loop Engineering は Harness の中の「反復制御層」として実装される場合が多いです。4層は整理のためのモデルであり、厳密な包含関係はツールや設計によって変わります。 「AIが自分で検証する」は正しい方向です。ただし、 LLMの自己レビューだけでは不十分 です。 これを Evidence-Gated Lifecycle Control （証拠ゲート付きライフサイクル制御）と呼びます。研究提案 Proof-or-Stop （2026年7月、プレプリント段階）では、次の原則が提唱されています。 Don't trust the agent, trust the evidence. エージェントの「完了しました」は 主張 （claim）に過ぎません。ライフサイクル状態を進めるのは、機械的に検証可能な証拠だけです。 ループの価値が出るのは 「手順は明確だが反復が多い」 タスクです。テスト修正、lint対応、定型的なリファクタ、ドキュメント生成などが該当します。 Before — プロンプトだけの場合、指示は次の一行で終わります。 After — Harness・Loop・証拠ゲートを組み込むと、次のようになります。 1. [Plan] PR diffと関連issueを読み、修正方針を3行で提示 2.",
+      "feedSnippet": "! TL;DR — 3つの原則 「賢いプロンプトを書く」のではなく、ガードレール付きの自律ループを設計する AIに作業を任せ、失敗を検知してAI自身が改善ループを回す 完了判定は主観ではなく、機械的な証拠（テスト・lint・E2E）で行う 項目 内容 対象読者 開発業務でAIを日常的に使っている人、作業の委譲方法に悩んでいる人 スコープ AIに作業を任せる際の設計原則と実践手順。モデル選定やプロンプトの文体論は扱わない 読む順番 概念の理解 → 1〜4章 / すぐ実践 → 7章と11章 情報の鮮度 ツール情報は2026年7月時点 1. 課題：な...",
+      "excerptOrigin": "article"
     },
     {
       "id": "c7f1ae54c7241920",
@@ -1035,7 +1037,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "はじめに 従来の音声対話システムでは、ユーザーの発話を受け取ってから応答を生成・読み上げる構成が多く、会話中の割り込みや相槌のような自然なやり取りが難しいという課題があります。そこで LLM-jp-Moshi-v1 を AWS の GPU EC2 上で起動し、手元のブラウザから full-duplex 音声対話 (送信と受信を同時に行える音声対話) を試してみました。 本記事では、次の 2 点を中心に検証・整理しています。 AWS のGPU EC2 上で LLM-jp-Moshi-v1 を動かし、ブラウザから音声対話できるかを確認する 「技術的に正しく動"
+      "contentSnippet": "従来の音声対話システムでは、ユーザーの発話を受け取ってから応答を生成・読み上げる構成が多く、会話中の割り込みや相槌のような自然なやり取りが難しいという課題があります。そこで LLM-jp-Moshi-v1 を AWS の GPU EC2 上で起動し、手元のブラウザから full-duplex 音声対話 (送信と受信を同時に行える音声対話) を試してみました。 AWS のGPU EC2 上で Moshi の開発元である Kyutai が提供する moshi.server を起動し、手元のブラウザから LLM-jp-Moshi-v1 の Web UI に接続しました。Kyutai が提供するサーバー実装と標準 Web UI を使い、マイク入力・音声出力を行うことで full-duplex 音声対話が動くかを確認しています。 この構成では、手元のブラウザから http://localhost:8000/ にアクセスします。ローカルポートへのアクセスは SSM Session Manager のポートフォワードを通じて AWS の GPU EC2 上の moshi.server に転送されます。 本構成のメリットは、EC2 のアプリケーションポートをインターネットに公開せずに検証でき、かつ Application Load Balancer (ALB) の追加コストも回避できる点です。検証段階のアプローチとして非常に有効です。 Deep Learning OSS Nvidia Driver AMI (Ubuntu 22.04) llm-jp/llm-jp-moshi-v1 (Apache 2.0 ライセンス) AWS 上で起動し、ブラウザから音声対話するところまでは成功しました。一方で、業務用途で活用するには対話品質に課題が残ると感じました。 EC2 上で Kyutai が提供する moshi.server を起動できました。 SSM ポートフォワード経由の localhost:8000 で Web UI を開き、接続操作を確認しました。",
+      "feedSnippet": "はじめに 従来の音声対話システムでは、ユーザーの発話を受け取ってから応答を生成・読み上げる構成が多く、会話中の割り込みや相槌のような自然なやり取りが難しいという課題があります。そこで LLM-jp-Moshi-v1 を AWS の GPU EC2 上で起動し、手元のブラウザから full-duplex 音声対話 (送信と受信を同時に行える音声対話) を試してみました。 本記事では、次の 2 点を中心に検証・整理しています。 AWS のGPU EC2 上で LLM-jp-Moshi-v1 を動かし、ブラウザから音声対話できるかを確認する 「技術的に正しく動",
+      "excerptOrigin": "article"
     },
     {
       "id": "bc5d9d5acec61156",
@@ -1043,7 +1047,7 @@
       "sourceType": "blog",
       "url": "https://qiita.com/workyou0125/items/e47549a51a2ed8206583",
       "title": "rive-mcpのWebスタジオ、機能がだいぶ増えたので7つ紹介する",
-      "titleJa": "rive-mcpのWebスタジオに追加された7つの新機能を紹介する",
+      "titleJa": "rive-mcpのWebスタジオ、機能がだいぶ増えたので7つ紹介する",
       "titleEn": "The browser-based Studio bundled with rive-mcp has received significant…",
       "summaryJa": "Riveファイルをブラウザ上で編集できるrive-mcpのWebスタジオが大幅に機能強化され、新たに追加された7つの機能を画面付きで解説している。エディタ不要でアニメーション編集が可能な点が注目される。",
       "summaryEn": "The browser-based Studio bundled with rive-mcp has received significant updates, and this article walks through seven newly added features with screenshots. It highlights how users can edit Rive animations without launching the native editor.",
@@ -1063,7 +1067,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "前回の記事（Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った）で、rive-mcpというMCPサーバー全体の話を書いた。そのときブラウザだけで動く編集画面Studioも軽く紹介したが、あれから触り続けているうちに機能がかなり増えたので、今回は画..."
+      "contentSnippet": "前回の記事（ Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った ）で、rive-mcpというMCPサーバー全体の話を書いた。そのときブラウザだけで動く編集画面Studioも軽く紹介したが、あれから触り続けているうちに機能がかなり増えたので、今回は画面と一緒に7つの機能をあらためて紹介する。 2026-08-06追記 : UIを公式Riveエディタのレイアウトに近づける形で全面的に刷新した。階層ツリー、Inspectorの各プロパティ行に付くダイヤ型のキーボタン、下部のステータスバー（Console・Problems・Changes）など、操作の場所を公式の作法に揃えている。以下のスクリーンショットのうち一部は刷新後の画面に差し替えた。 画面下部には、トラックごとのキーフレームを並べたドープシートがある。ズームで細かい区間に寄れて、再生速度も変えられる。細部を詰めたいときも、全体の流れをつかみたいときも、同じ画面で済む。 これまでイージングは、linearやease-inのような名前つきの種類を選ぶだけで、曲線そのものを触る手段がなかった。キーフレーム区間を選ぶと、ベジェの制御点をドラッグできるエディタが開く。hold・linear・cubicの切り替えと、よく使う10種のプリセットもワンクリックで当てられるようにした。 実装で地味に手間取ったのが、区間とキーフレームのズレだった。.rivのバイナリ仕様上、イージングのデータは区間の終点ではなく始点のキーフレームに乗っている。画面では「区間を選んで動かす」という感覚のまま操作させたかったので、内部では選んだ区間から1つ前のキーフレームへ書き込み先をずらす変換を挟んでいる。 状態遷移は、これまでJSON越しにしか確認できなかった。レイヤー・状態・遷移をノードグラフとして表示し、遷移をクリックするとduration・exitTime・条件（入力名・演算子・値）が出るようにした。 riv_lint の走査結果もそのまま乗せてある。",
+      "feedSnippet": "前回の記事（Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った）で、rive-mcpというMCPサーバー全体の話を書いた。そのときブラウザだけで動く編集画面Studioも軽く紹介したが、あれから触り続けているうちに機能がかなり増えたので、今回は画...",
+      "excerptOrigin": "article"
     },
     {
       "id": "879626308fe77e07",
@@ -1071,7 +1077,7 @@
       "sourceType": "blog",
       "url": "https://qiita.com/workyou0125/items/2bba7dc64d4db1065d73",
       "title": "Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った",
-      "titleJa": "Riveのエディタを起動せずに.rivファイルを作成・編集できるMCPサーバーを作った",
+      "titleJa": "Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った",
       "titleEn": "The author built and released an MCP server that creates and edits .riv…",
       "summaryJa": "Riveの公式MCPサーバーはエディタ起動が前提で、サードパーティ製は有料という課題を解決するため、エディタなしで.rivファイルを直接生成・編集できるMCPサーバーを自作・公開した。",
       "summaryEn": "The author built and released an MCP server that creates and edits .riv animation files programmatically without launching the Rive editor, filling a gap left by the official editor-dependent MCP server and paid third-party alternatives.",
@@ -1090,7 +1096,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "Riveはインタラクティブアニメーションのツールとしてかなり気に入って使っています。ただ、.rivファイルをプログラムから直接いじる手段がほぼありませんでした。公式のMCPサーバーはエディタが起動している前提だし、サードパーティのものは有料。「.rivさえあれば動く、なんな..."
+      "contentSnippet": "Riveのエディタを起動せずに.rivを作って編集できるMCPサーバーを作った Riveはインタラクティブアニメーションのツールとしてかなり気に入って使っています。ただ、.rivファイルをプログラムから直接いじる手段がほぼありませんでした。公式のMCPサーバーはエディタが起動している前提だし、サードパーティのものは有料。「.rivさえあれば動く、なんならAIに最初から.rivを作らせたい」というのが動機で、バイナリフォーマットを自分で解析してMCPサーバーを書きました。rive-mcpという名前で公開しています。 これは実際にこのツールだけで生成した天気ウィジェットです。太陽・雲・稲妻のアートワークはプロ製（Twemoji）をSVGで取り込み、配色と動きはサーバーが提供するトークンとプリセットで組んでいます。Riveエディタは一度も開いていません。 Claude Codeを使っている場合は、プラグインとして入れる方が楽です。リポジトリ自体がプラグインマーケットプレイスになっていて、2コマンドでMCPサーバー本体・後述のデザインガイドラインSkill・Rive制作専用のサブエージェント（rive-designer）がまとめて入ります。 あとはClaudeに日本語で「跳ねるボールのrivを作って」とか頼むだけです。.rivバイナリを直接生成して、プレビューまで返してくれます。 生成: JSONでシーンを指定すると.rivに変換する riv_create 。キャラのPNG1枚からリグ済み.rivを作る riv_rig_character という変わり種もあります 取り込み: SVG・Lottie・既存の.rivをシーン仕様に変換する riv_import_svg / riv_lottie_import / riv_decompile 。Iconifyのアイコンを検索してそのまま取り込む riv_asset_search もここです 解析: riv_inspect や riv_dump 、 riv_diff など、中身を覗くためのツール一式。",
+      "feedSnippet": "Riveはインタラクティブアニメーションのツールとしてかなり気に入って使っています。ただ、.rivファイルをプログラムから直接いじる手段がほぼありませんでした。公式のMCPサーバーはエディタが起動している前提だし、サードパーティのものは有料。「.rivさえあれば動く、なんな...",
+      "excerptOrigin": "article"
     },
     {
       "id": "7c7c2ff0bef3840e",
@@ -1118,7 +1126,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "プロジェクト単位のナレッジ管理（後編） この記事は、研究室AI基盤の構築シリーズの第４回です。 第1回：研究室で管理しやすい学生用AIハブの導入 第2回：カスタムモデルで「良いAI活用方法」を埋め込む 第3回：プロジェクト単位ナレッジ管理のコンセプトとインデ..."
+      "contentSnippet": "第３回は、プロジェクトナレッジ自作の前編として、フリーズ済みプロジェクトをフォルダ構造ごとナレッジ化する考え方と、それをQdrantへ登録するindexerを紹介しました。 後編では、そこにMCPによる検索・原本参照・登録機能を加えたfilesystem-knowledge-bridge（以下、FKB）v0.2.1を題材に、プロジェクトナレッジを実際に使うための考え方と運用方法を紹介します。 前回の記事では、フリーズ済みプロジェクトをナレッジとして管理するという考え方と、それをQdrantへインデックス化する FKB v0.1.0 を紹介しました。 その後、このナレッジの検索・閲覧と、登録方法について検討し、 MCP（Model Context Protocol）による検索・閲覧機能 、および 登録機能 を追加した FKB v0.2.1 として整理しました。 FKB のリポジトリはこちらです。 まで含めて、プロジェクトナレッジを実際に活用するための構成をまとめています。 実際の導入手順や設定方法については、本記事後半およびGitHubリポジトリのREADMEを参照してください。 前編では、プロジェクトをどのような単位でナレッジ化するかについて考えました。 一般的なRAGでは、社内Wikiやファイルサーバ全体を一つのナレッジとして扱い、「とりあえず全部検索する」という使い方が多く見られます。一方で、ソフトウェア開発や研究活動では、相談したい対象は最初からある程度決まっていることがほとんどです。 というように、「どのプロジェクトについて相談したいか」が先に決まっているケースが多くあります。そこで FKB では、 プロジェクトを単位としてナレッジを管理する ことを基本方針としています。 また、 FKB は、ナレッジ管理システムそのものを作ることを目的としていません。既存のナレッジ管理システムの多くは、認証や権限管理、WebUI、ワークフロー、監査ログなど、多くの機能が含まれますが、それらを一つのプロジェクトで実現しようとすると、システムは急速に複雑になってしまいます。",
+      "feedSnippet": "プロジェクト単位のナレッジ管理（後編） この記事は、研究室AI基盤の構築シリーズの第４回です。 第1回：研究室で管理しやすい学生用AIハブの導入 第2回：カスタムモデルで「良いAI活用方法」を埋め込む 第3回：プロジェクト単位ナレッジ管理のコンセプトとインデ...",
+      "excerptOrigin": "article"
     },
     {
       "id": "678425f32d72400f",
@@ -1177,7 +1187,9 @@
       "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "warm",
-      "contentSnippet": "はじめに Claude CodeやCodexに、テストより先に実装を書かれたことはありませんか？ プロンプトでTDDを指示してもエージェントがその手順を守るとは限りません。 TDDを守らせるツールとしては以下の TDD Guardがありました。 https://github.com/nizos/tdd-guard 仕組みやセットアップは、こちらの記事で詳しく紹介されています。 https://zenn.dev/serada/articles/20260213-claude-code-commands 今回紹介するProbityは、その移行先として開発され"
+      "contentSnippet": "Claude CodeやCodexに、テストより先に実装を書かれたことはありませんか？ プロンプトでTDDを指示してもエージェントがその手順を守るとは限りません。 TDDを守らせるツールとしては以下の TDD Guardがありました。 https://github.com/nizos/tdd-guard 仕組みやセットアップは、こちらの記事で詳しく紹介されています。 https://zenn.dev/serada/articles/20260213-claude-code-commands 今回紹介するProbityは、その移行先として開発されているガードレールツールです。 https://github.com/nizos/probity 公式READMEには、TDD Guard利用者にProbityへの切り替えを進める内容が書かれており、専用の移行ガイドも用意されています。 また、Probity ではTDDだけでなく、危険なコマンドやプロジェクトで避けたい実装もブロックできるようになっています。 Probityは、AIコーディングエージェントにルールを守らせるためのツールです。 ファイルの書き込みやシェルコマンドの実行前に、設定したルールへ違反していないか確認します。 その際、違反している場合は操作をブロックし、理由と次に取るべき行動をエージェントへ伝えます。 AIによる判定では、各エージェントの公式SDKとログイン情報を利用しており、Probity専用のAPIキーや契約は不要です。 TDD Guardでは、テスト結果を取得するためにテストフレームワークごとのレポーターが必要でした。 Probityはエージェントのセッション履歴を直接確認するため、専用レポーターは不要です。 Vitest、Jest、pytestなどへ個別のレポーターを追加せず、エージェントが扱える言語とテストランナーを利用できます。 公式READMEでは、次の点も改善されたと説明されています。",
+      "feedSnippet": "はじめに Claude CodeやCodexに、テストより先に実装を書かれたことはありませんか？ プロンプトでTDDを指示してもエージェントがその手順を守るとは限りません。 TDDを守らせるツールとしては以下の TDD Guardがありました。 https://github.com/nizos/tdd-guard 仕組みやセットアップは、こちらの記事で詳しく紹介されています。 https://zenn.dev/serada/articles/20260213-claude-code-commands 今回紹介するProbityは、その移行先として開発され",
+      "excerptOrigin": "article"
     },
     {
       "id": "86653c7434ab663d",
@@ -31170,7 +31182,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-11T23:37:01.406Z",
+      "collectedAt": "2026-09-12T11:20:24.342Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -37369,7 +37381,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-11T23:37:01.406Z",
+      "collectedAt": "2026-09-12T11:20:24.342Z",
       "tags": [
         "mcp",
         "mcp-server",

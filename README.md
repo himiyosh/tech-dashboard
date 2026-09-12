@@ -439,6 +439,7 @@ npm run publisher:contract -- --dry-run  # CURRENT を確認
 
 fingerprint を変える変更はまずdevelopへ統合し、production Workerはまだ変更しません。develop→mainのrelease PR exact headが確定した後、次の順序を固定します。
 
+0. `npm run worker:freshness -- --ref origin/main` で 3 つの Worker(`tech-dashboard-summarizer` / `tech-dashboard-body` / `tech-dashboard-harness`)の最新 deploy がソースの最新 commit より新しいことを確認する。`STALE` の Worker は必ずこの手順で deploy する(consumer は Pages にも pre-push hook にも自動 deploy されない。2026-08-13〜09-04 は consumer が未 deploy のまま放置され、対話生成と本文長の改善が本番に届かなかった)。
 1. CI 合格済み PR head の `tech-dashboard-summarizer` と `tech-dashboard-body` を明示承認のうえ先に deployする。
 2. 旧 consumer の in-flight 処理が残っていないことを確認して PR を mergeする。
 3. 旧 harness が新 markerとの mismatchで data publishを停止したことを確認する。
@@ -447,7 +448,7 @@ fingerprint を変える変更はまずdevelopへ統合し、production Worker�
 
 #### 監視 / ヘルスチェック
 
-Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueEnqueued` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyRetentionEligible` / `bodyBacklog` / `bodyEnqueueCandidates` / `bodyEnqueueCap` / `bodyEnqueued` / `bodyLookupCount` / `bodyMerged` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `enrichmentEnqueued` / `enrichmentRemaining` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。candidate、実 enqueue、lookup、merge は別指標で、field が無い場合は 0 件ではなく未観測です。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
+Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `excerptFetchCandidates` / `excerptFetchAttempted` / `excerptFetched` / `excerptFetchUnavailable` / `excerptFetchDeferred` / `excerptFetchPrioritized` / `excerptFetchUnlockable` / `excerptBodyBatchPinned` / `excerptBodyBatchEnqueued` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueEnqueued` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyRetentionEligible` / `bodyBacklog` / `bodyEnqueueCandidates` / `bodyEnqueueCap` / `bodyEnqueued` / `bodyLookupCount` / `bodyMerged` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `enrichmentEnqueued` / `enrichmentRemaining` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。candidate、実 enqueue、lookup、merge は別指標で、field が無い場合は 0 件ではなく未観測です。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
 
 - `run ok` — 直近 run が正常（source freshness は別指標）
 - `run warn` — summarize disabled / source error / backlog 増加など要確認

@@ -658,6 +658,7 @@ const footerLastRunRelative = footerLastRunAt
     </footer>
 
     <script>
+      import { relaxedCjkSearchQueries } from "../lib/search-relaxation.ts";
       import { normalizeSearchText } from "../lib/search-normalize.ts";
       import { normalizeTagKey } from "../lib/tag-normalize.ts";
       import {
@@ -1578,43 +1579,56 @@ const footerLastRunRelative = footerLastRunAt
                       // 長い CJK 貼り付けクエリ (タイトル全文など) は Pagefind の
                       // トークナイズ都合で当の記事を retrieval できないことがある
                       // (issue #253 第2形態)。実測で 2 パターンある:
-                      //   a. 全文で 0 件 / 先頭 12 字なら 30 件
+                      //   a. 全文で 0 件 / 語句の窓なら当該記事が 1 位で返る
                       //   b. 全文で 6 件返るが中身は tag/category ページだけで
                       //      記事が 1 件も含まれない (件数だけでは判別できない)
                       // b があるため「0 件のときだけ再取得」では救えない。長い CJK
-                      // クエリでは接頭辞の結果を常に *追加候補* として連結する。
+                      // クエリでは緩和クエリの結果を常に *追加候補* として連結する
+                      // (web/src/lib/search-relaxation.ts に規則と実測値)。
                       // 精度は後段の isExactResult (全文 includes) が担保するので、
                       // 候補が増えても無関係な記事が exact へ昇格することはない。
                       // - 1 回目は従来と同じ 3500ms 契約 (timeout は throw)
-                      // - 接頭辞側は best-effort (1500ms)。失敗時は 1 回目の結果のみ
+                      // - 緩和側は best-effort (各 1500ms / 合計 3000ms)。失敗しても
+                      //   1 回目の結果は失わない
                       // - CJK 限定。空白区切りの英文は term AND が正しく効くため、
-                      //   接頭辞再取得は junk 候補の data() fetch を増やすだけになる
-                      // - code point 単位で数え、絵文字 (surrogate pair) を割らない
+                      //   再取得は junk 候補の data() fetch を増やすだけになる
                       const first = await withDeadline(
                         Promise.resolve(pf.search(q)),
                         3500,
                         "The search index took too long to respond.",
                       );
-                      const trimmed = q.trim();
-                      const points = [...trimmed];
-                      const hasCjk = /[぀-ヿ㐀-鿿豈-﫿]/.test(trimmed);
-                      if (!hasCjk || points.length < 16) return first;
-                      try {
-                        const prefix = await withDeadline(
-                          Promise.resolve(pf.search(points.slice(0, 12).join(""))),
-                          1500,
-                          "The prefix fallback took too long to respond.",
-                        );
-                        const primary = first?.results ?? [];
-                        const extra = (prefix?.results ?? []).filter(
-                          (candidate: any) =>
-                            !primary.some((existing: any) => existing?.id === candidate?.id),
-                        );
-                        if (extra.length === 0) return first;
-                        return { ...first, results: [...primary, ...extra] };
-                      } catch {
-                        return first;
+                      const relaxedQueries = relaxedCjkSearchQueries(q);
+                      if (relaxedQueries.length === 0) return first;
+                      const primary = first?.results ?? [];
+                      const seenIds = new Set(
+                        primary.map((existing: any) => existing?.id).filter(Boolean),
+                      );
+                      const seenResults = new Set<any>(primary);
+                      const extra: any[] = [];
+                      const relaxedDeadline = performance.now() + 3000;
+                      for (const relaxedQuery of relaxedQueries) {
+                        if (performance.now() >= relaxedDeadline) break;
+                        try {
+                          const relaxed = await withDeadline(
+                            Promise.resolve(pf.search(relaxedQuery)),
+                            1500,
+                            "The relaxed query took too long to respond.",
+                          );
+                          for (const candidate of relaxed?.results ?? []) {
+                            // Pagefind always sets an id; fall back to object
+                            // identity so a result without one is still kept.
+                            if (!candidate || seenResults.has(candidate)) continue;
+                            if (candidate.id && seenIds.has(candidate.id)) continue;
+                            if (candidate.id) seenIds.add(candidate.id);
+                            seenResults.add(candidate);
+                            extra.push(candidate);
+                          }
+                        } catch {
+                          // best effort: keep whatever the verbatim query found
+                        }
                       }
+                      if (extra.length === 0) return first;
+                      return { ...first, results: [...primary, ...extra] };
                     })(),
                 tagIntent
                   ? withDeadline(

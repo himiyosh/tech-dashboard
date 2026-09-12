@@ -13,10 +13,14 @@
  * Contract:
  * - Pure extraction (`extractArticleText`) has no network and no DOM; it is
  *   regex/heuristic based so it runs identically in Node and Workers.
- * - `enrichThinExcerpts` is bounded per run (ARTICLE_FETCH_CAP), prefers this
- *   run's NEW entries, then backfills prior thin entries newest-first, and
- *   marks every attempt on the entry (`excerptOrigin`) so a failure is never
- *   retried every hour. Failures keep the feed excerpt (fail-open).
+ * - `enrichThinExcerpts` is bounded per run (ARTICLE_FETCH_CAP). Order: this
+ *   run's body batch first (`options.priority` rank <= 0, chosen by
+ *   bodyBoundExcerptPriority on the live set and pinned into runBodyPipeline),
+ *   then this run's NEW entries, then the unlockable backlog (rank >= 1), then
+ *   prior thin entries; ties newest-first. Without `priority` it falls back to
+ *   NEW then prior. Every attempt is marked on the entry (`excerptOrigin`) so
+ *   a failure is never retried every hour. Failures keep the feed excerpt
+ *   (fail-open).
  * - Nothing here is displayed: contentSnippet is model input and grounding
  *   material only (harness/pipeline/normalize.ts documents why).
  */
@@ -225,6 +229,14 @@ export interface EnrichExcerptOptions extends ArticleFetchOptions {
   cap?: number;
   /** URL keys already present in the prior index: everything else is NEW. */
   isPrior: (entry: NormalizedEntry) => boolean;
+  /**
+   * Optional rank from bodyBoundExcerptPriority (body-queue.ts). Rank <= 0 is
+   * this run's body batch and is enriched before this run's new entries;
+   * rank >= 1 is the unlockable backlog (summarized but too thin for a body)
+   * and is enriched after new entries but before the prior backfill.
+   * undefined / non-finite = default order. Ties keep newest-first.
+   */
+  priority?: (entry: NormalizedEntry) => number | undefined;
 }
 
 export interface EnrichExcerptStats {
@@ -234,6 +246,10 @@ export interface EnrichExcerptStats {
   unavailable: number;
   /** Candidates left for a later run because the cap was reached. */
   deferred: number;
+  /** Attempts spent on rank-0 entries (this run's body batch). */
+  prioritized: number;
+  /** Attempts spent on rank >= 1 entries (unlockable backlog). */
+  unlockable: number;
 }
 
 export function isThinExcerptCandidate(entry: NormalizedEntry): boolean {
@@ -249,8 +265,12 @@ function publishedMs(entry: NormalizedEntry): number {
 
 /**
  * Replace thin excerpts with article text, in place, within the run budget.
- * New entries first (their summary and body are generated this run), then
- * prior thin entries newest-first so the corpus backfills predictably.
+ * Order: this run's body batch first (options.priority rank <= 0, see
+ * bodyBoundExcerptPriority — those bodies are generated this run), then this
+ * run's new entries (summary this run, body next run), then the unlockable
+ * backlog (rank >= 1: summarized but too thin for a body), then prior thin
+ * entries newest-first. New entries therefore never wait behind the
+ * unbounded backlog; they can only lose slots to the bounded body batch.
  */
 export async function enrichThinExcerpts(
   entries: NormalizedEntry[],
@@ -258,15 +278,34 @@ export async function enrichThinExcerpts(
 ): Promise<EnrichExcerptStats> {
   const cap = Math.max(0, Math.floor(options.cap ?? DEFAULT_ARTICLE_FETCH_CAP));
   const thin = entries.filter(isThinExcerptCandidate);
-  const fresh = thin.filter((entry) => !options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
-  const prior = thin.filter((entry) => options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
-  const queue = [...fresh, ...prior].slice(0, cap);
+  // Order: this run's body batch (rank <= 0), then this run's new entries
+  // (their summary is generated this run; their body one run later once it
+  // lands), then the unlockable backlog (rank >= 1, unbounded — it must never
+  // starve new entries), then prior thin entries newest-first.
+  const ranked = new Map<NormalizedEntry, number>();
+  if (options.priority) {
+    for (const entry of thin) {
+      const rank = options.priority(entry);
+      if (typeof rank === "number" && Number.isFinite(rank)) ranked.set(entry, rank);
+    }
+  }
+  const prioritized = [...ranked.keys()].sort(
+    (a, b) => ranked.get(a)! - ranked.get(b)! || publishedMs(b) - publishedMs(a),
+  );
+  const rest = thin.filter((entry) => !ranked.has(entry));
+  const fresh = rest.filter((entry) => !options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
+  const prior = rest.filter((entry) => options.isPrior(entry)).sort((a, b) => publishedMs(b) - publishedMs(a));
+  const bodyNow = prioritized.filter((entry) => ranked.get(entry)! <= 0);
+  const unlock = prioritized.filter((entry) => ranked.get(entry)! > 0);
+  const queue = [...bodyNow, ...fresh, ...unlock, ...prior].slice(0, cap);
   const stats: EnrichExcerptStats = {
     candidates: thin.length,
     attempted: 0,
     enriched: 0,
     unavailable: 0,
     deferred: Math.max(0, thin.length - queue.length),
+    prioritized: queue.filter((entry) => (ranked.get(entry) ?? 1) <= 0).length,
+    unlockable: queue.filter((entry) => (ranked.get(entry) ?? 0) > 0).length,
   };
   let cursor = 0;
   const worker = async (): Promise<void> => {

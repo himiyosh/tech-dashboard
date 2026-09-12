@@ -12,12 +12,16 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ## Unreleased
 
-(なし)
+### 変更
+
+- 記事本文抽出レーン(毎時 40 件)の取得順を、本文の生成対象に合わせました。レーンを live 集合の確定後(per-source / category cap と INDEX_LIMIT の後)に移し、その実行で本文 job になる記事を本文パイプラインと同じ入力(retention・committed bodies・前回 pending・`BODY_LOOKUP_CAP`・同一時刻)で先に選定し、KV に本文が既にある記事(取り込みのみで再生成されない)を除いて取得したうえで、選定結果を `preferredCandidateIds` としてパイプラインに pin します。取得した記事がそのまま生成対象になり、先読みした KV はパイプラインが再利用するため bridge リクエストは増えません。その後に新着、要約済みだが抜粋が薄く本文の根拠ゲートを通れない記事(無制限の backlog でも新着を飢餓させない順序)、既存 backfill の順です。これまでは取得枠が最新のフィード項目に使われ、本文は 200 字前後の説明文から約 330 字で生成され続けていました。health に `excerptFetchPrioritized` / `excerptFetchUnlockable` / `excerptBodyBatchPinned` / `excerptBodyBatchEnqueued` を追加し、data-schema 検証に整合性ゲートを足しています。
+- Worker の deploy 鮮度ゲート `npm run worker:freshness` を追加しました。Queue consumer(`tech-dashboard-summarizer` / `tech-dashboard-body`)と Free bridge の最新 deploy が、ソースの最新 commit より古い場合に失敗します。2026-08-13〜09-04 の間 consumer が未 deploy のまま放置され、対話生成・本文長の改善・GPT-5.6 チェーンが本番に届いていなかった見落としの再発防止です。リリース手順(README)に手順 0 として組み込みました。
 
 ## 2026-09-04
 
 ### 修正
 
+- 日本語のタイトルや語句で検索したときに、その記事自体が 1 件も出ないことがある問題を修正しました。検索インデックスは記事本文と別にクエリを分割するため、ラテン文字と日本語が混ざった長いタイトルでは分割位置が食い違い、当の記事に到達できませんでした。長い日本語クエリでは語句単位の窓(`web/src/lib/search-relaxation.ts`)でも検索し、結果を追加候補として連結します。掲載中の日本語タイトル 60 件で実測し、自記事に到達できる件数が 49 件から 58 件に増えました。既存の完全一致判定が候補を絞るため、無関係な記事が上位に来ることはありません。
 - 記事本文抽出レーン(2026-09-03 リリース)が `contentSnippet` を記事本文で置き換えた結果、Publisher の fail-closed 検証がその本文からカテゴリを再導出して不一致(github-changelog: tech-news → copilot)を検出し、毎時公開が停止した問題を修正しました。収集時のフィード文を `feedSnippet` として保持し、キーワードフィルター・カテゴリ・重要度・Knowledge 適格性はフィード文で評価します(記事本文はモデル入力専用)。Worker / 移行 / 検証が同じ評価器を共有するため、既存データの移行はありません。修正前に本文化された entry(フィード文を持たない 10 件)は「検証不能」として保存済みのカテゴリ・Knowledge 判定を維持し、次回フィードを再収集した時点でフィード文を補完します。
 
 ## 2026-09-03

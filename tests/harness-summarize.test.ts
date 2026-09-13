@@ -108,7 +108,7 @@ Second paragraph.",
 
 describe("resolveSummarizeModel", () => {
   it("補完/backfill で許可されたモデルを受け付ける", () => {
-    expect(resolveSummarizeModel("claude-sonnet-4.6")).toBe("claude-sonnet-4.6");
+    expect(resolveSummarizeModel("claude-sonnet-5")).toBe("claude-sonnet-5");
     expect(resolveSummarizeModel("claude-opus-4.7")).toBe("claude-opus-4.7");
     expect(resolveSummarizeModel("gpt-5.5")).toBe("gpt-5.5");
   });

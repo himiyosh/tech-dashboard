@@ -147,7 +147,7 @@ export function buildQueuePrompt(e: PromptEntry): string {
 /**
  * Summary-only prompt for the Queue consumer (LL-106).
  *
- * claude-sonnet-4.6 is a reasoning model: it emits opaque reasoning tokens
+ * The Claude fallback is a reasoning model: it emits opaque reasoning tokens
  * that count against max_tokens. When the prompt also asks for a long
  * bilingual body (700-1100 JA chars + 500-800 EN words), reasoning + the long
  * output exhausts the budget and the Copilot chat endpoint returns

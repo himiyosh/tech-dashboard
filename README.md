@@ -13,7 +13,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
 | ソース収集 (registry sources) | GitHub Actions `Publisher` (Node 22) | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint または snapshot 不一致時は publish を自動停止 | Publisher workflow / `/status` |
-| 日本語/英語要約 (`summary*`) | Publisher → OIDC bridge → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-4.6) | 検証済み publish 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
+| 日本語/英語要約 (`summary*`) | Publisher → OIDC bridge → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-5) | 検証済み publish 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
 | 記事本文 (`data/bodies.json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を retention 対象にし、さらに実運用の byte budget (`DEFAULT_BODY_BUDGET_TARGET_BYTES` = 9MB、`tests/data-schema.test.ts` の 10MB hard ceiling には 1MB の余裕) を必ず超えないよう importance 1 (直近のみ) → 2 → 3 → evergreen の順で最古から deterministic に prune する (evergreen は最優先=最後に prune、絶対的な免除ではない、LL-411)。consumer が JA/EN を 2 call で生成して publisher が sidecar へ merge | 対象外・budget 超過で prune・本文無しの記事は要約主役の表示にフォールバック (原文リンクは維持、偽の生成予告は出さない) | `health.bodyBacklog` / `health.bodyQueueDrainEstimateHours` / `health.bodiesTotal` / `health.bodyBudgetBytes` / `health.bodyBudgetTargetBytes` / `health.bodyBudgetPruned` |
 | summary deterministic fallback | Publisher / `scripts/apply-summary-cache.mjs` | data commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | Publisher → OIDC bridge → KV | 毎時最大 1 件。data 検証と push 成功後だけ `og.v1` を更新 | サムネが no-image fallback になる | `health.ogCached` |
@@ -193,8 +193,8 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的の�
 COPILOT_PAT=ghp_...               # PAT → 一時トークン交換を自動で行う
 COPILOT_TOKEN=tid=...              # 既に交換済みの一時トークンを直接注入する場合
 
-# モデル切替 (要約 / 補完 backfill で利用可能なのは claude-sonnet-4.6 / claude-opus-4.7 のみ)
-SUMMARIZE_MODEL=claude-sonnet-4.6   # 既定 (速度優先、Worker wall-time に収まる)
+# モデル切替 (要約 / 補完 backfill で利用可能なのは claude-sonnet-5 / claude-opus-4.7 のみ)
+SUMMARIZE_MODEL=claude-sonnet-5     # 既定 (速度優先、Worker wall-time に収まる)
 # SUMMARIZE_MODEL=claude-opus-4.7   # 品質優先。長文生成は wall-time に収まらない場合あり (LL-031)
 # SUMMARIZE_MODEL=gpt-5.5            # Copilot では /responses 専用のため現 Worker (/chat/completions) からは利用不可 (LL-010)
 ENQUEUE_MAX_NEW=35                 # Worker 1 run 当たりの Queue 投入上限

@@ -13,8 +13,8 @@
  * 環境変数:
  *   COPILOT_TOKEN        … 一時トークン (交換済み)。CI 等で直接注入する場合
  *   COPILOT_PAT          … PAT (classic でよい)。上記より優先度低
- *   SUMMARIZE_MODEL      … 既定 "claude-sonnet-4.6"
- *                          補完/backfill は claude-sonnet-4.6 / claude-opus-4.7 / gpt-5.5 のみ許可
+ *   SUMMARIZE_MODEL      … 既定 "claude-sonnet-5"
+ *                          補完/backfill は claude-sonnet-5 / claude-opus-4.7 / gpt-5.5 のみ許可
  *   SUMMARIZE_ENDPOINT   … 既定 "https://api.githubcopilot.com/chat/completions"
  *   SUMMARIZE_MAX_NEW    … 1 ラン当たりの新規要約上限 (既定 15)
  *   SUMMARIZE_MAX_TOKENS … Copilot API の最大出力 token 数 (既定 1600)
@@ -52,7 +52,7 @@ interface CacheEntry {
 
 type Cache = Record<string, CacheEntry>;
 
-const DEFAULT_SUMMARIZE_MODEL = "claude-sonnet-4.6";
+const DEFAULT_SUMMARIZE_MODEL = "claude-sonnet-5";
 const ALLOWED_SUMMARIZE_MODELS = new Set([
   DEFAULT_SUMMARIZE_MODEL,
   "claude-opus-4.7",
@@ -66,7 +66,7 @@ export function resolveSummarizeModel(
   const selected = model ?? DEFAULT_SUMMARIZE_MODEL;
   if (!ALLOWED_SUMMARIZE_MODELS.has(selected)) {
     throw new Error(
-      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-sonnet-4.6, claude-opus-4.7, claude-opus-4.8, or gpt-5.5 for article summarization and backfill.`,
+      `Unsupported SUMMARIZE_MODEL="${selected}". Use claude-sonnet-5, claude-opus-4.7, claude-opus-4.8, or gpt-5.5 for article summarization and backfill.`,
     );
   }
   return selected;

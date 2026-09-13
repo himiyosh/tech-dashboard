@@ -29,7 +29,7 @@
 // Usage:
 //   npx tsx scripts/backfill-summaries.mjs --dry           # list targets, no API calls
 //   COPILOT_PAT=... npx tsx scripts/backfill-summaries.mjs # generate + write
-//   COPILOT_PAT=... SUMMARIZE_MODEL=claude-sonnet-4.6 npx tsx scripts/backfill-summaries.mjs
+//   COPILOT_PAT=... SUMMARIZE_MODEL=claude-sonnet-5 npx tsx scripts/backfill-summaries.mjs
 //   ... --limit 20                                         # cap this run (smoke test)
 
 import fs from "node:fs";
@@ -42,10 +42,10 @@ const LIMIT = limitArg !== -1 ? Number(process.argv[limitArg + 1]) : Infinity;
 const FILE = "data/index.json";
 const CACHE_FILE = "data/_summary-backfill-cache.json";
 
-const ALLOWED_MODELS = new Set(["claude-sonnet-4.6", "claude-opus-4.7", "claude-opus-4.8", "gpt-5.5"]);
+const ALLOWED_MODELS = new Set(["claude-sonnet-5", "claude-opus-4.7", "claude-opus-4.8", "gpt-5.5"]);
 const MODEL = process.env.SUMMARIZE_MODEL ?? "claude-opus-4.8";
 if (!ALLOWED_MODELS.has(MODEL)) {
-  console.error(`Unsupported SUMMARIZE_MODEL="${MODEL}". Use claude-opus-4.8, claude-opus-4.7, claude-sonnet-4.6, or gpt-5.5 (R-007).`);
+  console.error(`Unsupported SUMMARIZE_MODEL="${MODEL}". Use claude-opus-4.8, claude-opus-4.7, claude-sonnet-5, or gpt-5.5 (R-007).`);
   process.exit(1);
 }
 const ENDPOINT = process.env.SUMMARIZE_ENDPOINT ?? "https://api.githubcopilot.com/chat/completions";

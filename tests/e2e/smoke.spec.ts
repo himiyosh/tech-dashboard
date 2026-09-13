@@ -2083,10 +2083,31 @@ test.describe("TECH Dashboard smoke", () => {
     expect(metrics.todayEntries, "metrics and Daily Summary share the current JST count").toBe(
       todayValue,
     );
-    // Past days routinely have 30-120 articles in stats.byDay; the broken
-    // fallback maxed out at single digits. A max over 20 proves stats wins.
-    const max = Math.max(...counts);
-    expect(max, `7-day bar counts were ${counts.join(",")}`).toBeGreaterThan(20);
+    // The chart must read stats.byDay, not the broken fallback that produced
+    // its own numbers. Comparing every past bar with the count recorded for
+    // its own date proves that directly, and unlike a volume threshold it does
+    // not fail when intake is simply quieter. The final bar is today's live
+    // count, already pinned to the KPI and metrics.json above.
+    const stats = JSON.parse(readFileSync("data/stats.json", "utf8")) as {
+      byDay: Array<{ date: string; count: number }>;
+    };
+    const recordedByDate = new Map(stats.byDay.map((day) => [day.date, day.count]));
+    const barLabels = await page
+      .locator(".digest .spark .bars .bar")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title") ?? ""));
+    expect(barLabels).toHaveLength(7);
+    barLabels.slice(0, -1).forEach((label, index) => {
+      const [date, value] = label.split(": ");
+      expect(date, `bar ${index} labels its date`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number(value), `bar ${index} (${date}) matches stats.byDay`).toBe(
+        recordedByDate.get(date!) ?? 0,
+      );
+      expect(counts[index], `bar ${index} renders the number it labels`).toBe(Number(value));
+    });
+    expect(
+      counts.slice(0, -1).reduce((sum, value) => sum + value, 0),
+      `stats.byDay produced only zeros: ${counts.join(",")}`,
+    ).toBeGreaterThan(0);
     const dayScope = await digest.getAttribute("data-day-scope");
     expect(dayScope).toMatch(/^(today|latest)$/);
     await expect(digest.locator(".title h2.i18n-ja")).toHaveText(
@@ -3599,10 +3620,14 @@ test.describe("TECH Dashboard smoke", () => {
         url: string;
       }>;
     };
+    // The fixture must be an entry whose detail route is actually built:
+    // a summary-pending arXiv row has no page, so an unfiltered pick lands on
+    // a 404 as soon as the newest arXiv item is still awaiting its summary.
     const arxivEntry = index.entries.find((entry) => (
-      entry.source.startsWith("arxiv-")
-      || entry.sourceType === "paper"
-        && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+      (entry.source.startsWith("arxiv-")
+        || entry.sourceType === "paper"
+          && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname))
+      && isBuiltDetailEntry(entry as never)
     ));
     expect(arxivEntry, "the generated corpus contains an arXiv detail entry").toBeTruthy();
 
@@ -3653,10 +3678,14 @@ test.describe("TECH Dashboard smoke", () => {
         url: string;
       }>;
     };
+    // The fixture must be an entry whose detail route is actually built:
+    // a summary-pending arXiv row has no page, so an unfiltered pick lands on
+    // a 404 as soon as the newest arXiv item is still awaiting its summary.
     const arxivEntry = index.entries.find((entry) => (
-      entry.source.startsWith("arxiv-")
-      || entry.sourceType === "paper"
-        && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname)
+      (entry.source.startsWith("arxiv-")
+        || entry.sourceType === "paper"
+          && /(?:^|\.)arxiv\.org$/i.test(new URL(entry.url).hostname))
+      && isBuiltDetailEntry(entry as never)
     ));
     expect(arxivEntry, "the generated corpus contains an arXiv detail entry").toBeTruthy();
     await page.goto(`/e/${arxivEntry!.id}/`);
@@ -3836,10 +3865,15 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: SummaryFixtureEntry[];
     };
+    // Same constraint as the arXiv fixtures: only entries whose detail route
+    // is built can be navigated to.
     const correctedEntry = index.entries.find((entry) => (
-      entry.lang && effectiveTitleLanguage(entry) !== entry.lang
+      entry.lang
+      && effectiveTitleLanguage(entry) !== entry.lang
+      && isBuiltDetailEntry(entry as never)
     ));
-    const targetEntry = correctedEntry ?? index.entries.find((entry) => entry.lang);
+    const targetEntry = correctedEntry
+      ?? index.entries.find((entry) => entry.lang && isBuiltDetailEntry(entry as never));
     expect(targetEntry, "current data includes an entry with title language metadata").toBeTruthy();
 
     const expectedLanguage = effectiveTitleLanguage(targetEntry!);

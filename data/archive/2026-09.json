@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-13T07:28:22.723Z",
+  "generatedAt": "2026-09-13T16:42:20.122Z",
   "month": "2026-09",
-  "count": 137,
+  "count": 138,
   "entries": [
+    {
+      "id": "ea9a77a5bdb64bce",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/maskedridersystem/items/9149dfb7b06e4029461f",
+      "title": "「ACR Viewer for VSCode」をVS Code Marketplace / Open VSXに公開するまで",
+      "titleJa": "「ACR Viewer for VSCode」をVS Code Marketplace / Open VSXに公開するまで",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-13T06:46:08.000Z",
+      "collectedAt": "2026-09-13T16:42:01.871Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "自作の帳票エンジン「ACR (AcrossReport)」は、Google Skiaをレンダリングコアに据え、JSONを中間描画モデルとして扱うことで「実機がなくても1ドットも狂わないWYSIWYGプレビュー」を実現してきた。POS・ラベル・レシート印刷、そしてActiveReports互換の帳票designerと、30年分の現場知見を積み上げてきたエンジンだ。 このACRのレンダリングコアを、VS Codeの中に持ち込んだのが「ACR Viewer for VSCode」である。きっかけは単純で、VS Code自体にMarkdownやHTML、テキストファイルをまともに印刷・PDF化する手段がないことだった。 当初はChrome拡張(ACR Report Renderer)と同じくWASM化したSkiaコアをブラウザ上で動かす構成を想定していたが、VS Code拡張のホストはブラウザのサンドボックスではなくNode.jsで動く。であれば、AcrossReportDesigner(Avalonia)が使っているのと同じRustのcdylibビルドをNAPI-RS経由でそのままバインドできる。WASM経由のオーバーヘッドや制約を避けられるため、ネイティブアドオン方式に切り替えた。 Markdown/HTMLからACRのJSON中間モデルへの変換もRust側(acr_mdクレート、pulldown-cmarkベース)に寄せ、Node.js側はエントリーポイントを1つ呼ぶだけの薄いクライアントにした。ページ送りロジックも新規実装はせず、acr_core既存の高さベース自動改ページ(place_section)をそのまま再利用する形に倒している。「現場を動かす確かなコード」を壊さず、既存資産に載せるという方針を徹底した結果だ。 実装よりむしろ苦労したのはMarketplaceへの登録段階だった。",
+      "feedSnippet": "きっかけ 自作の帳票エンジン「ACR (AcrossReport)」は、Google Skiaをレンダリングコアに据え、JSONを中間描画モデルとして扱うことで「実機がなくても1ドットも狂わないWYSIWYGプレビュー」を実現してきた。POS・ラベル・レシート印刷、そして...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnd3dy5nb29nbGUuY29tJTJGczIlMkZwaG90b3MlMkZwcml2YXRlJTJGQUliRWlBSUFBQUJEQ0xyYmhOS095UHlVU0NJTGRtTmhjbVJmY0dodmRHOHFLR0ptT1dJNVl6UTNOekE1TURZd05HWmtNVEEyT0RObU1tUmxORFpsTmpoalltUXdPVE5pTURVd0FlZjJaazBLSDdUVk1TMm1UdWdDeDg2QUFkdWUlM0ZzeiUzRDUwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0xMDRlYTRjNDQ1YzE4MjZkYzEzMjM2NTIxMWNmODVjZA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De6cf155c3613059022a5442a5c74c59b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJThDQUNSJTIwVmlld2VyJTIwZm9yJTIwVlNDb2RlJUUzJTgwJThEJUUzJTgyJTkyVlMlMjBDb2RlJTIwTWFya2V0cGxhY2UlMjAlMkYlMjBPcGVuJTIwVlNYJUUzJTgxJUFCJUU1JTg1JUFDJUU5JTk2JThCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUJFJUUzJTgxJUE3JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzJhMmExNDIzMGI5NDIxMmE3NzdlMzUxY2FkNDczMTM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBtYXNrZWRyaWRlcnN5c3RlbSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJkNDhiYjYyZmExOWI1M2M1OGYxNzYwMjVmNWY0MWFj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=efa71f6e224accba6a76d43ebfda219c",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnd3dy5nb29nbGUuY29tJTJGczIlMkZwaG90b3MlMkZwcml2YXRlJTJGQUliRWlBSUFBQUJEQ0xyYmhOS095UHlVU0NJTGRtTmhjbVJmY0dodmRHOHFLR0ptT1dJNVl6UTNOekE1TURZd05HWmtNVEEyT0RObU1tUmxORFpsTmpoalltUXdPVE5pTURVd0FlZjJaazBLSDdUVk1TMm1UdWdDeDg2QUFkdWUlM0ZzeiUzRDUwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0xMDRlYTRjNDQ1YzE4MjZkYzEzMjM2NTIxMWNmODVjZA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De6cf155c3613059022a5442a5c74c59b?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJThDQUNSJTIwVmlld2VyJTIwZm9yJTIwVlNDb2RlJUUzJTgwJThEJUUzJTgyJTkyVlMlMjBDb2RlJTIwTWFya2V0cGxhY2UlMjAlMkYlMjBPcGVuJTIwVlNYJUUzJTgxJUFCJUU1JTg1JUFDJUU5JTk2JThCJUUzJTgxJTk5JUUzJTgyJThCJUUzJTgxJUJFJUUzJTgxJUE3JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MzJhMmExNDIzMGI5NDIxMmE3NzdlMzUxY2FkNDczMTM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBtYXNrZWRyaWRlcnN5c3RlbSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJkNDhiYjYyZmExOWI1M2M1OGYxNzYwMjVmNWY0MWFj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=efa71f6e224accba6a76d43ebfda219c",
+        "alt": "「ACR Viewer for VSCode」をVS Code Marketplace / Open VSXに公開するまで",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "cac4c3930144a02f",
       "source": "arxiv-cs-ai",
@@ -138,8 +169,8 @@
       }
     },
     {
-      "id": "8156421f827a3dc7",
-      "source": "github-copilot",
+      "id": "2576bf8a180858a9",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/marketing-ops-as-code-automating-events-from-planning-to-follow-up-on-github/",
       "title": "Marketing ops as code: Automating events from planning to follow-up on GitHub",
@@ -149,7 +180,7 @@
       "summaryEn": "GitHub codifies event operations, automating page duplication, channel-specific UTM links, and follow-up so marketers in Japan and Korea can focus on topics and audiences.",
       "lang": "en",
       "publishedAt": "2026-09-11T18:26:10.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "copilot",
         "event-operations",
@@ -160,7 +191,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I run marketing for GitHub in Japan and Korea, and events are the heartbeat of it: a recurring webinar series for enterprise developers, community meetups in Tokyo, invite-only executive sessions in Seoul. What does a developer in this market actually need right now? Which topics are worth an hour of their time, and who should be in the room? I’d happily spend all day on those questions. What follows the decisions is another matter. Once an event is greenlit, a fixed sequence begins: Duplicate a landing page on our event platform. Generate a set of UTM-tagged links: one for each channel, each formatted just so. Draft the invitation email and file a request with the team that sends it. Add the event to two project boards. Every morning until the event: download the registrant list, clean it up, post a status update for stakeholders.",
       "excerptOrigin": "article",
       "feedSnippet": "If you can write down how you do your work, you can automate it. Here's what I did to support GitHub's APAC marketing team. The post Marketing ops as code: Automating events from planning to follow-up on GitHub appeared first on The GitHub Blog .",
@@ -171,7 +201,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "93dcd14a5e3a0d95",
@@ -284,7 +315,7 @@
       "titleEn": "Zed Editor Releases v1.19.2",
       "lang": "en",
       "publishedAt": "2026-09-11T06:14:21.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "call-hierarchy",
         "editor",
@@ -318,7 +349,7 @@
       "titleEn": "Zed Editor Releases v1.19.0-pre",
       "lang": "en",
       "publishedAt": "2026-09-11T06:13:43.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "call-hierarchy",
         "editor",
@@ -417,8 +448,8 @@
       }
     },
     {
-      "id": "b310b2c06dbd9321",
-      "source": "github-copilot",
+      "id": "433004a6bd914ded",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-using-the-diff-terminal-and-browser/",
       "title": "GitHub Copilot app for Beginners: Using the diff, terminal, and browser",
@@ -428,7 +459,7 @@
       "summaryEn": "The GitHub Copilot app adds built-in diff and terminal panels alongside a browser, helping beginners review agent edits, run code, and verify results in one place.",
       "lang": "en",
       "publishedAt": "2026-09-10T21:31:19.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -440,7 +471,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "When an agent makes a change to your code, you want to review it, run it, and see what changed. Great news: now you can do all three without having to leave the GitHub Copilot app . Before, doing those three jobs would mean having to bounce between your editor, terminal window, and web browser. But when these steps live side by side as built-in panels in the Copilot app, checking your agent’s work is simple. Let’s walk through each of the panels in the app and how we’ll use them to complete the AI coding loop. The diff panel (a diff is a before and after comparison) shows exactly what lines were added, removed, or changed, with additions highlighted in green and deletions in red. This gives you complete clarity, so you can choose what happens. You can accept changes, leave comments, or ask Copilot to make changes. You’re in complete control and make the final decisions.",
       "excerptOrigin": "article",
       "feedSnippet": "Checking agent-generated code usually means hopping between tabs. Learn how to view diffs, run terminal commands, and preview web apps side by side in the GitHub Copilot app. The post GitHub Copilot app for Beginners: Using the diff, terminal, and browser appeared first on The GitHub Blog .",
@@ -451,7 +481,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c213d15843ae4aca",
@@ -848,7 +879,7 @@
       "titleEn": "Cursor Projects",
       "lang": "en",
       "publishedAt": "2026-09-10T00:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "ai-agents",
         "changelog",
@@ -1163,7 +1194,7 @@
       "titleEn": "Zed Editor Releases v1.20.0-pre",
       "lang": "en",
       "publishedAt": "2026-09-09T17:41:48.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "cursor-animation",
         "editor",
@@ -1300,7 +1331,7 @@
       "titleEn": "Visual Studio Code 1.137 Release Notes",
       "lang": "en",
       "publishedAt": "2026-09-09T17:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -1371,7 +1402,7 @@
       "titleEn": "Zed Editor Releases v1.19.1",
       "lang": "en",
       "publishedAt": "2026-09-09T11:09:47.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "editor",
         "github",
@@ -1553,7 +1584,15 @@
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "hot",
-      "contentSnippet": "While end-to-end benchmarks like SWE-bench provide broad performance scores for AI agents, they are often expensive, slow, and lack the root-cause diagnostics needed to explain exactly where an agent's logic broke down. To solve this, developers should adopt behavioral evaluations—fast, local, unit-style tests that assert on discrete intermediate actions, such as verifying specific tool calls or file modifications rather than final string equality. By building these inexpensive micro-checks alongside macro benchmarks, engineering teams can confidently iterate on system prompts and upgrade models without the risk of regressions."
+      "contentSnippet": "While end-to-end benchmarks like SWE-bench provide broad performance scores for AI agents, they are often expensive, slow, and lack the root-cause diagnostics needed to explain exactly where an agent's logic broke down. To solve this, developers should adopt behavioral evaluations—fast, local, unit-style tests that assert on discrete intermediate actions, such as verifying specific tool calls or file modifications rather than final string equality. By building these inexpensive micro-checks alongside macro benchmarks, engineering teams can confidently iterate on system prompts and upgrade models without the risk of regressions.",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/BehavioralEvaliationMeta.2e16d0ba.fill-1200x600.jpg",
+        "origSrc": "https://storage.googleapis.com/gweb-developer-goog-blog-assets/images/BehavioralEvaliationMeta.2e16d0ba.fill-1200x600.jpg",
+        "alt": "The Anatomy of Harness Engineering: How to Evaluate, Iterate, and Guard AI Coding Agents",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "b742920b4f129b1d",
@@ -2443,7 +2482,7 @@
       "titleEn": "Zed Editor Releases v1.18.1",
       "lang": "en",
       "publishedAt": "2026-09-04T16:59:05.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "bug-fix",
         "editor",
@@ -2503,8 +2542,8 @@
       }
     },
     {
-      "id": "855d6eb9ada55a72",
-      "source": "github-copilot",
+      "id": "43dc5941df4bfd39",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/project-hydrafusion-frontier-quality-via-multi-model-orchestration/",
       "title": "Project HydraFusion: Frontier quality via multi-model orchestration",
@@ -2514,7 +2553,7 @@
       "summaryEn": "GitHub Copilot research preview HydraFusion routes selective coding tasks across models. Offline tests matched or beat the Opus 5 baseline at lower estimated cost, enabling more efficient developer assistance.",
       "lang": "en",
       "publishedAt": "2026-09-04T16:04:14.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "copilot",
         "github",
@@ -2526,8 +2565,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -2537,7 +2574,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "b3860ff03421d355",
@@ -2549,7 +2588,7 @@
       "titleEn": "Zed Editor Releases v1.19.1-pre",
       "lang": "en",
       "publishedAt": "2026-09-04T16:00:43.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "bug-fix",
         "dev-containers",
@@ -3026,8 +3065,8 @@
       "evergreen": true
     },
     {
-      "id": "b68f08d5b78fdf2b",
-      "source": "github-copilot",
+      "id": "d94b84bc16af2780",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-run-several-agents-at-once/",
       "title": "GitHub Copilot app for Beginners: Run several agents at once",
@@ -3037,7 +3076,7 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "agent",
         "copilot",
@@ -3049,7 +3088,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -3060,7 +3098,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -3271,7 +3310,7 @@
       "summaryEn": "GitHub Podcast unpacks nine emerging AI-development terms, from Ralph loops and harness engineering to open weights, helping developers assess evolving practices and labels.",
       "lang": "en",
       "publishedAt": "2026-09-02T21:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "ai-terminology",
         "developer-workflows",
@@ -3376,7 +3415,7 @@
       "titleEn": "Zed Editor Releases v1.18.0",
       "lang": "en",
       "publishedAt": "2026-09-02T18:13:31.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "debugging",
         "editor",
@@ -3400,8 +3439,8 @@
       }
     },
     {
-      "id": "c3242eb99cc5f08b",
-      "source": "github-copilot",
+      "id": "dd3872b4a6c4bf09",
+      "source": "github-blog-ai",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/",
       "title": "How we make AI coding more cost efficient without sacrificing task quality",
@@ -3411,7 +3450,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -3423,7 +3462,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -3434,7 +3472,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6625a77e4710b219",
@@ -3446,7 +3485,7 @@
       "titleEn": "Visual Studio Code 1.136 Release Notes",
       "lang": "en",
       "publishedAt": "2026-09-02T17:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "release",
         "release-notes",
@@ -3513,7 +3552,7 @@
       "titleEn": "Proactive cyber defense for governments and enterprises",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-09T10:14:19.501Z",
+      "collectedAt": "2026-09-13T16:42:01.871Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -3880,7 +3919,7 @@
       "titleEn": "Self-hosted machines",
       "lang": "en",
       "publishedAt": "2026-09-02T00:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "changelog",
         "cloud-agents",
@@ -4269,7 +4308,7 @@
       "titleEn": "Introducing agentic video understanding with Gemini",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-09T10:14:19.501Z",
+      "collectedAt": "2026-09-13T16:42:01.871Z",
       "tags": [
         "agent",
         "deepmind",
@@ -4644,7 +4683,7 @@
       "titleEn": "Developing Enterprise Frontier Safeguards with our customers",
       "lang": "en",
       "publishedAt": "2026-09-01T00:00:00.000Z",
-      "collectedAt": "2026-09-13T06:53:00.613Z",
+      "collectedAt": "2026-09-13T12:23:31.427Z",
       "tags": [
         "ai-safety",
         "anthropic",

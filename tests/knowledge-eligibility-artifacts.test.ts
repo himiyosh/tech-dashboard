@@ -52,6 +52,7 @@ import {
 } from "../web/src/lib/detail-addressability.ts";
 import { entryDestination } from "../web/src/lib/entry-destination.ts";
 import { knowledgeEligibility } from "../web/src/lib/knowledge-eligibility.ts";
+import { isSourceTextUnverifiable } from "../harness/pipeline/feed-snippet.ts";
 import { detailPath } from "../web/src/lib/route-inventory.ts";
 import { SOURCE_META, canonicalSourceUrl } from "../web/src/lib/source-meta.ts";
 import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
@@ -248,7 +249,16 @@ describe("Knowledge exclusion contract (live + archive corpus)", () => {
     // The stored flag is derived, not hand-maintained (harness/pipeline/
     // normalize.ts). If the announcement / availability contract were loosened,
     // the next restamp would drop the flag and leak these into Knowledge.
-    const eligible = CORPUS_EXCLUSIONS
+    //
+    // Records the article excerpt lane enriched before feedSnippet existed are
+    // out of scope: their contentSnippet is fetched article prose and the feed
+    // text they were judged on is gone, so "the raw snippet alone" has no
+    // answer to give (feed-snippet.ts isSourceTextUnverifiable). The stored
+    // flag is the only evidence left, and the assertion above already pins it;
+    // entry-merge restores the feed text on the next re-collection.
+    const verifiable = CORPUS_EXCLUSIONS.filter((record) => !isSourceTextUnverifiable(record));
+    expect(verifiable.length, "全ての exclusion が検証不能ではない").toBeGreaterThan(0);
+    const eligible = verifiable
       .filter((record) => knowledgeEligibility({ ...record, knowledgeEligible: undefined }).eligible)
       .map(describeRecord);
     expect(eligible).toEqual([]);

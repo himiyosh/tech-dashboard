@@ -24,10 +24,6 @@ interface Props {
 }
 
 const { chat } = Astro.props;
-const cast = [
-  { key: "a" as const, persona: ARTICLE_CHAT_PERSONAS.a },
-  { key: "b" as const, persona: ARTICLE_CHAT_PERSONAS.b },
-];
 ---
 
 <section class="ed-chat" aria-labelledby="ed-chat-heading" data-article-chat>
@@ -49,24 +45,6 @@ const cast = [
     </span>
   </header>
 
-  <ul class="ed-chat-cast" role="list">
-    {cast.map(({ key, persona }) => (
-      <li class={`ed-chat-castcard ${key}`}>
-        <span class="ed-chat-face" aria-hidden="true">{persona.emoji}</span>
-        <span class="ed-chat-castmeta">
-          <span class="ed-chat-castname">
-            <span class="i18n-ja">{persona.nameJa}</span>
-            <span class="i18n-en" lang="en">{persona.nameEn}</span>
-          </span>
-          <span class="ed-chat-castrole">
-            <span class="i18n-ja">{persona.roleJa}</span>
-            <span class="i18n-en" lang="en">{persona.roleEn}</span>
-          </span>
-        </span>
-      </li>
-    ))}
-  </ul>
-
   <ol class="ed-chat-list" role="list">
     {chat.map((turn, index) => {
       const persona = ARTICLE_CHAT_PERSONAS[turn.s];
@@ -74,7 +52,7 @@ const cast = [
         <li
           class={`ed-chat-turn ed-chat-${turn.s}`}
           data-reveal="chat-turn"
-          style={`--reveal-index:${index}`}
+          style={`--reveal-index:${index};--chat-emoji:"${persona.emoji}"`}
         >
           <span class={`ed-chat-face ${turn.s}`} aria-hidden="true">{persona.emoji}</span>
           <div class="ed-chat-bubble">
@@ -146,44 +124,18 @@ const cast = [
     letter-spacing: 0.01em;
   }
   .ed-chat-origin {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
+    /* Block, not flex: as a flex row the note wrapped inside its own column and
+       every line after the first sat indented under the AI badge. */
     margin: 0;
     font-size: 0.76rem;
     line-height: 1.5;
     color: var(--muted);
   }
+  .ed-chat-origin .ai-badge {
+    margin-right: 6px;
+  }
 
   /* ---- cast cards ---------------------------------------------------- */
-  .ed-chat-cast {
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin: 0 0 16px;
-    padding: 0;
-  }
-  .ed-chat-castcard {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-  }
-  .ed-chat-castcard.a { border-left: 3px solid var(--chat-a); }
-  .ed-chat-castcard.b { border-left: 3px solid var(--chat-b); }
-  .ed-chat-castcard .ed-chat-face { width: 32px; height: 32px; font-size: 1rem; }
-  .ed-chat-castmeta { display: flex; flex-direction: column; min-width: 0; }
-  .ed-chat-castname { font-weight: 700; font-size: 0.85rem; }
-  .ed-chat-castrole {
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-
   /* ---- bubbles ------------------------------------------------------- */
   .ed-chat-list {
     list-style: none;
@@ -278,9 +230,38 @@ const cast = [
     transition-delay: calc(var(--reveal-index, 0) * 70ms);
   }
 
+  /* Phones read this as prose, not as a messaging app. Measured at 375px the
+     old layout gave the bubble 241px of text at 13.5px while the article body
+     had 305px at 16.5px, so the generated conversation was the smallest
+     long-form text on the page and every turn re-indented the left edge
+     (avatar 34px + 10px gap, alternating sides). Here the avatar moves into
+     the name row, every bubble starts at the same edge, and the text matches
+     the reading size of the body. */
   @media (max-width: 640px) {
     .ed-chat { padding: 16px 12px 12px; }
-    .ed-chat-turn { max-width: 100%; }
-    .ed-chat-cast { grid-template-columns: 1fr; }
+    .ed-chat-turn {
+      max-width: 100%;
+      align-self: stretch;
+      flex-direction: row;
+      gap: 0;
+    }
+    .ed-chat-turn .ed-chat-face { display: none; }
+    .ed-chat-bubble { padding: 10px 12px 11px; }
+    .ed-chat-bubble::before { display: none; }
+    .ed-chat-name {
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ed-chat-name::before {
+      content: var(--chat-emoji, "");
+      font-size: 1.1em;
+      line-height: 1;
+    }
+    .ed-chat-text {
+      font-size: 1.05rem;
+      line-height: 1.85;
+    }
   }
 </style>

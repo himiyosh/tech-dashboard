@@ -281,13 +281,16 @@ describe("sitemap", () => {
       expect(detailRobotsContent(entry)).toBe(DETAIL_ROBOTS_INDEX);
     }
     for (const entry of notIndexable) {
-      // Exactly three reasons are allowed to keep a page out of the index:
-      // no real body yet, an excluded lane, or a publication-gate hold
-      // (the route exists as noindex until the release drip frees it).
-      // Anything else means the gate grew a rule nobody declared.
+      // Exactly four reasons are allowed to keep a page out of the index
+      // (isIndexableDetailEntry, in the order it applies them): a
+      // publication-gate hold, a cold or dropped archive tier, an excluded
+      // lane, or no real body yet. Each one keeps the route reachable as
+      // noindex so listing cards still land in-site. Anything else means the
+      // gate grew a rule nobody declared.
       const excludedLane = NON_INDEXABLE_SOURCE_TYPES.has(String(entry.sourceType));
+      const decayedTier = entry.archiveTier === "cold" || entry.archiveTier === "dropped";
       expect(
-        !hasRealBody(entry) || excludedLane || entry.publicationHold === true,
+        !hasRealBody(entry) || excludedLane || entry.publicationHold === true || decayedTier,
         `${entry.id} is non-indexable for an undeclared reason`,
       ).toBe(true);
       expect(urls.has(canonical(detailPath(entry.id)))).toBe(false);

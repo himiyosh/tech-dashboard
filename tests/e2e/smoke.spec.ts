@@ -12879,4 +12879,61 @@ test.describe("TECH Dashboard smoke", () => {
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
       .toBe(true);
   });
+
+  test("the article chat reads as prose on phones and drops the cast introduction", async ({ page }) => {
+    // The chat used to open with two cast cards (name + role) and indent every
+    // bubble behind a 34px avatar, alternating sides. Measured at 375px that
+    // left 241px of text at 13.5px while the article body had 305px at 16.5px,
+    // so the generated conversation was the smallest long-form text on the
+    // page. The cast introduction is gone, and on phones the avatar moves into
+    // the name row so each bubble starts at the same edge.
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: unknown }>;
+    };
+    const chatEntry = index.entries.find((entry) => (
+      Array.isArray(bodyFile.bodies[entry.id]?.chat)
+      && isBuiltDetailEntry(entry as never)
+    ));
+    expect(chatEntry, "the corpus contains a built detail route carrying a chat").toBeTruthy();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/e/${chatEntry!.id}/`);
+    const chat = page.locator("[data-article-chat]");
+    await expect(chat).toBeVisible();
+    await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
+    const bubbles = chat.locator(".ed-chat-bubble");
+    await expect(bubbles).toHaveCount(6);
+    // Desktop keeps the messaging layout: avatars outside, sides alternating.
+    await expect(chat.locator(".ed-chat-turn .ed-chat-face").first()).toBeVisible();
+    const desktopLefts = await bubbles.evaluateAll((nodes) =>
+      [...new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().left)))],
+    );
+    expect(desktopLefts.length, "desktop alternates the bubble sides").toBeGreaterThan(1);
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await chat.scrollIntoViewIfNeeded();
+    const mobile = await chat.evaluate((node) => {
+      const bubble = node.querySelector(".ed-chat-bubble")!;
+      const text = node.querySelector(".ed-chat-text.i18n-ja")!;
+      const face = node.querySelector(".ed-chat-turn .ed-chat-face")!;
+      const name = node.querySelector(".ed-chat-name")!;
+      return {
+        lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
+          Math.round(el.getBoundingClientRect().left)))],
+        textWidth: Math.round(text.getBoundingClientRect().width),
+        fontSize: Number.parseFloat(getComputedStyle(text).fontSize),
+        faceDisplay: getComputedStyle(face).display,
+        nameEmoji: getComputedStyle(name, "::before").content,
+        bubbleWidth: Math.round(bubble.getBoundingClientRect().width),
+      };
+    });
+    expect(mobile.lefts, "every phone bubble starts at the same edge").toHaveLength(1);
+    expect(mobile.faceDisplay, "the avatar column is reclaimed on phones").toBe("none");
+    expect(mobile.nameEmoji, "the speaker emoji moves into the name row").not.toBe("none");
+    expect(mobile.fontSize, "phone chat text is at least 15px").toBeGreaterThanOrEqual(15);
+    expect(mobile.textWidth, "phone chat text keeps a readable measure").toBeGreaterThan(275);
+  });
 });

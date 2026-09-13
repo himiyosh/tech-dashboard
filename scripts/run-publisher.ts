@@ -671,7 +671,7 @@ export async function runPublisherCli(
     GITHUB_BRANCH: "main",
     SUMMARY_CACHE: summaryCache,
     COPILOT_PAT: "",
-    SUMMARIZE_MODEL: "claude-sonnet-4.6",
+    SUMMARIZE_MODEL: "claude-sonnet-5",
     SUMMARIZE_MAX_NEW: "0",
     SUMMARIZE_TIMEOUT_MS: "25000",
     SUMMARIZE_CONCURRENCY: "2",

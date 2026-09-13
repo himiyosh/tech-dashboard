@@ -220,7 +220,7 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
 
   const pat = env.COPILOT_PAT;
   const chain = parseModelChain(
-    env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+    env.SUMMARIZE_MODEL || "claude-sonnet-5",
     env.SUMMARIZE_MODEL_FALLBACKS,
   );
   const timeoutMs = Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS);
@@ -229,7 +229,7 @@ async function processJob(env: Env, job: SummaryJob): Promise<void> {
     throw new Error(`insufficient source grounding for ${job.url}`);
   }
 
-  // Summary-only prompt (LL-106). claude-sonnet-4.6 emits opaque reasoning
+  // Summary-only prompt (LL-106). the Claude fallback emits opaque reasoning
   // tokens that count against max_tokens; asking for a long bilingual body in
   // the same call exhausts the budget and the chat endpoint returns
   // {"choices":[]} (empty) -> "incomplete summary" -> ZERO summaries written.
@@ -383,9 +383,9 @@ export default {
         {
           ok,
           role: "queue-consumer",
-          model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+          model: env.SUMMARIZE_MODEL || "claude-sonnet-5",
           modelFallbacks: parseModelChain(
-            env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+            env.SUMMARIZE_MODEL || "claude-sonnet-5",
             env.SUMMARIZE_MODEL_FALLBACKS,
           ).slice(1),
           timeoutMs: Number(env.SUMMARIZE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),

@@ -1397,7 +1397,7 @@ export async function runHarness(
       + ` enriched=${excerptStats.enriched} unavailable=${excerptStats.unavailable} deferred=${excerptStats.deferred}`,
   );
 
-  const model = env.SUMMARIZE_MODEL || "claude-sonnet-4.6";
+  const model = env.SUMMARIZE_MODEL || "claude-sonnet-5";
   const maxNew = Number(env.SUMMARIZE_MAX_NEW || "25");
   const inlineSummarizeEnabled = maxNew > 0;
 
@@ -2723,7 +2723,7 @@ export default {
         try {
           const body = big
             ? {
-                model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+                model: env.SUMMARIZE_MODEL || "claude-sonnet-5",
                 temperature: 0.2,
                 max_tokens: 2400,
                 messages: [
@@ -2740,7 +2740,7 @@ export default {
                 ],
               }
             : {
-                model: env.SUMMARIZE_MODEL || "claude-sonnet-4.6",
+                model: env.SUMMARIZE_MODEL || "claude-sonnet-5",
                 max_tokens: 10,
                 messages: [{ role: "user", content: "Reply with exactly: OK" }],
               };

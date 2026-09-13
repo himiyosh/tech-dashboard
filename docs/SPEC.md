@@ -355,7 +355,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 ### 5.1 要約 API
 
 - エンドポイント: GitHub Copilot Enterprise Chat Completions (`https://api.githubcopilot.com/chat/completions`)
-- モデル: `claude-sonnet-4.6` (`SUMMARIZE_MODEL` で変更可)
+- モデル: `claude-sonnet-5` (`SUMMARIZE_MODEL` で変更可)
 - 認証: `COPILOT_PAT` → 一時トークン交換を自動実行 (`x-github-token` ヘッダ経由)
 - 出力: JSON `{ titleJa, summaryJa, summaryEn }` を期待。本文は専用 body consumer が別生成する
 

@@ -33,10 +33,10 @@ id = "6d67debb991742efadfec473a121f5fc"
 # parse+grounding pass across the gpt-5.6 variants, natural Japanese,
 # 3.6-12.7s per call (R-007 / LL-010 small-batch gate). These models are
 # /responses-only and the worker routes them there
-# (worker/src/copilot-client.ts); claude-sonnet-4.6 stays last in the chain
+# (worker/src/copilot-client.ts); claude-sonnet-5 stays last in the chain
 # as the battle-tested safety net on /chat/completions.
 SUMMARIZE_MODEL = "gpt-5.6-sol"
-SUMMARIZE_MODEL_FALLBACKS = "gpt-5.6-terra,gpt-5.6-luna,claude-sonnet-4.6"
+SUMMARIZE_MODEL_FALLBACKS = "gpt-5.6-terra,gpt-5.6-luna,claude-sonnet-5"
 # Summary-only generation normally completes well below one minute. Bound each
 # attempt so a malformed or stalled response releases the queue slot quickly.
 SUMMARIZE_TIMEOUT_MS = "60000"

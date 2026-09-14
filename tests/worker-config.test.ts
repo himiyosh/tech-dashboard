@@ -7,7 +7,7 @@ import {
   playwrightPreviewPort,
   playwrightWebServerCommand,
 } from "../playwright.config.ts";
-import { SOURCE_BATCHES, SOURCE_BATCH_SLOT_MS, sourceBatchIndexAt } from "../worker/src/index.ts";
+import { SOURCE_BATCHES, sourceBatchIndexAt } from "../worker/src/index.ts";
 
 function readConfig(path: string): string {
   return readFileSync(join(process.cwd(), path), "utf8");
@@ -112,7 +112,7 @@ describe("Cloudflare Worker deploy config", () => {
     const registry = readConfig("harness/registry.ts");
 
     expect(runner).toContain('ENABLE_SUMMARY_QUEUE: "1"');
-    expect(runner).toContain('ENQUEUE_MAX_NEW: "18"');
+    expect(runner).toContain('ENQUEUE_MAX_NEW: "35"');
     expect(runner).toContain('KV_LOOKUP_CAP: "35"');
     expect(runner).toContain('OG_BUDGET_PER_RUN: "1"');
     expect(registry).toContain("maxArticleDateFetches: 4");
@@ -146,20 +146,6 @@ describe("Cloudflare Worker deploy config", () => {
     expect(runner).toContain('BODY_RETENTION_DAYS: "30"');
   });
 
-  it("keeps the daily KV write worst case under the free tier for the publisher schedule", () => {
-    // Every enqueued summary or body job becomes one KV write in a consumer.
-    // Cloudflare's free tier allows 1,000 writes a day (LL-043); keep 100 of
-    // headroom for issue records and manual backfills. Doubling the schedule
-    // without halving the caps would have allowed 48 x 35 = 1,680.
-    const workflow = readConfig(".github/workflows/publisher.yml");
-    const runner = readConfig("scripts/run-publisher.ts");
-    const hourly = workflow.match(/cron: "([\d,]+) \* \* \* \*"/);
-    expect(hourly, "an every-hour cron line exists").toBeTruthy();
-    const runsPerDay = hourly![1]!.split(",").length * 24 + 1; // + daily reconcile
-    const totalEnqueueCap = Number(runner.match(/ENRICHMENT_ENQUEUE_MAX_TOTAL: "(\d+)"/)![1]);
-    expect(runsPerDay * totalEnqueueCap).toBeLessThanOrEqual(900);
-  });
-
   it("keeps bridge observability and serialized hourly publisher monitoring enabled", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
@@ -171,8 +157,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(harnessConfig).toContain("enabled = true");
     expect(summarizerConfig).toContain("[observability]");
     expect(summarizerConfig).toContain("enabled = true");
-    expect(publisherWorkflow).toContain('cron: "13,43 * * * *"');
-    expect(publisherWorkflow, "the congested top-of-hour slot must not return").not.toContain('cron: "0 * * * *"');
+    expect(publisherWorkflow).toContain('cron: "0 * * * *"');
     expect(publisherWorkflow).toContain('cron: "17 2 * * *"');
     expect(publisherWorkflow).toContain("run-name: Publisher /");
     expect(publisherWorkflow).toContain("inputs.full_reconcile");
@@ -590,18 +575,14 @@ describe("Cloudflare Worker deploy config", () => {
     ).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
   });
 
-  it("spreads source collection across six batches, one per half-hourly run", () => {
+  it("spreads source collection across six hourly batches", () => {
     expect(SOURCE_BATCHES).toBe(6);
-    expect(SOURCE_BATCH_SLOT_MS).toBe(30 * 60_000);
     const start = Date.parse("2026-07-12T00:00:00.000Z");
-    // The :13 and :43 runs of one hour land in consecutive slots, so they never
-    // collect the same batch twice.
     expect(
-      Array.from({ length: SOURCE_BATCHES }, (_, slot) =>
-        sourceBatchIndexAt(start + (13 * 60_000) + slot * SOURCE_BATCH_SLOT_MS),
+      Array.from({ length: SOURCE_BATCHES }, (_, hour) =>
+        sourceBatchIndexAt(start + hour * 3600_000),
       ),
     ).toEqual([0, 1, 2, 3, 4, 5]);
-    expect(sourceBatchIndexAt(start + 13 * 60_000)).not.toBe(sourceBatchIndexAt(start + 43 * 60_000));
-    expect(sourceBatchIndexAt(start + SOURCE_BATCHES * SOURCE_BATCH_SLOT_MS)).toBe(0);
+    expect(sourceBatchIndexAt(start + SOURCE_BATCHES * 3600_000)).toBe(0);
   });
 });

@@ -677,19 +677,16 @@ export async function runPublisherCli(
     SUMMARIZE_CONCURRENCY: "2",
     SUMMARY_QUEUE: new DeferredQueueBatchBinding("summary", effects),
     ENABLE_SUMMARY_QUEUE: "1",
-    ENQUEUE_MAX_NEW: "18",
+    ENQUEUE_MAX_NEW: "35",
     KV_LOOKUP_CAP: "35",
     OG_BUDGET_PER_RUN: "1",
     BODY_QUEUE: new DeferredQueueBatchBinding("body", effects),
     ENABLE_BODY_QUEUE: "1",
-    // Halved when the schedule moved to twice an hour (publisher.yml): the
-    // hourly throughput stays the same and the daily KV write worst case
-    // (runs/day x ENRICHMENT_ENQUEUE_MAX_TOTAL) stays under the free tier.
-    ENRICHMENT_ENQUEUE_MAX_TOTAL: "18",
-    BODY_ENQUEUE_MAX_NEW: "18",
-    BODY_LOOKUP_CAP: "18",
+    ENRICHMENT_ENQUEUE_MAX_TOTAL: "35",
+    BODY_ENQUEUE_MAX_NEW: "35",
+    BODY_LOOKUP_CAP: "35",
     BODY_RETENTION_DAYS: "30",
-    ARTICLE_FETCH_CAP: "20",
+    ARTICLE_FETCH_CAP: "40",
   };
   const result = await (dependencies.runHarness ?? runHarness)(publisherEnv, {
     commitFiles,

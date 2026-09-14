@@ -68,7 +68,7 @@
 
 | 項目 | 値 |
 |---|---|
-| Schedule | `13,43 * * * *` (UTC) |
+| Schedule | `0 * * * *` (UTC) |
 | 実行頻度 | **毎時 / 24 run×日** |
 | ソースローテーション | Publisher対象ソース ÷ 6 batch (`hour % 6`)、個別ソースはおおむね6時間ごと |
 | 1 実行あたり Queue 投入上限 | `ENQUEUE_MAX_NEW = 35` |
@@ -580,7 +580,7 @@ gh workflow run publisher.yml -f dry_run=true
 |---|---|---|---|
 | `/health` | GET | public | Free bridgeのmode、binding、OIDC設定を確認 |
 | bridge operations | POST | GitHub Actions OIDC | allowlist済みKV read/write、Queue送信 |
-| Publisher | GitHub Actions | repository permissions | `13,43 * * * *` / `workflow_dispatch` |
+| Publisher | GitHub Actions | repository permissions | `0 * * * *` / `workflow_dispatch` |
 
 ## 付録 B. コミット規約
 

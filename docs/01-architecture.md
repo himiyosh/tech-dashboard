@@ -66,7 +66,7 @@ Production では registry の有効ソースを対象とする。Publisher 実�
 │              GitHub Actions Publisher (Node 22)              │
 │                   = Runtime Harness Loop                     │
 └──────────────────┬──────────────────────────────────────────┘
-                   │ cron: 13,43 * * * * (6 batch rotation, 30 分ごと)
+                   │ cron: 0 * * * * (6 batch rotation)
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Node Harness (shared collectors/pipeline)                   │

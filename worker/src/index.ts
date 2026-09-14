@@ -190,14 +190,8 @@ export const SOURCE_BATCHES = 6;
 // per-invocation budget. See LL-034.
 const SUMMARIZE_ATTEMPTS = 1;
 
-/** One source batch per scheduled run: the publisher runs twice an hour. */
-export const SOURCE_BATCH_SLOT_MS = 30 * 60_000;
-
 export function sourceBatchIndexAt(nowMs: number): number {
-  // Rotating per hour would make the second run of each hour re-collect the
-  // batch the first run fetched 30 minutes earlier; per half hour every run
-  // collects new sources and each source is visited every 3 hours.
-  return Math.floor(nowMs / SOURCE_BATCH_SLOT_MS) % SOURCE_BATCHES;
+  return Math.floor(nowMs / 3600_000) % SOURCE_BATCHES;
 }
 
 export function assertSafePublisherEntryCount(

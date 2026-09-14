@@ -12,7 +12,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 
 | 処理 | 実行主体 | トリガ | 失効時の影響 | 監視 |
 |---|---|---|---|---|
-| ソース収集 (registry sources) | GitHub Actions `Publisher` (Node 22) | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint または snapshot 不一致時は publish を自動停止 | Publisher workflow / `/status` |
+| ソース収集 (registry sources) | GitHub Actions `Publisher` (Node 22) | Cron `13,43 * * * *` (1 時間に 2 回) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint または snapshot 不一致時は publish を自動停止 | Publisher workflow / `/status` |
 | 日本語/英語要約 (`summary*`) | Publisher → OIDC bridge → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-5) | 検証済み publish 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
 | 記事本文 (`data/bodies.json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を retention 対象にし、さらに実運用の byte budget (`DEFAULT_BODY_BUDGET_TARGET_BYTES` = 9MB、`tests/data-schema.test.ts` の 10MB hard ceiling には 1MB の余裕) を必ず超えないよう importance 1 (直近のみ) → 2 → 3 → evergreen の順で最古から deterministic に prune する (evergreen は最優先=最後に prune、絶対的な免除ではない、LL-411)。consumer が JA/EN を 2 call で生成して publisher が sidecar へ merge | 対象外・budget 超過で prune・本文無しの記事は要約主役の表示にフォールバック (原文リンクは維持、偽の生成予告は出さない) | `health.bodyBacklog` / `health.bodyQueueDrainEstimateHours` / `health.bodiesTotal` / `health.bodyBudgetBytes` / `health.bodyBudgetTargetBytes` / `health.bodyBudgetPruned` |
 | summary deterministic fallback | Publisher / `scripts/apply-summary-cache.mjs` | data commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
@@ -402,7 +402,7 @@ npm run deploy -- --dry-run
 npx wrangler deploy
 ```
 
-Publisher workflow は `0 * * * *` (毎時) で起動し、`17 2 * * *` (毎日 02:17 UTC / 11:17 JST) にfull reconciliationを追加実行します。registry の有効 source を 6 バッチでローテーション収集するため、**個別 source の再収集はおおむね 6 時間周期**です。runner は開始時に checkout と remote main の HEAD SHA を一致確認し、その immutable SHA から publisher contract、index、bodies、archive、stats を読みます。生成後に main が進んでいれば stale snapshot の commit と effects flushを中止し、次 run へ持ち越します。
+Publisher workflow は `13,43 * * * *` (1 時間に 2 回、GitHub の予約実行が混み合う毎時 0 分を避ける) で起動し、`17 2 * * *` (毎日 02:17 UTC / 11:17 JST) にfull reconciliationを追加実行します。registry の有効 source を 6 バッチでローテーション収集するため、**個別 source の再収集はおおむね 6 時間周期**です。runner は開始時に checkout と remote main の HEAD SHA を一致確認し、その immutable SHA から publisher contract、index、bodies、archive、stats を読みます。生成後に main が進んでいれば stale snapshot の commit と effects flushを中止し、次 run へ持ち越します。
 
 毎時のdata差分runはsecret scan、data schema、Publisher/impact regression、route-family growth、snapshot CASを通し、生成対象のdata fileだけをstageしてnon-force pushします。impact manifestは変更detail/body ID、archive月、category/tag、全件再計算が必要なaggregate familyを`$RUNNER_TEMP`へ記録します。毎日・manual full reconciliationは追加でroot/Worker typecheck、全unit、Astro + Pagefind build、Publisher E2Eを実行します。Queue と `og.v1` KV write は `$RUNNER_TEMP` の bundleへ遅延し、data push成功後だけ bridgeへ flushします。data差分がない runも final snapshot CASとcontract確認後に Queue / KV effectsだけをflushできます。collapse guardやCAS失敗時は effects bundleを保存しません。新しい repository secretは不要です。GitHub commitは built-in `GITHUB_TOKEN`、bridgeは専用 audienceのGitHub Actions OIDCを使います。
 

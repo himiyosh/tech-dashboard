@@ -3,7 +3,14 @@ run-name: Publisher / ${{ github.event_name == 'schedule' && github.event.schedu
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    # Twice an hour at :13 and :43. The former "0 * * * *" sat in GitHub's most
+    # congested scheduling slot and only 5-9 of its 24 daily runs ever launched
+    # (2026-08-30 .. 09-13), so the site refreshed every ~3h and Worker Health
+    # failed 18 times on "publisher run is stale". Two off-peak slots keep the
+    # site fresh when some launches are still dropped; the per-run enrichment
+    # caps in scripts/run-publisher.ts are halved to keep the daily KV write
+    # budget (tests/worker-config.test.ts pins runs/day x cap).
+    - cron: "13,43 * * * *"
     - cron: "17 2 * * *"
   workflow_dispatch:
     inputs:

@@ -219,10 +219,10 @@ describe("GitHub Actions publisher runner", () => {
     ).resolves.toBe(0);
 
     expect(capturedEnv).toMatchObject({
-      ENQUEUE_MAX_NEW: "35",
-      ENRICHMENT_ENQUEUE_MAX_TOTAL: "35",
-      BODY_ENQUEUE_MAX_NEW: "35",
-      BODY_LOOKUP_CAP: "35",
+      ENQUEUE_MAX_NEW: "18",
+      ENRICHMENT_ENQUEUE_MAX_TOTAL: "18",
+      BODY_ENQUEUE_MAX_NEW: "18",
+      BODY_LOOKUP_CAP: "18",
     });
   });
 

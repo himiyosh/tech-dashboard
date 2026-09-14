@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-14T07:53:52.935Z",
-  "count": 1016,
+  "generatedAt": "2026-09-14T12:01:37.061Z",
+  "count": 1008,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -2548,44 +2548,6 @@
         }
       ]
     },
-    "5d4f013c004a1be6": {
-      "bodyJa": "AI開発ツール市場が新たな局面を迎えている。長らく事実上の標準とされてきたGitHub Copilotに対し、複数の競合が月額100ドル前後の高価格帯プランを相次いで投入し、その独占的な地位が揺らぎ始めていると見られる。\n\n背景にあるのは、AIコーディング支援の高度化だ。かつてのCopilotは、コードの補完や短いスニペット生成が中心だった。しかし近年は、コードベース全体を理解して複数ファイルにまたがる変更を自律的に実行する「エージェント型」の機能が主流になりつつある。こうした機能は大規模言語モデル(LLM)を大量に呼び出すため推論コストが跳ね上がり、従来の月額10〜20ドル程度のプランでは採算が合いにくくなっている面がある。\n\n競合の動きも活発だ。エディタ一体型で人気を集めるCursorや、Anthropicが提供するClaude Code、さらにWindsurfなどが、ヘビーユーザー向けに高価格帯のプランを用意している。GitHub自身もCopilotで上位プランや従量課金の仕組みを整えており、価格と提供価値の設計が各社の競争軸になっている。加えて、Amazon Q DeveloperやGoogleのGemini Code Assistといったクラウド大手のツールも選択肢に加わり、市場はかつてないほど多様化している。\n\n開発者にとっての焦点は、高価格が実際の生産性に見合うかどうかだ。エージェント機能は大規模なリファクタリングやテスト生成で威力を発揮する一方、生成結果の検証やレビューには依然として人間の手間がかかる。利用頻度やチームの開発スタイルによって費用対効果は大きく変わるため、一律に「高い」「安い」と断じにくい。\n\n今後は、単純な月額固定制から、利用量に応じた課金や、使用するモデルを選べる柔軟なプランへと移行が進む可能性がある。Copilot一強とされた構図は流動化しつつあり、開発者は自身のワークフローに照らして各ツールを見極める姿勢が求められそうだ。",
-      "bodyEn": "For years, GitHub Copilot effectively set the template for what an AI coding assistant should look like and cost, offering individual developers inline code suggestions for around ten dollars a month. That reference point is now being unsettled as a growing number of tools introduce premium tiers priced near one hundred dollars a month. The shift matters because it signals both rising compute costs and a broader transition away from simple autocomplete toward more autonomous, agent-driven development workflows.\n\nThe price escalation is closely tied to a change in what these tools actually do. Early assistants primarily predicted the next few lines of code, a task that could run on relatively lightweight models. The newer generation aims to plan multi-step changes, edit across many files, run tests, and iterate on errors with limited human intervention. That style of \"agentic\" work consumes far more tokens per task, often relies on the most capable frontier models, and can involve large context windows that keep entire repositories in view. Each of those factors raises the underlying inference bill, which vendors appear to be passing along through higher-priced plans.\n\nGitHub Copilot itself has moved in this direction, layering business and enterprise tiers on top of its original individual plan and adding agent-style features alongside its chat and completion tools. Competitors have pushed further into the premium bracket. Cursor, an AI-native code editor built as a fork of Visual Studio Code, offers higher-cost tiers aimed at heavy users of its agent features. Anthropic's Claude Code and various command-line and IDE integrations position frontier-model access as a core selling point, where usage can accumulate quickly. Windsurf, formerly known as Codeium, and Cognition's Devin, marketed as an autonomous software engineering agent, similarly reflect the trend toward tools that promise to complete substantial tasks rather than merely assist with typing.\n\nA recurring theme in this segment is the tension between subscription pricing and usage-based billing. Because agent runs vary widely in cost, several vendors combine a flat monthly fee with credits, request limits, or metered overages once a quota is exceeded. This makes headline prices harder to compare directly, since a nominal hundred-dollar plan may still incur additional charges under heavy workloads. Some providers also let developers supply their own API keys, shifting model costs onto the user and blurring the line between paying for the tool and paying for the underlying model.\n\nFor developers weighing these options, the central question is whether the premium tiers deliver proportional value. The answer likely depends on how work is structured. Engineers who delegate large, well-scoped tasks to an agent, such as refactoring a module or scaffolding a feature, may recover the cost in saved time, whereas those who mainly want fast completions may find the cheaper tiers sufficient. Output quality remains uneven across languages, frameworks, and codebases, and agent runs can still produce plausible-looking but incorrect changes, so review overhead should be factored into any assessment of return on investment.\n\nIt is worth noting that the frontier model providers sit upstream of much of this market. OpenAI, Anthropic, and Google supply the models that many coding tools depend on, and they increasingly ship their own developer-facing products, from OpenAI's Codex-branded tooling to Google's Gemini Code Assist. That vertical positioning means the companies setting model prices are also competitors to the tools built on top of them, a dynamic that could influence margins and pricing across the ecosystem over time. Open-weight models and local inference offer a partial counterweight, potentially lowering costs for teams willing to self-host, though they generally trail the leading proprietary models on complex tasks.\n\nThe broader context is that AI coding is maturing from a single dominant product into a differentiated market with tiers spanning free, low-cost, and premium plans. Copilot retains significant advantages through its GitHub integration and large installed base, so describing its position as overturned would overstate the current situation. What appears more accurate is that its early monopoly on mindshare is eroding as rivals compete on agent capability, model choice, and pricing structure. For now, the practical takeaway for developers is to evaluate tools against their specific workflows and to read the fine print on usage limits, since the sticker price is only part of the total cost.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-18T01:33:37.029Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "月額100ドル前後のAI開発ツールが増えてるの？ それでCopilot一強が終わるってこと？",
-          "en": "More AI coding tools are offering plans around $100 a month? Does that mean Copilot’s dominance is over?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、複数のツールが高価格帯プランを投入し、Copilotの独占的地位が揺らぎつつあるそうじゃ。終わったと断定はしておらんよ。",
-          "en": "According to the article, several tools are entering the premium tier, challenging Copilot’s dominant position. It doesn’t claim that dominance is definitively over."
-        },
-        {
-          "s": "a",
-          "ja": "でも、それって開発者には何が嬉しいの？ 高いプランなら価値も高いとは限らないよね。",
-          "en": "But what’s the upside for developers? A pricier plan doesn’t automatically mean better value, right?"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事は開発者の視点から、どのツールが価格に見合う価値を提供するかを見極めようとしておる。",
-          "en": "Exactly. The article looks at these tools from a developer’s perspective, asking which ones actually provide enough value to justify the price."
-        },
-        {
-          "s": "a",
-          "ja": "つまり選択肢が増えたぶん、月額100ドル前後を払う価値があるか比べるのが大事なんだね。",
-          "en": "So with more options, the key is comparing whether any of them are really worth around $100 a month."
-        },
-        {
-          "s": "b",
-          "ja": "そういうことじゃな。今後の見どころは各ツールが価格相応の価値を示せるかで、現時点では勝者が決まったとは言えんのじゃ。",
-          "en": "That’s it. The key question is whether each tool can prove it’s worth the price; the article doesn’t suggest a winner has been decided yet."
-        }
-      ]
-    },
     "fecd0c4fb3b8f85d": {
       "bodyJa": "生成AIを組み込んだデモを、ユーザー登録を求めずに一般公開したい——そんな需要は増えているが、無防備に公開すればAPI費用の暴走や不正利用のリスクに直結する。あるQiitaのブログは、AnthropicのClaude APIを用いたデモを登録不要で公開する際に講じた4つの防御策と、公開後に判明したアクセス計測上の落とし穴を実践的に共有している。\n\n登録を不要にする最大の利点は、体験までの障壁を下げてユーザーに触ってもらいやすくなることだ。一方で、認証がないぶん誰でもリクエストを送れるため、悪意ある大量アクセスや、意図せぬ連打による従量課金の膨張を防ぐ仕組みが欠かせない。記事が挙げる防御策の中核はレート制限とコスト管理で、IPアドレスやセッション単位でのリクエスト数の上限設定、月間の利用上限を超えた場合の遮断などが、典型的な手段として想定される。\n\nこうした対策は、Claudeに限らず生成AI APIを外部公開する場合に共通する課題でもある。OpenAIやGoogleのGeminiなど各社のAPIも従量課金が基本で、トークン単位で費用が発生するため、入力・出力のトークン量やモデルの選択がコストを左右する。実装面では、Cloudflareのようなエッジでのレート制限や、リバースプロキシ、APIゲートウェイを挟んで自前のバックエンド経由で呼び出す構成が一般的だ。フロントエンドから直接APIキーを叩く実装はキー漏洩のリスクがあるため、避けるべきとされる。\n\n記事が特に注目に値するのは、公開後に発覚したアクセス計測の誤りを率直に共有している点だ。デモ公開では利用状況の把握が費用予測やチューニングの前提になるが、計測の設計を誤ると実際の利用実態と数値がずれ、判断を誤る可能性がある。ボットによるアクセスや重複カウント、計測タグの発火タイミングなどは、こうしたズレの一般的な要因として知られる。\n\n登録不要の手軽な公開と、コストや不正利用への備えは、本来トレードオフの関係にある。今回のような実装事例は、個人開発者や小規模チームが生成AIデモを安全に世へ出すうえで、具体的なチェックリストとして参考になりそうだ。",
       "bodyEn": "Publishing an interactive demo that calls the Claude API without requiring users to sign up is an appealing way to showcase a product, but it also exposes a raw endpoint to anonymous traffic. A recent practitioner writeup on Qiita walks through this exact scenario, outlining four defensive measures a developer put in place before opening such a demo to the public, and then candidly documenting a measurement error that surfaced only after launch. The piece matters because the same pattern—a public, registration-free front end wired directly to a metered, pay-per-token model—has become common, and the failure modes are financial as much as technical.\n\nThe central tension is that a large language model API bills by usage. Anthropic's Claude, like competing offerings from OpenAI and Google, charges per input and output token, so an unauthenticated demo effectively hands the internet a way to spend the operator's money. Without registration there is no natural throttle such as an account, a payment method, or a verified email, which means abuse prevention has to be engineered into the application layer rather than delegated to a login wall.\n\nThe first line of defense described is rate limiting. The article emphasizes restricting how many requests a single visitor can make within a window, typically keyed on IP address or a session identifier, to blunt both accidental loops and deliberate scraping. Rate limiting at this level is imperfect—shared IPs, mobile carrier NAT, and rotating proxies all complicate it—but it raises the cost of abuse and smooths out traffic spikes that could otherwise translate directly into a bill.\n\nThe second measure is cost management, which the summary highlights as a core concern. This generally involves capping the maximum tokens per request, choosing a cheaper model tier for demo purposes, and setting hard spending limits or budget alerts. Anthropic and most providers expose usage dashboards and, in some cases, programmatic spend controls, but the safest posture is to assume those are a backstop rather than a primary guardrail. Enforcing a low max_tokens value and truncating user input are simple, effective ways to bound the worst case per call.\n\nThe remaining defenses round out a defense-in-depth approach. Practical guides in this space typically add input validation and abuse filtering to reduce prompt-injection attempts and off-topic misuse, alongside some form of origin or bot protection—checking request headers, restricting cross-origin calls, or inserting a lightweight challenge. Crucially, the API key itself must never be shipped to the browser. A common architecture routes all model calls through a server-side proxy or serverless function, so the secret stays on the backend and every request passes through the operator's own logic before reaching Anthropic.\n\nThe more distinctive contribution of the article is its honesty about analytics. After launch, the author reports discovering that access measurement was wrong, a reminder that instrumentation is easy to get subtly incorrect. Such pitfalls are well known in practice: bot and crawler traffic can inflate visitor counts, health-check and preflight requests can be logged as real usage, client-side analytics can be blocked by ad blockers while server logs tell a different story, and caching or retries can double-count a single interaction. When the metric that matters is tied to spending, an inaccurate counter can mask either runaway costs or, conversely, genuine engagement. The lesson appears to be that measurement deserves the same scrutiny as the defenses themselves, ideally reconciled against the provider's own billing and usage data.\n\nFor readers weighing a similar launch, the broader context is a maturing ecosystem of tools that address these problems. API gateways, edge platforms such as Cloudflare Workers, and managed rate-limiting services can offload much of the throttling and bot mitigation, while providers increasingly offer per-key usage caps and budget notifications. None of these fully removes the risk of exposing a paid model to anonymous users; they shift where the controls live. The takeaway from this account is pragmatic rather than alarmist: a registration-free Claude demo is achievable, but it is likely to require layered rate limiting, strict cost ceilings, server-side key handling, and, just as importantly, analytics you have verified rather than assumed.",
@@ -4407,44 +4369,6 @@
           "s": "b",
           "ja": "その通りじゃ。まずは記事の最小構成サンプルで、エージェントの基本ループをコードにする方法を見るのがポイントじゃよ。",
           "en": "Exactly. The key is to start with the article’s minimal sample and see how the agent’s basic loop is implemented in code."
-        }
-      ]
-    },
-    "cffca3acfd4374f5": {
-      "bodyJa": "Anthropicの対話型AI「Claude」を使い、テキストプロンプトだけで提案書やスライド、プロトタイプを作成する手法を紹介する入門記事が公開された。デザインの専門知識がなくても、指示文からある程度整ったアウトプットを短時間で形にできる点が注目されている。\n\n記事で解説されている「Claude Design」は、作りたい成果物の目的や構成、トーンを自然言語で伝えると、それに沿った文書やレイアウト、画面イメージを生成させるワークフローを指すものと見られる。たとえば「新規事業の提案書を5枚のスライドで」「SaaSのダッシュボード画面のプロトタイプを」といった要望を言葉で渡し、生成された結果に対して修正を重ねて完成度を高めていく流れが想定される。専門ツールの操作を覚える前に、まず内容と骨子をAIと対話しながら固められる点が特徴だ。\n\n背景には、生成AIを単なる文章作成から「見せる成果物づくり」へ広げる動きがある。Claudeは近年、コードやHTML/CSSを含む出力をその場でプレビューできる「Artifacts」機能を備えており、この記事で扱う手法もそうしたインタラクティブな生成環境を活用していると考えられる。プロンプトエンジニアリング、すなわち指示の与え方を工夫することで出力品質が大きく変わるため、目的・対象読者・分量・スタイルを具体的に指定する基本が重要になる。\n\n同様の潮流は他社サービスでも進んでいる。スライド生成ではGammaやMicrosoft 365 Copilot、プロトタイピングではFigmaのAI機能やVercelのv0などが相次いで登場し、非デザイナーが素早く叩き台を作れる環境が整いつつある。Claudeを使う手法はその選択肢の一つとして位置づけられる。\n\n一方で、こうしたAI生成物はあくまで下書きやたたき台として捉えるのが現実的だ。ブランドガイドラインの厳密な反映や、事実関係の正確さ、細かなレイアウト調整には人による確認と仕上げが欠かせない。生成結果をそのまま最終成果物とするのではなく、初速を上げる道具として組み込むことで効果を発揮する可能性が高い。デザインの心理的・時間的なハードルを下げる入門としては、試す価値のあるアプローチと言えそうだ。",
-      "bodyEn": "Claude Design is emerging as a way to turn plain text descriptions into finished-looking design artifacts, and this introductory guide walks through how to use it to create proposals, slides, and interactive prototypes without opening a traditional design tool. For teams where writing is faster than wireframing, the appeal is straightforward: describe what you want in a prompt, and receive a structured, presentable output you can refine. That shift matters because it lowers the barrier for non-designers to produce polished material quickly, moving design work closer to the people who understand the underlying content.\n\nAt its core, the workflow described here treats the prompt as the primary interface. Instead of manipulating shapes, grids, and typography by hand, the user specifies intent in natural language, such as the audience, the purpose of a document, the tone, and the key messages to convey. Claude Design then generates a first draft of the artifact, whether that is a multi-slide deck, a one-page proposal, or a clickable prototype that simulates a product interface. The guide emphasizes that the initial result is a starting point rather than a final deliverable, and that quality tends to improve through iterative refinement, where the user reviews the output and issues follow-up prompts to adjust layout, wording, structure, or emphasis.\n\nThe tutorial appears to place significant weight on prompt engineering as the determining factor in output quality. Vague instructions tend to yield generic results, while prompts that include concrete constraints, for example the number of slides, the specific sections a proposal should contain, or a defined visual hierarchy, are more likely to produce usable drafts. This mirrors a broader pattern across generative AI tools, where clearly stated context, examples, and success criteria consistently outperform loose requests. Readers new to the practice are likely to benefit from framing each prompt around who the artifact is for and what action it should prompt from that audience, then layering in stylistic direction afterward.\n\nFor prototypes specifically, the value proposition is that a text description can be translated into something interactive enough to test an idea or communicate a concept to stakeholders. This is useful in the early stages of product thinking, when the goal is to validate direction rather than ship pixel-perfect assets. It is worth noting, however, that AI-generated prototypes generally serve as communication and exploration aids, and typically still require review by designers and engineers before they inform production decisions.\n\nPlacing this in context, Claude Design sits within a fast-moving category of AI-assisted design and generation tools. Anthropic has broadened Claude's capabilities beyond text chat with features such as Artifacts, which render generated content like documents, diagrams, and small applications alongside the conversation, and Claude can produce and run code, which underpins the ability to generate functional interfaces. The competitive landscape includes Figma's AI features, Canva's Magic Design, Microsoft Copilot's presentation generation in PowerPoint, Google's Gemini in Workspace, and developer-oriented tools such as Vercel's v0 and Galileo, all of which aim to compress the distance between an idea and a presentable output. Understanding that broader movement helps explain why prompt-to-design workflows are gaining attention across both business and product teams.\n\nPrerequisites for getting value from this approach are modest but real. A basic grasp of what makes a proposal or slide deck effective, such as a logical narrative, a clear ask, and appropriate structure, helps the user judge and steer the AI's output. Familiarity with iterative prompting is also useful, since the strongest results usually come from a short cycle of generate, review, and revise rather than a single request.\n\nAs with any generative system, some caution is warranted. Outputs should be checked for factual accuracy, brand consistency, and appropriateness before external use, and sensitive information should be handled in line with an organization's data policies. The technology is advancing quickly, so specific features and interfaces are likely to change over time. Read as part of an ongoing series, this entry functions as an on-ramp: it demonstrates that meaningful design artifacts can now originate from a well-constructed prompt, while leaving the finer craft of refinement and validation to the person guiding the tool.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T16:56:34.954Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Claude Designって何？文章を入力するだけで、提案書やスライド、プロトタイプまで作れるの？",
-          "en": "What is Claude Design? Can it really create proposals, slides, and prototypes from just a text prompt?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、Anthropicが2026年4月に公開したビジュアル生成ツールじゃよ。テキストプロンプトから素早く形にできるそうじゃ。",
-          "en": "According to the article, it’s a visual generation tool Anthropic released in April 2026. It quickly turns text prompts into tangible outputs."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、デザインが苦手でも使えるのは嬉しいね！でも、それってデザイナーの仕事を奪わないの？",
-          "en": "Wow, that sounds helpful even without design skills! But could it take work away from designers?"
-        },
-        {
-          "s": "b",
-          "ja": "記事の筆者は1カ月ほど試し、答えは「ノー」としておる。変わるのは、デザイナーへイメージを共有するまでの速さだという見方じゃよ。",
-          "en": "The article’s author tried it for about a month and concluded “no.” The change is how quickly people can share their vision with designers, not what gets designed."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、デザインを任せきる道具じゃなくて、作りたいものを素早く見える形にして伝える道具なんだね。",
-          "en": "So it’s not a tool for handing off design entirely. It helps make an idea visible quickly so you can communicate it."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事の見どころは、デザイナーの代替ではなく、イメージ共有の時間をどこまで短くできるかじゃな。",
-          "en": "Exactly. The key point is not replacing designers, but seeing how much it can shorten the time needed to share a visual idea."
         }
       ]
     },
@@ -35720,196 +35644,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:42:04.322Z"
     },
-    "855d6eb9ada55a72": {
-      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
-      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
-          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
-          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
-        },
-        {
-          "s": "a",
-          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
-          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
-          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
-          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
-        },
-        {
-          "s": "b",
-          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
-          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:12:32.259Z"
-    },
-    "b68f08d5b78fdf2b": {
-      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
-      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
-          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
-          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
-        },
-        {
-          "s": "a",
-          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
-          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
-        },
-        {
-          "s": "b",
-          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
-          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
-          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
-        },
-        {
-          "s": "b",
-          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
-          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:46:10.596Z"
-    },
-    "614c15e2239ab54e": {
-      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
-          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
-          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
-          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
-          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
-          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
-          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T18:43:11.880Z"
-    },
-    "0f7a7d85bd26ee44": {
-      "bodyJa": "## My workペイン\n\nGitHub Copilotアプリでは、「My work」ペインを使い、複数のCopilotセッションをまとめて追跡できる。並行作業の状態を一元的に確認できるため、初心者が作業を整理する際に役立つ機能として紹介されている。\n\n## セッション管理\n\n「My work」ペインで把握できるのは、現在進行中の作業、すでに完了した作業、次に取り組む作業だ。複数のアクティブなセッションを同時に追い、何が進行中で、何が完了し、何が次に控えているかを見分けやすくする。これにより、複数タスクにまたがるCopilotでの作業を整理しやすいと説明されている。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThe GitHub Copilot app’s My work pane helps beginners manage multiple Copilot sessions. It matters when several tasks are running in parallel and users need a clear view of their status.\n\nThe pane brings session tracking into one place, making it easier to understand ongoing work without checking each session separately.\n\n## Managing your work\n\nMy work shows what is currently in progress, what has been completed, and what is queued next. This allows users juggling multiple sessions to keep track of active tasks and identify the next work item.\n\nBy presenting these stages together, the pane helps users stay organized across parallel Copilot tasks.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Copilotでいくつも作業を並行するとき、普段の管理はどう変わるの？",
-          "en": "If I’m juggling several tasks in Copilot, how does this change the way I manage my work?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、「My work」ペインで進行中・完了・次のタスクをまとめて確認できるんじゃ。複数セッションも追いやすくなるぞ。",
-          "en": "The article says the My work pane puts active, completed, and upcoming tasks in one place, making multiple Copilot sessions easier to track."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！前は複数のセッションをまとめて確認できなかったの？",
-          "en": "Oh, nice! Was there no way to review multiple sessions together before?"
-        },
-        {
-          "s": "b",
-          "ja": "以前は不可能だった、とまでは書かれておらんのう。本文から分かるのは、このペインで並行作業を把握しやすくなることじゃ。",
-          "en": "It doesn’t say that was impossible before. What it does establish is that this pane makes parallel work easier to keep track of."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、作業が増えても「今どこ？」を見失いにくいことだね。初心者にも助かりそう！",
-          "en": "So the big win is not losing track of where everything stands as tasks pile up. That sounds really helpful for beginners!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。紹介されている範囲では、進行中・完了・次のタスクを一目で整理できる点に注目じゃよ。",
-          "en": "Exactly. Based on what’s described, the key point is being able to organize what’s active, finished, and next at a glance."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-04T22:53:50.918Z"
-    },
-    "fafa75871b75df2e": {
-      "bodyJa": "## キャンバス\n\nチャットは意図を伝えるのに適している一方、エージェントの作業はスクロールの中に埋もれがちだと説明されている。キャンバスは、エージェント型ワークフローを継続的かつ構造化された面に置き、作業を見える形にする手段となる。\n\n## 進捗と軌道修正\n\n作業の状態がチャット履歴だけに残る場合に比べ、キャンバス上ではエージェントの進捗を把握しやすい。ワークフローが可視化されることで、進行中の作業を確認し、必要に応じて軌道修正しやすくなるとされる。\n\n## トークンコスト\n\n構造化されたキャンバスを使うことで、無駄なコンテキストを減らせる。結果として不要なトークン消費が抑えられ、ワークフロー全体のトークンコスト低減につながると説明されている。",
-      "bodyEn": "## Agentic workflows\n\nCanvases can make agentic workflows visible, steerable, and more cost-efficient. This matters because chat is useful for expressing intent, but an agent’s work can become buried in the conversation scroll, making progress harder to follow.\n\n## Visible and steerable\n\nA canvas provides a persistent, structured surface for the workflow. Instead of leaving the agent’s activity embedded in chat history, it makes progress visible and easier to assess. That visibility also helps users steer the workflow and correct its course when needed.\n\nThe canvas therefore serves as a place to see the work as it develops, rather than relying only on a scrolling record of exchanges. According to the source, this structure makes it easier to understand where the agent is in the workflow and to guide what happens next.\n\n## Cost-efficient\n\nKeeping the workflow on a structured surface can also reduce wasted context. By avoiding unnecessary context consumption, canvases can limit unneeded token use and lower overall token costs while supporting the same agentic workflow.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でAIに何段階かの作業を任せるとき、キャンバスがあると普段の何が変わるの？",
-          "en": "When I give AI a multi-step task at work, what changes if I use a canvas?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、流れて消えがちな作業をキャンバス上に整理して残し、進捗を見ながら軌道修正しやすくなるとしておるぞ。",
-          "en": "The article says a canvas keeps the agent’s work organized and visible instead of losing it in the chat scroll, so you can track progress and steer it."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ チャットで途中経過を追うだけじゃ足りないのかな。",
-          "en": "Couldn’t we do that before? Isn’t following the progress in chat enough?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれておらん。本文では、チャットは意図を伝えるのに向く一方、作業がスクロールに埋もれやすいと対比しておるのう。",
-          "en": "It doesn’t say that was impossible. The post contrasts chat, which works well for expressing intent, with agent work that can get buried in the scroll."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど、一番の収穫は、AIの作業を見える場所に置けば、迷走に気づいて無駄を減らせるかもってことだね！",
-          "en": "Got it! My biggest takeaway is that keeping AI work visible could help us catch drift and cut waste."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。そこで挙げられている、不要な文脈を減らして全体のトークンコストを下げる効果にも注目じゃな。",
-          "en": "Exactly. It also highlights reducing wasted context and lowering overall token costs—that’s the next point to watch."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:20:04.037Z"
-    },
     "4db49bfa6eee5791": {
       "bodyJa": "## DeepSeek\n\nDeepSeekのモデルはMITライセンスでオープンソース公開されている。自分のPCやサーバーで動かせば、APIキーや月額費用が不要で、データを自分のマシン内だけに保てると説明されている。\n\n## 3つの方法\n\n導入手段としてOllama、LM Studio、vLLMの3つを解説する実践ガイドだ。どのモデルを選ぶかという観点から、モデルのパラメータや必要VRAM（Q4）も選択材料として扱っている。",
       "bodyEn": "## Running DeepSeek locally\n\nThis practical 2026 guide explains how to run DeepSeek models on your own PC or server. Local operation matters because it requires no API key or monthly subscription cost, while data remains entirely on your own machine.\n\n## Three methods\n\nThe guide covers three installation and local-inference methods: Ollama, LM Studio, and vLLM. It describes DeepSeek’s models as open source under the MIT license and also addresses model selection. According to the source excerpt, the selection information includes model parameters and required VRAM, helping readers consider which model to use on their machine.",
@@ -36213,82 +35947,6 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-04T23:15:48.133Z"
-    },
-    "8156421f827a3dc7": {
-      "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、必要なテーマや参加者の検討に集中しやすくする取り組みだ。\n\n## 企画と参加者理解\n\n対象となるイベントには、企業の開発者向けに継続開催するウェビナー、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、この市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを考える。こうした判断が、マーケターが時間をかけたい中心的な仕事として位置付けられている。\n\n## 定型工程のコード化\n\nイベントの実施が決まると、固定された手順が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに所定の形式でUTM付きリンクを作成する。さらに、招待メールの文面を作り、配信を担当するチームへ依頼を提出し、イベントを2つのプロジェクトボードに追加する。\n\n## 毎朝のフォロー\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整え、関係者向けの状況報告を投稿する。ページ複製、チャネル別リンクの生成、招待メールの依頼、フォローアップまでを自動化することで、繰り返し発生する運用作業をGitHub上で扱える形にしている。これにより、日本と韓国のマーケターは、企画や参加者への理解により集中できると説明されている。",
-      "bodyEn": "## Event Operations\n\nThe article describes codifying event operations on GitHub, from initial planning through follow-up. Automating recurring steps such as page duplication and channel-specific link creation lets marketers in Japan and Korea concentrate on deciding which topics matter and which audiences should participate.\n\nEvents are central to the marketing work described. They include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul. Planning begins with questions about what developers in the market need, which topics deserve an hour of their time, and who should be in the room.\n\n## A Fixed Sequence Begins\n\nOnce an event is approved, a fixed operational sequence starts. A landing page must be duplicated on the event platform. A set of UTM-tagged links must then be generated, with one link for each channel and each link following the required format.\n\nThe workflow also includes drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards. These defined steps are the recurring processes being codified and automated.\n\n## Every Morning Until the Event\n\nThe work continues after the event is set up. Every morning until the event, the registrant list is downloaded and cleaned. A status update is then posted for stakeholders.\n\nThe approach covers these ongoing tasks as well as follow-up, rather than limiting automation to the initial event setup. This brings page duplication, link generation, invitation handling, project tracking, registration monitoring, stakeholder updates, and follow-up into the same operational practice.\n\n## Topics and Audiences\n\nThe purpose of codifying the sequence is to shift attention toward planning and participant understanding. With the prescribed operational steps automated, marketers can spend more time considering current developer needs, selecting worthwhile topics, and identifying the appropriate audience for each event.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "イベント担当の普段の仕事は、何が変わるの？企画後の細かい作業が減るってこと？",
-          "en": "In day-to-day event work, what actually changes? Does this mean fewer fiddly tasks after the planning is done?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、GitHub上でページ複製、チャネル別UTMリンク、招待メール依頼などを自動化するんじゃ。UTMリンクは流入元を見分ける印付きリンクで、企画や参加者理解に集中しやすくなるのう。",
-          "en": "The article says GitHub automates page duplication, channel-specific UTM links, invitation email requests, and more. UTM links are tagged links that identify traffic sources, leaving marketers more room to focus on topics and audiences."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？それとも、できたけど毎回人が手を動かしていたの？",
-          "en": "Couldn’t they do that before? Or was it possible, but people had to handle it every time?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれておらん。イベント承認後は定型工程が始まり、登録者一覧を毎朝ダウンロードし、整理して関係者に共有していたんじゃ。",
-          "en": "It doesn’t say these tasks were impossible before. It describes a fixed post-approval sequence, including downloading, cleaning, and sharing the registrant list every morning."
-        },
-        {
-          "s": "a",
-          "ja": "一番の収穫は、イベント運営をGitHubでコード化して、担当者がテーマや参加者のことに頭を使える点なんだね！",
-          "en": "So the big win is coding event operations in GitHub, letting the team spend its brainpower on topics and attendees. That’s pretty cool!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。次は、ページ複製やリンク作成だけでなく、招待メール依頼やフォローアップまで自動化の対象になる点を押さえたいのう。",
-          "en": "Exactly. One more point to note: automation covers not only page copies and link creation, but also invitation email requests and follow-up."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-13T19:03:36.653Z"
-    },
-    "b310b2c06dbd9321": {
-      "bodyJa": "## アプリ内で完結\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を一つのアプリ内で行える。エージェントの作業を自分で確かめたい初心者にとって、必要な操作を追いやすい構成となっている。\n\n以前は、変更を確認してコードを実行し、その結果を見るために、エディター、ターミナルウィンドウ、Webブラウザーを行き来する必要があった。現在は差分、ターミナル、ブラウザーが組み込みパネルとして並び、AIコーディングの一連の作業をアプリから離れずに進められる。\n\n## 差分パネル\n\n差分パネルには、コードを変更する前と後の比較が表示される。どの行が追加、削除、変更されたのかを確認でき、追加部分は緑色、削除部分は赤色で強調されるため、エージェントが手を加えた箇所を具体的に把握できる。\n\n確認後は、変更を受け入れるだけでなく、コメントを残したり、Copilotに修正を依頼したりできる。提示された変更をそのまま確定するのではなく、最終的にどう扱うかは利用者が決定する。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できる。差分を読んで内容を確認した後、そのまま実行へ移れるため、別のターミナルウィンドウへ切り替える必要がない。\n\n## ブラウザー\n\nブラウザーパネルは、実行した結果を見て検証するために使う。差分で変更点を確認し、ターミナルでコードを実行し、ブラウザーで結果を確かめるという流れが、隣り合うパネルで完結する。これにより、エージェントの変更を確認して最終判断を下すまでの手順が一つの場所にまとまる。",
-      "bodyEn": "## GitHub Copilot app\n\nThe GitHub Copilot app brings code review, execution, and result verification into one place. For beginners checking an agent’s work, this matters because the diff, terminal, and browser are available as built-in panels rather than requiring constant movement between separate tools.\n\nTogether, these panels support the AI coding loop: an agent changes the code, the user reviews those edits, runs the code, and checks the result. Keeping these steps side by side is intended to make the agent’s work simpler to inspect.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It shows exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis comparison gives the user a direct view of the agent’s edits before making a decision. After reviewing the changes, the user can accept them, leave comments, or ask Copilot to make further changes. The final decision remains with the user.\n\n## Terminal window\n\nThe built-in terminal panel allows code to be run without leaving the GitHub Copilot app. Previously, reviewing an edit and then running it could require switching between an editor and a separate terminal window.\n\nWith the terminal placed alongside the other panels, running the changed code becomes part of the same in-app workflow. This helps users move from examining an agent’s edits to testing them without changing applications.\n\n## Web browser\n\nThe browser completes the workflow by allowing users to see and verify the results in the app. It sits alongside the diff and terminal panels, keeping review, execution, and verification together.\n\nThe three panels therefore cover the main steps involved in checking an agent’s work: inspect what changed, run the code, and confirm the result. This arrangement gives beginners a clearer way to complete the AI coding loop while retaining control over whether the proposed changes are accepted or revised.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "確認・実行・検証の3つがCopilotアプリ内で完結するんだ！ これって大きいこと？",
-          "en": "Reviewing, running, and verifying code can all happen inside the Copilot app now? Wow! Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、以前はエディター、ターミナル、ブラウザーを行き来した作業が横並びになる。初心者には大きな変化じゃのう。",
-          "en": "The article says those tasks previously meant jumping among an editor, terminal, and browser. Putting them side by side is a significant change for beginners."
-        },
-        {
-          "s": "a",
-          "ja": "「diffパネル」って何？ コードの差分を見るって、つまりどういうこと？",
-          "en": "What’s a “diff panel”? What does it actually mean to review code differences?"
-        },
-        {
-          "s": "b",
-          "ja": "diffは変更前と変更後の比較じゃ。本文だと、追加は緑、削除は赤で示され、変わった行を確認できるんじゃよ。",
-          "en": "A diff compares the code before and after a change. Here, added lines appear in green, deleted ones in red, so you can see exactly what changed."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら色付きの差分を見て、コードを動かし、ブラウザーで結果を確かめてから採用したいな！",
-          "en": "I’d check the colored diff, run the code, verify the result in the browser, and only then accept it!"
-        },
-        {
-          "s": "b",
-          "ja": "よい使い方じゃ。紹介されている範囲では、変更の採用、コメント、Copilotへの修正依頼を選べるが、最後に決めるのは自分じゃよ。",
-          "en": "That fits the workflow described. You can accept changes, leave comments, or ask Copilot for revisions—but the final decision remains yours."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-13T19:04:04.568Z"
     },
     "2e024570337d6571": {
       "bodyJa": "## Gemma-4の検証\n\nGemma-4のマルチトークン予測（MTP）をllama.cpp上で動かし、一般的な家庭用PC環境で速度向上の効果を実測した検証記事である。理論上の利点が普段使いのハードウェアでどこまで現れるのかを、測定データから確かめている。\n\n## MTPの賭け\n\n前回の概念編では、MTPは「外れてもほとんど損しないのに、当たれば得をする賭け」と説明されている。また、QwenとGemmaは、この仕組みをまったく異なる方法で実装しているという。\n\n今回は実装・検証編としてGemmaを対象に、llama.cppでの実行方法を扱いながら、実際にどれほど速くなるのか、MTPによる賭けが実環境で成立しているのかを確認する内容となっている。",
@@ -38417,6 +38075,12 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-14T07:35:57.151Z"
+    },
+    "328be2537973b2c6": {
+      "bodyJa": "AIコードエディタ「Cursor」が、チーム向け機能である「チームマーケットプレイス」をアップデートし、MCP(Model Context Protocol)のサポートと組織単位での管理機能に対応した。これにより、チームや組織全体でAIツールの構成を一元的に共有・標準化できるようになり、大規模な開発現場での環境統一が進めやすくなる。\n\nMCPは、Anthropicが提唱するオープンな標準仕様で、AIモデルと外部のツールやデータソースを接続するための共通のインターフェースを定義するものだ。これを利用することで、AIエージェントがコードベースの検索、外部APIの呼び出し、社内ドキュメントの参照といった作業を、統一された手順で扱えるようになる。従来、こうしたMCPサーバーの設定は個々の開発者が手元で行うことが多く、チーム内で構成がばらつきやすいという課題があったと見られる。\n\n今回の対応では、チームマーケットプレイスを通じて、承認済みのMCPや推奨設定を組織側があらかじめ配布できる点が特徴だ。管理者は組織単位でどのツールや構成を利用可能にするかを制御でき、新しくチームに加わったメンバーも、統一された開発環境をすぐに利用開始できる可能性がある。これは、セキュリティやガバナンスを重視する企業にとって導入のハードルを下げる要素になり得る。\n\n背景として、AIコーディング支援ツールをめぐる競争は激しさを増している。GitHub CopilotやAmazonのAI開発支援サービスなど、他社も企業向けの管理機能やポリシー制御の強化を進めており、個人の生産性向上だけでなく、組織全体での運用管理が重視される傾向が強まっている。MCP自体もOpenAIをはじめとする複数の主要企業が採用を表明しており、AIと外部ツールを結ぶ事実上の標準の一つとして広がりつつある。\n\nもっとも、こうした集中管理機能が実際にどの程度運用の効率化につながるかは、組織の規模や既存のワークフローに左右されるとみられる。とはいえ、AIツールの活用がチーム開発の前提になりつつある中で、設定の標準化と共有を後押しする今回の機能は、企業導入の実用性を高める一歩と位置づけられそうだ。",
+      "bodyEn": "Cursor has expanded its Team Marketplace to support the Model Context Protocol (MCP) and organization-level management, giving companies a central way to distribute and standardize AI tooling across every developer on their teams. For organizations that have struggled to keep configurations consistent as their use of AI coding assistants grows, this change addresses a practical pain point: ensuring that everyone works with the same approved tools, context sources, and settings rather than assembling them individually.\n\nThe Team Marketplace is Cursor's mechanism for sharing reusable assets within a workspace. With MCP support added, administrators and teams can now publish and adopt MCP servers through the same channel. MCP, an open standard introduced by Anthropic in late 2024, defines a common way for AI applications to connect to external data sources, tools, and services. Instead of building bespoke integrations for each connection, developers can point a model at MCP servers that expose resources such as documentation, databases, ticketing systems, internal APIs, or version control. Bringing MCP into the marketplace means those connections can be curated once and shared, rather than configured repeatedly by each engineer.\n\nThe organization-level management piece is the second half of the update. Where team settings typically apply to a single workspace, organization controls appear to operate one tier higher, spanning multiple teams under a single corporate account. This structure is common in enterprise software, and it allows a central administrator to define defaults, approve or restrict specific MCP servers, and roll out standardized configurations to everyone at once. The stated goal is to make it easier for large organizations to unify their development environments, which is often difficult when tooling decisions are left entirely to individual developers or small teams.\n\nFor readers less familiar with the product, Cursor is an AI-native code editor built as a fork of Visual Studio Code, developed by Anysphere. It integrates large language models directly into the editing experience for tasks such as code completion, chat-based assistance, and multi-file edits. Because it inherits the VS Code foundation, it supports many of the same extensions and workflows developers already know, while layering AI features on top. As adoption has moved from individual users to entire engineering organizations, features aimed at governance, consistency, and administrative control have become increasingly relevant, and this marketplace update fits that trajectory.\n\nThe emphasis on MCP also reflects a broader industry shift. Since its release, MCP has been adopted or supported by a growing number of tools and vendors, including AI assistants and development platforms that want a vendor-neutral way to connect models to context. Supporting MCP through a shared marketplace lowers the friction of that connection for teams and aligns Cursor with an emerging standard rather than a proprietary integration approach. This is likely to appeal to organizations that want to avoid lock-in and to reuse the same MCP servers across different AI clients where possible.\n\nStandardization matters for reasons beyond convenience. When developers configure their own tools and data connections, organizations can face inconsistent results, security gaps, and difficulty auditing what external systems an AI assistant can reach. Centralized management gives administrators a clearer view of which MCP servers are in use and the ability to enforce policy. For regulated industries or teams handling sensitive code, that visibility is often a prerequisite for approving AI tools at all. The update appears designed to make Cursor more defensible in those settings by turning ad hoc setups into managed, shareable defaults.\n\nSpecific details such as how permissions are scoped, whether MCP servers can be marked as required versus optional, and how the feature interacts with existing team billing or privacy modes were not fully detailed in the changelog summary, so organizations evaluating it will want to confirm those points in the official documentation. As with any centralized configuration system, the practical value will depend on how granular the controls are and how smoothly they integrate with existing identity and access management. Still, the direction is clear: Cursor is positioning its Team Marketplace as a governance layer for AI-assisted development at scale, combining a widely supported connection standard with enterprise-oriented administrative controls.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-05T14:10:18.197Z"
     }
   }
 }

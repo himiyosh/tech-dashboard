@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T17:22:26.213Z",
+  "generatedAt": "2026-09-14T07:53:55.687Z",
   "month": "2026-09",
   "count": 138,
   "entries": [
@@ -10,16 +10,21 @@
       "url": "https://qiita.com/maskedridersystem/items/9149dfb7b06e4029461f",
       "title": "「ACR Viewer for VSCode」をVS Code Marketplace / Open VSXに公開するまで",
       "titleJa": "「ACR Viewer for VSCode」をVS Code Marketplace / Open VSXに公開するまで",
-      "titleEn": "",
+      "titleEn": "Publishing ACR Viewer for VSCode on VS Code Marketplace and Open VSX",
       "lang": "ja",
       "publishedAt": "2026-09-13T06:46:08.000Z",
       "collectedAt": "2026-09-13T16:42:01.871Z",
       "tags": [
+        "napi-rs",
+        "open-vsx",
         "qiita",
-        "vscode"
+        "rust",
+        "skia",
+        "vscode",
+        "vscode-marketplace"
       ],
       "category": "vscode",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "自作の帳票エンジン「ACR (AcrossReport)」は、Google Skiaをレンダリングコアに据え、JSONを中間描画モデルとして扱うことで「実機がなくても1ドットも狂わないWYSIWYGプレビュー」を実現してきた。POS・ラベル・レシート印刷、そしてActiveReports互換の帳票designerと、30年分の現場知見を積み上げてきたエンジンだ。 このACRのレンダリングコアを、VS Codeの中に持ち込んだのが「ACR Viewer for VSCode」である。きっかけは単純で、VS Code自体にMarkdownやHTML、テキストファイルをまともに印刷・PDF化する手段がないことだった。 当初はChrome拡張(ACR Report Renderer)と同じくWASM化したSkiaコアをブラウザ上で動かす構成を想定していたが、VS Code拡張のホストはブラウザのサンドボックスではなくNode.jsで動く。であれば、AcrossReportDesigner(Avalonia)が使っているのと同じRustのcdylibビルドをNAPI-RS経由でそのままバインドできる。WASM経由のオーバーヘッドや制約を避けられるため、ネイティブアドオン方式に切り替えた。 Markdown/HTMLからACRのJSON中間モデルへの変換もRust側(acr_mdクレート、pulldown-cmarkベース)に寄せ、Node.js側はエントリーポイントを1つ呼ぶだけの薄いクライアントにした。ページ送りロジックも新規実装はせず、acr_core既存の高さベース自動改ページ(place_section)をそのまま再利用する形に倒している。「現場を動かす確かなコード」を壊さず、既存資産に載せるという方針を徹底した結果だ。 実装よりむしろ苦労したのはMarketplaceへの登録段階だった。",
@@ -78,7 +83,7 @@
       "titleEn": "Add VS Code Agents to Copilot usage metrics",
       "lang": "en",
       "publishedAt": "2026-09-11T21:30:30.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "changelog",
         "copilot",
@@ -112,7 +117,7 @@
       "titleEn": "Auto-resolution and analysis updates in Copilot code review",
       "lang": "en",
       "publishedAt": "2026-09-11T20:00:07.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "changelog",
         "code-review",
@@ -146,7 +151,7 @@
       "titleEn": "OpenHands Releases v1.18.0",
       "lang": "en",
       "publishedAt": "2026-09-11T18:32:07.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "automation",
         "canvas",
@@ -169,8 +174,8 @@
       }
     },
     {
-      "id": "2576bf8a180858a9",
-      "source": "github-blog-ai",
+      "id": "8156421f827a3dc7",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/marketing-ops-as-code-automating-events-from-planning-to-follow-up-on-github/",
       "title": "Marketing ops as code: Automating events from planning to follow-up on GitHub",
@@ -180,7 +185,7 @@
       "summaryEn": "GitHub codifies event operations, automating page duplication, channel-specific UTM links, and follow-up so marketers in Japan and Korea can focus on topics and audiences.",
       "lang": "en",
       "publishedAt": "2026-09-11T18:26:10.000Z",
-      "collectedAt": "2026-09-13T12:23:31.427Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "copilot",
         "event-operations",
@@ -191,6 +196,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "I run marketing for GitHub in Japan and Korea, and events are the heartbeat of it: a recurring webinar series for enterprise developers, community meetups in Tokyo, invite-only executive sessions in Seoul. What does a developer in this market actually need right now? Which topics are worth an hour of their time, and who should be in the room? I’d happily spend all day on those questions. What follows the decisions is another matter. Once an event is greenlit, a fixed sequence begins: Duplicate a landing page on our event platform. Generate a set of UTM-tagged links: one for each channel, each formatted just so. Draft the invitation email and file a request with the team that sends it. Add the event to two project boards. Every morning until the event: download the registrant list, clean it up, post a status update for stakeholders.",
       "excerptOrigin": "article",
       "feedSnippet": "If you can write down how you do your work, you can automate it. Here's what I did to support GitHub's APAC marketing team. The post Marketing ops as code: Automating events from planning to follow-up on GitHub appeared first on The GitHub Blog .",
@@ -201,8 +207,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "93dcd14a5e3a0d95",
@@ -283,7 +288,7 @@
       "titleEn": "Cline Desktop v0.0.26",
       "lang": "en",
       "publishedAt": "2026-09-11T07:46:46.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ci",
         "cline",
@@ -383,7 +388,7 @@
       "titleEn": "Autonomous LLM post-training with Tunix on TPUs",
       "lang": "en",
       "publishedAt": "2026-09-11T00:00:00.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "agent",
         "google",
@@ -418,7 +423,7 @@
       "titleEn": "GitHub Copilot weekly releases — September 7",
       "lang": "en",
       "publishedAt": "2026-09-10T22:55:07.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "agent",
         "changelog",
@@ -448,8 +453,8 @@
       }
     },
     {
-      "id": "433004a6bd914ded",
-      "source": "github-blog-ai",
+      "id": "b310b2c06dbd9321",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-using-the-diff-terminal-and-browser/",
       "title": "GitHub Copilot app for Beginners: Using the diff, terminal, and browser",
@@ -459,7 +464,7 @@
       "summaryEn": "The GitHub Copilot app adds built-in diff and terminal panels alongside a browser, helping beginners review agent edits, run code, and verify results in one place.",
       "lang": "en",
       "publishedAt": "2026-09-10T21:31:19.000Z",
-      "collectedAt": "2026-09-13T12:23:31.427Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -471,6 +476,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "When an agent makes a change to your code, you want to review it, run it, and see what changed. Great news: now you can do all three without having to leave the GitHub Copilot app . Before, doing those three jobs would mean having to bounce between your editor, terminal window, and web browser. But when these steps live side by side as built-in panels in the Copilot app, checking your agent’s work is simple. Let’s walk through each of the panels in the app and how we’ll use them to complete the AI coding loop. The diff panel (a diff is a before and after comparison) shows exactly what lines were added, removed, or changed, with additions highlighted in green and deletions in red. This gives you complete clarity, so you can choose what happens. You can accept changes, leave comments, or ask Copilot to make changes. You’re in complete control and make the final decisions.",
       "excerptOrigin": "article",
       "feedSnippet": "Checking agent-generated code usually means hopping between tabs. Learn how to view diffs, run terminal commands, and preview web apps side by side in the GitHub Copilot app. The post GitHub Copilot app for Beginners: Using the diff, terminal, and browser appeared first on The GitHub Blog .",
@@ -481,8 +487,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "c213d15843ae4aca",
@@ -494,7 +499,7 @@
       "titleEn": "Refreshed repository pull requests page in public preview",
       "lang": "en",
       "publishedAt": "2026-09-10T21:27:17.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "changelog",
         "developer-tools",
@@ -528,7 +533,7 @@
       "titleEn": "AI Scan for pull request APIs in public preview",
       "lang": "en",
       "publishedAt": "2026-09-10T20:20:58.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "ai-scan",
         "changelog",
@@ -637,7 +642,7 @@
       "titleEn": "Control GitHub Actions cache access with cache-mode",
       "lang": "en",
       "publishedAt": "2026-09-10T17:26:59.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "cache",
         "changelog",
@@ -672,7 +677,7 @@
       "titleEn": "MAI-Code-1-Flash deprecated",
       "lang": "en",
       "publishedAt": "2026-09-10T16:54:01.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "agent",
         "changelog",
@@ -708,7 +713,7 @@
       "titleEn": "Skild AI Taps NVIDIA Physical AI to Teach Robots New Tasks From a Single Video",
       "lang": "en",
       "publishedAt": "2026-09-10T16:30:35.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "news",
         "nvidia",
@@ -742,7 +747,7 @@
       "titleEn": "Xcode 27 runner image now runs on macOS 27",
       "lang": "en",
       "publishedAt": "2026-09-10T15:15:36.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "arm64",
         "changelog",
@@ -777,7 +782,7 @@
       "titleEn": "d-Matrix Adopts NVIDIA NVLink Fusion for Rack-Scale XPU Deployment",
       "lang": "en",
       "publishedAt": "2026-09-10T13:00:21.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ai-inference",
         "d-matrix",
@@ -812,7 +817,7 @@
       "titleEn": "Ollama Releases v0.34.0",
       "lang": "en",
       "publishedAt": "2026-09-10T06:18:35.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "apple-silicon",
         "chatgpt-desktop",
@@ -847,7 +852,7 @@
       "titleEn": "Cline Desktop v0.0.25",
       "lang": "en",
       "publishedAt": "2026-09-10T04:57:18.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "chatgpt-subscription",
         "cline",
@@ -956,7 +961,7 @@
       "titleEn": "npm extends recovery-code security holds to all accounts",
       "lang": "en",
       "publishedAt": "2026-09-09T21:55:55.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "account-security",
         "authentication",
@@ -990,7 +995,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc5",
       "lang": "en",
       "publishedAt": "2026-09-09T21:51:50.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ollama",
         "release",
@@ -1022,7 +1027,7 @@
       "titleEn": "CodeQL 2.27.0 adds support for Linux ARM64",
       "lang": "en",
       "publishedAt": "2026-09-09T21:45:06.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "changelog",
         "code-security",
@@ -1162,7 +1167,7 @@
       "titleEn": "OpenHands Releases v1.17.0",
       "lang": "en",
       "publishedAt": "2026-09-09T19:31:50.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "agent-canvas",
         "automation",
@@ -1262,7 +1267,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc4",
       "lang": "en",
       "publishedAt": "2026-09-09T17:20:48.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "apple-silicon",
         "chatgpt-desktop",
@@ -1436,7 +1441,7 @@
       "titleEn": "Cline Desktop v0.0.24",
       "lang": "en",
       "publishedAt": "2026-09-09T08:16:59.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "cline",
         "desktop",
@@ -1504,7 +1509,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc3",
       "lang": "en",
       "publishedAt": "2026-09-09T00:09:48.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ollama",
         "release",
@@ -1536,7 +1541,7 @@
       "titleEn": "Announcing ADK for Kotlin 1.0: Building Production-Ready AI Agents in Kotlin, Android, and Beyond",
       "lang": "en",
       "publishedAt": "2026-09-09T00:00:00.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "adk",
         "agent",
@@ -1570,7 +1575,7 @@
       "titleEn": "The Anatomy of Harness Engineering: How to Evaluate, Iterate, and Guard AI Coding Agents",
       "lang": "en",
       "publishedAt": "2026-09-09T00:00:00.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "agent",
         "agent-evaluation",
@@ -1638,7 +1643,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc2",
       "lang": "en",
       "publishedAt": "2026-09-08T23:27:20.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ollama",
         "release",
@@ -1706,7 +1711,7 @@
       "titleEn": "Introducing Muse: The World’s First Personal AI Agent Built for Everyone",
       "lang": "en",
       "publishedAt": "2026-09-08T19:00:51.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "agent",
         "meta",
@@ -1754,7 +1759,15 @@
       "archiveTier": "hot",
       "contentSnippet": "The support portal has been redesigned and moved to a new home at help.github.com . It brings support, docs, learning, community, and account resources together in one place with Copilot-powered search across all of them. Find support, entitlements, and self-serve resources from a single entry point with less clicking across separate sites. Search anything and get Copilot-powered answers, no sign-in required. Easily view GitHub product statuses and important announcements. Visit help.github.com to try it out! Please note that we’re gradually rolling this out over the next couple of weeks so you may not see the new experience right away. If you don’t have access yet, support.github.com will continue to work as expected. Feedback or suggestions for improvement? Feel free to post directly to this discussion in the GitHub Community for consideration.",
       "feedSnippet": "The support portal has been redesigned and moved to a new home at help.github.com. It brings support, docs, learning, community, and account resources together in one place with Copilot-powered search… The post New customer portal help.github.com appeared first on The GitHub Blog .",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/645378793-e03ded5d-3655-4ebc-81cd-f9e16bc72419.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/645378793-e03ded5d-3655-4ebc-81cd-f9e16bc72419.jpg",
+        "alt": "New customer portal help.github.com",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "cca2e704afb6cdb3",
@@ -2250,7 +2263,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc1",
       "lang": "en",
       "publishedAt": "2026-09-05T00:48:55.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -2387,7 +2400,7 @@
       "titleEn": "Ollama Releases v0.34.0-rc0",
       "lang": "en",
       "publishedAt": "2026-09-04T21:04:48.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "github",
         "ollama",
@@ -2550,8 +2563,8 @@
       }
     },
     {
-      "id": "43dc5941df4bfd39",
-      "source": "github-blog-ai",
+      "id": "855d6eb9ada55a72",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/project-hydrafusion-frontier-quality-via-multi-model-orchestration/",
       "title": "Project HydraFusion: Frontier quality via multi-model orchestration",
@@ -2561,7 +2574,7 @@
       "summaryEn": "GitHub Copilot research preview HydraFusion routes selective coding tasks across models. Offline tests matched or beat the Opus 5 baseline at lower estimated cost, enabling more efficient developer assistance.",
       "lang": "en",
       "publishedAt": "2026-09-04T16:04:14.000Z",
-      "collectedAt": "2026-09-13T12:23:31.427Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "copilot",
         "github",
@@ -2573,6 +2586,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -2582,9 +2597,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true,
-      "knowledgeEligible": false
+      }
     },
     {
       "id": "b3860ff03421d355",
@@ -2666,7 +2679,7 @@
       "titleEn": "Driving Developer Excellence: Inside the Program Sprints",
       "lang": "en",
       "publishedAt": "2026-09-04T00:00:00.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "agent",
         "agent-gateway",
@@ -2875,7 +2888,7 @@
       "titleEn": "Semantic Kernel dotnet-1.80.1",
       "lang": "en",
       "publishedAt": "2026-09-03T18:41:24.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "agent",
         "ci",
@@ -2908,7 +2921,7 @@
       "titleEn": "Cline Desktop v0.0.23",
       "lang": "en",
       "publishedAt": "2026-09-03T18:33:16.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "agent",
         "agent-plugins",
@@ -2942,7 +2955,7 @@
       "titleEn": "Ollama Releases v0.33.3",
       "lang": "en",
       "publishedAt": "2026-09-03T17:24:07.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -3011,7 +3024,7 @@
       "titleEn": "Sparks Fly: NVIDIA Accelerates Local AI at IFA 2026",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:59.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ai-agents",
         "local-ai",
@@ -3049,7 +3062,7 @@
       "summaryEn": "ZGateway adds a shared proxy layer for traffic to ZippyDB, Meta's most-used key-value store, enabling admission control, balancing, regional resilience, and richer operations.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:20.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "distributed-systems",
         "engineering",
@@ -3061,7 +3074,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’re introducing ZGateway, the proxy we are using to unify traffic through ZippyDB, Meta’s most widely-used key value store. As a bonus, it also enables admission control, load balancing, cross-region resilience, and richer operations. ZippyDB is the most widely used key value store at Meta, backing product metadata, counters, and configuration, and can serve billions [...] Read More... The post ZGateway: Learnings from Putting a Proxy in Front of ZippyDB appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/09/ZGateway-Hero.png",
@@ -3070,11 +3082,12 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
-      "id": "d94b84bc16af2780",
-      "source": "github-blog-ai",
+      "id": "b68f08d5b78fdf2b",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-run-several-agents-at-once/",
       "title": "GitHub Copilot app for Beginners: Run several agents at once",
@@ -3084,7 +3097,7 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-09-13T12:23:31.427Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "agent",
         "copilot",
@@ -3096,6 +3109,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -3106,8 +3120,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -3189,7 +3202,7 @@
       "titleEn": "NVIDIA to Acquire Hugging Face",
       "lang": "en",
       "publishedAt": "2026-09-03T11:56:49.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "acquisition",
         "ai-platforms",
@@ -3252,7 +3265,7 @@
       "titleEn": "Cline Desktop v0.0.23-beta.1",
       "lang": "en",
       "publishedAt": "2026-09-03T01:46:38.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "cline",
         "image-generation",
@@ -3284,7 +3297,7 @@
       "titleEn": "v0.33.3-rc2: gemma4: image and audio input support",
       "lang": "en",
       "publishedAt": "2026-09-02T22:07:28.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "ollama",
         "release",
@@ -3447,8 +3460,8 @@
       }
     },
     {
-      "id": "dd3872b4a6c4bf09",
-      "source": "github-blog-ai",
+      "id": "c3242eb99cc5f08b",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/",
       "title": "How we make AI coding more cost efficient without sacrificing task quality",
@@ -3458,7 +3471,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-13T12:23:31.427Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -3470,6 +3483,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -3480,8 +3494,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6625a77e4710b219",
@@ -3525,7 +3538,7 @@
       "titleEn": "Ollama Releases v0.33.3-rc1",
       "lang": "en",
       "publishedAt": "2026-09-02T16:46:04.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "gguf",
         "llama-cpp",
@@ -3596,7 +3609,7 @@
       "summaryEn": "Meta's AI agent captures expert domain knowledge in a structured, auditable system and serves as a backup specialist. It preserves know-how so teams can access, share, and extend it.",
       "lang": "en",
       "publishedAt": "2026-09-02T09:00:29.000Z",
-      "collectedAt": "2026-09-13T17:22:00.570Z",
+      "collectedAt": "2026-09-13T23:43:11.437Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -3609,7 +3622,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’ve built an AI agent that acts as a secondary expert for a given domain, making deep specialist knowledge readily available and preserved for anyone in an organization to access, share, and build upon. This is not a typical domain-specific agent. Its novelty comes from integrating two layers: A structured, auditable knowledge architecture separates what [...] Read More... The post An Organizational Second Brain: Building an AI That Learns From Experts appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/08/Domain-Expert-AI-Hero-1.png",
@@ -3618,7 +3630,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "0ea901f86e2fc43f",
@@ -3662,7 +3675,7 @@
       "titleEn": "Cline Releases v4.1.17",
       "lang": "en",
       "publishedAt": "2026-09-02T05:40:07.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "bug-fix",
         "cline",
@@ -3793,7 +3806,7 @@
       "titleEn": "Cline SDK v0.0.82",
       "lang": "en",
       "publishedAt": "2026-09-02T04:40:16.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "bug-fix",
         "capability-mapping",
@@ -4065,7 +4078,7 @@
       "titleEn": "NVIDIA and CrowdStrike Strengthen Agentic Cybersecurity Frontier",
       "lang": "en",
       "publishedAt": "2026-09-01T21:19:20.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -4135,7 +4148,7 @@
       "titleEn": "Inside Meta’s Infrastructure Lab",
       "lang": "en",
       "publishedAt": "2026-09-01T20:24:43.000Z",
-      "collectedAt": "2026-09-13T07:28:03.875Z",
+      "collectedAt": "2026-09-14T07:53:37.457Z",
       "tags": [
         "ai-hardware",
         "infrastructure-lab",
@@ -4236,7 +4249,7 @@
       "titleEn": "Meet Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T19:21:24.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "anthropic",
         "claude-fable-5-1",
@@ -4259,7 +4272,7 @@
       "titleEn": "Introducing Claude Fable 5.1",
       "lang": "en",
       "publishedAt": "2026-09-01T18:02:31.000Z",
-      "collectedAt": "2026-09-12T21:45:17.504Z",
+      "collectedAt": "2026-09-13T21:51:58.010Z",
       "tags": [
         "anthropic",
         "claude-fable",

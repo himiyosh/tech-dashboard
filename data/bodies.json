@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-09-14T21:47:31.686Z",
-  "count": 1038,
+  "count": 1031,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -30402,44 +30402,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-04T23:31:03.868Z"
     },
-    "63ac2975fcbd2d12": {
-      "bodyJa": "## 会話履歴の検証\n\ndevcontainerでClaude Codeを使う際、コンテナのリビルドによって認証情報と会話履歴が消える問題に対し、マウント設定を導入。そのうえで、会話履歴が実際に永続化されるかを検証している。履歴の継続性を重視する開発者が、設定の信頼性を確認できる内容だ。\n\n## 全プロジェクト\n\n検証に加え、このマウント設定を全プロジェクトへ自動適用する方法もまとめている。Claude Codeを複数のdevcontainer環境で使う場合に、同じ対策を自動的に適用するための実践的な設定方法として説明されている。",
-      "bodyEn": "## Claude Code conversation history\n\nThis article examines whether Claude Code conversation history truly persists in a devcontainer environment. The question matters for developers who rely on history continuity when rebuilding containers.\n\nUsing Claude Code in a devcontainer can cause authentication information and conversation history to disappear whenever the container is rebuilt. The article tests a mount configuration introduced as a countermeasure to that problem, focusing on whether it provides reliable history persistence.\n\n## Automatically apply the setup\n\nThe article also explains how to apply the configuration automatically across all projects. This approach is intended to avoid configuring the same persistence setup separately for each project while addressing the loss of authentication information and conversation history during container rebuilds.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "コンテナをリビルドするたびに認証情報と会話履歴が消えるって、かなり大きい問題なの？",
-          "en": "Authentication details and chat history can disappear every time the container is rebuilt? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、履歴の継続を頼りにする開発者にとって確認すべき問題として扱っておる。そこで実際に永続化を検証したんじゃ。",
-          "en": "The article treats that as an important concern for developers who rely on continuity. It tests whether the history really persists."
-        },
-        {
-          "s": "a",
-          "ja": "その「マウント設定」って何？ つまりどういう仕組み？",
-          "en": "What’s a “mount configuration”? How does that work?"
-        },
-        {
-          "s": "b",
-          "ja": "マウントは、コンテナの外にある保存場所を中から使えるようにつなぐ仕組みじゃ。ここでは認証情報や履歴を残す対策として導入しておる。",
-          "en": "A mount connects storage outside the container so it can be used from inside. Here, it’s introduced as a way to preserve authentication details and history."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ 僕なら全プロジェクトに自動適用して、リビルド後も前の会話を使いたいな。",
-          "en": "That’s neat! I’d apply it automatically to every project so I could keep using earlier conversations after a rebuild."
-        },
-        {
-          "s": "b",
-          "ja": "それが狙いじゃのう。ただし自動で効かせるには設定が必要で、記事では全プロジェクトへ適用する方法までまとめておるぞ。",
-          "en": "That’s the goal. But automatic application requires configuration, and the piece also lays out how to apply the setup across all projects."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:34:04.973Z"
-    },
     "3946c53a352c1713": {
       "bodyJa": "## 従量課金モデル\n\nGitHub Copilot、Kiro、Cursorなどの主要AIコーディングツールが、相次いで従量課金モデルを導入している。AIに任せる開発スタイルにも利用量に応じたコストが伴う時代が、本格的に到来したとされる。\n\n## Copilotの変更\n\nGitHub Copilotでは、2026年6月1日に課金体系が従量制へ変わった。この変更は単体の動きではなく、主要ツールが同じ方向へ収束する流れとして捉えられている。開発者には、利用量とコストを慎重に見極めることが求められる。",
       "bodyEn": "## Major AI Coding Tools\n\nGitHub Copilot, Kiro, and Cursor have collectively moved toward usage-based pricing. The shift matters because developers using AI to handle coding work must now consider the cost of that delegation rather than treating it as free.\n\n## Usage-Based Pricing\n\nGitHub Copilot’s billing model changed to usage-based pricing on June 1, 2026. Viewed alongside similar moves by other major AI coding tools, the change represents a broader convergence rather than an isolated Copilot update. This pricing direction puts a cost on AI-dependent development styles and requires developers to weigh usage more carefully.",
@@ -38620,44 +38582,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T20:53:01.345Z"
     },
-    "6b80fc88b1aec8c5": {
-      "bodyJa": "## Memory MCP\n\nClaude CodeのようなAIは、会話が終わるとそれまでのやり取りを覚えていません。そこで、AIに外部機能を追加できるMCPの公式サンプルとして配布されている、会話をまたいだ「記憶」を持たせるサーバーを、AI本体を経由せず直接呼び出して挙動が検証されました。\n\n## 記憶の保存先\n\n同じ名前でもう一度記憶を登録すると、既存内容の上書きやマージは行われず、新しい内容がまるごと無視されると説明されています。また、初期設定では保存先がプロジェクトのフォルダではなく、npm installで作られる場所に置かれます。\n\n## npm install\n\nこのため、npm installを再実行するだけで、保存されていたナレッジグラフの記憶データが消失したとされています。継続的に記憶を保持する運用では、データ永続化に別途対策が必要だと要約されています。",
-      "bodyEn": "## Memory MCP server for Claude\n\nA hands-on test found that reinstalling the Memory MCP server through npm erased its stored knowledge graph data. The result matters because the server is intended to give an AI “memory” across conversations, while an AI such as Claude Code does not retain previous exchanges after a conversation ends.\n\n## Model Context Protocol\n\nThe server is distributed as an official sample of MCP, or Model Context Protocol, a mechanism for adding external capabilities to an AI. The test examined the server directly, without going through the AI itself, to check its behavior.\n\nThe test also found that registering memory again under the same name did not overwrite or merge the existing entry. Instead, the new content was ignored in full.\n\n## Data persistence\n\nUnder the default configuration, the memory was not stored in the project folder. Its storage location was created by npm install, and running npm install again caused the knowledge graph memory data to disappear.\n\nAccording to the existing summary, using the server where persistent memory is required therefore needs a separate data-persistence measure.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Memory MCPサーバーって何？ npm installをやり直すだけで、どうして記憶が消えるの？",
-          "en": "What’s a Memory MCP server? Why would its memory disappear just from running npm install again?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、AIに会話をまたぐ記憶を持たせる仕組みじゃな。記事によれば、初期設定では再インストール時に記憶データが消えたそうじゃ。",
-          "en": "Simply put, it gives AI memory across conversations. According to the article, the default setup lost its stored data after reinstallation."
-        },
-        {
-          "s": "a",
-          "ja": "その記憶は「ナレッジグラフ」なんだよね。それって何で、消えると何が困るの？",
-          "en": "That memory is a “knowledge graph,” right? What is that, and why is losing it a problem?"
-        },
-        {
-          "s": "b",
-          "ja": "知識と知識の関係をつないで保存する形、くらいの意味じゃ。運用で継続的な記憶を頼るなら、全消失は大きな落とし穴になるのう。",
-          "en": "Think of it as storing knowledge together with its relationships. If production relies on that memory persisting, losing everything becomes a serious pitfall."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、初期設定のままでは記憶の永続保存に不安があるんだね。同じ名前で登録し直しても更新されないの？",
-          "en": "So the default setup isn’t reliable for persistent memory. And registering the same name again doesn’t update it either?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、上書きもマージもされず、新しい内容が丸ごと無視されたそうじゃ。運用前に保存先と更新時の挙動を確かめ、永続化対策が必要じゃな。",
-          "en": "According to the article, it neither overwrote nor merged; the new content was entirely ignored. Before production use, verify storage and update behavior, and add persistence safeguards."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T20:53:28.266Z"
-    },
     "8156421f827a3dc7": {
       "bodyJa": "## イベント運営\n\nGitHubの日本・韓国におけるマーケティングでは、イベント運営の定型工程をGitHub上でコード化し、自動化する実践が紹介されている。事務的な作業を減らし、マーケターが企画や参加者の理解に集中できるようにする取り組みだ。\n\nイベントには、企業の開発者向けに繰り返し開催するウェビナー、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、この市場の開発者が現在必要としているものは何か、1時間を費やす価値があるテーマは何か、誰が参加すべきかを検討する。\n\n## 定型工程のコード化\n\nイベントの実施が決まると、固定された一連の工程が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに所定の形式でUTMタグ付きリンクを作成する。さらに、招待メールの文面を作り、送信を担当するチームへ依頼を提出する。\n\nイベント情報は2つのプロジェクトボードにも追加する。開催日までは毎朝、登録者リストをダウンロードして整理し、関係者向けの状況報告を投稿する必要がある。\n\n## 企画への集中\n\nこの取り組みでは、ページの複製、チャネル別UTMリンクの生成、招待メールに関する依頼、フォローアップといった反復作業を自動化する。決まった順序と形式を持つ運用をコードとして扱うことで、イベント決定後に繰り返される工程を処理する形だ。\n\nその結果、日本と韓国のマーケターは、開発者が求めるテーマや、イベントに参加すべき人を考える作業へ集中できると説明されている。",
       "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so marketers in Japan and Korea can spend more time deciding what developers need, which topics deserve an hour of their time, and who should attend. The practice applies automation to the fixed operational sequence that begins after an event is approved.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul. Across these formats, the planning questions center on topics and audiences, while the subsequent execution follows a repeatable process.\n\n## A Fixed Sequence Begins\n\nOnce an event is greenlit, the workflow starts with duplicating a landing page on the event platform. It then requires generating UTM-tagged links for each channel, with every link formatted in the required way.\n\nThe process also includes drafting the invitation email and filing a request with the team responsible for sending it. The event must be added to two project boards as part of the same operating sequence.\n\nUntil the event takes place, another routine repeats every morning: downloading the registrant list, cleaning it up, and posting a status update for stakeholders. These steps make event operations a suitable target for codification because the same defined actions recur after each approval.\n\n## Focus on Topics and Audiences\n\nBy codifying these operations on GitHub, the workflow automates landing-page duplication, channel-specific UTM link creation, the invitation-email request, and follow-up work. The approach covers the event process from planning through follow-up rather than treating each operational task as a separate manual activity.\n\nThe result is a clearer division between decisions that require attention and repeatable execution steps. Marketers can focus on understanding participants, selecting worthwhile topics, and determining who should be in the room, while the standardized event workflow handles the recurring operational sequence.",
@@ -38702,158 +38626,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T15:12:32.259Z"
     },
-    "3d0422c2f380c78e": {
-      "bodyJa": "## 2026年10月2日\n\nGitHub Copilotは2026年10月2日、一部モデルの提供を終了する。利用中のワークフローや統合が対象モデルに依存している場合は、この日までにサポート対象のモデルへ更新する必要がある。対象となる個別のモデル名は、収集元の抜粋では示されていない。\n\n## Copilot Chat\n\n提供終了の対象範囲は、GitHub Copilotの全機能と説明されている。具体的には、Copilot Chat、インライン編集、askモード、agentモード、コード補完が含まれる。特定の操作だけに限られた変更ではなく、これらのGitHub Copilot experiencesを横断して対象モデルが提供終了となる。\n\n## モデルポリシー\n\nCopilot EnterpriseとCopilot Businessの管理者は、代替モデルへのアクセスをCopilot設定のモデルポリシーで有効にする必要がある場合がある。管理者は、組織またはEnterpriseのCopilotモデル設定を開き、代替として利用する特定モデルが利用可能かどうかと、そのモデルに対するポリシーが有効になっているかを確認できる。\n\n## モデル選択\n\nモデルポリシーで代替モデルを有効にすると、利用者は対応するGitHub Copilot experiencesのCopilot Chatモデル選択画面で、そのモデルを確認できるようになる。提供終了後に対象モデルを削除するための操作は不要とされているため、管理者側で求められる対応の中心は、終了日前の代替モデルの確認と有効化になる。",
-      "bodyEn": "## GitHub Copilot experiences\n\nGitHub Copilot will deprecate selected models across all GitHub Copilot experiences on October 2, 2026. The change matters because workflows and integrations using those models must move to supported alternatives before that date.\n\nThe deprecation applies to Copilot Chat, inline edits, ask and agent modes, and code completions. The source does not identify the affected models in the provided excerpt, but it states that the change will cover all of these experiences rather than only a single Copilot feature.\n\n## Workflows and integrations\n\nUsers and organizations should update their workflows and integrations to use supported models before October 2, 2026. This is the action specified in the announcement for avoiding continued reliance on models scheduled for deprecation.\n\nNo action is required to remove the affected models after they have been deprecated. The required preparation is therefore focused on selecting and enabling supported alternatives, rather than manually removing the deprecated models once the change takes effect.\n\n## Copilot model settings\n\nCopilot Enterprise and Copilot Business administrators may need to enable access to alternative models through model policies in Copilot settings. An administrator can verify whether a model is available in the organization or enterprise Copilot model settings and confirm that the policy for that specific model is enabled.\n\nAfter an alternative model has been enabled, users will see it in the Copilot Chat model selector within supported GitHub Copilot experiences. Administrators can use these settings to confirm availability and provide users with access to the models selected for updated workflows and integrations before the deprecation date.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "2026年10月2日に、一部モデルがChatだけでなくコード補完でも使えなくなるの？どこまで影響するのか気になる！",
-          "en": "On October 2, 2026, will selected models stop working not just in Chat but in code completion too? How broad is the impact?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、Chat、インライン編集、ask／agentモード、コード補完を含む全機能が対象じゃ。期限前に対応モデルへ切り替える必要があるのう。",
-          "en": "The article says this applies across Chat, inline edits, ask and agent modes, and code completion. Workflows and integrations need to move to supported models before the deadline."
-        },
-        {
-          "s": "a",
-          "ja": "閉鎖予定の道に代わるルートを、会社の管理者が先に開けておく感じ？利用者が迷わず移れるようにするんだね。",
-          "en": "So it’s like company admins opening an alternate route before a road closes? That would help users switch without getting stuck."
-        },
-        {
-          "s": "b",
-          "ja": "記事だと、Business／Enterprise管理者はモデルポリシーで代替モデルを有効化できるんじゃ。利用者には対応するChatのモデル選択欄に表示されるぞ。",
-          "en": "That’s the idea. The article says Business and Enterprise admins can enable alternatives through model policies, after which users will see them in the Chat model selector where supported."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、対象モデルの終了前に、管理者が代わりを使える状態にして、みんなが移行しておくんだね！",
-          "en": "Got it: before the selected models retire, admins make alternatives available and everyone moves over in advance!"
-        },
-        {
-          "s": "b",
-          "ja": "告知では、終了後に対象モデルを外す作業は不要じゃ。ただし、それまでにワークフローや連携を対応モデルへ更新しておく必要があるのう。",
-          "en": "The notice says no action is needed to remove the retired models afterward. The key caution is to update workflows and integrations to supported models beforehand."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:42:50.216Z"
-    },
-    "52cae1be130bcf2c": {
-      "bodyJa": "## PGP鍵の失効\n\nGitHub CLIのLinuxパッケージリポジトリで使われている現在のPGP鍵は、2026年9月5日土曜日に期限切れとなる。公式APTまたはRPMリポジトリを以前から利用している環境では、後継鍵を信頼する設定になっているか、期限前の確認が必要だ。\n\n## 後継鍵への切替\n\n9月5日より後の最初のリリースから、APTとRPMのリポジトリメタデータ、および新たに公開されるRPMパッケージは、後継鍵だけで署名される。現在の鍵と後継鍵の両方を含むキーリングは、2026年4月に公開済みと説明されている。鍵の切り替え後は、後継鍵を信頼していない環境で更新に失敗する可能性があるため、設定の確認が求められる。\n\n## 確認が必要な環境\n\n2026年4月8日より前に公式APTまたはRPMリポジトリからghをインストールし、その後セットアップを更新していない場合は、9月5日までに正式告知の手順に従う必要がある。4月8日以降に導入した場合でも、導入時期を覚えていない場合や、カスタムイメージ、独自の自動化経路を使っている場合は、正式告知の手順でシステムが後継鍵を信頼していることを確認するよう案内されている。\n\n## その他の導入経路\n\n収集元では、Homebrew、Conda、コミュニティのパッケージマネージャーを通じたghのインストールも挙げられている。また、GitHub Releasesから直接.debファイルを使う方法や、単体のアーカイブバイナリを利用する方法も示されている。",
-      "bodyEn": "## Current PGP key\n\nThe current PGP key used for GitHub CLI Linux package repositories expires on Saturday, September 5, 2026. The change matters because systems that do not trust the replacement key may encounter update failures after package signing switches to that key.\n\nBeginning with the first release after the expiration date, APT and RPM repository metadata will be signed only with the replacement key. Newly published RPM packages will also use only the replacement key.\n\n## Current and replacement keys\n\nIn April, a keyring containing both the current and replacement PGP keys was published. Systems using that keyring can trust the replacement key before the existing key expires and signing changes over.\n\nThe relevant action depends on when and how GitHub CLI, also called gh, was installed. The announcement focuses particularly on installations made through the official APT or RPM repositories and on systems using custom images or automation paths.\n\n## Before April 8, 2026\n\nUsers who installed gh from the official APT or RPM repositories before April 8, 2026, and have not updated the setup since then should follow the instructions in the full announcement before September 5.\n\nUsers who installed later, do not remember when they installed, or rely on a custom image or automation path should follow the announcement’s verification steps. Those steps are intended to confirm that the system trusts the replacement key before the signing transition.\n\n## Homebrew, Conda, or community package manager\n\nThe source also identifies other ways to install gh: through Homebrew, Conda, or a community package manager. Direct installation options include a .deb file or a standalone archive binary from GitHub Releases.\n\nFor official APT and RPM repository users, the key point is to verify replacement-key trust where necessary before the current PGP key expires.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "これは普段の何が変わるの？ Linuxでghを更新するとき、急に失敗するかもってこと？",
-          "en": "What changes in everyday use? Does this mean updating gh on Linux could suddenly fail?"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。9月5日以降は後継PGP鍵だけで署名されるため、古い設定では更新時の確認で止まるおそれがあると、この記事は伝えておる。",
-          "en": "That’s the concern. After September 5, packages will use only the replacement PGP key, and the article says older setups may fail verification during updates."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ いままでの鍵と後継鍵を、両方使えるようにしていたんだね。",
-          "en": "Was it different before? So the old and replacement keys had both been usable until now?"
-        },
-        {
-          "s": "b",
-          "ja": "4月には両方を入れたキーリングが公開されていたそうじゃが、9月5日後の最初のリリースからは後継鍵だけになる。PGP鍵は配布元を確かめる印のようなものじゃよ。",
-          "en": "A keyring with both keys was published in April, but from the first release after September 5, only the replacement key will be used. A PGP key is like a stamp for checking who provided a package."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど、一番大事なのは、前から公式APTかRPMで入れているなら期限前に後継鍵を信頼しているか確かめることだね。",
-          "en": "Got it. The key point is that people who set up the official APT or RPM repositories earlier should check that they trust the replacement key before the deadline."
-        },
-        {
-          "s": "b",
-          "ja": "その確認が収穫じゃのう。入れた時期が曖昧だったり独自イメージや自動化を使う場合も、案内の手順で信頼設定を確認する点に注目じゃ。",
-          "en": "Exactly. If you’re unsure when it was installed, or use a custom image or automation, the article points to checking the trust setup through its instructions."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:43:43.901Z"
-    },
-    "87b4f54cb89ae614": {
-      "bodyJa": "## ローカルAI\n\nIFA 2026で、NVIDIAはMicrosoftおよびパートナーと連携し、NVIDIAハードウェア上でAIエージェントをローカル実行しやすくする取り組みを示した。推論の高速化に加え、エージェントのセットアップと実行を簡単にする新たなツールが中心となる。\n\n## 推論を最大1.9倍\n\nllama.cppとvLLMには新しい最適化が用意され、ローカル推論は最大1.9倍高速になると説明されている。これらの最適化はすでに直接利用できるほか、LM StudioとOllamaを通じても利用可能とされる。対象はローカル推論の処理であり、抜粋では個別の構成や条件ごとの性能差には触れられていない。\n\n## AIエージェント\n\nHermes Agent、OpenClaw、Perplexity Portable Computerでは、NVIDIA GPU向けのローカルAI対応が簡素化される予定だ。また、NVIDIA PAIRは「Personal AI Router」とされるツールで、ユーザーのローカルネットワーク内にあるPCへAI推論をインテリジェントに分散する。エージェントの導入とローカル実行を扱いやすくするための仕組みとして位置付けられている。\n\n## RTX Spark\n\nコンパクトなNVIDIA RTX Spark Windows PCは10月に登場し、LenovoとAcerから新しいWindows PCが提供される。AI愛好家、開発者、クリエイターに対し、高性能なエージェントをローカルかつ安全に動かすための選択肢を増やすものと説明されている。具体的な価格や構成、地域については示されていない。",
-      "bodyEn": "## Frontier Intelligence Goes Local\n\nAt IFA 2026, NVIDIA, Microsoft and their partners are presenting faster inference and new tools intended to make AI agents easier to set up and run locally on NVIDIA hardware. The announcement matters for AI enthusiasts, developers and creators seeking more ways to run capable agents locally and securely.\n\nThe effort includes new compact Windows PCs, simplified local AI support, inference optimizations and a tool for distributing AI workloads across PCs on a local network.\n\n## Faster Local Inference\n\nNew optimizations for llama.cpp and vLLM provide up to 1.9x faster local inference, according to the source. The optimizations are available now, both directly and through LM Studio and Ollama.\n\nThe stated performance improvement applies to local inference, aligning with the broader focus on running AI agents on NVIDIA hardware rather than relying only on systems outside the user’s local environment.\n\n## Simplified Local AI Support\n\nSimplified local AI support for NVIDIA GPUs is coming to Hermes Agent, OpenClaw and Perplexity Portable Computer. The announcement says these additions will make agents easier to configure and operate locally.\n\nNVIDIA is also introducing PAIR, described as a Personal AI Router. PAIR intelligently distributes AI inference across the PCs connected to a user’s local network, allowing local hardware to share inference work.\n\n## NVIDIA RTX Spark Arrives\n\nNVIDIA RTX Spark is scheduled to arrive in October through new compact Windows PCs from Lenovo and Acer. These systems are intended to give AI enthusiasts, developers and creators additional options for running capable agents locally and securely.\n\nTogether, the RTX Spark PCs, software optimizations, expanded local AI support and PAIR focus the IFA 2026 announcement on making local agents faster and easier to run across NVIDIA hardware.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "ローカル推論が最大1.9倍速くなるって、これって大きいこと？",
-          "en": "Local inference can be up to 1.9 times faster? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな変化じゃよ。この記事ではllama.cppとvLLMの最適化で速くなるとしており、「最大」なので条件で差は出るのう。",
-          "en": "That’s a meaningful jump. The article says llama.cpp and vLLM optimizations can speed it up, though “up to” means results will vary by conditions."
-        },
-        {
-          "s": "a",
-          "ja": "NVIDIA PAIRって何？ 推論をローカルネットワークのPCに振り分けるって、つまりどういうこと？",
-          "en": "What is NVIDIA PAIR? What does it mean to distribute inference across PCs on a local network?"
-        },
-        {
-          "s": "b",
-          "ja": "PCごとの作業の振り分け役、くらいに考えるとよいじゃろう。本文では、近くのネットワーク内にあるPCへAI推論を賢く配る道具とされているのう。",
-          "en": "Think of it as a coordinator for the work across PCs. The article describes it as a tool that intelligently sends AI inference around machines on your local network."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ私は、手元でAIエージェントを動かしてみたいな。複数のPCがあれば、PAIRも使えそう？",
-          "en": "Then I’d want to run an AI agent on my own setup. If I had multiple PCs, could PAIR fit into that?"
-        },
-        {
-          "s": "b",
-          "ja": "その使い方なら、PAIRはローカルネットワーク上のPCが対象じゃ。RTX SparkのWindows PCは10月登場予定で、本文ではLenovoとAcerの機種が挙げられているよ。",
-          "en": "For that use, PAIR is meant for PCs on a local network. RTX Spark Windows PCs are due in October, and the article names systems from Lenovo and Acer."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:45:10.137Z"
-    },
-    "9d5b9bae039a952e": {
-      "bodyJa": "## ZGateway\n\nZGatewayは、Metaで最も広く使われているキーバリューストアZippyDBの前段に置かれ、通信を統合するプロキシだ。広範に利用されるデータ基盤への通信を共通の層に集約し、複数の制御や運用機能を持たせている点が重要となる。\n\n## ZippyDB\n\nZippyDBは、Metaのプロダクトメタデータ、カウンター、設定を支えるキーバリューストアと説明されている。ZGatewayは、このZippyDBに向かうトラフィックの前段に共有プロキシ層を追加する構成であり、ZippyDBを利用する通信を一つの仕組みを通じて扱えるようにする。\n\n## 流入制御と負荷分散\n\n通信の統合に加え、ZGatewayは流入制御と負荷分散を可能にする。流入制御はZippyDBへ入るトラフィックを制御する機能で、負荷分散は通信の負荷を振り分ける役割を指す。これらは、プロキシをZippyDBの前段に置くことで実現される機能として紹介されている。\n\n## リージョン間耐障害性\n\nZGatewayは、リージョンをまたぐ耐障害性にも対応するとされる。さらに、通信経路を共通化するだけでなく、より豊富な運用機能も有効にする。つまりZGatewayは、ZippyDBへのトラフィックをまとめる入口であると同時に、流入制御、負荷分散、リージョン間の耐障害性、運用機能の強化を担うプロキシとして位置付けられている。",
-      "bodyEn": "## ZGateway\n\nZGateway is the proxy Meta uses in front of ZippyDB, its most widely used key-value store. The shared proxy layer matters because it unifies ZippyDB traffic while enabling admission control, load balancing, cross-region resilience, and richer operations.\n\nThe Meta Engineering post focuses on what was learned from placing this proxy in front of ZippyDB. The announcement describes traffic unification as ZGateway’s central role, with the other capabilities presented as additional benefits.\n\n## Traffic through ZippyDB\n\nZippyDB backs product metadata, counters, and configuration at Meta. According to the source, it can serve billions, although the excerpt does not provide further detail about that scale.\n\nZGateway sits ahead of this widely used store and provides a shared layer for its traffic. Rather than describing ZGateway as a replacement for ZippyDB, the source presents it as a proxy used with the existing key-value store.\n\n## Admission control and load balancing\n\nThe proxy enables admission control and load balancing for traffic passing through ZGateway. These capabilities are directly associated with the shared layer introduced in front of ZippyDB.\n\nThe excerpt does not specify individual admission policies, balancing methods, or implementation details. Its stated technical point is that introducing the proxy makes these functions available alongside traffic unification.\n\n## Cross-region resilience\n\nZGateway also enables cross-region resilience and richer operations. The source groups these features with admission control and load balancing as benefits of putting the proxy in front of ZippyDB.\n\nNo specific regional design, operational interface, or resilience mechanism is detailed in the collected excerpt. The announcement’s scope is therefore the proxy architecture and the set of capabilities it enables for ZippyDB traffic.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "ZippyDBの前にZGatewayを置いて通信をまとめるって、つまりどういうこと？",
-          "en": "Putting ZGateway in front of ZippyDB to unify traffic—what does that actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、ZippyDBへの通信を共通のプロキシに通す構成じゃ。プロキシは、通信を中継する窓口のようなものじゃよ。",
-          "en": "The post describes a shared proxy that routes traffic to ZippyDB. Think of a proxy as a central desk that forwards requests."
-        },
-        {
-          "s": "a",
-          "ja": "大きな店の入口で係の人が案内する感じかな？ ZippyDBを使うサービスの通信が混み合いにくくなるの？",
-          "en": "So it’s like an attendant directing people at a busy store entrance? Does that help services using ZippyDB handle crowded traffic?"
-        },
-        {
-          "s": "b",
-          "ja": "記事だと、流入制御や負荷分散に加え、リージョン間の耐障害性と運用機能も強化できるそうじゃ。通信を交通整理しやすくなるわけじゃな。",
-          "en": "The article says it enables admission control, load balancing, cross-region resilience, and richer operations. In other words, traffic becomes easier to coordinate."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、ZGatewayはZippyDBへの通信をまとめて、安定運用を助ける共通窓口なんだね！",
-          "en": "Oh, I get it! ZGateway is a shared front door that unifies ZippyDB traffic and helps keep operations resilient."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。紹介の範囲では、通信の統合だけでなく、制御・分散・耐障害性・運用まで一つの層で扱える点が注目じゃよ。",
-          "en": "Exactly. What stands out in the description is that one layer handles not only traffic unification, but also control, balancing, resilience, and operations."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:45:42.456Z"
-    },
     "b68f08d5b78fdf2b": {
       "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
       "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
@@ -38891,44 +38663,6 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:46:10.596Z"
-    },
-    "c3242eb99cc5f08b": {
-      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
-      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
-          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
-          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
-        },
-        {
-          "s": "a",
-          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
-          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
-        },
-        {
-          "s": "b",
-          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
-          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
-          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
-        },
-        {
-          "s": "b",
-          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
-          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:50:27.117Z"
     },
     "3331a55ea23268f9": {
       "bodyJa": "## コアダンプの疫学\n\nOpenAIのエンジニアは、大規模なコアダンプ解析を用いて、データインフラでまれに起きるクラッシュを調査した。長年続いたシステム不安定性の根本原因に迫り、解消した点が主題だ。\n\n## 18年前のバグ\n\n解析により、ハードウェア障害と、データインフラに潜んでいた18年前からのソフトウェアバグを発見した。エンジニアはこのバグを特定して修正し、長年にわたる不安定性の要因を取り除いたとされる。",

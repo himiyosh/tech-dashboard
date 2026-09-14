@@ -78,15 +78,24 @@ afterEach(() => {
 });
 
 describe("Cloudflare Worker deploy config", () => {
-  it("deploys only the OIDC bridge on Workers Free without a cron or paid CPU limit", () => {
+  it("deploys only the OIDC bridge on Workers Free without a paid CPU limit; its only cron dispatches the Publisher", () => {
     const harnessConfig = readConfig("worker/wrangler.toml");
     const summarizerConfig = readConfig("worker-summarizer/wrangler.toml");
 
     expect(harnessConfig).toContain('main = "src/free-plan-bridge.ts"');
-    expect(harnessConfig).not.toContain("[triggers]");
     expect(harnessConfig).not.toContain("[limits]");
     expect(harnessConfig).not.toContain("cpu_ms");
     expect(summarizerConfig).not.toMatch(/\[limits\][\s\S]*cpu_ms\s*=/);
+
+    // LL-200: collection and multi-megabyte JSON merge must never run on a
+    // Worker cron again (Workers Free allows 10ms CPU per invocation). The one
+    // allowed trigger only asks GitHub to run the Actions Publisher: at most two
+    // small HTTP calls, no KV, no Queue, no harness code.
+    const triggers = harnessConfig.match(/\[triggers\]\s*\ncrons = \[([^\]]*)\]/);
+    expect(triggers?.[1], "exactly one cron, the Publisher dispatch").toBe('"*/30 * * * *"');
+    const dispatch = readConfig("worker/src/publisher-dispatch.ts");
+    expect(dispatch, "the dispatcher stays self-contained").not.toMatch(/^import /m);
+    expect(dispatch).not.toMatch(/SUMMARY_CACHE|SUMMARY_QUEUE|BODY_QUEUE|harness\//);
   });
 
   it("uses the compact summary-only budget for queue summarization", () => {

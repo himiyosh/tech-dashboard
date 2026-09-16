@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T13:52:31.658Z",
+  "generatedAt": "2026-09-16T17:51:15.297Z",
   "month": "2026-08",
   "count": 724,
   "entries": [
@@ -169,7 +169,7 @@
       "summaryEn": "MCP Servers v2026.8.31 updates the filesystem, memory, sequential-thinking, and everything packages to one version, helping users keep deployments aligned.",
       "lang": "en",
       "publishedAt": "2026-08-31T20:34:32.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -1543,7 +1543,7 @@
       "summaryEn": "OpenHands v1.16.0 adds LLM provider selection in settings, a Linux desktop installer with deb packaging, and live phase visibility for automation runs, improving setup and operational monitoring for developers.",
       "lang": "en",
       "publishedAt": "2026-08-27T18:23:52.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "automation",
         "linux",
@@ -2011,7 +2011,15 @@
       "archiveTier": "hot",
       "contentSnippet": "前回記事「 GitHub Copilot 向けの指示を構造化して管理 」では、 h-nasu/copilot-instructions の全体像を紹介しました。 今回は、このフレームワークを構成する 仕組みの概念 を、1つずつ具体例で掘り下げます。 ※ ドキュメントの配置・責務分離については、前回記事「 AI用ドキュメントと開発者用ドキュメントの混在問題を解決する 」で詳しく解説しているので、そちらを参照してください。本記事では「仕組み」そのものに集中します。 AI がタスクを始める前に、 .ai-instructions/ 配下のファイルを 決まった順番で読む という仕組みです。 「どのファイルを読めばいいか」を AI に委ねると、読むファイルが毎回変わって前提がぶれます。 読み込み順を固定 すれば、常に同じ文脈でタスクを開始できます。 .ai-instructions/ の README では、AI が必ず読む順序が定義されています。 Copilot: まず .ai-instructions/ を読み込みました。 - project-docs.md: ドキュメント配置ルール確認 毎回同じ前提で始まるので、 説明の繰り返しが減り、ぶれがなくなります 。 ファイル名の 00- , 01- , 02- というインデックス順にルールが適用され、 後ろのファイルほど前のルールを拡張・上書きできる 仕組みです。 「全体共通の原則」と「プロジェクト固有の例外」「機能固有の例外」を、同じ仕組みの中で両立させるためです。1つのファイルに全部書くと、例外が増えるたびに壊れます。 ├── 00-default.md # 全プロジェクト共通のデフォルト ├── 01-project.md # このプロジェクト固有のルール（00を上書き） └── 02-feature-x.md # 特定機能の例外（00, 01を上書き） .ai-instructions/ の説明では、後ろのファイルは「新しいルールの追加」「既存ルールの上書き」「スコープの絞り込み・拡大」ができると定義されています。",
       "feedSnippet": "copilot-instructions の複雑な概念を具体例で理解する — 読み込み順・上書き・フック・実行契約・テンプレート・自信度・学習ループ 前回記事「GitHub Copilot 向けの指示を構造化して管理」では、h-nasu/copilot-instructi...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMwLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY2NTU4NTY1JTNGdiUzRDQ_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTJhYTM5NDhhMGVhN2M0YWE0ZTlkNzBmMzBmMTZmYjdm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D78b1461227519108ff60109c487e12f8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Y29waWxvdC1pbnN0cnVjdGlvbnMlMjAlRTMlODElQUUlRTglQTQlODclRTklOUIlOTElRTMlODElQUElRTYlQTYlODIlRTUlQkYlQjUlRTMlODIlOTIlRTUlODUlQjclRTQlQkQlOTMlRTQlQkUlOEIlRTMlODElQTclRTclOTAlODYlRTglQTclQTMlRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wY2RiZTY0NTRjMTkwMDBkZDZhMjBkMjJlZmEyMGNmNA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoLW5hc3UmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1lYTJmZDM5MDM1YjQyYjQ1NGRjNThhYTBiYmE2OGU0Zg&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=f0919e5a5e1e06f3531dc2751690de9e",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMwLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY2NTU4NTY1JTNGdiUzRDQ_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTJhYTM5NDhhMGVhN2M0YWE0ZTlkNzBmMzBmMTZmYjdm%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D78b1461227519108ff60109c487e12f8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Y29waWxvdC1pbnN0cnVjdGlvbnMlMjAlRTMlODElQUUlRTglQTQlODclRTklOUIlOTElRTMlODElQUElRTYlQTYlODIlRTUlQkYlQjUlRTMlODIlOTIlRTUlODUlQjclRTQlQkQlOTMlRTQlQkUlOEIlRTMlODElQTclRTclOTAlODYlRTglQTclQTMlRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0wY2RiZTY0NTRjMTkwMDBkZDZhMjBkMjJlZmEyMGNmNA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoLW5hc3UmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1lYTJmZDM5MDM1YjQyYjQ1NGRjNThhYTBiYmE2OGU0Zg&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=f0919e5a5e1e06f3531dc2751690de9e",
+        "alt": "copilot-instructions の複雑な概念を具体例で理解する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "600018066d388994",
@@ -2335,7 +2343,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I might be biased, but I think Dependabot is pretty amazing. It helps keep my projects up to date, ensuring I’m always using secure libraries. But because there’re frequently new vulnerabilities, there’re frequently new pull requests from Dependabot. Sometimes it’s a minor version bump. Sometimes it’s a major version upgrade. Sometimes everything will work just fine. And sometimes… well, every single developer has been caught by a breaking change. How can we best triage these pull requests? The work isn’t particularly difficult per se, but it certainly is repetitive. It’s the perfect task to offload to Copilot! With GitHub Copilot app automations , you can hand off that first round of review.",
       "excerptOrigin": "article",
       "feedSnippet": "Managing library updates can be tedious at times. Learn how the GitHub Copilot app can handle this type of repetitive task. The post GitHub Copilot app for Beginners: Automate Dependabot pull request triage appeared first on The GitHub Blog .",
@@ -2346,7 +2353,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bbffbe230b585ac7",
@@ -4002,7 +4010,7 @@
       "summaryEn": "Meta has open-sourced MetaRoCE, a ground-up RDMA transport protocol optimized for AI training and inference on commodity Ethernet, releasing the full spec, a reference software implementation, and a compliance test suite.",
       "lang": "en",
       "publishedAt": "2026-08-24T18:02:29.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "ai-infrastructure",
         "engineering",
@@ -4017,6 +4025,7 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Training and serving frontier AI models depends on fast, reliable networks that move data between GPUs without wasting compute cycles. To meet this challenge at scale, Meta designed MetaRoCE – a clean-sheet RDMA transport protocol purpose-built for AI workloads on commodity Ethernet. We’re releasing the MetaRoCE specification, a reference software implementation and a compliance test [...] Read More... The post MetaRoCE: A New RDMA Transport Built for AI-Scale Ethernet appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/08/MetaRoCE-HERO-final.png",
@@ -4025,8 +4034,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "f03cb9ddcece8aee",
@@ -4040,7 +4048,7 @@
       "summaryEn": "Meta unveiled MTIA 300, its first in-house training accelerator featuring built-in NIC chiplets and a co-designed communication library (HCCL), delivering superior performance for training ranking and recommendation models compared to general-purpose GPUs.",
       "lang": "en",
       "publishedAt": "2026-08-24T17:45:52.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "ai-hardware",
         "engineering",
@@ -4054,6 +4062,7 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "MTIA 300 is the first of Meta’s family of in-house training and inference accelerators optimized for training ranking and recommendation models. We’re sharing how MTIA 300’s built-in NIC chiplets allow it to meet the communication needs associated with training recommendation models with superior performance over general-purpose GPUs. By co-designing MTIA’s communication library, HCCL, alongside the [...] Read More... The post MTIA 300: Meta’s First Training Chip with Built-in NICs and Communication-Offloading Engines appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/08/Meta-MTIA-300-Hero-final.png",
@@ -4062,8 +4071,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "43a5b93c8b1188eb",
@@ -5867,7 +5875,7 @@
       "summaryEn": "OpenHands v1.15.0 adds a getting-started checklist in the sidebar, workspace path display in the Files view, and catalog-based script bundle installation, improving onboarding and project navigation.",
       "lang": "en",
       "publishedAt": "2026-08-21T14:05:50.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "open-source",
         "openhands",
@@ -7219,7 +7227,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "This is the third post in our GitHub Copilot app for Beginners series. If you’re just joining us, check out, GitHub Copilot app for beginners: Getting started , where we introduced the app and how it helps you work across multiple agent sessions. Our second post goes deeper on working within a session. Here, we’ll look at how to keep all of the requests and work being done on a project organized in one place. If you’ve been following along in this series, you know that real development is rarely a straight line. You fix a bug here, review a pull request there, and chase down a new idea somewhere in between. As you continue to assign tasks to Copilot and create new pull requests, you’ll quickly find yourself with several proverbial balls in the air. Being able to manage everything from one centralized location is key, and that’s exactly why the My work pane exists.",
       "excerptOrigin": "article",
       "feedSnippet": "If you’re juggling multiple Copilot sessions, use the My work pane to track what's in flight, what's done, and what's next. The post GitHub Copilot app for Beginners: Managing your work appeared first on The GitHub Blog .",
@@ -7230,7 +7237,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c341f7ca502170c7",
@@ -8227,7 +8235,7 @@
       "summaryEn": "Routine release 2026.8.18 updates core MCP server packages—server-everything, mcp-server-time, mcp-server-fetch, and mcp-server-git—to the same version.",
       "lang": "en",
       "publishedAt": "2026-08-18T16:16:12.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -9207,7 +9215,7 @@
       "summaryEn": "OpenHands v1.14.0 adds canvas structured error display, LLM pre-flight validation to block misconfigured profiles, and a new Git Sync page for automations.",
       "lang": "en",
       "publishedAt": "2026-08-17T21:45:46.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "git-sync",
         "llm",
@@ -9316,6 +9324,8 @@
       "title": "LLM による意味論検証を支える規律 〜参照整合性への応用例を添えて〜",
       "titleJa": "LLM による意味論検証を支える規律 〜参照整合性への応用例を添えて〜",
       "titleEn": "Semantic validation has long relied on costly and inconsistent human review,…",
+      "summaryJa": "構文検証は機械が担ってきたが、意味論検証は人間のレビューに依存していた。LLM を活用することで、設計意図との整合性チェックを自動化・再現可能にできると論じた記事。",
+      "summaryEn": "Semantic validation has long relied on costly and inconsistent human review, but LLMs can now automate it by reading meaning across code and natural language, as demonstrated through a referential integrity use case.",
       "lang": "ja",
       "publishedAt": "2026-08-17T16:25:43.000Z",
       "collectedAt": "2026-08-18T06:20:52.553Z",
@@ -9330,7 +9340,7 @@
       "category": "local-llm",
       "importance": 2,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "プログラムの正しさには、シンタックス（構文）とセマンティクス（意味論）の両面がある。構文の検証は機械の得意分野で、コンパイラや lint が昔から黙って引き受けてきた。一方、意味論の検証——この仕様は設計の意図と矛盾していないか、このコードをレビューして指摘すべき所見はないか——は、長らく人間のレビューに頼るほかなかった。そして人間のレビューは、高価で、再現せず、属人的だ。 LLM の登場が、この分担を変えつつある。自然言語とコードをまたいで意味を読める判定器が、機械の側に現れたからだ。意味論の検証から属人性を排除しつつ、自動化できるようになったのだ。 ただし LLM の判定は非決定的で、同じ入力に同じ答えを返す保証がない。そのままゲートに置けば、信頼できない門番になる。本稿では、LLM の判定を規律で縛って CI ゲートに耐えるものにする方法を扱う。扱う規律は以下の 5 つである。 と複数の LLM 判定ゲートがある。本稿では、規律が最も濃く現れる引用・参照の意味論検証を主例に取る。 第 1 回で SoT Chain （「ADR ← 仕様書 ← 型契約 ← 実装」を一方向の参照で結ぶチェーン）の全体像を、第 2 回で track ワークフローを、第 3 回で型契約書 (TDDD) を扱った [1] 。 文書やプログラムの断片から、より上流のドキュメントへの参照・引用（たとえばプログラム中の関数から設計書内の一文への参照）について考える。このとき、下流が上流を適切に参照できているかを評価する軸は、次の 4 つである。 ここで注意しておきたいことがある。層① と層② の検証は、機械的に行うことができる。しかし、① と ② の合格は「引用が存在し、参照先も実在する」を意味するだけで、参照先が主張を意味的に裏付けているかは何も言っていない。仕様書が設計判断の一つを引用し、しかしその決定を否定する内容を書いていても、① と ② は素通しになる。",
       "image": {
         "src": "https://res.cloudinary.com/zenn/image/upload/s--4FOczMRd--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:LLM%2520%25E3%2581%25AB%25E3%2582%2588%25E3%2582%258B%25E6%2584%258F%25E5%2591%25B3%25E8%25AB%2596%25E6%25A4%259C%25E8%25A8%25BC%25E3%2582%2592%25E6%2594%25AF%25E3%2581%2588%25E3%2582%258B%25E8%25A6%258F%25E5%25BE%258B%2520%25E3%2580%259C%25E5%258F%2582%25E7%2585%25A7%25E6%2595%25B4%25E5%2590%2588%25E6%2580%25A7%25E3%2581%25B8%25E3%2581%25AE%25E5%25BF%259C%25E7%2594%25A8%25E4%25BE%258B%25E3%2582%2592%25E6%25B7%25BB%25E3%2581%2588%25E3%2581%25A6%25E3%2580%259C%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:flip451%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSkg4WGNMcWZmWUFOenNrVWYyVGp0SkZHSmppcGVQUTVYNXBPY2RyTkdaPXM5Ni1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
@@ -9368,7 +9378,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "When I was in college, I joined the beta for one of the first versions of AI inline completions in VS Code. It felt like a game changer. Since then, GenAI has fundamentally changed software development: hybrid teams where agents and humans work in tandem, with the developer at the center as visionary and orchestrator. We are living in that transition right now. As a natural byproduct of how fast innovation in GenAI has moved, we now have tools to help us plan, build, review, and ship code. But in the current state, many workflows still feel disjointed. Context gets lost across threads and surfaces, and too much time gets spent reviewing agent-generated work. Agents can produce changes faster than any human can review them, and most developer tools were not originally designed for multi-agent orchestration.",
       "excerptOrigin": "article",
       "feedSnippet": "Chat is great for intent, but agent work gets lost in the scroll. Here is how I use canvases with my agentic workflows—and why your workflow also deserves a canvas. The post How canvases make agentic workflows visible, steerable, and cost-efficient appeared first on The GitHub Blog .",
@@ -9379,7 +9388,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "15181461c82404fc",
@@ -11816,7 +11826,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "How many tabs do you have open alongside your pull request? Imagine picking up a new issue in your product’s free-trial onboarding flow: make the “invite your teammates” step optional. Support keeps flagging the step as a friction point as signups increase. Quick win, right? Is this even the right change? Are the dependencies I’m touching clean? Is it safe to deploy right now? Each answer lives in a different tool, so working through the pull request means carrying the same context across four places. GitHub agent apps bring the tools you need to answer those questions to where you’re already working, powered by the same platform and harness as our own Copilot cloud agent .",
       "excerptOrigin": "article",
       "feedSnippet": "See how four GitHub agent apps can help you scope, secure, roll out, and ship a feature across the SDLC–all without leaving GitHub. The post How to bring your software delivery workflow into GitHub with agent apps appeared first on The GitHub Blog .",
@@ -11827,7 +11836,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bed40e9d96da51fa",
@@ -13673,7 +13683,7 @@
       "summaryEn": "OpenHands v1.13.0 adds client-side conversation archiving, inline markdown artifact previews, and a readiness gate for dev-ready issues.",
       "lang": "en",
       "publishedAt": "2026-08-13T02:01:19.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "conversation-archive",
         "markdown-preview",
@@ -14051,7 +14061,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Opening a new AI tool can feel a little like staring at a blank page. You know you want help with something, but figuring out exactly what to ask can be its own task. The good news is that you don’t need to write the perfect prompt to get started. A prompt is simply a description of what you want to accomplish. Start with what you know, give Copilot some context, and refine the request as you go. Let’s walk through what it looks like to start your first task in the GitHub Copilot app . Before you can ask Copilot to make a change, it needs something to work on. Agent sessions can be connected to a GitHub repository or a folder on your local machine, giving Copilot access to the code and files it needs for the task. From the GitHub Copilot app home screen, you can select a project you’ve worked with before or add a new one.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to write your first prompt in the GitHub Copilot app, choose the right context and model, and start your first task with confidence. The post GitHub Copilot app for Beginners: Write your first prompt appeared first on The GitHub Blog .",
@@ -14062,7 +14071,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "4d90c2275a7b5d33",
@@ -14812,7 +14822,7 @@
       "summaryEn": "Meta detailed how it is building a Scam Alert feature for WhatsApp that detects fraudulent messages—including AI-generated lures and impersonation—without compromising end-to-end encryption or user privacy.",
       "lang": "en",
       "publishedAt": "2026-08-12T13:00:28.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "encryption",
         "engineering",
@@ -14826,6 +14836,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "WhatsApp is committed to helping people stay safe while protecting the privacy of their messages. As scam tactics evolve — from impersonation to social engineering to AI-generated lures — we’re always evolving as well, so that our protections stay ahead of scammers while protecting people’s personal messages with end-to-end encryption. Today, we’re sharing an early [...] Read More... The post How We’re Building Scam Alert on WhatsApp With End-to-End Encryption and Verifiability Guarantees appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/07/WhatsApp-Scam-Alert.png",
@@ -14834,8 +14845,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "9af9748a797740b3",
@@ -19035,7 +19045,7 @@
       "summaryEn": "OpenHands v1.12.0 is out with a clarification of free model endpoints, making it easier for users to identify which OpenHands model options are available at no cost.",
       "lang": "en",
       "publishedAt": "2026-08-07T19:38:32.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "model-endpoints",
         "openhands",
@@ -19179,7 +19189,7 @@
       "summaryEn": "OpenHands v1.11.0 adds per-run LLM cost tracking in the Activity Log, reordered Customize navigation, and polished Agent Canvas version update UI.",
       "lang": "en",
       "publishedAt": "2026-08-07T18:06:12.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "agent",
         "agent-canvas",
@@ -21471,7 +21481,7 @@
       "summaryEn": "Meta details how it evolved its ads ranking system from sequence-based user modeling into a multi-stage architecture governed by scaling laws, improving recommendation accuracy across billions of daily interactions.",
       "lang": "en",
       "publishedAt": "2026-08-05T19:20:20.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "ads",
         "engineering",
@@ -21485,6 +21495,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Every day, Meta’s recommendation platforms handle billions of user interactions, generating rich temporal signals that capture individual preferences and intent across products, ads, and content. In our 2024 post on sequence learning for ads recommendations, we showed how modeling the order and timing of user actions (rather than relying on static, manually engineered sparse features) [...] Read More... The post From User Sequences to Scaling Laws: A Multi-Stage Architecture for Meta’s Ads Ranking appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/05/Meta-Mult-stage-Ads-Ranking.png",
@@ -21493,8 +21504,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b62e4bf961f3acc3",
@@ -21695,7 +21705,7 @@
       "summaryEn": "OpenHands v1.10.0 ships several new features including a GLM 5.2 default model for Canvas, activity log export, and a featured automations landing dashboard.",
       "lang": "en",
       "publishedAt": "2026-08-05T16:00:58.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "canvas",
         "glm",
@@ -23406,7 +23416,7 @@
       "summaryEn": "OpenHands v1.9.0 adds a domain-neutral extension-manifest host, a streamlined Cloud vs Agent-server backend chooser, and live agent activity display in the chat interface.",
       "lang": "en",
       "publishedAt": "2026-08-03T18:54:13.000Z",
-      "collectedAt": "2026-09-15T23:18:49.139Z",
+      "collectedAt": "2026-09-16T17:50:52.565Z",
       "tags": [
         "agent",
         "openhands",

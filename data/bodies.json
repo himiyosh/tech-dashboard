@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-16T13:52:28.286Z",
-  "count": 1119,
+  "generatedAt": "2026-09-16T17:51:11.451Z",
+  "count": 1125,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -1595,44 +1595,6 @@
           "s": "b",
           "ja": "その通りじゃ。今はあくまでパブリックベータなので、次は正式公開に向けた動きが見どころじゃな。",
           "en": "Exactly. Since this is still a public beta, the next thing to watch is how it moves toward the official launch."
-        }
-      ]
-    },
-    "f8073f2ba786f475": {
-      "bodyJa": "AnthropicのAIコーディング支援ツール「Claude Code」の最新版v2.1.210が公開された。悪意あるコンテンツを介した間接プロンプトインジェクション攻撃への防御が強化され、あわせてGitのworktree分離に関するバグも修正されている。開発者が日々コードベースを扱うツールだけに、セキュリティと安定性の両面で実務上の意味を持つ更新といえる。\n\n間接プロンプトインジェクションとは、AIエージェントが読み込む外部データ——Webページやリポジトリ内のファイル、コマンドやツールの出力結果など——に攻撃者が不正な指示を仕込み、本来のユーザー指示を上書きしたり、意図しない操作を誘発したりする手法を指す。Claude Codeはファイルの読み書きやシェルコマンドの実行、外部コンテンツの取得といった強力な権限を持つため、こうした攻撃が成立した場合の潜在的な影響は小さくない。今回の強化は、そのリスクを軽減する狙いがあると見られる。\n\nこの種の脆弱性はClaude Code固有のものではなく、GitHub CopilotやCursorをはじめとするAIエージェント全般に共通する課題として認識されている。近年はモデル自体の判断力向上に加え、ツール側で権限やコンテキストを制御する多層防御の重要性が指摘されており、今回の対応もその流れに沿ったものと位置づけられる。\n\nもう一方の修正対象であるGit worktreeは、単一のリポジトリから複数の作業ディレクトリを同時に展開できる機能で、ブランチごとの並行作業などに用いられる。Claude Codeでは、worktree単位で作業環境を分離することで複数タスクの干渉を防ぐ設計が採られているとされる。今回のバグ修正により、この分離が正しく機能しない不具合が解消されたとみられ、並行作業時の予期せぬ動作を避けやすくなる可能性がある。\n\nClaude Codeはマイナーバージョンでの更新頻度が高く、機能追加と不具合修正が継続的に重ねられている点も特徴だ。利用者にとっては、セキュリティ関連を含むこうしたパッチを速やかに適用することが、安全な運用の前提となる。個々の挙動や適用範囲の詳細については、公式のリリースノートを確認することが望ましい。",
-      "bodyEn": "Anthropic's Claude Code has received a maintenance update, version 2.1.210, that centers on two practical concerns for developers who let an AI agent operate directly inside their repositories: resistance to indirect prompt injection and correct isolation between git worktrees. Both changes matter because Claude Code is an agentic tool that reads files, runs commands, and acts on the contents of a codebase, which means the security and reliability of those actions have real consequences for the systems it touches.\n\nIndirect prompt injection is the more security-sensitive of the two areas. Unlike a direct injection, where a user types malicious instructions into a prompt, an indirect attack hides adversarial instructions inside content that the model later ingests as part of a normal task. That content might be a README, a code comment, a dependency's documentation, an issue description, the output of a tool, or text fetched from a web page. When an agent reads such material, a crafted payload can attempt to redirect its behavior, for example by instructing it to exfiltrate secrets, modify files it should not touch, or run unexpected commands. Because the malicious text arrives through data the agent is supposed to process rather than through the operator's own instructions, it is harder to filter out with naive input checks. According to the release summary, v2.1.210 strengthens Claude Code's defenses against this class of attack, which appears to involve better separation between trusted instructions and untrusted content, though the precise mechanisms are not fully detailed in the notes.\n\nThis work sits within a broader industry effort. Prompt injection has been repeatedly cited as one of the most significant unsolved risks for large language model applications, and it features prominently in the OWASP Top 10 for LLM applications. As agentic coding assistants such as Claude Code, GitHub Copilot's agent modes, Cursor, and similar tools gain the ability to execute actions autonomously, the potential impact of a successful injection grows from misleading text output to concrete side effects on a developer's machine or infrastructure. There is no known complete defense, so vendors generally layer mitigations: constraining what the agent is permitted to do, requiring confirmation for sensitive operations, sandboxing execution, and improving how models distinguish operator intent from data. An incremental hardening release like this one is best understood as one more layer rather than a definitive fix.\n\nThe second change addresses a bug affecting git worktree isolation. Git worktrees let a single repository check out multiple branches into separate directories at the same time, so a developer can work on several branches in parallel without repeatedly stashing changes or cloning the repository again. They share the same underlying object database but are meant to keep their working directories and checked-out states independent. Isolation is important when an automated agent is involved, because operations intended for one worktree should not leak into another; a failure of isolation could cause files to be created, modified, or referenced in the wrong location, leading to confusing state or lost work. The fix in v2.1.210 is described as correcting behavior in this area, improving reliability for developers who rely on worktrees as part of their workflow.\n\nFor context, Claude Code ships frequent point releases, and versions in this range are typically small, targeted updates rather than feature overhauls. That cadence favors quick delivery of bug fixes and security hardening, and it means individual entries like this one usually address a narrow set of issues. Users on managed installations may receive the update automatically, while others can pull it through their normal package or installer channels.\n\nPractically, the takeaway is modest but useful. If the improvements perform as described, teams using Claude Code gain a somewhat safer footing when the tool processes untrusted repository content and a more dependable experience when juggling multiple worktrees. As always, defense in depth remains prudent: reviewing agent actions, limiting credentials and permissions available to the tool, and being cautious with repositories or external sources of unknown provenance. Prompt injection is an evolving threat, and this release looks like continued iteration on a problem the wider ecosystem is still actively working to contain rather than a claim to have solved it.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-15T17:11:41.968Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "間接プロンプトインジェクションって何？ Claude Codeでどんな対策が強くなったの？",
-          "en": "What’s an indirect prompt injection? What protection did Claude Code strengthen?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、悪意あるコンテンツに命令を紛れ込ませ、AIを誘導する攻撃じゃな。記事によれば、その防御が強化されたそうじゃよ。",
-          "en": "Simply put, it’s an attack that hides instructions in malicious content to steer an AI. According to the article, Claude Code strengthened its defenses against that."
-        },
-        {
-          "s": "a",
-          "ja": "へえ。gitのworktree分離のバグ修正は、何が嬉しいの？",
-          "en": "Oh, interesting. What’s the benefit of fixing the git worktree isolation bug?"
-        },
-        {
-          "s": "b",
-          "ja": "worktreeは、gitの作業場所を分ける仕組みじゃ。記事では分離の不具合が直り、マルチエージェント運用の安定性が高まるとしておる。",
-          "en": "A worktree is a way to separate git working areas. The article says fixing the isolation issue improves reliability in multi-agent use."
-        },
-        {
-          "s": "a",
-          "ja": "つまり派手な新機能より、悪い命令への防御と、分けた作業の安定性を高めた更新なんだね！",
-          "en": "So instead of flashy new features, this update improves protection from malicious instructions and makes separated work more reliable!"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば実用上重要な改善なので、今後はマルチエージェント運用での安全性と安定性が見どころじゃな。",
-          "en": "Exactly. The article calls these practically important improvements, so security and reliability in multi-agent workflows will be the key things to watch."
         }
       ]
     },
@@ -5778,158 +5740,6 @@
         }
       ]
     },
-    "321ffa27422f7819": {
-      "bodyJa": "Claude CodeのToolSearch機能について、公式ドキュメントには明記されていない4つの実挙動を検証した実践ガイドが公開された。エージェント型の開発ツールが扱えるツール数が増えるなかで、どのツールが選ばれ、どう呼び出されるのかを正確に把握することは、動作の再現性や精度を高めるうえで重要な意味を持つ。\n\nToolSearchは、Model Context Protocol(MCP)を通じて接続された多数のツールの中から、モデルが必要なものを動的に検索・選択するための仕組みと位置づけられる。従来はエージェントが利用可能なツール定義をすべてコンテキストに読み込む必要があったが、対象が増えるとトークン消費や選択ミスが問題になりやすい。ToolSearchのような検索ベースの絞り込みは、この課題を緩和する狙いがあると見られる。\n\n背景にあるMCPは、AIモデルと外部ツールやデータソースを標準化された形式で接続するためにAnthropicが公開したオープンな仕様だ。対応するMCPサーバーが増えるほど、Claude Codeが同時に見渡せるツールの総数は膨らむ。そのため、実際にどの条件でツールが候補に上がり、どの順序で提示されるかといった細部が、開発体験を左右する要素になっている。\n\n今回のガイドが示すのは、こうした挙動のうちドキュメントに書かれていない部分を、実際の動作から確認して整理した知見である。記事では、ツールの検索・選択のタイミングや、想定と異なる呼び出しパターンなど、現場で遭遇しやすいポイントに焦点を当てているとされる。断定的な仕様ではなく実測に基づく観察であるため、バージョン更新によって挙動が変わる可能性がある点には留意が必要だ。\n\n同種の検証は、GitHub CopilotやCursorといった競合ツールでも活発になりつつあり、エージェントがツールをどう選ぶかという「ツール選択の透明性」は業界共通の関心事になりつつある。公式に文書化される前の段階で、利用者側が実挙動を共有し合う動きは、MCPエコシステムの成熟を促す一助になると考えられる。\n\nToolSearchを本番のワークフローに組み込む際は、ドキュメントの記載と実際の挙動の双方を突き合わせ、自分の環境で再検証する姿勢が求められる。今回のような実践ガイドは、その出発点として参照する価値があるだろう。",
-      "bodyEn": "Claude Code's ToolSearch feature has quietly become one of the more consequential mechanisms for developers who connect many Model Context Protocol (MCP) servers at once, yet its precise behavior remains only partially documented. A recent practical guide published on Zenn sets out to close that gap, verifying four behaviors that do not appear in the official documentation. For teams building automation around Claude Code, these details matter because they directly affect which tools the model can find, how much context budget is consumed, and how reliably a workflow behaves in production.\n\nTo understand why ToolSearch exists, it helps to recall the underlying problem. MCP lets Claude Code talk to external tools through standardized servers, and each connected server exposes a set of tool definitions that normally must be loaded into the model's context. As developers add more servers, the combined tool definitions can consume a large share of the available context window before any real work begins. ToolSearch addresses this by allowing tools to be discovered on demand rather than injected in full upfront. In effect, the model searches an index of available tools and pulls in only the definitions it needs for a given task, which is meant to keep the context lean while still exposing a large catalog.\n\nThe first behavior the guide highlights concerns how matching actually works. According to the write-up, ToolSearch appears to rely on more than simple exact-string matching, weighing tool names and descriptions together when ranking candidates. The practical implication is that the wording of a tool's description is not cosmetic; it likely influences whether that tool surfaces for a given query. Developers writing MCP servers may therefore get more predictable results by describing tools in terms that match how the model is likely to phrase its search.\n\nThe second behavior relates to when ToolSearch engages at all. The guide reports that the feature does not necessarily activate in every session, and that its involvement appears to depend on how many tools are present. Below a certain scale, tools may be loaded directly, while larger catalogs trigger the search-based path. This threshold behavior is significant because it means a workflow can behave differently as more servers are connected, even if none of the individual tools changed. Testing at the scale you intend to run, rather than with a minimal setup, is a reasonable precaution the guide implies.\n\nA third observation involves the interaction between ToolSearch and tools that a developer wants always available. The guide suggests there are ways certain tools can remain directly accessible rather than being gated behind search, and that understanding this distinction helps avoid situations where a critical tool is present in the catalog but not readily surfaced. Getting this wrong can look like the model \"forgetting\" a capability, when in fact the tool simply was not retrieved for that turn.\n\nThe fourth behavior touches on consistency across repeated queries. The guide indicates that search results are not always identical, and that phrasing, prior context, and the current task can shift which tools appear. This is a familiar characteristic of retrieval-driven systems, and it argues for designing prompts and tool descriptions defensively rather than assuming a fixed mapping between an intent and a returned tool.\n\nThese findings sit within a broader industry shift. Anthropic and the wider MCP ecosystem have been working to manage the token cost of large tool sets, and dynamic tool discovery is a recurring theme across agent frameworks, not just Claude Code. Comparable ideas appear in other agent runtimes and in retrieval-augmented tool selection approaches, where the goal is to scale the number of available capabilities without overwhelming the model. Adjacent concerns include tool namespacing, permission scoping, and observability, all of which become more important as the catalog grows.\n\nAs with any behavior derived from hands-on testing rather than official specification, these conclusions should be treated as provisional and may change as Claude Code evolves. Still, the guide offers a useful reminder that features which look simple on the surface often carry hidden mechanics, and that verifying them empirically can meaningfully improve reliability in real-world workflows.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T11:47:00.369Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「遅延ツール」とToolSearchって何？ 使う直前までロードしないって、どういうこと？",
-          "en": "What are “deferred tools” and ToolSearch? What does it mean that they aren’t loaded until right before use?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、MCPツールの設計情報を必要になるまで読み込まず、ToolSearchが検索してロードする仕組みじゃよ。",
-          "en": "Simply put, MCP tool definitions stay unloaded until needed, and ToolSearch finds and loads them."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、それを実際に調べると何が嬉しいの？ 公式ドキュメントだけでは足りないのかな？",
-          "en": "Oh, interesting! What’s the benefit of testing it in practice? Isn’t the official documentation enough?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、文書にない4つの挙動を実測しておる。現場でToolSearchをより確実に使うための判断材料になる、というわけじゃな。",
-          "en": "According to the article, four undocumented behaviors were verified through testing. That gives developers practical clues for using ToolSearch more reliably."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、仕組みを知るだけでなく、実際の検索やエラーの出方まで把握するのが大事なんだね。",
-          "en": "So it’s not just about knowing the mechanism—you also need to understand how searches and errors actually behave."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。特に「No matching deferred tools found」は、ツール不存在とMCPサーバー未接続を区別しない点に注意じゃよ。",
-          "en": "Exactly. One key caution: “No matching deferred tools found” doesn’t distinguish between a missing tool and a disconnected MCP server."
-        }
-      ]
-    },
-    "ca91e0c54d351ec1": {
-      "bodyJa": "複数の大規模言語モデル（LLM）を一つのコードベースから扱いたい――そんな要望に応える定番の手法が「OpenAI互換API」だ。今回取り上げる記事は、Anthropic の Claude、OpenAI の GPT、Google の Gemini、xAI の Grok という主要4系統を単一のインターフェースへ束ねる実装を記録しつつ、この互換レイヤーが抱える構造的な限界を浮き彫りにしている。\n\nOpenAI互換APIとは、OpenAIが定めた chat completions 形式のリクエスト・レスポンス構造を他社モデルでも受け付けられるようにする仕組みを指す。エンドポイントのURLやモデル名を差し替えるだけでプロバイダを切り替えられるため、多くのSDKやツールがこの形式を事実上の共通語として採用してきた。ローカル推論のollamaやvLLMなどもこの様式に対応しており、互換性の広がりが開発の前提になりつつある。\n\nしかし記事が指摘するのは、各モデルが共通仕様の外側に独自機能を広げるほど、「互換」で吸収できる範囲が痩せていくという現実だ。たとえば Claude の拡張思考（extended thinking）やプロンプトキャッシュ、Gemini の長大なコンテキストやマルチモーダル処理、Grok のリアルタイム検索連携といった要素は、OpenAI形式の枠に素直には収まらない。共通部分だけを使えば安全だが、それでは各モデルの持ち味を捨てることになる。\n\nこの記事では、共通の入出力は互換レイヤーで受けつつ、モデル固有の機能はアダプタ的に分岐させる設計が紹介されているとみられる。トークン数やツール呼び出し（function calling）の仕様差、ストリーミングの挙動、エラーコードの違いなどを吸収する薄い変換層を、プロバイダごとに用意する発想だ。\n\n背景には、LiteLLM や OpenRouter のように複数モデルを仲介するルーティング基盤が広く使われるようになった流れがある。抽象化は開発効率を上げる一方で、最新機能への追随が遅れたり、細かな挙動差が隠れて再現しにくくなったりする可能性もある。統一インターフェースの利便性と、各モデル固有の性能を引き出す作り込みのどちらを優先するかは、用途に応じた設計判断として今後も問われ続けるだろう。",
-      "bodyEn": "The idea of an \"OpenAI-compatible\" API has quietly become one of the most important conventions in applied machine learning. When developers want to route requests to Claude, GPT, Gemini, or Grok without rewriting their application logic each time, they typically lean on a shared request-and-response shape modeled after OpenAI's Chat Completions endpoint. This article documents a practical wiring exercise: unifying four major model families behind a single OpenAI-compatible interface, and cataloguing where that abstraction holds together and where it visibly frays.\n\nThe appeal of the pattern is straightforward. OpenAI's schema—messages with roles, a model identifier, temperature and token parameters, and a predictable JSON envelope—became a de facto lingua franca that other providers and tooling adopted. Google exposes an OpenAI-compatible surface for Gemini, xAI offers one for Grok, and Anthropic's Claude can be reached through the same shape via gateways or its own compatibility endpoints. Aggregators such as OpenRouter, along with libraries like LiteLLM and frameworks including LangChain and the Vercel AI SDK, lean heavily on this convention so that switching models becomes a configuration change rather than a code rewrite. In principle, one client, one set of parameters, and four interchangeable back ends.\n\nIn practice, the article's central observation is that the compatible layer \"is getting thinner.\" The shared specification covers the lowest common denominator: sending messages and receiving text, streaming tokens, and setting a few generation parameters. But each model now exposes capabilities that live outside that intersection. Anthropic's models surface extended thinking or reasoning traces and a distinctive tool-use and system-prompt handling. OpenAI has its own function-calling evolution, structured outputs, and reasoning-effort controls on its o-series models. Gemini brings very large context windows, native multimodal inputs, and safety-setting semantics that do not map cleanly onto the OpenAI envelope. Grok adds its own options and, in some configurations, live search behavior. The more each provider differentiates, the more the common schema describes only a shrinking core.\n\nTechnically, this creates friction at several predictable seams. Token accounting and the naming of usage fields differ, so cost tracking cannot be assumed identical across providers. Streaming formats, stop reasons, and error payloads vary enough that robust clients need per-provider handling despite the shared surface. Tool and function calling is a frequent breaking point, because the JSON structures for declaring tools and parsing model-issued calls are similar but not identical, and multi-turn tool loops expose the differences quickly. System prompts, role ordering, and how each model treats consecutive same-role messages also diverge. The article's approach, as summarized, is to route common traffic through the compatible interface while adding explicit adapters or escape hatches for model-specific features, rather than pretending the abstraction is complete.\n\nThat mirrors a broader industry pattern. The compatibility layer is best understood as a convenience for portability, not a guarantee of feature parity. Anthropic, Google, and OpenAI each continue to publish native SDKs precisely because their most advanced features—reasoning visibility, multimodal handling, caching, and structured output guarantees—are easier to express in their own idioms. Prompt caching, for example, can materially reduce cost and latency but is configured differently across vendors and is not part of the shared spec. The Model Context Protocol, which Anthropic introduced to standardize how models connect to external tools and data, is a separate effort addressing a different layer of the stack and does not resolve these request-shape divergences.\n\nThe practical takeaway is one of trade-offs rather than a verdict. Standardizing on an OpenAI-compatible interface remains a reasonable default for teams that value the ability to swap models, run A/B comparisons, or hedge against a single vendor. It lowers integration cost and keeps application code stable. But builders should treat the shared schema as a floor and plan deliberately for the growing set of features that sit above it. A durable design appears to be a thin common core for routine chat and streaming, combined with well-isolated provider-specific modules for reasoning modes, tool calling, multimodal inputs, and caching.\n\nAs the frontier labs keep competing on differentiated capabilities, the \"compatible\" surface is likely to keep thinning relative to what each model can actually do. The wiring record here is useful less as a finished template than as an honest map of where a single interface saves effort and where the seams demand attention.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T11:47:53.442Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「OpenAI互換」が痩せていくって、それって何？ 4つのLLMを同じように使えるんじゃないの？",
-          "en": "What does it mean that “OpenAI-compatible” is getting thinner? Can’t all four LLMs be used the same way?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、共通のAPI形式でClaude・GPT・Gemini・Grokを扱う仕組みじゃな。ただし記事によれば、固有機能までは共通化できないのじゃよ。",
-          "en": "Simply put, it’s a shared API format for Claude, GPT, Gemini, and Grok. But the article says their model-specific features don’t fully fit that common interface."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、じゃあ1つのインターフェースにまとめると何が嬉しいの？ 固有機能は使えなくなるのかな？",
-          "en": "Oh, so what’s the benefit of putting them behind one interface? Does that mean you lose their unique features?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、複数のLLMを統一的に扱える実装手法が示されておる。固有機能は捨てると断定せず、互換レイヤーの限界を踏まえて個別に扱う整理じゃな。",
-          "en": "The article shows a way to handle multiple LLMs consistently. It doesn’t say to discard unique features; it explains how to treat them separately while recognizing the compatibility layer’s limits."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、共通部分は1本化できるけど、モデルならではの機能は別の配線が必要かもしれないってことだね！",
-          "en": "So the shared parts can be unified, but model-specific features may still need separate wiring. Got it!"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、各モデルの固有機能が増すほど共通仕様との隔たりが見えてくる点が、今後の見どころじゃな。",
-          "en": "Exactly. According to the article, the key thing to watch is how the gap from the shared spec becomes clearer as each model exposes more unique capabilities."
-        }
-      ]
-    },
-    "b5b5461fd83d414f": {
-      "bodyJa": "AI企業のAnthropicと投資大手のBlackstoneが、AI産業における次の巨大な成長機会は最先端モデルそのものの開発ではなく、企業への導入や実装にあるとの見方を打ち出した。両社の主張は、AI競争の焦点が基盤インフラの構築から、実際の業務での活用へと移りつつあることを示唆している。\n\nこれまでのAI業界は、OpenAI、Google、Anthropicといった主要プレイヤーが、より高性能な大規模言語モデル(LLM)の開発を競い合う構図が中心だった。モデルの性能向上には巨額の計算資源と資金が必要であり、その投資規模は年々拡大している。しかし、モデルの能力が一定の水準に達しつつある中で、その価値をどう企業の実務に落とし込むかという「実装」の局面が、新たな収益源として注目され始めている。\n\n企業がAIを実際に導入する際には、既存の業務システムとの統合、データの整備、セキュリティやコンプライアンスへの対応、従業員の運用体制づくりなど、多くの課題が伴う。モデルを提供するだけでは、こうした現場の複雑さを解決するのは難しい。Anthropicは自社の「Claude」シリーズを企業向けに展開しており、業務プロセスへ組み込むためのツールや連携機能を強化しているとされる。Blackstoneのような投資会社が実装領域に関心を寄せる背景には、この分野が今後大きな市場へ成長する可能性があるとの判断があると見られる。\n\nこうした動きは、AI業界全体の潮流とも重なる。近年はモデル単体ではなく、外部データやツールと連携させる「エージェント」型のAIや、企業固有の情報を参照させる仕組みへの関心が高まっている。Microsoftが「Copilot」を業務ソフトに統合したり、各社が業界特化型のソリューションを打ち出したりする動きも、価値の源泉が実用化へと移りつつあることを裏付けているといえる。\n\nただし、実装を軸とした市場が実際にどの程度の規模に育つかは、まだ不透明な部分も残る。企業のAI投資が期待通りの成果を生むかどうかは、導入後の運用や費用対効果の検証にかかっている。それでも、モデル開発の先にある「使いこなし」の段階に商機を見出す今回の視点は、AIビジネスの次の局面を占う手がかりになりそうだ。",
-      "bodyEn": "Anthropic and Blackstone are publicly aligning around a thesis that could reshape how investors and executives think about artificial intelligence: the next major wave of value creation lies not in building ever-larger foundation models, but in the messy, unglamorous work of deploying those models inside enterprises. The claim matters because it reframes where the money, talent, and competitive advantage in AI are likely to accumulate over the coming years, shifting attention from the model labs toward the integration layer that connects AI to real business processes.\n\nThe core argument is that frontier model capability, while still advancing, is increasingly becoming a shared commodity. Multiple providers now offer models of broadly comparable strength, and the marginal benefit of each new release appears to be narrowing for many practical tasks. Under this view, the differentiator is no longer who has the smartest model, but who can reliably embed AI into workflows, connect it to proprietary data, meet security and compliance requirements, and demonstrate measurable returns. Anthropic, the maker of the Claude family of models, has leaned heavily into enterprise adoption, and Blackstone, one of the world's largest alternative asset managers, brings a capital-allocation lens that treats implementation as a durable, monetizable category rather than a temporary services cost.\n\nTechnically, the \"implementation\" opportunity encompasses a stack of components that sit between a raw model and a finished business outcome. These include retrieval-augmented generation, which grounds model responses in a company's own documents; fine-tuning and prompt engineering to align outputs with domain requirements; orchestration frameworks that let AI agents chain multiple steps and call external tools; and evaluation systems that monitor accuracy, cost, and safety in production. Much of the difficulty is what practitioners often call the \"last mile\" — cleaning and structuring data, integrating with legacy systems, managing access controls, and handling the change-management challenge of getting employees to actually use new tools. These problems are labor-intensive and specific to each organization, which is precisely why they are hard to commoditize and potentially lucrative.\n\nThe positioning also reflects Anthropic's broader commercial strategy. The company has emphasized enterprise-grade features, safety practices, and integrations, and has cultivated partnerships with cloud providers and consulting firms to reach large customers. Framing implementation as the trillion-dollar prize aligns with selling not just API access but a pathway to production. For Blackstone, an investment thesis centered on deployment fits patterns seen in prior technology transitions, where infrastructure buildout was eventually followed by a larger, longer-lived market in application and services.\n\nThis view sits within a wider industry conversation. System integrators and consultancies such as Accenture and Deloitte have been expanding generative-AI practices, and cloud platforms from Microsoft, Amazon, and Google have positioned themselves as the delivery channel for enterprise AI. OpenAI, Anthropic's closest competitor, has similarly pushed enterprise products and custom deployments. A parallel trend is the rise of AI agents and \"agentic\" workflows, which promise to automate multi-step tasks but also raise the stakes for reliability, governance, and integration — reinforcing the argument that execution, not raw model horsepower, becomes the bottleneck.\n\nSeveral caveats temper the thesis. Foundation-model progress has repeatedly surprised observers, and a significant leap in capability could once again shift value back toward the labs. Enterprise adoption has also proven slower and more uneven than early enthusiasm suggested, with many pilots failing to reach production because of data readiness, cost, or unclear return on investment. The specific dollar figures cited for the opportunity should be read as directional framing rather than precise forecasts, and it is worth noting that both companies have commercial incentives to promote a narrative in which their own strengths are decisive.\n\nStill, the alignment of a leading model developer and a major institutional investor around the same idea is notable. It suggests that at least part of the market believes the hardest and most valuable problems in AI are now organizational and operational rather than purely scientific. Whether implementation ultimately proves to be the trillion-dollar layer or simply one important segment among many, the framing captures a real shift underway: the center of gravity in enterprise AI appears to be moving from what a model can do in principle to what it can reliably do inside a business.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T11:48:05.033Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "モデルじゃなくて「実装」が次の成長機会って、それって何？ AIを企業で使える形にするってこと？",
-          "en": "They say implementation, not models, is the next growth opportunity. What does “implementation” mean—making AI actually usable inside a company?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、記事ではモデル開発より、企業にAIを導入して実際に動かす領域に大きな機会があるとしておる。",
-          "en": "Put simply, the article says the bigger opportunity may lie in bringing AI into companies and getting it running, rather than developing the models themselves."
-        },
-        {
-          "s": "a",
-          "ja": "企業の中にエンジニアを入れると、何がうれしいの？ AI導入が本当に早くなるのかな。",
-          "en": "What’s the benefit of putting engineers inside companies? Would that really speed up AI adoption?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、Odeの立ち上げは、企業に入り込んで導入を支える技術者がAI普及を加速する、という期待を映しておる。",
-          "en": "According to the article, Ode’s launch reflects a bet that engineers embedded in enterprises can support implementation and accelerate AI adoption."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、AIの勝負が、モデルを作るだけじゃなく、企業でちゃんと使えるようにする方へ移っているんだね。",
-          "en": "Oh, I get it! The competition is shifting from just building models to making AI work properly inside companies."
-        },
-        {
-          "s": "b",
-          "ja": "そういう見立てじゃな。AnthropicとBlackstoneは実装への投資を強めており、企業導入が実際に広がるかが見どころじゃよ。",
-          "en": "That’s the thesis. Anthropic and Blackstone are increasing investment in implementation, and the key thing to watch is whether enterprise adoption actually expands."
-        }
-      ]
-    },
-    "791ba43939a43466": {
-      "bodyJa": "スタートアップのReelfulは、スマートフォンのカメラロールにたまった写真や動画クリップをAIが自動で編集し、SNS向けの縦型ショート動画に仕上げるモバイルアプリを発表した。動画編集の専門知識がなくても手軽に投稿用コンテンツを作れる点が特徴で、日常的なコンテンツ制作のハードルを下げる試みとして注目される。\n\n同アプリは、ユーザーが端末内の素材へのアクセスを許可すると、AIが写真や短い動画を解析し、見栄えのするカットの選定やトリミング、BGMやトランジションの付与、テンポの調整などを自動で行うとされる。仕上がりはTikTokやInstagramのリール、YouTubeショートといったプラットフォームの縦型フォーマットに最適化されると説明されており、利用者はほぼワンタップで完成品に近い動画を得られる可能性がある。手動での微調整余地がどの程度あるかなど、詳細な仕様は今後の情報公開が待たれる。\n\n背景には、短尺動画がSNSの主戦場となり、個人や中小事業者にとっても継続的な投稿が求められている事情がある。一方で、動画編集は撮影よりも時間と手間がかかる工程であり、この負担を軽減するAIツールへの需要が高まっている。生成AIの普及も追い風で、素材の自動選別や字幕付け、音楽の同期といった編集作業を機械が担う流れが加速している。\n\n競合環境も厚みを増している。既存の編集アプリでは、CapCutやAdobeのExpress、InShotなどがAIによる自動編集機能を段階的に取り込んでおり、テキストや画像から動画を生成するタイプのサービスも相次いで登場している。Reelfulはこうした市場の中で、既存のカメラロールを起点にする手軽さを差別化点に据えていると見られる。\n\nもっとも、AIによる自動編集には課題も残る。素材へのアクセスを前提とするためプライバシーやデータ取り扱いへの配慮が求められるほか、生成物が画一的になりやすい、著作権付きの楽曲利用に制約が生じる、といった懸念も指摘され得る。手軽さと表現の独自性をどう両立させるかが、この種のサービスの普及を左右する要素になりそうだ。実際の編集品質や対応地域、料金体系については、正式提供の進展とともに評価が固まっていくとみられる。",
-      "bodyEn": "Reelful, a startup working in the AI content-creation space, has launched a mobile app that automatically turns the photos and video clips sitting in a user's camera roll into polished short-form videos designed for social platforms. The pitch is straightforward: rather than manually trimming footage, choosing music, and arranging cuts, users point the app at their existing media and let its models assemble something ready to post. It matters because short vertical video has become the dominant format across Instagram Reels, TikTok, and YouTube Shorts, and the effort required to produce it remains a barrier for casual users and small businesses alike.\n\nAccording to the company, the app scans a phone's library and selects moments it judges to be worth featuring, then edits them into a finished sequence optimized for social feeds. In practice, tools of this type typically rely on a combination of computer vision and audio analysis to detect faces, scenes, and highlights, to discard blurry or redundant frames, and to synchronize cuts to the beat of a chosen soundtrack. Reelful appears to follow this general approach, packaging those steps into a one-tap workflow so that the output arrives in vertical aspect ratios and lengths suited to each platform. The stated goal is to lower the barrier for everyday content creation rather than to serve professional editors.\n\nThe launch lands in an increasingly crowded field. ByteDance's CapCut has become the default free editor for many creators and offers its own template-driven and AI-assisted features. Adobe has pushed generative capabilities into Premiere and its Express mobile tools, while Google and Apple have long shipped automatic highlight reels through Google Photos \"Memories\" and Apple's Photos \"Memories\" and Clips. A wave of newer startups, including companies building on generative video models such as Runway and Pika, has also blurred the line between editing existing footage and synthesizing new frames. Reelful's emphasis on repurposing a user's own camera roll positions it closer to the automated-editing camp than to fully generative video, which may help it sidestep some of the authenticity and provenance concerns that surround AI-generated imagery.\n\nFor readers less familiar with the underlying concepts, short-form video \"optimization\" generally means more than cropping. Platforms reward content that holds attention in the first few seconds, so automated editors tend to front-load strong visuals, keep pacing brisk, and add captions or on-screen text because a large share of feed viewing happens with sound off. Music selection is another consideration, since licensed or trending audio can influence how algorithms distribute a clip, and it is not yet clear from the announcement how Reelful handles music rights or whether it draws from a licensed library. These details will likely matter to creators who intend to monetize or widely distribute their videos.\n\nPrivacy is a relevant backdrop as well. An app that analyzes a full camera roll is processing potentially sensitive personal images, and where that analysis happens, on the device or in the cloud, affects both performance and data exposure. The company has not detailed its processing model in the material available, so users evaluating the app would be wise to check its privacy policy and permissions. This is a common point of scrutiny for AI photo and video tools, several of which have faced questions over how uploaded media is stored, used for model training, or retained.\n\nThe broader context is a race to reduce the time between capturing a moment and publishing it. Social platforms benefit from a steady supply of native content, and the tools that make creation faster tend to gain traction quickly, as CapCut's growth alongside TikTok demonstrated. Whether Reelful can differentiate on edit quality, speed, or output variety remains to be seen, and its success will likely depend on how well its automated choices match the tastes of individual users, an area where automated highlight tools have historically produced mixed results.\n\nFor now, Reelful represents another step in the steady automation of media production, aimed at users who want shareable results without the learning curve of traditional editing software. Its practical value will become clearer as early adopters test the output against manually edited alternatives and as the company clarifies pricing, platform support, and how it manages the data and licensing questions that accompany any camera-roll-based AI service.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T11:49:00.150Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "スマホの写真や動画をAIが自動編集するって、具体的にはどういうこと？",
-          "en": "AI automatically edits the photos and clips on your phone—what does that actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、Reelfulがカメラロールの素材をまとめ、SNS向けの短い動画に仕上げるそうじゃよ。",
-          "en": "Put simply, the article says Reelful takes media from your camera roll and turns it into polished short videos for social media."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！でも、それって何が嬉しいの？",
-          "en": "Wow, neat! But what’s the real benefit?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、従来の動画編集を複雑だったり時間がかかったりすると感じる人でも、投稿用動画を作りやすくなる点じゃな。",
-          "en": "According to the article, it helps people who find traditional video editing too complicated or time-consuming create social posts more easily."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、編集が苦手でも、手元の写真や動画からSNS向けの短い動画を作りやすくなるんだね。",
-          "en": "So even if editing isn’t my thing, I could more easily turn my photos and clips into short social videos."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。注目点は手軽さじゃが、記事情報だけでは編集の細かな仕組みまでは分からない点には注意じゃな。",
-          "en": "That’s right. Ease of use is the key appeal, though the article doesn’t explain the finer details of how the editing works."
-        }
-      ]
-    },
     "7f5c3f7820ecc6bb": {
       "bodyJa": "VS Code Copilot Chat 1.109で追加された8つの新機能を、Context Engineering(文脈設計)の観点から検証する解説記事が公開された。AIコーディング支援において、開発者がモデルへ渡す文脈をどこまで精密に制御できるかが焦点となっており、今回のアップデートはその流れを一段と後押しするものと位置づけられている。\n\nContext Engineeringとは、生成AIに与えるプロンプトだけでなく、参照させるファイルやディレクトリ、過去の会話履歴、ツールの実行結果といった「文脈」全体を意図的に設計する考え方を指す。単発の指示文を磨くプロンプトエンジニアリングから一歩進み、AIが何を見て何を無視するかを開発者側がコントロールすることで、出力の一貫性や再現性を高める狙いがある。大規模なコードベースほど、モデルに渡す情報の取捨選択が回答品質を左右しやすいとされる。\n\n記事では、1.109で加わった各機能を、この文脈制御の観点から一つずつ位置づけている。具体的には、チャットに含めるコンテキストの指定方法や、エージェント的にツールを呼び出す挙動、カスタム指示ファイルの扱いなどが、開発者の意図をAIへより明確に伝える手段として整理されていると見られる。どの情報を渡し、どの範囲で作業させるかを細かく調整できることが、実務での使い勝手に直結するという論旨だ。\n\n背景には、AIコーディング支援ツールをめぐる競争の激化がある。GitHub Copilotに加え、CursorやClineといったエージェント型ツール、Anthropicのモデルを組み込んだ環境などが相次いで登場し、いずれも「いかに適切な文脈を与えるか」を重要テーマに据えている。VS Codeは拡張機能として複数のモデルを切り替えられる柔軟性を持ち、Copilot Chatの更新頻度も比較的高いことから、こうした文脈制御機能は今後も継続的に拡充される可能性がある。\n\nもっとも、機能が増えるほど設定や運用の複雑さも増す。今回紹介された8機能をすべて使いこなす必要は必ずしもなく、自分の開発スタイルやプロジェクト規模に応じて取捨選択する視点が求められそうだ。Context Engineeringという枠組みは、そうした判断の指針として一定の有用性を持つと考えられる。",
       "bodyEn": "Context Engineering, the practice of deliberately shaping the information an AI model receives before it generates a response, has become a central concern for developers who rely on coding assistants. This article looks at the release of VS Code Copilot Chat version 1.109 and examines eight of its new features through that lens, focusing on how each one gives developers more precise control over the context that surrounds a request. As models grow more capable, the quality of their output increasingly depends less on the phrasing of a single prompt and more on the surrounding material—open files, project structure, instructions, and tool results—that the assistant can see.\n\nThe central idea behind Context Engineering is that a large language model only reasons over what fits inside its context window. Everything the assistant \"knows\" about a task in the moment is assembled from sources the developer either supplies explicitly or allows the tool to gather automatically. When that assembly is left to chance, results can be inconsistent; when it is managed deliberately, the same underlying model tends to behave more predictably. The features highlighted in 1.109 appear to reflect this shift, moving the emphasis from clever wording toward reproducible context construction.\n\nSeveral of the updates concern how instructions and reusable context are declared. Recent versions of Copilot Chat have supported instruction files and prompt files stored in the workspace, which let teams codify conventions such as preferred libraries, testing patterns, or coding style so they are injected consistently rather than retyped. Improvements in this area typically make it easier to scope instructions to particular file types or folders, which reduces noise by ensuring the model sees guidance relevant to the current task and not everything at once. From a Context Engineering standpoint, this is significant because irrelevant context can dilute a model's attention as much as missing context can starve it.\n\nOther features address the mechanics of gathering context during a conversation. Context variables and references, which allow a developer to point the assistant at a specific file, selection, symbol, or the broader codebase, remain a core mechanism for controlling what the model reads. Enhancements here generally aim to make the boundaries of that context more visible and controllable, so the developer can confirm what was actually included. Agent-oriented workflows, where the assistant can run tools, read files, and make multi-step edits, raise the stakes further, because the context is being modified as the task proceeds rather than fixed at the outset.\n\nTooling and extensibility form another recurring theme. The Model Context Protocol, an open standard for connecting assistants to external data sources and tools, has been adopted across several vendors and is likely relevant to any discussion of context control in modern editors. Features that manage tool sets, permissions, and how tool output is fed back into the conversation directly affect what ends up in the window. Neatly summarizing or filtering tool results, for instance, can prevent a single verbose command output from crowding out more useful material.\n\nIt is worth placing this release in a wider industry context. Copilot Chat competes with tools such as Cursor, Cline, and JetBrains AI Assistant, many of which have converged on similar concepts: workspace-level rules, explicit context attachment, agent modes, and standardized tool interfaces. This convergence suggests that Context Engineering is becoming a shared vocabulary rather than a single product's marketing frame. The prerequisite concepts—prompt engineering, retrieval, and an understanding of context window limits—carry over across these environments, which makes learning them broadly transferable.\n\nReaders evaluating whether to adopt the new features should treat specific behavior as version-dependent, since fast-moving extensions change defaults and naming between releases, and hands-on testing remains the most reliable guide. The broader takeaway is that the assistant's usefulness is closely tied to how well its context is curated. The eight features discussed here appear designed to make that curation more explicit, repeatable, and team-friendly, which is consistent with a general trend toward treating context as something to be engineered rather than left implicit. Developers who internalize that mindset are likely to get steadier results regardless of which tool or version they use.",
@@ -5965,82 +5775,6 @@
           "s": "b",
           "ja": "その通りじゃ。見どころは、8機能それぞれが精密な制御にどう役立つと検証されているかじゃな。",
           "en": "Exactly. The key thing to watch is how the article finds each of the eight features can support more precise control."
-        }
-      ]
-    },
-    "63e951e83a4ef1d3": {
-      "bodyJa": "AIエージェントに社内のデータベースやAPIといったツールを使わせたい――そうした需要が高まる中、両者をつなぐ標準として注目を集めているのがMCP（Model Context Protocol）だ。本記事は、最小限のコードでMCPサーバーを自作しながら、権限の境界をどう設計すべきかを実践的に解説する入門ガイドである。\n\nMCPは、Anthropicが2024年に公開したオープンな仕様で、AIモデルと外部のツールやデータソースを標準化された方法で接続することを目的とする。従来は各AIクライアントやエージェントごとに独自の連携を作り込む必要があったが、MCPを介せば「サーバー」としてツールを一度公開するだけで、対応する複数のクライアントから再利用できる。ClaudeやChatGPT、各種エージェント開発フレームワークが対応を進めており、事実上の共通インターフェースになりつつある。\n\n記事が強調するのは、MCPサーバー自体は決して複雑なものではないという点だ。ツールの名前、入力スキーマ、そして実際の処理を記述すれば、30行程度のコードでも動く最小構成が作れる。まず小さく作って動かし、そこから機能を足していくアプローチが、仕組みの理解には有効だと見られる。\n\nただし、社内ツールをエージェントに渡すうえで本当に難しいのは、コードの量ではなく「どこまでの操作を許すか」という境界の設計だ。エージェントは与えられたツールを自律的に呼び出すため、読み取り専用にとどめるのか、書き込みや削除まで認めるのか、対象データの範囲をどう絞るのかを、あらかじめサーバー側で明確に制御しておく必要がある。認証情報の扱いや、想定外の入力に対する検証も欠かせない。\n\nプロンプトインジェクションなどを通じて、エージェントが意図しない操作へ誘導されるリスクも指摘されており、最小権限の原則に沿って公開範囲を絞ることが現実的な防御策となる。まず手を動かして動く最小のサーバーを作り、そのうえで境界設計を考えるという記事の進め方は、MCPを社内へ安全に取り入れたい開発者にとって手がかりになりそうだ。",
-      "bodyEn": "Model Context Protocol (MCP) has rapidly become one of the most discussed ways to connect AI agents to the systems that make them genuinely useful, and this tutorial addresses a problem that surfaces the moment teams move past demos: how to expose internal tools to an agent without granting unchecked access to sensitive systems. Its central argument is that a working MCP server can be assembled in roughly thirty lines of code, but that the more consequential work lies in designing the permission boundaries around it.\n\nMCP is an open protocol, originally published by Anthropic in late 2024, that standardizes how AI applications communicate with external tools and data. Instead of writing a bespoke integration for every model and every service, developers run an MCP server that advertises a set of capabilities, and any compatible client—an AI agent, an IDE assistant, or a chat interface—can discover and call them. The protocol is built on JSON-RPC and typically exposes three kinds of primitives: tools, which are actions the agent can invoke; resources, which are data it can read; and prompts, which are reusable templates. Because the interface is uniform, one server can be reused across different agents and hosts.\n\nThe \"thirty lines\" framing reflects how much the tooling has matured. Official SDKs in Python and TypeScript, along with helper frameworks such as FastMCP, reduce a basic server to a handful of function definitions decorated to mark them as callable tools. Transport is usually handled over standard input/output for local processes or over HTTP for networked deployments, so a minimal server can register a function, describe its inputs, and run without much boilerplate. This low barrier is precisely why the article stresses that the code is the easy part.\n\nThe security discussion is where the guide appears to concentrate its value. Once an agent can call a tool, it can also be manipulated into calling that tool in unintended ways, whether through flawed reasoning or through prompt injection embedded in the data it processes. The recommended approach follows the principle of least privilege: each tool should do the smallest useful thing, expose only the parameters it truly needs, and validate every input rather than trusting the model to behave. Separating read-only operations from write or destructive ones, and gating the latter behind explicit human confirmation, is a common pattern for limiting blast radius.\n\nBoundary design also extends beyond the individual function. A well-scoped server authenticates the caller, enforces authorization per tool, and logs each invocation so that actions can be audited after the fact. Sensitive credentials should live on the server side rather than being passed through the model, and outputs returned to the agent should avoid leaking more of the underlying system than necessary. Treating the agent as an untrusted client—much as a web backend treats a browser—is a useful mental model, because the language model sits at an unpredictable trust boundary between user intent and system capability.\n\nThis attention to safety mirrors broader industry movement. After Anthropic introduced MCP, support was signaled by other major vendors, including OpenAI and Google, which helped position it as a de facto interoperability layer for agent tooling rather than a single company's format. That momentum makes the security questions more urgent, because a shared protocol means the same misconfigured server could be reachable by many different clients. Security researchers have already highlighted risks such as tool poisoning, over-broad scopes, and confused-deputy scenarios, so guidance on careful boundary design is timely.\n\nFor readers, the useful takeaway is a mental separation between capability and permission. MCP solves capability: it gives agents a clean, standardized way to reach tools. Permission remains the developer's responsibility, and it is where most real-world risk concentrates. Adjacent concepts worth understanding before building include JSON-RPC basics, the distinction between local and remote transports, and existing authorization patterns like OAuth, which later versions of the specification have moved to incorporate for HTTP-based servers.\n\nThe article is best read as an entry point rather than a complete security framework. Building a minimal server demonstrates the mechanics, but production deployments in an organization would likely require threat modeling, rate limiting, and monitoring beyond what a short tutorial can cover. Its lasting contribution is reframing the task: the goal is not merely to make internal tools reachable, but to decide, deliberately, exactly how much of them an agent should ever be able to touch.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T13:55:49.307Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "社内DBやAPIをAIに直接触らせるのは怖いよね。MCPサーバーって何をしてくれるの？",
-          "en": "Letting an AI directly access an internal database or API sounds scary. What does an MCP server actually do?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、AIと社内ツールの間に置く「境界」じゃよ。記事では、関数の直呼びやAPIキーの丸渡しを避ける設計を扱っておる。",
-          "en": "Simply put, it’s a boundary between the AI and internal tools. The article explores designing that boundary instead of exposing functions directly or handing over an entire API key."
-        },
-        {
-          "s": "a",
-          "ja": "境界を挟むと、何が嬉しいの？ただ接続方法が増えるだけじゃないの？",
-          "en": "What’s the benefit of adding that boundary? Doesn’t it just create another connection layer?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、供給側で権限の範囲を設計できるのが要点じゃよ。最小限のMCPサーバーを自作し、その不安をかなり減らす流れを解説しておる。",
-          "en": "According to the article, the key is designing permission limits on the provider side. It shows how to build a minimal MCP server and use that approach to ease many of those concerns."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！AIに全部を渡すんじゃなく、MCPを間に置いて触れられる範囲を決めるんだね。",
-          "en": "Got it! Instead of giving the AI everything, you put MCP in the middle and define what it’s allowed to access."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。30行から動かす手順だけでなく、なぜ境界が必要かという設計思想まで見るのが記事のポイントじゃな。",
-          "en": "Exactly. The article’s key point isn’t only the steps to get started in about 30 lines, but also the design reasoning behind why that boundary matters."
-        }
-      ]
-    },
-    "8767e530335953dd": {
-      "bodyJa": "AIエージェントを試作段階から本番運用へ移行させる企業が増えるなか、見落とされがちなのが継続的にかかる運用コストの構造だ。Google Cloudの調査を下敷きにした本記事は、そのコストを5つの視点から解剖し、実務で使える最適化戦略を整理している点で参考になる。\n\nエージェントのコストは単純なAPI利用料だけでは説明できない。第一にトークン消費がある。エージェントは対話履歴やツールの実行結果をコンテキストとして繰り返しモデルに渡すため、会話が長引くほど入力トークンが累積的に膨らみやすい。第二にツール呼び出しのコストだ。外部API検索やデータベース照会を含む一連の処理は、内部で複数回のLLM推論を誘発することがあり、想定より課金が増える一因になる。第三にインフラ費用として、ベクトルデータベースやオーケストレーション基盤、モニタリング環境の維持費が挙げられる。加えて、リトライやエラー処理といった信頼性確保のための冗長な実行、そして人手による評価や監視の運用コストも無視できない要素とされる。\n\nこうした構造を踏まえた削減策として、記事ではモデルの使い分けが有効だと示唆されている。すべての処理を高性能モデルに任せるのではなく、単純な分類や要約には軽量モデルを割り当て、複雑な推論のみを上位モデルに回す階層化が典型例だ。Anthropicが提供するClaudeでも、用途に応じて複数のモデル階層が用意されており、同様の考え方は各社の製品に共通して適用しやすい。プロンプトキャッシュの活用や、コンテキストの要約・圧縮によるトークン削減も現実的な手段となる。\n\n背景には、LLMOpsと呼ばれる運用管理の考え方が広がりつつある事情がある。従来のMLOpsがモデルの学習・デプロイを主眼としたのに対し、LLMOpsではトークン単位のコスト可視化や品質評価、レイテンシ監視が重視される。エージェントは自律的に判断を重ねるぶん挙動が読みにくく、コストの予測が難しい傾向がある。だからこそ、呼び出し単位でのトレースやコスト計測を早期に組み込むことが、本番運用の安定に寄与すると見られる。\n\nコスト最適化は単なる節約ではなく、応答速度やユーザー体験と表裏一体の設計課題でもある。5つの視点を手がかりに自社の構成を点検することは、スケール時の予期せぬ費用増を避けるうえで一定の意義を持つだろう。",
-      "bodyEn": "Running AI agents in production is quickly becoming its own operational discipline, and cost is emerging as one of the hardest variables to control. A recent analysis inspired by Google Cloud research breaks agent economics into five distinct dimensions, arguing that teams cannot optimize what they do not first decompose. For organizations moving beyond prototypes into sustained deployment, this framing matters because agent costs tend to be non-linear: a system that looks affordable in a demo can become expensive at scale once repeated reasoning loops, tool invocations, and infrastructure overhead compound.\n\nThe first and most visible dimension is token consumption. Autonomous and semi-autonomous agents typically send far more tokens than a single chat completion, because each step in a reasoning loop re-sends system prompts, prior context, tool schemas, and accumulated history. The article notes that context growth is often the dominant driver of spend, since every additional turn carries the weight of everything that came before. Practical mitigations include trimming or summarizing conversation history, caching stable system prompts where the provider supports it, and being deliberate about how much context an agent actually needs to complete a task.\n\nThe second dimension is tool calls. Agents frequently interact with external APIs, databases, search endpoints, and code execution environments, and each call can carry both a direct fee and an indirect token cost when results are fed back into the model. Poorly designed agents may call the same tool redundantly or fan out into unnecessary sub-tasks. The analysis suggests constraining the tool set, validating arguments before execution, and using cheaper retrieval or deterministic logic in place of model reasoning where possible.\n\nInfrastructure forms the third dimension. Beyond the model API itself, production agents require orchestration layers, vector databases, message queues, memory stores, and monitoring systems that run continuously. These fixed and semi-fixed costs are easy to overlook because they do not appear on a per-request invoice, yet they can rival model spend for high-availability deployments. Serverless and autoscaling approaches are presented as ways to align infrastructure cost more closely with actual demand.\n\nThe fourth dimension concerns model selection and routing. Not every step in an agent workflow requires the most capable, most expensive model. The research points toward tiered strategies in which smaller or cheaper models handle routine classification, extraction, or routing decisions, while a stronger model such as one from the Claude or Gemini families is reserved for complex reasoning. This kind of model routing appears to be one of the highest-leverage optimizations available, though it adds engineering complexity and requires careful evaluation to avoid quality regressions.\n\nThe fifth dimension covers reliability overhead: retries, error handling, guardrails, and evaluation. Agents that fail silently or loop indefinitely can quietly multiply costs, so spending on validation, timeouts, and step limits is framed less as pure overhead and more as a cost-control mechanism. Observability is central here, because teams that cannot attribute spend to specific agents, tools, or users are unlikely to optimize effectively.\n\nTaken together, these five views reflect a broader shift often described as LLMOps, the operational practice of deploying, monitoring, and governing language-model systems the way MLOps did for earlier machine learning. The emphasis on cost attribution echoes moves across the industry: providers have introduced prompt caching, batch processing discounts, and smaller distilled models specifically to address production economics, while frameworks such as LangChain, LlamaIndex, and various agent orchestration tools increasingly expose token and latency instrumentation by default.\n\nIt is worth treating the specific numbers and rankings in any single study with caution, since agent costs depend heavily on workload, provider pricing, and architecture, all of which change frequently. The value of a five-dimension model is less in precise figures and more in giving teams a checklist for where to look. Readers evaluating their own systems would likely benefit from measuring each dimension independently before committing to optimizations, because the largest savings tend to come from whichever dimension is currently unmeasured. As agents move further into production, this kind of structured cost analysis is likely to become a standard part of designing, not just operating, agentic systems.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T13:55:44.700Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AIエージェントの費用って、LLMのAPI料金だけじゃないの？「スケールアウト」も気になる！",
-          "en": "Aren’t AI agent costs mostly LLM API fees? And what exactly does “scaling out” mean?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、それだけではないんじゃ。スケールアウトは処理に使う計算資源を増やすことで、転送・保存・計算の費用も盲点になるそうじゃよ。",
-          "en": "According to the article, there’s more to it. Scaling out simply means adding computing resources, and data transfer, storage, and increased compute can become hidden costs."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、じゃあトークン消費やツール呼び出しまで、5つの視点で分けると何が嬉しいの？",
-          "en": "Oh, interesting! So what’s the benefit of examining five areas, including token usage and tool calls?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、費用がどこで膨らむかを見つけやすくなる。記事はGoogle Cloudの調査をもとに、実践的な削減策を整理しておる。",
-          "en": "Simply put, it makes cost increases easier to pinpoint. Drawing on Google Cloud research, the article organizes practical ways to reduce those costs."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、モデルの料金だけを追わず、エージェントを動かす周りの仕組みまで見るのが大事なんだね！",
-          "en": "So the key is to look beyond model fees and examine the whole system supporting the agent. Got it!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。最適化するときは、ネットワーク転送・ストレージ・スケールアウトによる計算増を見落とさないのが見どころじゃよ。",
-          "en": "Exactly. When optimizing, the article suggests watching for overlooked costs from network transfers, storage, and extra compute caused by scaling out."
         }
       ]
     },
@@ -34840,44 +34574,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-13T23:44:56.008Z"
     },
-    "abfff2974af8db44": {
-      "bodyJa": "## 戦略的提携\n\n3MとMicrosoftは2026年7月15日、AIデータセンター基盤と企業変革に焦点を当てた戦略的提携を発表した。AI向けインフラへの3M技術の導入と、3Mの主要業務機能におけるMicrosoftのAI・デジタル基盤の活用を同時に進める協業となる。\n\n## EBO技術\n\nインフラ面では、MicrosoftのAzureクラウドおよびAIインフラが、3MのExpanded Beam Optical（EBO）技術を導入する。Azureは、この技術の導入を公表した初のハイパースケールクラウドプロバイダーになると説明されている。今回の提携では、EBO技術がAIデータセンター基盤に関する取り組みの中心に置かれ、3Mの技術をMicrosoftのクラウドおよびAIインフラに展開する関係が示された。\n\n## 企業変革\n\nもう一つの軸は、3M自身のエンタープライズ変革だ。3Mは、主要な業務機能にまたがる変革の一環として、MicrosoftのAIおよびデジタルプラットフォームを利用する。Microsoftが3MのEBO技術をインフラ側で採用する一方、3MはMicrosoftの基盤を企業変革に用いる構成となる。両社の協業は、AI基盤の発展と、企業によるAI活用の加速につながるものとされている。",
-      "bodyEn": "## Strategic partnership\n\n3M and Microsoft announced a strategic partnership focused on AI data center infrastructure and enterprise transformation. The alliance matters because it combines work on the infrastructure used for AI with the application of AI and digital capabilities across key business functions, with the stated goal of helping enterprises adopt AI faster.\n\nThe companies announced the partnership on July 15, 2026. Its scope includes a planned technology deployment within Microsoft’s Azure cloud and AI infrastructure, alongside 3M’s use of Microsoft platforms for its own enterprise transformation.\n\n## AI data center infrastructure\n\nMicrosoft’s Azure cloud and AI infrastructure will deploy 3M Expanded Beam Optical, or EBO, technology. According to the announcement, Microsoft will be the first announced hyperscale cloud provider to deploy the technology.\n\nThe infrastructure element of the partnership is specifically centered on AI data centers. The companies describe their collaboration as a way to strengthen and advance the infrastructure supporting AI. The announcement does not separate this effort from Azure’s broader cloud and AI infrastructure; instead, it identifies that environment as the location for the EBO deployment.\n\nThis makes the EBO deployment the principal technical detail of the infrastructure agreement. The partnership announcement does not attach a deployment figure, price, or expansion schedule to it.\n\n## Enterprise transformation\n\nThe second part of the partnership concerns 3M’s internal enterprise transformation. 3M will use Microsoft’s AI and digital platforms across key business functions.\n\nThis work is described as companywide transformation rather than a single-function deployment. The stated focus is on using Microsoft’s AI and digital capabilities to advance that transformation and accelerate enterprise adoption of AI.\n\nTogether, the two parts define the alliance: Microsoft plans to deploy 3M’s EBO technology in Azure cloud and AI infrastructure, while 3M plans to use Microsoft’s AI and digital platforms across its business.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Microsoftが3MのEBO技術をAzureに使うって、EBOって何？ 「初」なのはどこ？",
-          "en": "Microsoft is bringing 3M’s EBO technology to Azure—but what is EBO, and what exactly is a “first” here?"
-        },
-        {
-          "s": "b",
-          "ja": "EBOはExpanded Beam Opticalの略で、光を広げて扱う接続技術じゃ。今回の発表では、Azureが導入する初のハイパースケールクラウド事業者とされておる。",
-          "en": "EBO stands for Expanded Beam Optical, a connection technology that handles broadened light beams. The announcement describes Azure as the first hyperscale cloud provider named to deploy it."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、3Mが巨大なAI工場の土台を支え、Microsoftが3Mの中の改革を助ける感じ？ 誰に役立つの？",
-          "en": "So is this like 3M helping build the foundation of a huge AI factory, while Microsoft helps modernize 3M from the inside? Who benefits?"
-        },
-        {
-          "s": "b",
-          "ja": "そういう構図じゃ。両社の説明だと、MicrosoftはAI基盤にEBOを導入し、3Mは主要業務でMicrosoftのAIとデジタル基盤を使い、企業のAI活用を加速させる狙いじゃよ。",
-          "en": "That’s the basic shape. As the companies frame it, Microsoft adopts EBO for AI infrastructure, while 3M uses Microsoft’s AI and digital platforms across key functions, helping enterprises adopt AI faster."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、3MはAI基盤を支え、MicrosoftのAIは3Mの変革を支える、双方向の提携なんだね！",
-          "en": "Got it! It’s a two-way partnership: 3M supports AI infrastructure, and Microsoft’s AI supports 3M’s transformation."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。ひとつ注意するなら、AzureはEBOを「導入済み」ではなく「導入する」と伝えられている点じゃのう。",
-          "en": "Exactly. One nuance in the wording: Azure is set to deploy EBO; it is not described as already having completed the deployment."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-13T23:45:29.552Z"
-    },
     "93120742e5d55aa3": {
       "bodyJa": "## 大規模ゲノムモデル\n\n研究者は大規模ゲノムAIモデルを用い、既知のウイルスとは遺伝的に大きく異なる新たなバクテリオファージの設計に成功した。AIを活用した合成生物学における重要な一歩とされる。\n\n## バクテリオファージ\n\nバクテリオファージは細菌を殺すウイルスで、AIシステムは遺伝的に遠い版を作ったと説明されている。この成果は、新種のウイルス設計として、合成生物学や医療への応用可能性が注目されている。",
       "bodyEn": "## Large Genome AI Models\n\nResearchers used large genome AI models to design novel bacteriophages, which are bacteria-killing viruses. The work marks a significant step in AI-driven synthetic biology and may have medical applications.\n\n## Genetically Distant Versions\n\nThe AI system produced versions of a bacteria-killing virus that are genetically distant from known viruses. The Japanese summary describes the result as the successful design of a new kind of virus that differs substantially from existing bacteriophages. According to the collected summaries, the implications for synthetic biology and medical use are attracting attention.",
@@ -42192,81 +41888,613 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T16:48:06.704Z"
     },
-    "12f7e79056948afc": {
-      "bodyJa": "生成AIを開発者の「育成」に活用する動きが広がるなか、コードレビューや壁打ち、ペアプログラミングにそのまま貼り付けて使えるプロンプト集を紹介する記事が、Qiita上で公開された。チームの学習効率を高める実践的なテンプレートとして注目される内容だ。\n\n近年、GitHub CopilotやCursor、Claude、ChatGPTといったAIコーディング支援ツールは、単なるコード補完から、対話を通じた設計相談やレビュー支援へと役割を広げつつある。今回のプロンプト集は、こうしたツールを「作業の自動化」だけでなく「人材育成の相棒」として位置づける点に特徴があるとみられる。\n\n具体的には、大きく三つの用途が想定されている。一つ目はコードレビューで、AIに指摘の観点や改善理由を言語化させることで、レビュアー不足を補いつつ、なぜその書き方が望ましいのかを学べるよう設計されているようだ。二つ目は「壁打ち」と呼ばれる、設計や実装方針を相談しながら思考を整理する使い方。三つ目はペアプログラミングで、AIをペアの相手に見立て、実装を進めながら知識の定着を図る狙いがある。\n\nこうしたプロンプトの背景には、プロンプトエンジニアリングの知見がある。役割や前提、出力形式を明示的に指定することでLLMの回答品質が安定しやすくなることは広く知られており、育成用途でも「初心者向けに丁寧に説明する」「答えを即座に示さず考えさせる」といった指示が効果を左右する可能性がある。\n\n一方で、AIによる育成には注意点もある。生成される回答は必ずしも正確とは限らず、誤った知識をそのまま学んでしまうリスクは残る。最終的な判断や検証は人間側が担う前提で、あくまで学習を補助する道具として使うことが望ましいだろう。\n\nチーム開発の現場では、レビュー担当者の負荷やメンター不足が慢性的な課題となりやすい。すぐにコピペで試せる形でテンプレートが共有される意義は大きく、各社が模索するAI活用の一つの実践例として参考になりそうだ。",
-      "bodyEn": "A growing number of engineering teams are experimenting with large language models not only to generate code, but to accelerate how junior and mid-level developers learn. A recent Qiita post gathers a set of ready-to-paste prompts built for exactly that goal, organizing them around three familiar workflows: AI-assisted code review, structured brainstorming (often described in Japanese as 壁打ち, or bouncing ideas off a wall), and pair programming. The premise is practical rather than novel. Instead of writing prompts from scratch each time, teams can drop in tested templates and immediately weave AI into their mentoring routines, which the author frames as a way to raise a team's overall learning efficiency.\n\nThe code-review prompts appear designed to treat the model as a reviewer that explains its reasoning rather than one that simply flags issues. In a training context, the goal is not only to catch bugs but to help the author understand why a change is risky, what alternatives exist, and which conventions apply. Prompts of this kind typically ask the model to assume a specific persona, such as a senior engineer, to comment on readability, edge cases, security, and performance, and to phrase feedback in a way that teaches rather than dictates. Positioned this way, AI review is presented as a supplement to human review, useful for a fast first pass before a colleague spends time on the change.\n\nThe brainstorming, or 壁打ち, category targets the earlier stage when a developer is still shaping an approach. Here the model acts as a sounding board that asks clarifying questions, surfaces trade-offs, and challenges assumptions before any code is written. This mirrors the classic \"rubber-duck debugging\" technique, where explaining a problem aloud often reveals the solution, except that the LLM can respond, probe further, and suggest directions the developer had not considered. For less experienced engineers, this kind of guided questioning can make the reasoning process visible, which is often the harder skill to transfer than syntax itself.\n\nThe pair-programming prompts aim to reproduce the driver-and-navigator dynamic, with the AI typically taking the navigator role: watching for mistakes, proposing next steps, and keeping the larger goal in view while the human writes the code. The templates likely emphasize incremental collaboration, asking the model to work in small steps, explain its suggestions, and wait for confirmation rather than dumping a complete solution. That distinction matters in a training setting, because a model that writes everything at once can short-circuit the learning it is meant to support.\n\nUnderlying all three categories is the discipline of prompt engineering. The templates reflect common patterns that tend to improve results across models: assigning a clear role, supplying context about the codebase and constraints, specifying the desired output format, and defining the tone of feedback. These techniques are broadly applicable regardless of which assistant a team uses, whether GitHub Copilot, Cursor, Claude, ChatGPT, or another tool. The tags accompanying the article, including cursor and llm, suggest the prompts are meant to be tool-agnostic and pasted into whichever chat-based interface a developer already has open.\n\nThe broader context is an industry rapidly folding AI into everyday development. Editor-integrated assistants such as Copilot and Cursor have moved from autocomplete toward chat, multi-file edits, and agent-like behavior, while organizations increasingly ask how these tools affect onboarding and skill development rather than raw output alone. A prompt collection focused on training rather than code generation fits that shift, treating the model as a teaching aid embedded in the review and pairing practices teams already use.\n\nSome caveats are worth keeping in mind. LLMs can produce confident but incorrect suggestions, so their review comments and design advice still require human verification, a point that is especially important when the audience is developers who may not yet be able to judge the output critically. Pasting proprietary code into external services also raises data-handling considerations that vary by organization and tool. Used with those limits in mind, a curated prompt set appears to offer a low-effort way for teams to standardize how they apply AI to mentoring, and its main contribution is convenience: reusable starting points that lower the barrier to consistent, repeatable practice.",
+    "053b554b04e7b020": {
+      "bodyJa": "## 強制適用\n\nGitHub Advanced Securityで、Enterprise管理者が組織全体のセキュリティ構成を強制適用できるようになった。Enterpriseレベルで定義した設定を下位の管理者が変更できないようにし、セキュリティおよびコンプライアンスの担当チームが一貫したポリシーを適用しやすくする機能だ。\n\n## 上書き防止\n\nこれまでの強制設定では、リポジトリ所有者による変更のみを防止していた。今回、組織管理者とリポジトリ管理者の双方が、Enterpriseレベルの設定を上書きできないように構成できる。組織ごと、あるいはリポジトリごとに設定が変更されることを抑え、Enterprise全体で同じセキュリティ構成を維持できる。\n\n強制の対象を組織管理者まで広げられる点が従来との違いとなる。リポジトリ所有者だけを対象にした従来の範囲も選べるため、常にすべての下位管理者へ一律に強制する仕組みではなく、必要な強制範囲を指定する形式となっている。\n\n## Enforcement\n\nセキュリティ構成の「Enforcement」ドロップダウンメニューには、3つの選択肢が用意される。「Don’t enforce」は強制しない設定で、「Enforce for repository owners」はリポジトリ所有者に対して強制する。「Enforce for repository and organization owners」を選ぶと、リポジトリ所有者と組織所有者の両方に対して設定を強制できる。\n\nこの選択によって、Enterprise管理者は強制を行わない構成、従来と同様の範囲、組織所有者まで含めた範囲を使い分けられる。",
+      "bodyEn": "## Enforce security configurations\n\nGitHub Advanced Security now allows enterprise administrators to enforce security configurations across their organizations. The change matters because it enables security and compliance teams to apply consistent policies across an enterprise without lower-level administrators overriding enterprise-defined settings.\n\nWhen enforcement is applied at the enterprise level, both organization administrators and repository administrators are prevented from changing the configured settings. Enterprise administrators can therefore lock a security configuration across organizations rather than relying on each organization or repository to preserve it independently.\n\n## Previously, enforcement\n\nPreviously, enforcement only prevented repository owners from changing these settings. Organization-level administrators were still able to override the configuration defined above them.\n\nThe expanded enforcement option closes that distinction by allowing an enterprise administrator to prevent changes by both repository and organization owners. The selected level determines which administrators retain the ability to modify the security configuration.\n\n## Enforcement dropdown menu\n\nEnterprise administrators configure this behavior within a security configuration by using the “Enforcement” dropdown menu. The menu provides three choices: “Don’t enforce,” “Enforce for repository owners,” and “Enforce for repository and organization owners.”\n\n“Don’t enforce” leaves the configuration without enforcement. “Enforce for repository owners” applies the earlier scope, preventing repository owners from changing the settings. “Enforce for repository and organization owners” extends the restriction to both repository and organization owners.\n\nThe announcement also directs administrators to the GitHub documentation for more information about security configurations.",
       "chat": [
         {
           "s": "a",
-          "ja": "AIとの「壁打ち」や「ペアプログラミング」って、それって何をするの？",
-          "en": "What do “brainstorming” and “pair programming” with AI actually involve?"
+          "ja": "仕事でGitHubのセキュリティ設定をそろえるとき、普段の作業はどう変わるの？",
+          "en": "When teams align their GitHub security settings, what changes in their day-to-day work?"
         },
         {
           "s": "b",
-          "ja": "簡単に言うと、AIに考えを整理してもらったり、一緒にコードを検討したりすることじゃな。記事では育成向けのプロンプトを紹介しておる。",
-          "en": "Simply put, you use AI to organize ideas or work through code together. The article provides prompts designed for developer training."
+          "ja": "この記事では、Enterprise管理者が組織全体の構成を固定できるようになったんじゃ。組織やリポジトリの管理者に上書きされず、一貫したポリシーを保てるのう。",
+          "en": "The article says enterprise admins can now lock GitHub Advanced Security settings across organizations. Organization and repository admins can’t override them, helping teams keep policies consistent."
         },
         {
           "s": "a",
-          "ja": "コピペで使えると、何が嬉しいの？チームの育成にも役立つのかな。",
-          "en": "What’s so useful about ready-to-paste prompts? Could they help with team training too?"
+          "ja": "前も強制する機能はあったんだよね？ 何ができなかったの？",
+          "en": "There was already an enforcement feature, right? What couldn’t it do before?"
         },
         {
           "s": "b",
-          "ja": "記事によれば、すぐ使えるテンプレートでAIを育成の流れに組み込みやすくし、チームの学習効率向上を支える狙いじゃよ。",
-          "en": "According to the article, ready-made templates make AI easier to add to mentoring workflows, with the goal of improving how efficiently teams learn."
+          "ja": "以前は、変更を止められたのはリポジトリ所有者だけ、と説明されておる。今回は組織側の管理者による上書きも防げるようになったのが違いじゃ。",
+          "en": "Previously, the post explains, enforcement only stopped repository owners from changing settings. Now it can also prevent overrides by organization admins—that’s the difference."
         },
         {
           "s": "a",
-          "ja": "なるほど！コードレビューや相談、一緒の実装に使える育成用の質問文がまとまっているんだね。",
-          "en": "Got it! It’s a set of training prompts for code reviews, discussing ideas, and working through implementation together."
+          "ja": "つまり、企業で決めたセキュリティ方針を、組織ごとに変えられないようにできるのが一番の収穫だね。へえ、管理しやすそう！",
+          "en": "So the big win is that security policies set at the enterprise level can’t be changed organization by organization. That sounds much easier to manage!"
         },
         {
           "s": "b",
-          "ja": "その通りじゃ。現場ですぐ試せる形なので、AIを育成にどう組み込めるかが見どころじゃな。",
-          "en": "Exactly. Since they’re designed for immediate use, the key point is seeing how AI can fit into real-world developer training."
+          "ja": "次は、案内にある「Enforcement」の3択に注目じゃ。「強制しない」「リポジトリ所有者に強制」「リポジトリと組織の所有者に強制」を選べるんじゃよ。",
+          "en": "Next, note the three Enforcement choices listed: Don’t enforce, enforce for repository owners, or enforce for repository and organization owners."
         }
       ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T16:52:37.255Z"
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:53:47.068Z"
     },
-    "62f49d80d26acfec": {
-      "bodyJa": "米OpenAIは、州法と連邦の取り組みが連携して安全なAIの国家的枠組みを形づくりつつあるとして、米国におけるAI安全政策の進展を報告した。同社はこれを「逆連邦主義(reverse federalism)」と呼ぶ考え方で説明し、州レベルの立法が全国的なルール整備を下支えする役割を担うと位置づけている。\n\n一般に連邦制の下では、連邦政府がまず大枠を定め、州がそれに従う構図が想定されやすい。これに対して「逆連邦主義」は、各州が先行して安全性に関する規則を整備し、その積み重ねが結果として全国的な枠組みの土台になるという発想と見られる。急速に進化するAIに対し、連邦レベルでの包括的な立法が追いつきにくい状況を踏まえた現実的なアプローチと位置づけられる可能性がある。\n\n背景には、生成AIの普及に伴う安全性・信頼性への懸念の高まりがある。誤情報の拡散、プライバシー、著作権、そして高度なモデルがもたらすリスクなどをめぐり、規制のあり方が世界的な論点となってきた。OpenAIは「責任あるAI開発」を支える規制の枠組み整備が加速していると強調しており、民主的な価値観に沿ったAIの発展を目指す姿勢を示している。\n\nこうした議論は米国に限らない。欧州連合(EU)はAIのリスクを段階的に区分する「AI法(AI Act)」の運用を進めており、各国・地域で規制の枠組みづくりが並行して進む。米国では従来、包括的な連邦法よりも大統領令や既存法の運用、州ごとの取り組みが先行してきた経緯があり、今回OpenAIが示した見取り図はその延長線上にあると考えられる。\n\nもっとも、州ごとに規則が分かれれば、企業にとっては対応コストが増し、規制の一貫性が損なわれるとの指摘もある。州法の積み重ねが実際に整合的な国家的枠組みへと結実するかは、今後の連邦・州双方の動向次第と見られる。AI開発を主導する立場の企業が政策形成にどう関与していくかも、引き続き注目される論点となりそうだ。",
-      "bodyEn": "The United States is increasingly treating artificial intelligence safety as a matter of public policy rather than voluntary corporate discretion, and OpenAI has weighed in on how that governance should take shape. In a recent blog post, the company outlined what it calls a \"reverse federalism\" approach, in which state laws help construct a national framework for safe and democratic AI. The framing matters because it stakes out a position on one of the most contested questions in technology policy: whether AI rules should be set primarily in Washington, in state capitals, or through some combination of the two.\n\nThe term \"reverse federalism\" inverts the usual direction of policy flow. In conventional federalism, the national government sets a baseline and states fill in details. OpenAI's phrasing suggests the opposite dynamic, in which experimentation and rulemaking at the state level accumulate into a coherent national standard over time. Under this reading, individual state laws are not obstacles to a unified system but building blocks for it, allowing different jurisdictions to test approaches that can later inform federal action. The emphasis on \"safe, democratic AI\" appears intended to align the company's stance with broader public-interest goals rather than narrow commercial ones.\n\nThis position sits within an active and sometimes fragmented regulatory landscape. Several US states have already advanced their own AI legislation, addressing issues such as automated decision-making, transparency requirements, deepfakes, and consumer protections. California, Colorado, and other states have pursued measures targeting high-risk AI systems and disclosure obligations, while lawmakers elsewhere continue to introduce bills at a steady pace. The result is a patchwork that industry participants often describe as difficult to navigate, since companies operating nationally must reconcile potentially divergent obligations. OpenAI's argument appears to be that this patchwork, rather than being purely a liability, can seed a national framework if the individual efforts are coordinated toward common principles.\n\nAt the federal level, momentum has been more uneven. Congress has held numerous hearings and floated various proposals, but comprehensive AI legislation has been slow to materialize. Executive actions and agency guidance have filled some of the gap, and standards bodies such as the National Institute of Standards and Technology have produced influential voluntary frameworks, including its AI Risk Management Framework. These efforts provide reference points that both states and companies can adopt, and they help explain why a bottom-up approach is plausible: shared technical vocabulary and risk-assessment methods already exist even in the absence of binding national law.\n\nThe debate also reflects a longstanding tension between innovation and oversight. Proponents of lighter-touch or unified rules argue that a thicket of state requirements could raise compliance costs and slow deployment, particularly for smaller developers. Advocates for stronger state authority counter that local governments are often faster to respond to emerging harms and closer to affected communities. OpenAI's reverse-federalism framing attempts to bridge these camps, presenting state action as complementary to, rather than in competition with, eventual national coordination. Whether policymakers embrace that interpretation remains uncertain, and the approach is likely to draw scrutiny from those who favor a single federal standard preemptively.\n\nFor context, OpenAI is one of several major AI developers that have publicly engaged with governments on safety and governance, alongside companies such as Anthropic, Google, and Microsoft. Many of these firms have signed onto voluntary commitments and participated in safety institutes established in the US and abroad. The company's public policy positions are worth reading in that light: they are contributions to an ongoing negotiation over who writes the rules and how strict they should be, not settled outcomes.\n\nThe practical significance of this post is that it signals how a leading developer wants the regulatory conversation to unfold. If the reverse-federalism idea gains traction, it could shape how state legislatures coordinate and how future federal proposals are structured. If it does not, the underlying patchwork dynamic is likely to persist regardless. Either way, the framing underscores that AI safety in the United States is being negotiated across multiple levels of government simultaneously, and that industry voices are actively trying to influence the shape of the resulting framework.",
+    "1f937836d8dd30ca": {
+      "bodyJa": "GitHub Copilotが、組織内のリポジトリ向けカスタムプロパティを作成する際、関連する許可値を提案できるようになった。管理用メタデータの統一と、ルールセットを適用するリポジトリの指定を支援する機能だ。\n\n## 許可値の提案\n\n企業または組織レベルで新しいカスタムプロパティ定義を作成すると、Copilotが定義中のプロパティに基づいて、関連性のある許可値を提案する。管理者が許可値を一から検討する際の難しさに対応し、プロパティ定義を始めやすくする仕組みとなる。\n\n## カスタムプロパティ\n\nカスタムプロパティは、企業および組織の管理者がリポジトリへガバナンス用のメタデータを付与するための機能だ。このメタデータは、ルールセットを適用するリポジトリの対象指定に利用できる。カスタムプロパティはルールセットの適用範囲を絞る方法として特に多く利用されている一方、どのプロパティを定義し、どの許可値を使うべきか判断しにくいことが課題とされていた。\n\n## メタデータの統一\n\n管理者ごとにプロパティや許可値の選び方が異なると、メタデータに一貫性を持たせにくくなる。多数のリポジトリに対して統一的にガバナンスを適用することも難しくなるため、Copilotによる許可値の提案は、メタデータをそろえたうえでルールセットの対象を指定しやすくするものと説明されている。\n\n## パブリックプレビュー\n\nこの機能は、GitHub Copilot BusinessとCopilot Enterpriseの各プランを対象に、パブリックプレビューとして提供される。",
+      "bodyEn": "## Custom property definitions\n\nGitHub Copilot can now suggest allowed values when administrators create custom properties for repositories in their organization. The capability matters because more consistent property definitions can make it easier to apply governance and target repositories with rulesets.\n\nCustom properties allow enterprise and organization administrators to attach governance metadata to repositories. That metadata can then be used to determine which repositories a ruleset targets.\n\n## Relevant allowed values\n\nWhen an administrator creates a new custom property definition at the enterprise or organization level, Copilot suggests relevant allowed values based on the property being defined. The assistance focuses specifically on the values that the new property can permit.\n\nCustom properties are one of the most popular ways to scope rulesets, but administrators can face uncertainty when getting started. They may not know which properties to define or which allowed values to use. If metadata is inconsistent, applying governance consistently across a large fleet of repositories becomes more difficult.\n\nBy recommending permitted values during property definition, Copilot supports a more consistent approach to repository metadata. Administrators still create the custom property at the enterprise or organization level, while Copilot provides suggestions relevant to that property.\n\n## Public preview\n\nThe feature is available in public preview for GitHub Copilot Business and Copilot Enterprise plans. It is intended to help administrators define repository custom properties, standardize the associated metadata, and use those properties when targeting repositories with rulesets.\n\nThe release connects the property-definition process directly with Copilot’s suggestions. Rather than requiring administrators to determine every allowed value without assistance, the new workflow presents recommendations as the custom property is created.",
       "chat": [
         {
           "s": "a",
-          "ja": "「逆連邦主義」って何？州の法律が国全体のAIルールにつながるってこと？",
-          "en": "What does “reverse federalism” mean? Are state laws supposed to lead to nationwide AI rules?"
+          "ja": "Copilotが、リポジトリのカスタムプロパティに許可値まで提案するようになったんだね。これって大きいこと？",
+          "en": "Copilot can now suggest allowed values for repository custom properties. Is that a big deal?"
         },
         {
           "s": "b",
-          "ja": "簡単に言うとじゃな、記事では州法を積み重ね、安全で民主的なAIの全国的枠組みを作る考え方じゃよ。",
-          "en": "Simply put, the article describes state laws helping build a national framework for safe, democratic AI."
+          "ja": "この記事では、設定時の迷いやメタデータの不統一を抑え、ルールを一貫して適用しやすくする変化とされているんじゃ。",
+          "en": "The article frames it as a way to reduce setup uncertainty, keep metadata consistent, and apply governance rules more consistently across repositories."
         },
         {
           "s": "a",
-          "ja": "それって何がうれしいの？AIを責任ある形で開発するための土台ができるってことかな。",
-          "en": "What’s the benefit? Does it create a foundation for developing AI responsibly?"
+          "ja": "カスタムプロパティとルールセットって、どうつながるの？つまりどういうこと？",
+          "en": "How do custom properties connect to rulesets? What does that actually mean?"
         },
         {
           "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、州と連邦の取り組みが規制の枠組みを形づくり、責任あるAI開発を支えるのじゃ。",
-          "en": "That’s the idea. According to the article, state and federal initiatives are shaping regulations that support responsible AI development."
+          "ja": "カスタムプロパティはリポジトリに付ける管理用の名札のようなものじゃ。その名札を使って、ルールセットの対象を選べると説明されておる。",
+          "en": "Think of a custom property as a management label on a repository. As described here, admins can use those labels to choose which repositories a ruleset targets."
         },
         {
           "s": "a",
-          "ja": "なるほど！州の動きも生かしながら、国全体のAI安全政策を整えていく流れなんだね。",
-          "en": "Got it! So state efforts can help shape broader AI safety policy across the country."
+          "ja": "自分が管理者なら、新しいプロパティを作るとき、提案された許可値を見てチームの付け方を揃えたいな！",
+          "en": "If I were an admin, I’d use the suggested values when creating a property so the team labels repositories consistently!"
         },
         {
           "s": "b",
-          "ja": "そうじゃな。OpenAIは政策進展の勢いを強調しておるが、具体的にどんな枠組みになるかが今後の見どころじゃよ。",
-          "en": "Exactly. OpenAI highlights growing policy momentum, while the key thing to watch is what the resulting framework actually looks like."
+          "ja": "現時点ではCopilot BusinessとCopilot Enterprise向けのパブリックプレビューじゃ。企業または組織レベルで管理者が新規定義を作る場面で使えるぞ。",
+          "en": "For now, the release says it’s a public preview for Copilot Business and Enterprise, available when admins create new definitions at the enterprise or organization level."
         }
       ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T16:53:57.922Z"
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:54:36.412Z"
+    },
+    "8217b1ba9172bfd3": {
+      "bodyJa": "## SHA-1停止\n\nGitHubは2026年9月15日、github.comと提携CDNのHTTPSでSHA-1の利用を停止した。HTTPS通信の対象となる暗号方式を見直し、より安全な方式への移行を促す変更とされる。\n\n## github.com\n\n今回停止されたのは、github.comおよび提携CDNを経由するHTTPSトラフィックでのSHA-1サポートだ。GitHubは以前から同日に無効化する予定を告知しており、発表済みのスケジュールに沿って変更を実施した。対象はHTTPSにおけるSHA-1であり、github.comと提携CDNの双方に適用されている。\n\n## Enterprise Cloud\n\nGitHub Enterprise Cloudも変更の対象に含まれる。さらに、GitHub Enterprise Cloud with Data Residencyにも適用されるため、Data Residencyを利用する環境を含め、クラウド側のHTTPSトラフィックではSHA-1が無効化された。github.comだけでなく、これらのEnterprise Cloud環境まで対象範囲が明示されている。\n\n## Enterprise Server\n\n一方、GitHub Enterprise Serverは今回の変更による影響を受けない。GitHub Enterprise CloudとGitHub Enterprise Serverでは扱いが異なり、SHA-1停止の対象はgithub.com、提携CDN、GitHub Enterprise Cloud、およびData Residency環境に限られる。詳細については、GitHubが以前に公開した告知を参照するよう案内されている。",
+      "bodyEn": "## SHA-1 in HTTPS\n\nGitHub has ended SHA-1 support for HTTPS traffic on github.com and its partner CDNs. The change matters because it advances stronger transport security and encourages a move toward more secure cryptographic methods for the affected services.\n\nGitHub had previously announced that SHA-1 would be disabled in HTTPS on September 15, 2026. The company says it completed the change according to that planned schedule.\n\n## github.com and partner CDNs\n\nThe change applies to HTTPS for github.com and GitHub’s partner CDNs. SHA-1 is therefore no longer supported for HTTPS traffic within that stated scope.\n\nThe announcement specifically ties the change to github.com and partner CDN traffic. It does not present the move as a new product or as a broader change covering every GitHub environment.\n\n## GitHub Enterprise Cloud\n\nGitHub Enterprise Cloud is included in the SHA-1 removal. The scope also covers GitHub Enterprise Cloud with Data Residency, so those environments are part of the same HTTPS transport security change affecting github.com and the partner CDNs.\n\nThis means the planned end of SHA-1 support applies both to Enterprise Cloud generally and to its Data Residency offering. The announcement treats these as included parts of the completed rollout rather than as later expansions.\n\n## GitHub Enterprise Server\n\nGitHub Enterprise Server is unaffected. The SHA-1 change described by GitHub is limited to github.com, partner CDNs, GitHub Enterprise Cloud, and GitHub Enterprise Cloud with Data Residency.\n\nThat distinction is central to the scope of the announcement: Enterprise Cloud services are covered, including Data Residency, while Enterprise Server is not affected by this scheduled HTTPS change.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GitHubがHTTPSでSHA-1を止めたって、何が変わったの？ SHA-1ってそもそも何？",
+          "en": "GitHub dropped SHA-1 for HTTPS—what actually changed? And what is SHA-1 in the first place?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、github.comと提携CDNのHTTPSでSHA-1を無効にしたのじゃ。SHA-1は通信を暗号技術で確かめる仕組みの一つ、と捉えればよいぞ。",
+          "en": "The article says GitHub disabled SHA-1 for HTTPS on github.com and partner CDNs. Think of SHA-1 as one method used to verify protected communications."
+        },
+        {
+          "s": "a",
+          "ja": "古い鍵を新しい鍵に替える感じかな？ Enterprise Cloudやデータレジデンシー環境を使う人の通信に関係するの？",
+          "en": "So it’s like replacing an old lock with a newer one? Does this affect traffic for Enterprise Cloud and Data Residency users?"
+        },
+        {
+          "s": "b",
+          "ja": "そんなイメージじゃな。本文が示す範囲では両環境も対象で、より安全な暗号方式への移行を進め、通信の安全性を強める変更じゃよ。",
+          "en": "That’s a fair analogy. Within the scope described, both environments are covered, advancing stronger encryption and transport security."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、github.com側のHTTPS通信からSHA-1を卒業して、より安全な方式へ進んだんだね。へえ、すごい！",
+          "en": "So GitHub has moved its HTTPS traffic away from SHA-1 toward stronger protection. That’s a meaningful upgrade!"
+        },
+        {
+          "s": "b",
+          "ja": "そういうことじゃ。ただし対象はgithub.com、提携CDN、Enterprise Cloud系で、GitHub Enterprise Serverは影響を受けないと明記されておるぞ。",
+          "en": "Exactly. One important limit: the stated scope covers github.com, partner CDNs, and Enterprise Cloud environments, while GitHub Enterprise Server is unaffected."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:54:53.648Z"
+    },
+    "60582ab80f6848d9": {
+      "bodyJa": "## Meta One\n\nMeta Oneは、Facebook、Instagram、WhatsApp、Meta AIで提供される新しいサブスクリプションサービスだ。AIの利用枠と表現機能を拡充し、創作や交流、個性の発信を支えることを主眼としている。複数のサービスを対象に、AIの活用と発信に関わる機能を強化する内容となる。\n\n## AI利用枠\n\n大きな柱は、AIをより多く利用できるようにすることだ。対象はMeta AIだけに限られず、Facebook、Instagram、WhatsAppも含む形で示されている。AIへのアクセスを広げることと、表現の選択肢を強化することが、サブスクリプションの特徴として位置づけられる。\n\n## 制作と交流\n\nクリエイターや企業向けには、制作や仕事に使うツールも提供される。AI利用枠の拡大、表現機能、各種ツールを組み合わせ、制作すること、人とつながること、発信を通じて個性を示すことを支援するサービスと説明されている。",
+      "bodyEn": "## Introducing Meta One\n\nMeta One is a new subscription service for Facebook, Instagram, WhatsApp, and Meta AI. It matters for creators and businesses because it brings expanded AI access, enhanced expression features, and work tools together across those services.\n\nThe announcement presents the subscription as a way to support creation, communication, and individual expression. Its feature set centers on increased AI usage and additional options for how subscribers create and present their work.\n\n## More Features and AI\n\nMeta One expands the amount of AI usage available to subscribers. It also adds enhanced expression features intended to give people more ways to create, connect, and stand out on Facebook, Instagram, WhatsApp, and Meta AI.\n\nThe service is not described solely as an AI subscription. Its offering also includes tools aimed at the work of creators and companies, alongside the expanded AI access and expression options.\n\n## Creators and Businesses\n\nFor creators, Meta One is positioned as supporting production, interaction, and the sharing of personal expression. For businesses, it offers work tools in addition to broader AI usage.\n\nTogether, these elements define Meta One as a subscription focused on additional capabilities across the four named services, rather than a single standalone feature.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段の投稿や仕事で、何が変わるの？ AIでできることが増えるってこと？",
+          "en": "What changes for everyday posts or work? Does this mean we can do more with AI?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、4つのサービスでAI利用枠や表現機能が広がり、クリエイターや企業向けの道具も増えるとしておるぞ。",
+          "en": "The article says users get more AI access and expression options across four services, plus additional tools for creators and businesses."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！ でも前はできなかったの？ どこが新しいのか気になるな。",
+          "en": "Wow, that sounds useful! But was none of this possible before? I’m curious what’s actually new."
+        },
+        {
+          "s": "b",
+          "ja": "新しいサブスクリプションで利用枠や機能が拡充される点は示されておるが、以前の制限との細かな違いまでは書かれていないのじゃ。",
+          "en": "It’s described as a new subscription with expanded access and features, but the piece doesn’t spell out the exact differences from previous limits."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、Meta OneでAI活用も発信も仕事の道具もまとめて広がることなんだね。",
+          "en": "So the big takeaway is that Meta One expands AI use, self-expression, and work tools together."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。発表で分かるのはその大枠なので、次は各サービスで何がどこまで増えるのかに注目じゃよ。",
+          "en": "That’s the broad promise presented here. Next, it’ll be worth watching exactly what gets added to each service and how far those expanded options go."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:55:23.114Z"
+    },
+    "21a763ca0da36dae": {
+      "bodyJa": "## 判定エンジニアリング\n\nAIエージェントが出力の正誤を安定して判定する難しさは、製造業の検査工程が長年扱ってきた課題と本質的に共通すると論じられている。判定基準の作成、誤判定の記録、判定者自身の精度検証をまとめて捉える考え方が、仮に「Judgment Engineering」と呼ばれている。\n\n## 品質保証\n\n製造業の検査工程では、合格と不合格の基準を定め、判定のばらつきを測り、判定結果が正しかったかを後から検証してきた。こうした取り組みは「品質保証」の枠組みで、統計的な手法も使いながら続けられてきたという。AIエージェントの検証役であるVerifierに不足する発想の多くは、この検査工程の知見から得られるとされる。\n\n## 限度見本\n\n限度見本は、目視検査で「ここまでは合格、ここからは不合格」という境界を示す実物サンプルだ。文章だけで基準を示すと検査員ごとに解釈がぶれるため、ギリギリ合格する例とギリギリ不合格になる例を用意し、全員で共有する。判定基準を言葉だけでなく、具体的な対象によって揃える方法である。\n\n## ゲージR&R\n\nゲージR&Rは、同じ製品を同じ検査員が繰り返し測った際のばらつきと、異なる検査員が測った際のばらつきを統計的に測定する手法だ。判定基準を本当に信用できるのか、数値で確かめる仕組みと説明されている。Verifierやレビュー用サブエージェントの基準は自然言語のプロンプトで書かれることが多く、これは限度見本を用意せずに検査員へ判定を任せる状態に近いと指摘されている。",
+      "bodyEn": "## Judgment Engineering\n\nThe article argues that reliably evaluating AI-agent outputs is fundamentally similar to a problem manufacturing inspection workflows have addressed for decades. This matters because many ideas missing from AI verifiers may already exist within quality assurance.\n\nThe author provisionally calls the field “Judgment Engineering”: the engineering of how evaluation criteria are created, how incorrect judgments are recorded, and how the accuracy of the evaluator itself is verified. Rather than treating judgment as a simple final step, this framing makes the reliability of the judging process an object of measurement and review.\n\n## Quality Assurance\n\nManufacturing inspection establishes criteria for passing or failing, measures whether judgments vary, and later checks whether those judgments were correct. According to the article, inspection processes have performed these tasks for decades within the framework of quality assurance, including through statistical methods.\n\nThe parallel applies to AI verifiers and review sub-agents. Their role is not only to produce a judgment, but to do so against criteria whose reliability can itself be examined. The article suggests that manufacturing’s established approach to inspection can inform how those agent roles are designed.\n\n## Limit Samples\n\nA limit sample is a physical example showing the boundary between acceptable and unacceptable results in visual inspection. Written criteria can be interpreted differently by different inspectors, so borderline passing and borderline failing samples are prepared and shown to everyone.\n\nThe aim is to align judgments through concrete examples rather than words alone. The article compares AI evaluation criteria written mainly as natural-language prompts to asking inspectors to make decisions without limit samples.\n\n## Gauge R&R\n\nGauge Repeatability and Reproducibility, or Gauge R&R, is a form of measurement-system analysis. It statistically measures variation when the same inspector repeatedly measures the same product, known as repeatability, and variation when different inspectors measure it, known as reproducibility.\n\nIn the article’s framing, Gauge R&R provides a numerical way to answer whether an evaluation standard can actually be trusted. Applied to Judgment Engineering, the central issue becomes not merely whether a verifier reaches a decision, but whether its judgments remain sufficiently consistent to support confidence in the evaluation process.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIに仕事を任せるとき、普段のチェック作業はどう変わるの？",
+          "en": "When we hand work to an AI, how would this change our everyday review process?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事の提案は、合否の境界例を示し、判定のばらつきを測り、後から正しさを検証する設計にできる、という話じゃ。",
+          "en": "The article suggests using pass-fail boundary examples, measuring inconsistent judgments, and checking decisions afterward—patterns borrowed from manufacturing inspection."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、前のAIエージェントでは、そういう判定はできなかったの？",
+          "en": "Oh, interesting! Couldn’t AI agents evaluate their work like that before?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれておらんよ。本文では、多くの検証役が自然言語の指示頼みで、限度見本なしの検査に近いと説明しておる。",
+          "en": "It doesn’t say they couldn’t. It says many verifiers rely on natural-language instructions, much like inspectors working without concrete boundary samples."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、AIの判定を良くするヒントが、昔からの品質保証にもうあるかもしれないってことだね！",
+          "en": "So the big takeaway is that long-established quality assurance may already hold clues for improving AI judgment!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。論旨の範囲では、判定基準だけでなく、判定者自身の精度をどう測るかにも注目じゃよ。",
+          "en": "Exactly. Within the article’s argument, the next key question is not just how to set criteria, but how to measure the evaluator’s own reliability."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:55:25.323Z"
+    },
+    "409be8f1b65fa706": {
+      "bodyJa": "Qwythos-9Bは、Claude Fable 5などの思考プロセスを9B規模へ蒸留したとされる推理モデルだ。100万トークンのコンテキストに対応し、量子化モデルなら4GB程度のVRAMで動作すると説明されている点が注目される。\n\n## Qwythos-9B\n\n正式名称は「Qwythos-9B-Claude-Mythos-5-1M」で、Empero AIが2026年6月に発表したオープンウェイトモデルである。90億パラメータという規模ながら、超長文のコンテキストと推理能力を組み合わせていることが大きな特徴とされる。\n\n## 9Bへの蒸留\n\n基座には、アリババのオープンソースモデル「Qwen3.5-9B」が使われている。Empero AIは、この基座モデルに対してフルパラメータのポストトレーニングを実施した。学習データは5億トークン以上の対話データで、Claude Fable 5やClaude Mythos 5が生成した「思考の連鎖（Chain of Thought、CoT）」を含む。ここでいう蒸留は、これらのモデルが示した思考プロセスを含むデータを9Bモデルへ学習させたことを指している。\n\n## 100万トークン\n\nQwythos-9Bは、100万トークンのコンテキストに対応する。長い入力を扱えることと、90億パラメータの推理モデルであることが同時に掲げられており、「超長文推理モデル」と位置付けられている。\n\n## 4GBのVRAM\n\n量子化形式のGGUFモデルを利用すれば、4GB程度の消費級VRAMでも快適に動作するとされる。Qwythos-9Bは、100万トークン対応という長文処理の仕様に加え、量子化によって限られたVRAMでローカル実行できる点を特徴としている。",
+      "bodyEn": "## Qwythos-9B\n\nQwythos-9B is a 9-billion-parameter reasoning model presented as a distillation of Claude Fable 5. Its combination of a 1-million-token context window and operation on roughly 4 GB of consumer-grade VRAM is intended to make long-context reasoning available in a local environment.\n\nEmpero AI announced the open-weight model, formally named Qwythos-9B-Claude-Mythos-5-1M, in June 2026. The model is based on Alibaba’s Qwen3.5-9B and underwent full-parameter post-training by Empero AI.\n\n## Claude Fable 5 distillation\n\nThe claimed relationship with Claude Fable 5 does not mean that Qwythos-9B uses the same model architecture or parameters. Instead, the source describes a post-training process based on dialogue data generated by Claude Fable 5 and Claude Mythos 5.\n\nAccording to the announcement, the training material contains more than 500 million tokens of dialogue data. That data includes chains of thought generated by the two models, with the aim of transferring their reasoning processes into the smaller 9B-parameter model. Qwythos-9B is therefore characterized as a purported distillation rather than a direct release of either closed-source model.\n\n## 1M-token context\n\nQwythos-9B supports a context length of 1 million tokens. This is the model’s central long-context feature and allows it to process very large amounts of text within a single context.\n\nThe combination is notable because the million-token context is attached to a comparatively lightweight 9B-parameter reasoning model. The available information does not provide separate measurements for reasoning quality or long-context performance.\n\n## 4 GB of VRAM\n\nThe reported 4 GB VRAM requirement applies when using a quantized GGUF version of Qwythos-9B. According to the source, this configuration can run comfortably with approximately 4 GB of consumer-grade VRAM.\n\nThis hardware claim specifically concerns the quantized model rather than an unqualified version of Qwythos-9B. Together with the 1-million-token context window, it is the key basis for presenting the model as suitable for local long-context reasoning.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "100万トークンを扱えて、VRAMは4GB程度って驚いた！ これって大きいこと？",
+          "en": "A million tokens on around 4 GB of VRAM sounds wild! Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "かなり目を引く組み合わせじゃ。この記事では、9Bの推論モデルで超長文をローカルに扱える点が注目されておる。",
+          "en": "It’s a striking combination. The piece highlights that a 9B reasoning model can handle extremely long context locally with modest VRAM."
+        },
+        {
+          "s": "a",
+          "ja": "蒸留って、つまりどういうこと？ Claude Fable 5をそのまま小さくしたの？",
+          "en": "What does “distillation” mean here? Did they literally shrink Claude Fable 5?"
+        },
+        {
+          "s": "b",
+          "ja": "蒸留は一般に、別モデルの出力を教材にすることじゃ。今回はFable 5やMythos 5が作った、答えまでの考え方を含む5億トークン超の対話で学んだとされる。",
+          "en": "Distillation generally means training on another model’s outputs. Here, it reportedly learned from over 500 million dialogue tokens, including reasoning generated by Fable 5 and Mythos 5."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ僕なら、長い文章をローカルで読み込ませて、じっくり推論させてみたいな。4GBなら気軽に試せそう！",
+          "en": "Then I’d feed it a huge document locally and ask it to reason through it. At 4 GB, that sounds approachable!"
+        },
+        {
+          "s": "b",
+          "ja": "試したくなるのう。ただ、4GB程度での快適動作は容量を抑えた量子化GGUFを使う場合の話で、実機テストや運用上の注意も確認したいところじゃ。",
+          "en": "Tempting, indeed. But the roughly 4 GB figure applies to a size-reduced, quantized GGUF model, so the real-device tests and operational caveats are worth checking."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:56:40.963Z"
+    },
+    "d3baae9b633e4024": {
+      "bodyJa": "## 言語別設定\n\nVSCodeでは、言語別設定の対象を複数まとめて指定すると、設定の優先度が期待とは異なる場合がある。特に、単独言語のユーザー設定が、リポジトリ側に置かれた複数言語のローカル設定を上書きする点に注意が必要だ。\n\n## settings.json\n\nディレクトリごとの設定は、.vscode/settings.jsonに記述できる。一方、ユーザー自身もsettings.jsonに設定を持つことができ、どちらでもプログラミング言語ごとの設定や、複数の言語を対象とした設定を記述できる。\n\nこの組み合わせで競合が起きた場合、複数言語を対象にしたローカル設定より、単独言語を対象にしたユーザー設定が優先される。これはVSCodeの仕様であり、今後変更する予定はないと明言されている。\n\n## タブサイズ\n\nたとえば、ローカル側の複数言語設定で「editor.tabSize」を2にしていても、ユーザー側の単独言語設定で8にしていれば、2は無視されて8が反映される。以前、自分用のプロジェクトなどに合わせて作成した単独言語設定が残っていると、リポジトリ側の複数言語設定を無効にすることがあり得る。\n\n## フォーマッタ\n\n同じ競合は「editor.defaultFormatter」でも起こる。ローカル設定で「esbenp.prettier-vscode」を指定していても、単独言語のユーザー設定に「dbaeumer.vscode-eslint」があれば、ローカル側は無視され、手動フォーマット時にはeslintが使われる。\n\nタブサイズは結果を確認しやすいが、フォーマッタの競合では、リポジトリに置かれたフォーマット設定が効かないように見え、差分が大量に生じる可能性がある。設定を確認する際は、記述順だけでなく、単独言語と複数言語という指定方法の違いも切り分ける必要がある。",
+      "bodyEn": "## VSCode language-specific settings\n\nVSCode allows programming-language-specific options to be placed in a directory’s .vscode/settings.json file, while users can also maintain their own settings.json. The way these two levels interact matters because a user setting may override a repository’s local configuration unexpectedly.\n\nLanguage-specific configuration can target either one language or multiple languages. When these forms conflict, their priority does not necessarily follow the order a developer might expect.\n\n## Multiple entries are configured\n\nThe key behavior is that a single-language user setting overrides a local setting that targets multiple languages. This is a VSCode specification, and it has been explicitly stated that there are no plans to change it.\n\nAs a result, a single-language option previously added for a personal project can disable a multi-language option stored in a repository. The conflict is based on how the language targets are configured, rather than simply on which rule appears later.\n\n## Priority can drop unexpectedly\n\nTab size makes the behavior easy to see. In the example, a local \"editor.tabSize\" value of 2 is ignored, while the user’s value of 8 takes priority. This can make it appear that the repository setting is not being applied.\n\nThe same behavior can create a more difficult problem when the conflicting option controls formatting. A repository may contain formatting configuration, yet a user-level setting can cause a different formatter to be selected.\n\n## Per-language overrides\n\nIn the formatter example, the local settings.json specifies \"esbenp.prettier-vscode\" as \"editor.defaultFormatter\", but that value is ignored. The user setting specifies \"dbaeumer.vscode-eslint\", which takes priority and is used when the file is formatted manually.\n\nThat change can produce many differences despite the repository containing its own formatter choice. Developers relying on per-language overrides therefore need to account for the fact that a single-language user configuration can supersede a multi-language local configuration.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "タブ幅2の設定が無視されて、8が優先されることもあるんだ。これって大きいこと？",
+          "en": "A tab size of 2 can be ignored while 8 takes priority? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "影響は大きくなりうるのう。この記事では、フォーマッタまで意図と違えば差分が大量に出る可能性があり、仕様の変更予定もないとされておる。",
+          "en": "It can be. The article warns that an unexpected formatter may create lots of diffs, and this behavior is stated to have no planned change."
+        },
+        {
+          "s": "a",
+          "ja": "複数言語をまとめた設定は優先度が落ちるって、つまりどういうこと？ 後に書けば勝つわけじゃないの？",
+          "en": "What does it mean that a setting for multiple languages gets lower priority? Doesn’t the later rule win?"
+        },
+        {
+          "s": "b",
+          "ja": "ユーザー側の単独言語設定が、リポジトリ側の複数言語設定より優先されるということじゃ。後ろの設定が必ず勝つ仕組みではないのう。",
+          "en": "A single-language user setting can outrank a multi-language repository setting. So no, the rule written later does not necessarily win."
+        },
+        {
+          "s": "a",
+          "ja": "僕ならリポジトリでprettierを指定して、みんなの整形をそろえたいな。これなら安心？",
+          "en": "I’d set prettier in the repository so formatting stays consistent. Would that be safe?"
+        },
+        {
+          "s": "b",
+          "ja": "記事の例では、ユーザー設定のeslintがローカルのprettierを上書きし、手動整形でeslintが使われるんじゃ。自分のsettings.jsonも確認したいのう。",
+          "en": "In the example, the user’s eslint setting overrides local prettier, so manual formatting uses eslint. It would be wise to check your own settings.json too."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:56:08.554Z"
+    },
+    "1643d00b5cdc406d": {
+      "bodyJa": "## AIの評価を報酬に\n\nLLMの応答を別のLLMが採点し、そのスコアを報酬としてモデルを強化学習する仕組みを、GRPOの1学習ステップ単位で捉える。単なる評価値が計算を経て、何十億個もの重みを動かすまでが中心的な論点となる。\n\n## RLAIFとRLVR\n\n人間の代わりにLLMが応答を採点する方法は、RLAIF（Reinforcement Learning from AI Feedback）と呼ばれる。さらにDeepSeek-R1以降は、正誤を機械的に検証するRLVR（Reinforcement Learning with Verifiable Rewards）や、rubric採点を報酬に使う研究も急増している。\n\nただし、評価で得られるスコア自体は数値にすぎない。GRPOでは、LLM判定（LLM-as-a-Judge）のスコアが報酬信号となり、最終的にモデルのパラメータを更新する。この流れを具体的な数字で追うことで、評価と重みの更新がどう結び付くのかを捉えやすくする。\n\n## SFTとの比較\n\n比較対象となるSFT（教師ありファインチューニング）では、訓練データとして「プロンプトと正解応答のペア」を用意する。プロンプトをx、正解応答をy＊、現在のモデルをπθとすると、学習はモデルが正解応答のトークン列を出力する確率を最大化するように進む。言い換えれば、その確率に基づく損失を最小化する。\n\n## 正解データと勾配\n\nSFTでは、正解データy＊が損失関数へ直接入る。このため勾配降下法は、正解トークン列の確率を上げる方向を、損失の微分から直接計算できる。\n\n一方で、タスクごとに人が正解応答を書くか、強いモデルから蒸留する必要がある。また、「こういう応答はダメ」という負例の情報を損失へ入れる場所がなく、他人の文体を写す学習になるという特徴も示されている。",
+      "bodyEn": "## AI Evaluation as Reward\n\nThe article explains how an evaluation produced by an AI can become a reward signal for training a language model. This matters because a score is only a number, making it difficult to picture how that number ultimately changes billions of model weights.\n\nIn Reinforcement Learning from AI Feedback, or RLAIF, an LLM scores responses instead of a human, and those scores are used for reinforcement learning. The article also notes increased research into Reinforcement Learning with Verifiable Rewards, or RLVR, which uses mechanically verified correctness, as well as reward systems based on rubric scoring.\n\n## SFT as Comparison\n\nBefore introducing reinforcement learning, the explanation uses supervised fine-tuning, or SFT, as a comparison. SFT training data consists of prompt-and-correct-response pairs. Training maximizes the probability that the model will produce the token sequence in the correct response, or equivalently minimizes a loss representing that objective.\n\nHere, x is the prompt, y* is the correct response, and πθ is the probability that the current model, with parameters θ, assigns to the response. The essential point is that y* enters the loss function directly. Gradient descent can therefore calculate, from the derivative of the loss, a direction that increases the probability of that correct token sequence.\n\n## SFT Training Data\n\nThis arrangement means SFT requires correct response text. For each task, that response must be written by a person or distilled from a stronger model.\n\nThe article also identifies limits in how this setup handles undesirable answers. There is no place in the described loss for information that says a particular response is bad, so negative examples cannot be incorporated in that way. It also characterizes SFT as learning to reproduce someone else’s writing style.\n\n## A Single GRPO Step\n\nThe intended reader already understands SFT but has no reinforcement-learning experience. Using GRPO as the teaching method, the article follows one optimization step with concrete numbers.\n\nThe walkthrough traces how an LLM-as-a-Judge score is processed as a reward signal until it changes the model’s weights. Its purpose is to make the mechanism intuitive at the level of a single training step, rather than leaving “the evaluation score becomes the reward” as an abstract description.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIが付けた点数はただの数値なのに、GRPOではどうやって何十億個もの重みを動かすの？",
+          "en": "An AI score is just a number. How does GRPO turn it into changes across billions of model weights?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、GRPOの1学習ステップを具体的な数字で追っておる。報酬信号は、評価の高い応答を出しやすくするための目印、と捉えるとよいぞ。",
+          "en": "The article follows one GRPO training step with concrete numbers. Think of the reward signal as a guide that makes higher-rated responses more likely."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、採点表の点がモデル調整まで届く道筋を見たい人向け？ SFTは分かるけど強化学習は初めて、という人に役立ちそう。",
+          "en": "So it’s for people who want to trace how a score reaches model tuning? Sounds useful if you know SFT but are new to reinforcement learning."
+        },
+        {
+          "s": "b",
+          "ja": "まさに想定読者はそこじゃ。説明では、正解文が損失に直接入るSFTと比べ、LLMの採点が重みを動かすまでをたどっておるよ。",
+          "en": "That’s exactly the intended audience. It contrasts SFT, where the correct response directly enters the loss, with the path from an LLM’s score to weight updates."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、AIの採点が学習に変わる瞬間を、GRPOの1ステップで数字から理解する話なんだね。",
+          "en": "Got it: it uses one numerical GRPO step to show how AI grading turns into learning."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。大事なのは、点数がそのままモデルを書き換えるのではなく、計算を経て重みに届く点じゃと本文は示しておる。",
+          "en": "Exactly. One key point in the piece is that the score does not rewrite the model directly; it reaches the weights through a sequence of calculations."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:57:01.853Z"
+    },
+    "b42c66bd34bb0655": {
+      "bodyJa": "## AIへの懐疑\n\n「オデッセイ」のクリストファー・ノーラン監督が、AIを「トロイの木馬」にたとえて批判した。とりわけ若い人々の間でAIへの深い懐疑が見られることについて、ノーラン監督は「かなり心強い」と述べ、創造産業や映画業界で広がるAI利用に強い懸念を示した。\n\n## トロイの木馬\n\n発言は、YouTubeでHugoDécrypteの名義を使うインタビュアー、ヒューゴ・トラヴァースからの質問に答える形で出た。トラヴァースは、ノーラン監督の映画でも重要な役割を担う伝説上のトロイの木馬を取り上げた。殺意を持つギリシャ人を内部に隠した贈り物と同じように、AIも日常生活へ歓迎された後で「別のもの、より暗いもの」になる可能性があるのではないか、と問いかけた。\n\n## 明白な脅威\n\nこれに対し、ノーラン監督は笑いながら「AIは、ギリシャ人が中にいることを誰もが知っているトロイの木馬だと思う」と回答した。AIの危険性が完全に隠されているというより、内部に何があるのか知られた状態で受け入れられようとしている、という比喩だ。さらに同監督は、この技術を「透明な馬」とも表現している。\n\n## 創造産業への警告\n\nノーラン監督の発言は、AIを創造産業に対する欺瞞的な脅威として公に批判するものとなった。映画制作におけるAIの役割拡大が議論されるなか、オスカー受賞監督による警告として、映画業界全体の議論に影響を与える可能性がある。",
+      "bodyEn": "## Deep skepticism of AI\n\nChristopher Nolan has publicly criticized AI as a threat to creative industries, expressing strong concern about its expanding use in filmmaking. His remarks matter because Hollywood is debating AI’s growing role in the industry, and his position adds a prominent director’s voice to that discussion.\n\nThe Oscar-winning director made the comments while discussing his new version of “The Odyssey,” which is currently performing strongly at the box office. Nolan said it had been “pretty encouraging” to see deep skepticism of AI, especially among young people.\n\n## The Trojan horse\n\nNolan was responding to interviewer Hugo Travers, who publishes on YouTube under the name HugoDécrypte. Travers connected the discussion to the legendary Trojan horse, which plays a key role in Nolan’s film.\n\nTravers described the horse as a gift that concealed murderous Greek invaders. He asked whether AI could similarly be something people welcome into their daily lives before seeing it become “something else and something darker.”\n\nNolan laughed and replied: “I think AI is a Trojan horse that everybody knows the Greeks are inside.” He later described the technology as “a transparent horse.”\n\n## Creative industries\n\nThe comparison presents AI as a threat whose danger is visible rather than fully concealed. Nolan’s formulation suggests that people accepting the technology already understand what the metaphorical horse contains.\n\nHis comments focused that warning on creative industries and reflected his concern about the increasing use of AI in filmmaking. As Hollywood continues debating that role, Nolan’s criticism frames the technology not simply as a new production option, but as something the creative sector should approach with pronounced skepticism.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIを映画づくりや普段の生活で使うと、何が変わるの？便利な道具というより、危険があるってこと？",
+          "en": "If AI becomes part of filmmaking and daily life, what actually changes? Is Nolan saying it’s more of a threat than a helpful tool?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では具体的な変化までは示しておらん。ノーランは、歓迎して取り込むAIに危険が潜むとして「トロイの木馬」にたとえたんじゃ。",
+          "en": "The piece doesn’t spell out specific changes. Nolan compares AI to a Trojan horse: something people welcome even though they can already see the danger inside."
+        },
+        {
+          "s": "a",
+          "ja": "でも、前はAIを映画で使えなかったの？今回、急に何かが変わったわけじゃないのかな。",
+          "en": "But couldn’t filmmakers use AI before? Did something suddenly change this time?"
+        },
+        {
+          "s": "b",
+          "ja": "以前との具体的な違いは書かれておらんよ。映画制作でAIの役割が広がるなか、強い警戒を示した発言として扱われているんじゃ。",
+          "en": "No specific before-and-after comparison is given. It presents his remarks as a strong warning while Hollywood debates AI’s expanding role in filmmaking."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、AIの危険は隠れているというより、見えているのに受け入れようとしている、という指摘だね。かなり強い言い方だ！",
+          "en": "So my big takeaway is that the danger isn’t really hidden—we may be welcoming AI even while seeing the risk. That’s a pretty sharp warning!"
+        },
+        {
+          "s": "b",
+          "ja": "そういう比喩じゃのう。次は、この著名監督の発言が映画業界のAI議論にどこまで影響するかに注目じゃ。",
+          "en": "That’s the point of his metaphor. Next, watch whether such a prominent director’s warning influences the film industry’s wider AI debate."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:57:33.038Z"
+    },
+    "411907ab01fd02fe": {
+      "bodyJa": "## 外部記憶への退避\n\nClaude CodeでMCP経由の外部記憶を使い、自然な区切りで重要な決定とセッション全体の要約を保存すれば、/compactをほぼ使わずに作業状態を引き継げる、という考え方だ。文脈の継続性を残しながら、コンテキスト窓を/clearでまっさらにできる点が重要になる。\n\n筆者の環境では、作業終了時に重要な決定とセッション要約を外部記憶へ保存している。その直後に/compactを実行すると、同じ情報を二度要約する形になることが、この方法を見直すきっかけとなった。\n\n## /compactの処理\n\n/compactは、会話履歴を単純に短く畳むだけの処理ではない。その時点のコンテキスト全量を入力として、フラッグシップモデルを呼び出して要約する。200Kのコンテキスト窓では、auto-compactが発火する頃に約150〜180kトークンが入力されると説明されている。\n\n生成された要約ブロブは、次の窓の先頭へ固定注入される。その窓も埋まれば同じ処理が繰り返されるため、長いセッションほど、窓の大部分を読ませて要約し、次へ持ち越す処理が重なる。\n\n## 文脈の持ち越し\n\n/compactには、作業途中の細かな状態まで引き継げる強みがある。一方、その役割は、現在の窓にある記憶を次の窓でも利用できる形へ一時的に詰め直すことだと捉えられる。必要な情報を先に外部へ退避できるなら、その役割を外部記憶と/clearの組み合わせで置き換えられる。\n\n## MCPでの保存\n\n筆者は外部記憶MCP serverとして自作の「CPersona」を使っている。ただし中心となるのは製品固有の機能ではなく、記憶をコンテキスト窓の外へ保存し、検索できる構造である。同じ役割を持つmemory MCP serverでも、基本構造は変わらないとされる。\n\nまた、archive_episodeへ渡すsummaryとkeywordsは、より安価なサブエージェントのSonnetに前計算させている。",
+      "bodyEn": "## External Memory via MCP\n\nIntegrating external memory through MCP can let Claude Code retain long-term working context without relying on the /compact command. The approach matters because it avoids summarizing essentially the same session information twice while reducing manual context-management overhead.\n\nAt the end of a work session, important decisions can be saved to external memory and the full session summarized. Instead of then running /compact, the context window can be reset with /clear. The saved information remains outside the context window and can later be searched, preserving continuity across work sessions.\n\n## The /compact Command\n\nThe article describes /compact as more than a lightweight shortening of conversation history. It invokes a flagship model to summarize the full context available at that point.\n\nWith a 200K context window, auto-compact may receive approximately 150,000 to 180,000 tokens as input when it activates. The resulting summary blob is then inserted at the beginning of the next context window. If that window also fills, the process happens again.\n\nConsequently, a long-running session can repeatedly require most of a context window to be read, summarized, and carried into another window. This retains detailed intermediate working state, but it also means repeatedly repackaging the current window’s memory into a temporary form usable by the next window.\n\n## Long-Term Session Context\n\nWhen work can be archived at natural stopping points, external memory provides another structure. Decisions and session summaries are moved outside the context window, where they remain searchable, while /clear creates a fresh window.\n\nThe author uses a self-built external-memory MCP server called CPersona. However, the relevant pattern is not specific to that server: memory is stored beyond the context window and retrieved when needed. A memory MCP server serving the same role can follow the same basic structure.\n\n## Summary and Keywords\n\nFor archive_episode, the required summary and keywords are precomputed by Sonnet acting as a less expensive subagent. This separates preparation of the stored memory from the repeated full-context summarization performed by /compact.\n\nUnder this workflow, external memory maintains longer-term working state, while a cleared context window provides a clean starting point for subsequent work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "200Kの窓で、/compact時に約150〜180kトークンを読むって、これって大きいこと？",
+          "en": "It reads around 150–180k tokens when /compact kicks in on a 200K window. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事の範囲では、窓の大部分を要約し、長い作業ほど繰り返す処理じゃ。負担を見直すには十分大きな量じゃのう。",
+          "en": "In the article’s setup, that means summarizing most of the window, repeatedly during long sessions. That’s substantial enough to reconsider the workflow."
+        },
+        {
+          "s": "a",
+          "ja": "外部記憶をMCP経由で使うって、つまりどういうこと？ Claude Codeの外に覚えさせるの？",
+          "en": "What does using external memory through MCP actually mean? Is Claude Code storing things somewhere outside its context?"
+        },
+        {
+          "s": "b",
+          "ja": "MCPは、AIと外部の道具やデータをつなぐ仕組みじゃ。ここでは決定や要約を窓の外へ保存し、あとで検索できる形にするんじゃよ。",
+          "en": "MCP is a way for AI to connect with external tools and data. Here, it stores decisions and summaries outside the context window so they can be searched later."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら作業の終わりに決定と要約を保存して、/clearで次を始めたいな。二重要約を避けられそう！",
+          "en": "I’d save the key decisions and a summary at the end, then use /clear for a fresh start. That sounds like it could avoid duplicate summarizing!"
+        },
+        {
+          "s": "b",
+          "ja": "筆者が示す流れも、自然な区切りで外部記憶へ退避できることが条件じゃ。途中の細かな状態まで残したい場面では、/compactの強みもあるぞ。",
+          "en": "That workflow depends on saving to external memory at natural stopping points. The article also notes that /compact remains strong when you need to carry over fine-grained work-in-progress state."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:57:55.435Z"
+    },
+    "e308cad69399bfa1": {
+      "bodyJa": "## AI時代の評価\n\nOpenAIは、AI時代における社会・経済・安全面の進捗を測定、追跡するスコアカードの枠組みを公開した。AIが世界に及ぼす影響を可視化し、説明責任と透明性の向上を目指す。\n\n## ROIの測定軸\n\nOpenAIのCFO、Sarah Friarは、実用的なAIスコアカードを紹介した。ROIは、有用な仕事、成功したタスク当たりのコスト、信頼性、コンピュートに対するリターンという観点から測る。仕事の有用性やタスクの成否、計算資源に対する成果を評価する構成だ。",
+      "bodyEn": "## Practical AI Scorecard\n\nOpenAI has introduced a framework for measuring and tracking AI progress across social, economic, and safety dimensions. The scorecard is intended to make AI’s effects on the world more visible while improving accountability and transparency around development.\n\n## Useful Work and Dependability\n\nSarah Friar, OpenAI’s CFO, presents the scorecard as a practical way to measure return on investment. Its criteria include useful work, cost per successful task, dependability, and return on compute. Together, these measures provide a structure for evaluating progress through task outcomes, costs, reliability, and the value produced from computing resources.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "役立つ仕事、成功した作業あたりの費用、信頼性、計算資源の見返りの4項目で測るんだ。これって大きいこと？",
+          "en": "They’re measuring AI with four things: useful work, cost per successful task, dependability, and return on compute. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、AIの成果を一つの数字でなく複数の面から追う実用的な枠組みとして示しておる。影響を見える形にする一歩じゃな。",
+          "en": "The article presents it as a practical way to track AI from several angles, not with one number. That could make its impact easier to see."
+        },
+        {
+          "s": "a",
+          "ja": "「計算資源の見返り」って何？ つまりどういうこと？",
+          "en": "What does “return on compute” mean? What is it actually measuring?"
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、使った計算資源に対して、どれだけ成果が返ったかを見る考え方じゃ。ROIを計算資源に当てはめたイメージじゃよ。",
+          "en": "Generally, it means asking how much useful result you get from the computing resources spent—basically, ROI applied to compute."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、AIを使う前後で仕事がどれだけ進んだか比べてみたいな。費用だけ見ないのが大事そう！",
+          "en": "I’d compare how much work I get done before and after using AI. Looking beyond cost alone sounds important!"
+        },
+        {
+          "s": "b",
+          "ja": "本文が挙げる基準なら、役立ったかだけでなく、作業が成功したか、安定して任せられるか、費用に見合うかも確かめる必要があるのう。",
+          "en": "Under the article’s criteria, you’d also check whether tasks succeed, results are dependable, and the cost and compute are justified—not just whether AI seemed helpful."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:58:12.383Z"
+    },
+    "63ac2975fcbd2d12": {
+      "bodyJa": "## 履歴消失の対策\n\ndevcontainerでClaude Codeを使う際、コンテナのリビルドによって認証情報と会話履歴が消える問題を、マウント設定で回避できるか検証している。履歴の継続性に加え、新しいプロジェクトでコンテナをreopenした時点から設定を自動適用できるかも確認対象となっている。\n\n## マウント設定\n\n環境はWSL2上のDockerとVS Code Dev Containers拡張で、devcontainer.jsonには、imageとしてmcr.microsoft.com/devcontainers/dotnet:1-10.0-nobleを指定している。workspaceMountは、ローカルのワークスペースをコンテナ内の/code/blzrappへbindする構成だ。\n\nClaude Codeにはghcr.io/anthropics/devcontainer-features/claude-code:1.0を使用する。さらに、ローカル環境の${localEnv:HOME}/.claudeを/home/vscode/.claudeへ、${localEnv:HOME}/.claude.jsonを/home/vscode/.claude.jsonへ、それぞれbindし、consistencyにはcachedを指定している。認証情報と会話履歴に関係する場所をコンテナ外の領域へ結び付ける設定となる。\n\n## コンテナ内確認\n\n設定を記述しただけではなく、実際に有効になっているかをコンテナ内から確認している。確認結果では、/home/vscode/.claudeと/home/vscode/.claude.jsonの双方について、/dev/sddがext4としてマウントされ、rwとrelatimeを含む状態が表示された。\n\nこれにより、指定した二つのパスがコンテナ内でマウント対象として認識されていることを確かめている。設定ファイルの記述と実際のマウント状態を分けて検証している点が重要だ。\n\n## 全体への適用\n\n検証では、個別プロジェクトでの履歴永続化だけでなく、新しいプロジェクトをreopenした際に同じ設定を自動的に適用できるかも扱っている。コンテナの再構築後もClaude Codeの利用状態を継続したい場合に、マウントが実際に機能しているかと、全プロジェクトへの適用をあわせて確認する構成である。",
+      "bodyEn": "## Claude Code conversation history\n\nUsing Claude Code in a devcontainer can cause authentication information and conversation history to disappear whenever the container is rebuilt. The article tests a mount-based countermeasure and examines whether the same setup can be applied automatically when reopening a container for a new project.\n\nThe aim is to distinguish between merely writing the configuration and confirming that it is active inside the container. This matters for developers who rely on conversation history continuity in devcontainer environments.\n\n## devcontainer.json settings\n\nThe configuration is added to devcontainer.json. It uses the image mcr.microsoft.com/devcontainers/dotnet:1-10.0-noble and defines a workspace bind mount from ${localWorkspaceFolder} to /code/blzrapp with cached consistency.\n\nClaude Code is included through ghcr.io/anthropics/devcontainer-features/claude-code:1.0. Two additional bind mounts connect files from the local home environment to the container. The local ${localEnv:HOME}/.claude directory is mounted at /home/vscode/.claude, while ${localEnv:HOME}/.claude.json is mounted at /home/vscode/.claude.json. Both use cached consistency.\n\nThese mounts are the settings introduced to prevent authentication information and conversation history from being lost during container rebuilds.\n\n## Confirmed inside the container\n\nThe test environment is Docker on WSL2 with the VS Code Dev Containers extension. Rather than assuming that the devcontainer.json entries are effective, the article checks the mount state from within the running container.\n\nThe resulting output shows /dev/sdd mounted on both /home/vscode/.claude and /home/vscode/.claude.json. Each is reported as an ext4 mount with read-write access. This confirms that the configured locations are mounted inside the container.\n\n## Automatically across all projects\n\nThe article also addresses applying the setup automatically across all projects when a container is reopened for a new project. Its focus is therefore both verifying that Claude Code history persists in a devcontainer and describing how to make the relevant setup apply across projects, rather than requiring the same configuration process to be handled separately each time.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「.claude」と「.claude.json」の2か所をマウントして、履歴消失を防げるか確かめたんだね。これって大きいこと？",
+          "en": "They mounted both .claude and .claude.json to see if that prevents lost chat history. Is verifying those two locations a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、コンテナ内から2か所が実際にマウントされていると確認しておる。設定を書くだけでなく、効いているかを見た点が大事じゃ。",
+          "en": "The article confirms from inside the container that both locations were actually mounted. That matters: it checks the setup is working, not merely written down."
+        },
+        {
+          "s": "a",
+          "ja": "バインドマウントって何？つまりどういうこと？",
+          "en": "Wait, what’s a bind mount? What does that actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "ホスト側のファイルやフォルダを、コンテナ内から見えるようにつなぐ仕組みじゃ。外の棚にデータを置き、作り直しても参照するイメージじゃよ。",
+          "en": "A bind mount makes a host file or folder visible inside the container. Think of it as keeping data on an outside shelf that a rebuilt container can revisit."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、新しいプロジェクトをreopenしたら自動で設定して、Claude Codeの会話をそのまま続けたいな！",
+          "en": "I’d have the setup apply automatically when reopening a new project, so I could keep going with my Claude Code chats!"
+        },
+        {
+          "s": "b",
+          "ja": "その使い方が狙いじゃ。ただ、確認環境はWSL2上のDockerとVS Code Dev Containers拡張で、記載のマウント設定も前提じゃよ。",
+          "en": "That’s the practical goal. The tested setup uses Docker on WSL2 with the VS Code Dev Containers extension, and it relies on the listed mount configuration."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:59:04.166Z"
+    },
+    "ed20d359e5c667ee": {
+      "bodyJa": "## 一般提供開始\n\nMicrosoft 365向けのAIチーム共同作業支援機能「Copilot Cowork」が、世界で一般提供となった。プレビュー段階を終え、Microsoft 365の利用者が業務で幅広く活用できる状態へ移行したことが今回の発表の中心だ。\n\n## Frontier\n\nCopilot Coworkは、Frontierで3カ月間にわたってプレビュー提供されていた。この期間にはFortune 500企業の半数以上が利用したほか、Accenture、Avanade、Advance Local、Capital Group、Koch、LTM、Ooredoo Qatar、Zurich Insuranceといった企業も使用していると説明されている。一般提供は、こうしたプレビューでの利用を経て開始された。\n\n## 手作業の自動化\n\n活用例の一つとして、あるエンジニアリングチームは、バッチジョブのスプレッドシートを安全に編集し、変更のたびに依存関係のフローチャートを生成する方法をCopilot Coworkに学習させた。これにより、従来は慎重な手作業を必要としていた一連の処理を自動化したとされる。編集だけでなく、変更後の依存関係を図として生成するところまでが一つの作業として扱われている。\n\n## 約4000ファイル\n\n別のチームは、2つの製品バージョンにまたがる約4000件のファイルを比較した。この作業は、従来であれば数週間を要する規模だったと説明されている。Copilot Coworkの一般提供では、チームで扱う多数のファイルの比較や、変更に伴う業務処理の自動化といった実際の利用例が示されている。",
+      "bodyEn": "## General availability\n\nMicrosoft has moved Copilot Cowork to general availability worldwide, making its AI-powered team collaboration capabilities broadly accessible to Microsoft 365 subscribers. The release matters because it expands the feature from a limited preview into a service that a wider range of users can apply to their work.\n\nCopilot Cowork is intended to support team collaboration within Microsoft 365. Its move to general availability follows three months of preview in Frontier.\n\n## Three months of preview\n\nAccording to Microsoft, more than half of the Fortune 500 used Copilot Cowork during the preview period. The announcement also identifies Accenture, Avanade, Advance Local, Capital Group, Koch, LTM, Ooredoo Qatar, and Zurich Insurance among the companies using it.\n\nMicrosoft says users built a variety of workflows with Copilot Cowork during that period. The examples provided focus on automating work involving spreadsheets, dependency flow charts, and comparisons across large numbers of files.\n\n## Batch-job spreadsheets\n\nIn one example, an engineering team taught Copilot Cowork how to safely edit batch-job spreadsheets. The same workflow generated dependency flow charts after every change.\n\nMicrosoft describes this as automating work that had previously required careful manual intervention. The example shows Copilot Cowork being configured for a multi-step engineering task in which spreadsheet changes and updated dependency flow charts were connected within the same process.\n\n## Nearly four thousand files\n\nAnother team used Copilot Cowork to compare nearly four thousand files across two product versions. According to Microsoft, completing that work otherwise would have taken weeks.\n\nTogether, the examples illustrate the kinds of business tasks performed during the preview: handling repeated spreadsheet changes, regenerating related flow charts, and comparing a large collection of files between product versions. With general availability, those AI-powered collaboration capabilities are now offered worldwide to Microsoft 365 subscribers.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Microsoft 365で働くとき、これは普段の何が変わるの？ファイル確認や表の更新をAIと進められるってこと？",
+          "en": "What changes in everyday Microsoft 365 work? Can teams use AI to help review files and update spreadsheets?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、バッチジョブ用の表を安全に編集し、変更後の依存関係図を作る例や、約4千ファイルを比較する例が紹介されておるぞ。",
+          "en": "The article highlights teams safely editing batch-job spreadsheets, generating dependency flow charts after changes, and comparing nearly 4,000 files with Cowork."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！前はできなかったの？それとも、使える人が増えたのが大きな違い？",
+          "en": "Wow! Was that impossible before, or is the big change that more people can use it now?"
+        },
+        {
+          "s": "b",
+          "ja": "本文で確認できる違いは、Frontierでの3カ月のプレビューを終え、世界で一般提供されたことじゃ。以前は慎重な手作業や数週間を要した作業例もあるぞ。",
+          "en": "The piece says Cowork moved from a three-month Frontier preview to worldwide general availability. It also describes tasks that previously required careful manual work or would have taken weeks."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、大量のファイル比較や表の更新をAIと進めた実例があり、それが広く使える段階になったことだね！",
+          "en": "My biggest takeaway is that teams have already used AI for large file comparisons and spreadsheet updates, and now Cowork is broadly available."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。紹介された活用例を物差しに、一般提供後にどんなチーム作業が組み立てられるかを追いたいのう。",
+          "en": "Exactly. Based on the examples shared, the next thing to watch is what kinds of team workflows people build now that Cowork is broadly available."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:59:15.666Z"
+    },
+    "3946c53a352c1713": {
+      "bodyJa": "AIコーディングツールの料金体系は、定額で無制限に使う形から、利用量や上限を意識する形へ移りつつある。GitHub Copilotの変更も単独の動きではなく、Kiro、Cursor、Claudeを横断してコスト構造を捉える必要がある。\n\n## Copilotの移行\n\nGitHub Copilotは2026年6月1日、トークン従量制のGitHub AI Creditsへ移行した。課金対象はチャット、エージェント、CLIなどで、コード補完とNext Edit Suggestionsは無料のまま維持される。一方、上限到達時に低コストモデルへ切り替えるフォールバックは廃止された。Copilotは従量制へ移行した最初のツールではなく、「移行した最後の大物」と位置付けられている。\n\n## Kiroのクレジット制\n\nKiroは2025年10月の有料化当初からクレジット制で、定額使い放題の段階を経ていない。消費量はプロンプトの複雑さに応じて0.01刻みで計算され、簡単な編集なら1クレジット未満となる。超過分は1クレジット当たり$0.04。新しく登場したツールが当初から従量を前提に設計されている点が注目されている。\n\n## Cursorの利用枠\n\nCursorは回数制から使用量ベースの料金モデルへ移行済みで、各プランに利用枠が紐づく。枠を超えた場合は、オンデマンド従量を選んで利用を続けられる。Autoモードが利用枠を消費しないという説明については一次情報で確認できていないとされ、契約前に公式ドキュメントで確認することが推奨されている。\n\n## Claudeの上限\n\nClaudeは月額定額だが無制限ではない。5時間ごとのセッション上限に加え、週次の使用量上限が設定されている。上限を超えた後は、Extra Usageによる従量課金またはAPI課金で継続する形だ。各ツールの細部は異なるものの、利用枠と超過時の課金を組み合わせる構造が共通しており、選定時には機能だけでなく実際のコスト構造も見極める必要がある。",
+      "bodyEn": "## GitHub AI Credits\n\nAI coding tools are moving away from flat-rate unlimited use toward pricing tied to consumption, credits, or usage limits. That shift matters because developers now need to examine cost structures alongside tool capabilities.\n\nGitHub Copilot moved to token-based GitHub AI Credits on June 1, 2026. Code completion and Next Edit Suggestions remain free, while chat, agent, and CLI use are subject to charges. The previous fallback to a lower-cost model after reaching the usage limit was also removed.\n\nThe article presents Copilot as the last major tool in this comparison to make the transition, rather than the first.\n\n## Kiro and Cursor\n\nKiro used a credit system from the start of its paid service in October 2025, without passing through a flat-rate unlimited phase. Credits are consumed according to prompt complexity in increments of 0.01. A simple edit can cost less than one credit, while overage is priced at $0.04 per credit.\n\nCursor has already moved from request-based pricing to a usage-based model. Each plan includes a usage allowance, with on-demand metered usage available after that allowance is exceeded.\n\nSome explanations claim that Cursor’s Auto mode does not consume the allowance. However, the author says this could not be confirmed through primary information and recommends checking the official documentation before subscribing.\n\n## Session and weekly caps\n\nClaude uses a monthly flat-rate structure, but it is not unlimited. It applies both a session limit measured in five-hour periods and a weekly usage limit.\n\nAfter reaching those limits, users can continue through metered Extra Usage or API billing. This creates another variation on the same broader structure: a plan includes defined access, while continued use beyond its limits carries additional charges.\n\n## Weigh true costs\n\nThe pricing details differ across Copilot, Kiro, Cursor, and Claude, but the comparison indicates a common move away from unlimited AI coding plans. Kiro is especially notable in the article because it was designed around usage-based credits from the outset.\n\nFor developers choosing among these tools, the relevant comparison therefore includes included allowances, chargeable features, overage options, and the way each service measures consumption.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Copilotが2026年6月1日にトークン従量制へ変わったって、使うほど料金が増えるってこと？",
+          "en": "Copilot switched to token-based pricing on June 1, 2026. Does that mean the more you use it, the more you may pay?"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。トークンはAIが処理する文字の細かな単位で、この記事ではチャットやエージェント、CLIなどがGitHub AI Creditsの対象じゃよ。",
+          "en": "Yes. Tokens are small units of text an AI processes. The article says chats, agents, and CLI use GitHub AI Credits, while code completion and Next Edit Suggestions remain free."
+        },
+        {
+          "s": "a",
+          "ja": "つまり開発者は、食べ放題を選ぶ感覚じゃなく、利用枠と追加料金まで値札を見比べる感じ？",
+          "en": "So developers need to compare these tools less like all-you-can-eat plans and more like price tags showing allowances and extra charges?"
+        },
+        {
+          "s": "b",
+          "ja": "そんな感覚じゃな。本文が示すのは、KiroやCursor、Claudeも形は違えど利用量や上限に料金が結びつき、選定時にコスト構造の確認が要ることじゃ。",
+          "en": "That’s the idea. The piece shows Kiro, Cursor, and Claude also tying costs to usage or limits in different ways, so developers need to examine the pricing structure before choosing."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、AIコーディングツールは機能だけでなく、どこまで使えて超過時にどう払うかも比べる時代なんだね。",
+          "en": "Wow, so choosing an AI coding tool now means comparing not just features, but usage limits and what happens when you go over."
+        },
+        {
+          "s": "b",
+          "ja": "そう見えつつあるのう。ただしCursorのAutoモードが利用枠を消費しないという説明は一次情報で未確認なので、契約前に公式文書を確かめるのが大切じゃ。",
+          "en": "That’s where things seem headed. One caution: the claim that Cursor’s Auto mode does not consume the allowance wasn’t verified from a primary source, so check the official documentation before subscribing."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T13:59:55.473Z"
+    },
+    "dfd231f6d2cdbbdb": {
+      "bodyJa": "Shippyは、海洋保護のように誤答が現実の影響を及ぼす場面に向けて構築された海事AIエージェントだ。AllenAIは、その開発経験から、信頼できるエージェントに必要な設計上の課題とアーキテクチャ上の判断を共有している。\n\n## Shippyの役割\n\nShippyは、リアルタイムの海洋状況把握を支援し、重大な判断に関わる問い合わせへ回答する。例として、GhanaのEEZに関するライブクエリへの応答が示されている。海事アナリストが利用する状況では、誤った回答によって巡視船が本来とは何マイルも離れた方向へ向かう可能性がある。限られた資源を大きく消費するだけでなく、人員を危険にさらしかねないため、回答の正しさが重要になる。\n\n## 検証可能な回答\n\nShippyの応答は、結論だけを提示するものではない。境界情報の出典、データのカットオフ、問い合わせのタイムスタンプを併記し、Skylightの地図へ戻るディープリンクも示す。これにより、アナリストは回答に含まれる各数値を地図上で確認できる。どの情報に基づき、どの時点のデータを使って答えたのかを回答内で明らかにする構成である。\n\n## 信頼性という課題\n\n海洋保護のような高リスクの運用領域でAIエージェントを構築するうえでは、何よりも信頼性が課題になると説明されている。SkylightチームがShippyの開発に着手した際も、実際の中心的な作業はモデルそのものではなかった。開発を通じて得られた実践的な教訓は、Ai2のほかの環境プラットフォームにも持ち込まれている。",
+      "bodyEn": "## High-stakes decisions\n\nShippy is a maritime AI agent designed for high-stakes decisions, where incorrect answers can have real consequences. AllenAI’s account of building it focuses on the design challenges, architectural decisions, and practical lessons involved in creating reliable agents.\n\nShippy supports real-time maritime domain awareness for the Skylight team. In an operational setting such as ocean protection, reliability is critical because a wrong answer could direct a patrol vessel miles away from the correct location. That could consume significant resources that are already stretched thin and potentially place personnel in harm’s way.\n\n## Showing its work\n\nWhen Shippy answers a live query about Ghana’s EEZ, its response includes information that allows a maritime analyst to inspect the basis of the answer. It identifies the boundary source, the data cutoff, and the query timestamp.\n\nThe response also provides a deep link to the Skylight map. This gives the analyst a way to return to the map and verify every number rather than relying only on the agent’s response.\n\n## A problem of reliability\n\nThe central challenge in building an AI agent for this kind of high-stakes operational domain is reliability. The account emphasizes that the real work behind Shippy was not the model itself.\n\nInstead, the architecture reflects the need to make answers traceable and verifiable. Showing the relevant source, timing information, and a link back to the underlying map makes the agent’s work visible to the analyst who must use the result.\n\n## Practical lessons\n\nThe experience of developing Shippy produced practical lessons for reliable agent design. These lessons cover the challenges and architectural decisions that matter when an agent’s answer may influence real-world operations.\n\nAi2 is carrying lessons from Shippy into its other environmental platforms. The central takeaway is that building a useful agent for consequential decisions requires attention to reliability and to the information analysts need to verify its answers.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Shippyは境界の出典、データの基準時点、質問時刻、Skylight地図へのリンクまで出すんだね。それって何のため？",
+          "en": "Shippy shows the boundary source, data cutoff, query time, and even a link to the Skylight map. Why include all that?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、分析者が数字を一つずつ確かめられるようにするためじゃ。重大な海上判断では、根拠を検証できることが信頼性につながるのう。",
+          "en": "The piece says this lets analysts verify every number. In high-stakes maritime decisions, reliability also means being able to check the evidence behind an answer."
+        },
+        {
+          "s": "a",
+          "ja": "航海の案内役が「進む方向」だけでなく「なぜそう言えるか」も見せる感じ？海事分析者が判断前に確かめられるんだね。",
+          "en": "So it’s like a navigator showing not only where to go, but why? That lets maritime analysts check the answer before acting."
+        },
+        {
+          "s": "b",
+          "ja": "そういう捉え方じゃよ。本文では、誤答が巡視船を何マイルも違う方向へ進ませ、限られた資源や人員の安全に影響しうるとしておる。",
+          "en": "That’s a fair analogy. The text warns that a wrong answer could send a patrol vessel miles off course, waste stretched resources, and potentially put personnel in harm’s way."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、Shippy開発の核心はモデルそのものより、答えを検証できる信頼性の設計だったんだ！",
+          "en": "So the heart of building Shippy wasn’t the model itself—it was designing for answers people could verify!"
+        },
+        {
+          "s": "b",
+          "ja": "記事の焦点は、海洋保護のように誤答の影響が大きい領域じゃ。教訓はAi2のほかの環境プラットフォームにも生かすとしておるのう。",
+          "en": "Exactly. The takeaway is rooted in high-stakes ocean protection, and Ai2 says it is carrying Shippy’s lessons into its other environmental platforms."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T14:00:25.781Z"
+    },
+    "135b57e2f494a88d": {
+      "bodyJa": "## モデルルーティング\n\nIBM Researchは、エージェントに組み込むモデルルーティングが、単純なモデル選択ではなく、精度、レイテンシ、安全性を含むシステム最適化の問題になると説明している。料金だけを基準にした素朴な振り分けでは、実用上の複雑さを十分に扱えないという。\n\n## 分類と振り分け\n\n一見すると、ルーターの役割は明快だ。簡単な要求は安価なモデルへ送り、難しいタスクには高価なモデルを使う。あるいは、コードにはClaude、マルチモーダルにはGeminiというように、専門性に応じて振り分ける。分類器やヒューリスティックで選択すれば、性能を保ちながらコストを下げられるように見える。\n\nしかし、多くのルーティングシステムが前提とする「モデル選択は分類問題である」という捉え方だけでは足りないとされる。エージェント型システムへ実際に組み込むと、個々の要求を分類するだけでなく、複数の条件を同時に調整する必要が生じるためだ。\n\n## コストと性能\n\n特に、コストはモデルの価格だけでは決まらない。GPT-4.1はClaude Sonnet 4.6より安価になると予想されていたが、実際にはそうならなかったという。この例は、価格の比較だけでルーティング結果の費用を判断できないことを示している。\n\nそのため設計では、単純なコスト最適化を超え、精度、レイテンシ、安全性のトレードオフを考慮する必要がある。安価なモデルへ送るか、高価なモデルを使うかという二択ではなく、システム全体の条件を踏まえて選択する問題として扱うことが提案されている。",
+      "bodyEn": "## Model Routing Is Simple\n\nIBM Research examines why model routing in agentic systems becomes more complicated than it initially appears. The central issue is that reducing model costs cannot be treated separately from performance, accuracy, latency, and safety.\n\nA seemingly straightforward router can send simple requests to cheaper models while reserving more expensive models for harder tasks. It can also select models by specialty, such as using Claude for code and Gemini for multimodal requests. A classifier or heuristic makes that decision, with the intended result that costs decline while performance remains stable.\n\n## A Classification Problem\n\nMany routing systems assume model selection is fundamentally a classification problem. Under that assumption, the router identifies the type or difficulty of a request and chooses the corresponding model.\n\nIBM Research says its experience building routing into agentic systems challenged that framing. What starts as selecting the appropriate model quickly becomes a systems optimization problem. The routing decision therefore cannot be reduced to assigning each request to a model based only on a simple category or heuristic.\n\nThe practical challenge is to evaluate multiple dimensions together rather than treating any single measure as sufficient. According to the source, three dimensions made routing unexpectedly difficult, with cost presented as one of them.\n\n## Cost Is More Than Model Pricing\n\nThe discussion argues that model pricing alone does not determine which routing choice will actually be cheaper. IBM Research expected GPT-4.1 to cost less than Claude Sonnet 4.6, but reports that it did not.\n\nThat result illustrates the weakness of a naive cost-based approach. A router designed around assumed price differences may fail to produce the expected outcome when used within an agentic system.\n\n## Accuracy, Latency, and Safety\n\nThe proposed design perspective extends beyond simple cost optimization. Effective routing requires balancing accuracy, latency, and safety trade-offs rather than selecting models on price alone.\n\nThis makes routing a broader optimization task: the system must account for several competing considerations while deciding where a request should go. The apparent simplicity of classifier- or heuristic-based selection gives way to a more complex design problem once those practical trade-offs are considered together.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-4.1のほうがClaude Sonnet 4.6より安いと思ったら違ったって、これって大きいこと？",
+          "en": "They expected GPT-4.1 to cost less than Claude Sonnet 4.6, but it didn’t. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "価格だけで振り分ければ節約できる、という前提が揺らぐ話じゃ。この記事では、コストはモデル価格だけではないとしておる。",
+          "en": "It challenges the idea that routing by price automatically saves money. The article’s point is that cost involves more than model pricing."
+        },
+        {
+          "s": "a",
+          "ja": "そもそも「モデルルーティング」って何？ つまりどういうこと？",
+          "en": "What is “model routing” in the first place? What does it actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "質問に応じて使うAIモデルを選ぶ振り分け役のことじゃよ。本文では、単なる分類ではなくシステム全体の最適化になると説明しておる。",
+          "en": "It’s a traffic controller that picks an AI model for each request. Here, the authors say it becomes a whole-system optimization problem, not merely classification."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、軽い質問は安いモデル、難しい相談は高いモデルに回してみたいな。へえ、便利そう！",
+          "en": "I’d send easy questions to a cheaper model and tougher ones to a more expensive one. That sounds handy!"
+        },
+        {
+          "s": "b",
+          "ja": "その使い方は示されておるのう。ただし実際は費用だけでなく、精度・待ち時間・安全性も一緒に考える必要がある、という話じゃ。",
+          "en": "That’s one approach described. But in practice, the piece says you must weigh accuracy, latency, and safety alongside cost."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T14:00:44.672Z"
     }
   }
 }

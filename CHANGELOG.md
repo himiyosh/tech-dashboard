@@ -12,6 +12,10 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ## Unreleased
 
+(なし)
+
+## 2026-09-17
+
 ### 変更
 
 - Publisher を Cloudflare Cron Trigger から起動する仕組みを追加しました。GitHub の予約実行はこのリポジトリで大きく遅延・間引きされ、毎時の予定が 1 日 5〜9 回しか動かず、サイトの更新が平均 3 時間おきになっていました。bridge Worker が 30 分ごとに最新の Publisher 実行を確認し、実行中でなく 50 分以上経っていれば GitHub に実行を指示します(約 1 時間に 1 回)。GitHub のトークン(`GITHUB_DISPATCH_TOKEN`、このリポジトリの Actions 読み書き権限)を Worker に登録すると有効になり、未登録の間は何もしません。

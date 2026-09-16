@@ -1,5 +1,6 @@
 import type { BodyJob } from "./body-generate.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "./publisher-contract.ts";
+import { runScheduledPublisherDispatch } from "./publisher-dispatch.ts";
 import type { SummaryJob } from "./summary-queue.ts";
 
 const GITHUB_OIDC_ISSUER = "https://token.actions.githubusercontent.com";
@@ -31,6 +32,8 @@ export interface BridgeEnv {
   PUBLISHER_OIDC_AUDIENCE: string;
   PUBLISHER_REPOSITORY: string;
   PUBLISHER_WORKFLOW_REF: string;
+  /** Secret (wrangler secret put): fine-grained PAT, this repo, Actions read + write. */
+  GITHUB_DISPATCH_TOKEN?: string;
 }
 
 export interface PublisherOidcPolicy {
@@ -456,5 +459,11 @@ export async function handleFreePlanBridgeRequest(
 export default {
   fetch(request: Request, env: BridgeEnv): Promise<Response> {
     return handleFreePlanBridgeRequest(request, env);
+  },
+  // Cloudflare Cron Trigger (wrangler.toml [triggers]): starts the GitHub
+  // Actions Publisher on time, because GitHub's own schedule event is delayed
+  // and dropped for this repository (publisher-dispatch.ts).
+  scheduled(_controller: ScheduledController, env: BridgeEnv, ctx: ExecutionContext): void {
+    ctx.waitUntil(runScheduledPublisherDispatch(env).then(() => undefined));
   },
 } satisfies ExportedHandler<BridgeEnv>;

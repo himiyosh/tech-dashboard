@@ -19,6 +19,13 @@ queue = "tech-dashboard-summary"
 binding = "BODY_QUEUE"
 queue = "tech-dashboard-body"
 
+# Starts the Publisher workflow on time (src/publisher-dispatch.ts): GitHub's
+# own schedule event is delayed and dropped for this repository. Each tick
+# dispatches only when no run is active and the newest is >= 50 minutes old.
+# Needs the GITHUB_DISPATCH_TOKEN secret; without it every tick is a no-op.
+[triggers]
+crons = ["*/30 * * * *"]
+
 [vars]
 PUBLISHER_OIDC_AUDIENCE = "tech-dashboard-publisher"
 PUBLISHER_REPOSITORY = "himiyosh/tech-dashboard"

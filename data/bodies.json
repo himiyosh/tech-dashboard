@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T12:29:08.771Z",
+  "generatedAt": "2026-09-18T16:48:42.276Z",
   "count": 1126,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -1367,44 +1367,6 @@
           "s": "b",
           "ja": "その理解でよいぞ。今後は、Google Cloudの顧客が複雑な計算や設計の課題でどう活用するかが見どころじゃな。",
           "en": "That’s the idea. The key thing to watch is how Google Cloud customers apply it to complex computational and design problems."
-        }
-      ]
-    },
-    "1fe4d821705368ab": {
-      "bodyJa": "AWSは、Claudeを組み込んだアプリケーションとAWSの各種サービスをつなぐ新しい統合レイヤー「Claude apps gateway」を発表した。Amazon Bedrock上でエージェント型AI(エージェンティックAI)のワークフローを構築・運用する際の手間を減らすことを狙った仕組みで、モデルと外部ツールやデータソースの橋渡しを標準化する点が特徴とされる。\n\n背景には、生成AIの利用が単発の文章生成から、複数の手順を自律的にこなす「エージェント」へと移りつつある流れがある。エージェント型のアプリケーションでは、モデルが自ら判断して外部APIを呼び出したり、社内データを検索したり、複数の処理を連鎖させたりする必要がある。しかし、こうした連携を一つひとつ独自に実装すると、認証やアクセス制御、エラー処理などが複雑になりやすい。ゲートウェイはこの結合部分を集約し、開発者がビジネスロジックに集中しやすくする役割を担うと見られる。\n\nAmazon BedrockはAWSが提供するマネージド型の基盤モデルサービスで、AnthropicのClaudeをはじめ複数社のモデルをAPI経由で利用できる。AWSはAnthropicへの大規模な出資でも知られ、Claudeをクラウド戦略の中核の一つに位置づけている。今回のゲートウェイは、そのBedrock環境において、Claudeを使うアプリからAWSのストレージ、データベース、認証基盤といったサービスへ安全につなぐ経路を用意するものと考えられる。\n\n関連する動きとして、Anthropicが提唱する「Model Context Protocol(MCP)」など、モデルと外部リソースの接続方法を共通化しようとする取り組みが業界で広がっている。OpenAIやGoogleもそれぞれ関数呼び出しやエージェント向けの機能を拡充しており、エージェント基盤をめぐる競争は激しくなっている。こうした中で、AWSが自社サービスとの親和性を武器に統合レイヤーを提供する意義は小さくないだろう。\n\n導入により、認証やツール連携の共通化を通じて、実運用に耐えるエージェントを比較的短期間で立ち上げられる可能性がある。一方で、実際の使い勝手や対応範囲、コスト、既存の他フレームワークとの整合性については、公開される技術文書や実装事例を通じた検証が今後の焦点になりそうだ。企業が生成AIをどの程度まで自律的な業務処理に組み込めるかを左右する要素として、注目に値する発表といえる。",
-      "bodyEn": "AWS has introduced the Claude apps gateway, an integration layer designed to connect Claude-powered applications with the broader set of AWS services and to streamline how developers build and operate agentic AI workflows on Amazon Bedrock. The announcement matters because it targets one of the most persistent friction points in enterprise AI adoption: wiring a capable large language model to the data sources, tools, and permissions it needs to take useful action, rather than merely generating text.\n\nAt its core, the Claude apps gateway appears to function as a managed connective tier that sits between Claude, Anthropic's family of models, and the operational resources an agent must reach to complete tasks. In practice this means an agent can request information, invoke functions, and trigger downstream processes through a consistent interface rather than through bespoke code written for each individual service. For teams already standardized on Bedrock, the gateway is positioned as a way to reduce the custom scaffolding that typically accumulates around production agents, including authentication handling, tool registration, and request routing.\n\nAgentic AI, the category this release addresses, refers to systems that go beyond single-turn responses to plan multi-step actions, call external tools, and iterate toward a goal. Building such systems reliably has proven harder than building chat interfaces, because each tool connection introduces potential failure modes around security, latency, error handling, and observability. A gateway model attempts to centralize these concerns. By providing a single control point, it is likely intended to make it easier to enforce guardrails, log agent behavior, and manage which resources a given application is permitted to touch. AWS has emphasized simplified development and management as the primary benefits, which suggests the value proposition is operational consistency as much as raw capability.\n\nThe move fits within a wider industry pattern. Over the past two years, the notion of an agent gateway or tool router has gained traction as vendors converge on the idea that models need a governed pathway to external systems. Anthropic itself has promoted the Model Context Protocol, an open standard for connecting AI assistants to data and tools, and it would be reasonable to expect the Claude apps gateway to align with or complement such standardized approaches, though the exact relationship depends on implementation details AWS has not fully enumerated. The broader goal across the ecosystem is interoperability, so that an agent is not locked into a single set of hand-built connectors.\n\nContext also comes from the Bedrock platform itself. Amazon Bedrock is AWS's managed service for accessing foundation models from multiple providers, including Anthropic, through a unified API, and it already includes features such as Bedrock Agents, Knowledge Bases for retrieval-augmented generation, and Guardrails for content filtering and safety policies. The Claude apps gateway appears to extend this stack rather than replace it, giving Claude-based applications a more direct route into AWS-native services like storage, databases, and compute while inheriting the identity and access controls that enterprises rely on through AWS Identity and Access Management.\n\nFor developers, the practical implications center on time to production. If the gateway delivers on its stated aims, teams may spend less effort on integration plumbing and more on defining agent logic and business workflows. It could also improve auditability, an increasingly important requirement as organizations in regulated sectors weigh the risks of granting autonomous systems access to sensitive operations. That said, the degree of benefit will likely vary with the complexity of a given deployment, and any gateway introduces its own considerations around latency, cost, and dependency on a specific vendor's abstractions.\n\nSeveral questions remain open at launch. Details such as regional availability, pricing structure, supported Claude model versions, and the precise mechanics of tool authorization will shape how the gateway is adopted. It is also unclear how tightly the offering couples applications to AWS, which matters for organizations pursuing multi-cloud strategies. Prospective users would be well served to review AWS documentation and test the gateway against their own governance and performance requirements before committing production workloads.\n\nTaken together, the Claude apps gateway reflects a maturing phase of enterprise AI, in which the emphasis is shifting from model quality alone toward the surrounding infrastructure that makes agents dependable, secure, and manageable. Whether it becomes a default building block on Bedrock will depend on real-world reliability and on how it interoperates with the growing set of open standards and competing tools in the agentic AI space.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-09T18:02:26.138Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Claude apps gatewayって何？ ClaudeアプリとAWSの間に何か置くの？",
-          "en": "What is the Claude apps gateway? Is it something that sits between Claude apps and AWS?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、ClaudeアプリとAWSサービスをつなぐ統合レイヤーじゃ。記事では、自分たちで運用する制御基盤と説明されておるよ。",
-          "en": "Simply put, it’s an integration layer connecting Claude apps with AWS services. The article describes it as a self-hosted control plane."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ つなぐだけじゃなく、管理も楽になるのかな？",
-          "en": "What’s the benefit? Does it make management easier, not just connect the two?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、Claude CodeとClaude Desktopのアクセス、コスト、ポリシーを一か所で制御できる。Bedrock上のエージェント型AIの構築・管理も効率化されるそうじゃ。",
-          "en": "According to the article, it centralizes access, cost, and policy controls for Claude Code and Claude Desktop. It also streamlines building and managing agentic AI workflows on Bedrock."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ ClaudeアプリをAWSで使うときの接続と管理を、ひとまとめにできる仕組みなんだね。",
-          "en": "Got it! It brings connectivity and management together when using Claude apps with AWS."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。今後の見どころは、アクセスやコスト、ポリシーの一元管理が、実際のワークフローをどこまで簡素化するかじゃな。",
-          "en": "Exactly. The key thing to watch is how much centralized access, cost, and policy management can simplify real-world workflows."
         }
       ]
     },
@@ -5319,44 +5281,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事ではSwarmとGraphという2つの協調パターンを比較しており、その違いが見どころじゃな。",
           "en": "Exactly. The article compares two orchestration patterns, Swarm and Graph, so how those approaches differ is the key point to watch."
-        }
-      ]
-    },
-    "ca558219115f5374": {
-      "bodyJa": "Googleは、AIエージェントを大規模に構築・運用するための設計手法として「モジュール型プロンプトトランスパイル」を提唱した。プロンプトを再利用可能な部品へと分割し、それらを組み合わせて最終的な指示文へ変換(トランスパイル)することで、複雑化しがちなエージェントの保守性と拡張性を高めるアプローチである。\n\n背景には、LLMを中核に据えたエージェント開発の急速な普及がある。単一のタスクをこなすだけなら一つのプロンプトで済むが、外部ツールの呼び出し、複数ステップの推論、役割の異なるサブエージェントの連携といった要素が絡み合うと、プロンプトは長大かつ複雑になり、修正や再利用が困難になる。文字列を直接書き連ねる従来の手法では、共通部分の重複や、一箇所の変更が全体へ波及する副作用が課題とされてきた。\n\nモジュール型プロンプトトランスパイルは、こうした課題をソフトウェア工学の発想で解こうとするものだ。プログラミングでソースコードを別の形式へ変換する「トランスパイル」になぞらえ、抽象度の高いモジュール定義を最終的なプロンプト文字列へと機械的に組み立てる。役割設定、出力形式の指定、ツール利用のルールといった要素を独立した部品として管理すれば、共通コンポーネントを複数のエージェント間で使い回せるほか、変更の影響範囲を局所化しやすくなると見られる。\n\n同様の問題意識は業界全体で共有されており、周辺のツールも増えている。プロンプトをコードのように扱うフレームワークとしてはLangChainやDSPyなどが知られ、後者はプロンプトの自動最適化を志向する。Googleはこれらと並ぶ選択肢として、Geminiを含む自社モデルでの実践知を反映した設計指針を示した形だ。\n\nもっとも、モジュール化には抽象化のための学習コストや、部品の粒度設計の難しさといったトレードオフを伴う可能性がある。エージェント開発が試行錯誤の段階にある中、こうした構造化の手法がどこまで標準的な実践として定着するかは、今後の事例の蓄積によって明らかになっていくだろう。",
-      "bodyEn": "Google's developer organization has outlined a modular prompt transpilation approach for building scalable AI agents, a technique aimed at teams that struggle to maintain the sprawling instructions behind complex agent systems. The topic matters because as AI agents move from demonstrations into production, the prompts driving them often balloon into large, brittle blocks of text that are hard to test, reuse, or reason about. The proposal treats prompt construction more like software engineering, introducing composable parts and a compilation step rather than a single hand-written string.\n\nThe central premise is that a prompt should not be one monolithic instruction. Instead, it is decomposed into smaller, reusable modules, each responsible for a discrete concern such as role definition, tool descriptions, output formatting, safety constraints, or few-shot examples. Because each module addresses a single responsibility, it can be authored, versioned, and validated on its own, then assembled into the final instruction the model receives at runtime. This mirrors long-standing practices in traditional programming, where separation of concerns and modularity reduce the cost of change.\n\nThe term \"transpilation\" is borrowed from software development, where a transpiler converts source code from one representation into another. In this context, a higher-level, structured definition of an agent's behavior is transformed into the concrete prompt text that a model such as Gemini ultimately consumes. This intermediate layer appears to give developers a place to enforce consistency, inject shared components, and adapt output for different models or contexts without rewriting everything by hand. It also creates a clearer boundary between what an agent is supposed to do and how that intent is expressed to a particular language model.\n\nThe practical benefits center on maintainability and flexibility. When prompt logic lives in reusable modules, a change to a shared safety policy or output schema can be made in one place and propagated everywhere it is used, rather than edited across dozens of copy-pasted prompts. Modules can be unit tested in isolation, which is difficult with a single large prompt, and teams can compose different combinations to support multiple agents or workflows. This is particularly relevant when orchestrating multi-step agents that call tools, chain reasoning across stages, or hand off tasks to sub-agents, since each stage may require its own tailored instructions.\n\nThe approach fits within a broader industry shift toward treating prompts as engineered artifacts. Frameworks such as DSPy have popularized a declarative style in which prompts are compiled and optimized rather than written by hand, while templating tools and libraries like LangChain and LlamaIndex offer structured ways to assemble prompts from parts. Google has been expanding its own agent tooling, including the Agent Development Kit and support for agent workflows on Vertex AI, alongside interoperability efforts such as the Model Context Protocol and agent-to-agent communication patterns. Modular prompt transpilation is likely intended to complement these tools by standardizing how the instruction layer itself is built.\n\nUnderstanding the value requires some background on how modern agents work. An LLM-based agent typically combines a system prompt, a description of available tools or functions, memory or context from previous steps, and formatting rules for structured output. Function calling lets the model request external actions, and the surrounding prompt must reliably describe those capabilities. As the number of tools and behaviors grows, the prompt becomes a critical and fragile piece of infrastructure, which is precisely the fragility this modular method seeks to reduce.\n\nThere are trade-offs worth noting. Introducing a transpilation layer adds a level of abstraction and tooling that smaller projects may not need, and debugging can become harder when the final prompt is generated rather than directly written. Teams also still depend on model behavior, which can shift between versions, so modular structure does not eliminate the need for evaluation and testing. As with any prompt-engineering methodology, results appear to depend heavily on disciplined design and ongoing measurement.\n\nFor developers building agents that must scale across many use cases, the concept offers a structured alternative to ad hoc prompt writing. Whether it becomes a common pattern will likely depend on tooling maturity, documentation, and how well it integrates with existing agent frameworks and evaluation pipelines.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-20T11:43:28.473Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「モジュール型プロンプトトランスパイル」って何？プロンプトを変換するの？",
-          "en": "What is “modular prompt transpilation”? Does it mean converting prompts somehow?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、指示を再利用できる「スキルファイル」に分け、トランスパイラで使える形へ変換する手法じゃよ。",
-          "en": "Simply put, it splits instructions into reusable “skill files,” then uses a transpiler to convert them into a usable form."
-        },
-        {
-          "s": "a",
-          "ja": "一つの大きなプロンプトに全部書くより、何がうれしいの？",
-          "en": "What’s the benefit compared with putting everything into one giant prompt?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、巨大なシステムプロンプトが招く拡張時の詰まりや実行時エラーを抑え、保守や拡張をしやすくできるそうじゃ。",
-          "en": "According to the article, it can reduce scaling bottlenecks and runtime errors from monolithic system prompts, while making complex workflows easier to maintain and extend."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、長い指示を部品に分けて再利用すれば、複雑なAIエージェントも育てやすくなるんだね！",
-          "en": "So breaking long instructions into reusable parts could make complex AI agents easier to grow and manage!"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。Googleは、プロンプトを単なる文章でなく再利用可能な構築物として扱う設計に注目しておるのじゃ。",
-          "en": "That’s the idea. Google’s approach treats prompts not as one-off text, but as reusable building artifacts for agent design."
         }
       ]
     },
@@ -42064,44 +41988,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:33:08.118Z"
     },
-    "7a9c8b2981b32ecc": {
-      "bodyJa": "## 2本並走時の遅延\n\n重いGitHub Copilot Agentの作業を2つのVS Codeウィンドウで並走させたところ、Windows環境で画面操作が著しく重くなる現象が確認された。マウス操作やウィンドウ切り替えを含む画面描画に影響が出ており、根本原因はまだ特定されていない。\n\n## 主因から後退\n\nログを使った切り分けでは、OS全体のCPU、RAM、disk、GPUとデスクトップ描画、Microsoft Scout、Git status単体は、主因の候補として後退した。現在の優先調査対象は、VS Code内部のUI処理経路と、その上で扱われる長いChatやtool outputの処理とされている。ただし、これらが原因だと確定した段階ではなく、調査は進行中である。\n\n## 100と1000\n\nchat.agent.maxRequestsは1000から100へ下げ、一定期間の確認が行われた。しかし、設定変更後も同じUI遅延が再現したため、1000が原因だった可能性はかなり下がったと説明されている。100へ下げたことで変化したのは、Agentが早めに続行確認で止まる点だった。実用性も低下したため、作業継続性を優先して現在は1000へ戻されている。現行実装では、この設定はAgentの並列度、CPU使用率、画面更新頻度を直接変えないという。\n\n## 最初の切り分け\n\n最初に試せる切り分けは、重いAgent作業の並走を止め、1本ずつ実行して症状が変わるか確認することだ。maxRequests、履歴要約、debug logging、watcherの除外設定を一括で変更することは推奨されていない。WPRも今回使用された計測手段であり、すべての利用者に必須の手順ではない。",
-      "bodyEn": "## Running Two Copilot Agent Sessions\n\nRunning two Copilot Agent sessions simultaneously in VS Code caused severe UI lag in the author’s Windows environment. The issue matters because it affected screen rendering broadly, including mouse interaction and switching between windows, while two heavy Agent tasks were running in separate VS Code windows.\n\nThe investigation is still in progress, and the root cause has not been identified. The documented findings therefore narrow the search rather than establish a definitive explanation.\n\n## Diagnostic Findings\n\nBased on the collected logs, several possible primary causes have become less likely. These include system-wide CPU, RAM, and disk activity; GPU and desktop rendering; Microsoft Scout; and Git status when considered on its own.\n\nThe priority areas for further investigation are now VS Code’s internal UI processing path and its handling of long Chat and tool output. These remain investigation targets rather than confirmed causes.\n\n## chat.agent.maxRequests\n\nThe author reduced chat.agent.maxRequests from 1000 to 100 and used that setting for a period of time. The same UI delay still occurred, making it considerably less likely that a value of 1000 was responsible.\n\nLowering the value did change Agent behavior: it stopped more frequently to request confirmation before continuing, which reduced practical usability. According to the account, the current implementation does not use this setting to directly change Agent parallelism, CPU usage, or screen-update frequency. To prioritize continuity of work, the setting was returned to 1000.\n\n## Isolate the Root Cause\n\nThe first isolation step for readers encountering similar symptoms is to stop running heavy Agent tasks in parallel. Running them one at a time can show whether the UI behavior changes.\n\nThe article cautions against using this investigation as a reason to change maxRequests, history summarization, debug logging, and watcher exclusion settings all at once. WPR was used as a measurement method during this investigation, but it is not presented as a required procedure for every reader. Further findings may be added later or covered in a follow-up.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Copilot Agentを2本並走させただけで、マウスや画面切り替えまで著しく重くなったんだよね。これって大きいこと？",
-          "en": "Just two Copilot Agent sessions made even mouse movement and window switching severely laggy. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "操作全体に響くほどなので影響は大きいのう。ただし、この記事で確認されたのは筆者のWindows環境で、根本原因はまだ調査中じゃ。",
-          "en": "It’s significant because the slowdown affects basic interaction. Still, the article only confirms it on the author’s Windows setup, and the root cause remains under investigation."
-        },
-        {
-          "s": "a",
-          "ja": "「chat.agent.maxRequests」って何？ 1000から100に下げたのに遅さが変わらないって、つまりどういうこと？",
-          "en": "What is chat.agent.maxRequests? If lowering it from 1000 to 100 didn’t fix the lag, what does that mean?"
-        },
-        {
-          "s": "b",
-          "ja": "Agentが続けられるリクエスト数に関わる設定じゃ。この検証では100でも遅延し、早めに続行確認で止まっただけなので、主因の可能性はかなり下がったのう。",
-          "en": "It controls how many requests the Agent can continue through. In this test, 100 still lagged and only triggered confirmation sooner, making it a much less likely cause."
-        },
-        {
-          "s": "a",
-          "ja": "自分なら、まず重いAgent作業を1本ずつ動かして、画面の重さが変わるか比べてみるかな！",
-          "en": "I’d start by running one heavy Agent task at a time and see whether the interface feels any better!"
-        },
-        {
-          "s": "b",
-          "ja": "それが最初に試せる切り分けじゃよ。記載上は設定を一括変更せず、WPRも全員必須ではないので、条件を一つずつ確かめるのが現実的じゃ。",
-          "en": "That’s the suggested first check. The piece cautions against changing several settings at once, and WPR isn’t mandatory for everyone, so testing one condition at a time is sensible."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-18T07:46:06.409Z"
-    },
     "655fd12194d5c751": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に書き換えられた。3つの提供形態に共通するランタイムの大規模な移行であり、実装は80万行を超えるプロダクションRustとなった。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスである。GitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKはいずれも、このランタイムを基盤として動作する。\n\nもともとは、現在のGitHub Copilot cloud agent向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして開発された。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## 80万行超のRust\n\n今回の移行では、GitHub Copilot appとCopilot CLIを使い、ランタイム全体をRustで書き直した。完成したコードは80万行を超え、その大半をAIエージェントが作成したと説明されている。\n\n単なる一部分の置き換えではなく、CopilotのCLI、アプリ、SDKを支えるランタイムそのものを対象とした全面的な再実装となっている。\n\n## 128件のPR\n\n移行作業は128件のプルリクエストに分けられ、それぞれがmainへ取り込まれた。最後に一度だけ切り替える方式ではなく、段階的に出荷する形で進められた点が特徴だ。\n\nその過程では避けられない少数のリグレッションが発生したものの、順次発見され、速やかに修正された。ランタイムの性能についても、桁違いに改善したとされている。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has rewritten the Copilot agent runtime from TypeScript on Node.js into Rust, using the GitHub Copilot app and GitHub Copilot CLI during the migration. The change matters because this shared runtime backs the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its capabilities continued to grow while it remained on its original technology stack.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript on Node.js and the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, also referred to as CCA.\n\nAs the runtime and its capabilities expanded rapidly, it continued using that stack. GitHub has now replaced that implementation with a production Rust codebase rather than retaining the original TypeScript, Node.js, and V8 foundation.\n\n## More than 800,000 lines\n\nThe completed Rust rewrite contains more than 800,000 lines of production code. AI agents produced most of that code through work spanning 128 pull requests.\n\nThe GitHub Copilot app and Copilot CLI were used to carry out the rewrite. This made the migration itself an example of Copilot being applied to a large production codebase, with AI agents responsible for most of the resulting implementation.\n\n## Shipped incrementally\n\nThe 128 pull requests landed in the main branch and shipped incrementally. The team did not wait for a single cutover at the end before delivering the rewritten runtime.\n\nAccording to the announcement, the migration introduced a few regressions, which were discovered and fixed quickly during the incremental rollout. It also says runtime performance improved by orders of magnitude. Because the runtime supports the GitHub Copilot CLI, app, and SDK, the benefits of the Rust implementation extend across all three.",
@@ -42405,6 +42291,120 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-04T22:53:50.918Z"
+    },
+    "fedbd212b6fdbd18": {
+      "bodyJa": "## 機能別の利用状況\n\nCopilot impact dashboardで、主要なCopilot機能を継続的に利用しているアクティブユーザー数を機能別に確認できるようになった。企業管理者は、広く定着している体験と、利用促進が必要となる可能性のある体験を素早く把握できる。\n\n## 28日間の集計\n\n機能の利用者として集計されるのは、28日間のうち少なくとも2日、その機能を使ったアクティブユーザーだ。単に期間内に一度利用した人数ではなく、複数日にわたって利用した人数を各機能のエンゲージメントとして表示する。\n\nこの集計によって、管理者はCopilot全体の利用者数だけでなく、対象となる各機能がどの程度継続して使われているかを確認できる。機能ごとの利用状況を同じ28日間の基準で比較できる点が中心となる。\n\n## レポートAPI\n\n企業および組織向けのレポートAPIにも、ダッシュボードと同じ28日間の機能別内訳が追加された。copilot_feature_engagementには、ダッシュボードのアクティブユーザー総数と、各機能のエンゲージメント数が含まれ、企業および組織の28日間集計レポートから取得できる。\n\n## AI導入段階\n\nAI導入段階のレポートも改善され、各レポート日の時点における、段階ごとの直近28日間の全利用者数が加わった。これにより、機能単位の利用状況とAI導入段階別の利用者規模を、いずれも直近28日間を軸に確認できる。管理者は、Copilotの体験ごとの定着度を判断するための情報として活用できる。",
+      "bodyEn": "## Copilot impact dashboard\n\nThe Copilot impact dashboard now shows how many active users regularly use key Copilot features. This gives enterprise administrators a direct way to see which experiences are widely adopted and which may need more enablement.\n\nFor each included feature, the dashboard counts active users who engaged with that feature on at least two days during a 28-day period. The resulting feature-level view focuses on repeated engagement rather than counting every user who may have used a feature only once during that period.\n\n## Feature engagement counts\n\nThe dashboard presents engagement as a breakdown by feature, allowing administrators to assess uptake across the included Copilot experiences. Its active-user definition is tied to the same 28-day period: a user is included in a feature’s count after engaging with it on two or more days.\n\nThis provides more detail than an overall active-user total alone. Administrators can see the number of qualifying active users for each included feature and use those counts to determine which experiences have broader adoption and where additional enablement may be needed.\n\n## Enterprise and organization reports\n\nEnterprise and organization report APIs now include the same 28-day feature engagement breakdown shown in the dashboard. The copilot_feature_engagement data adds both the dashboard’s active-user total and its feature engagement counts to enterprise and organization 28-day aggregate reports.\n\nThe APIs also include an improvement to AI adoption phase reporting. For every report day, that reporting now adds the full rolling 28-day population for each AI adoption phase. Together, the feature-level engagement counts and rolling phase populations give administrators dashboard and API views based on the same 28-day reporting window.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "会社でCopilotを使うとき、普段の管理やサポートは何が変わるの？",
+          "en": "When a company uses Copilot, what changes in the day-to-day work of managing and supporting it?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、管理者が機能ごとの定着度を見分け、利用支援が必要そうな体験を把握しやすくなるんじゃ。28日間に2日以上使った利用者を数えるぞい。",
+          "en": "The article says admins can see which features are catching on and which may need more support. It counts users who used each feature on at least two days within 28 days."
+        },
+        {
+          "s": "a",
+          "ja": "前は機能ごとの利用人数を見られなかったの？APIも同じ？",
+          "en": "Couldn’t admins see user counts for each feature before? And what about the APIs?"
+        },
+        {
+          "s": "b",
+          "ja": "以前の詳しい仕様は書かれておらん。本文が明言するのは、今回ダッシュボードに機能別人数が表示され、企業・組織APIにも同じ28日間の内訳が加わったことじゃ。",
+          "en": "The piece doesn’t spell out the old setup. It confirms that feature-level counts now appear in the dashboard, with the same 28-day breakdown added to enterprise and organization APIs."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、単に触った人数ではなく、機能別に繰り返し使われた人数で定着を見られることだね！",
+          "en": "So the big takeaway is that admins can judge uptake by repeat use for each feature, not just by how many people tried it. Nice!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃのう。次はAPIで、AI導入段階ごとの各報告日時点における直近28日間の全利用者数も確認したいところじゃ。",
+          "en": "That’s right. Another point to watch is the API’s full rolling 28-day user population for each AI adoption phase as of each report day."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-18T12:31:00.444Z"
+    },
+    "3f13a3ed847f3f00": {
+      "bodyJa": "## 正式提供\n\nGitHub Actions向けのUbuntu 26.04ランナーイメージがパブリックプレビューを終え、x64とarm64の本番ワークフローで正式に利用できるようになった。あわせて、標準ラベルであるubuntu-latestの移行も行われるため、既存ワークフローへの影響を事前に確認する必要がある。\n\n## ラベル移行\n\nubuntu-latestラベルは、Ubuntu 24.04からUbuntu 26.04へ移行する。移行後にubuntu-latestを指定したワークフローでは、デフォルトで最新のサポート対象UbuntuリリースとなるUbuntu 26.04が使われる。\n\nこのため、ワークフローファイルを変更していなくても、ubuntu-latestを利用している場合は実行環境が切り替わる。特定のイメージを明示せず、ubuntu-latestに依存しているワークフローは、移行前の確認対象となる。\n\n## 実行環境の指定\n\n新しいイメージを利用するには、ワークフローファイルのruns-onにubuntu-26.04またはubuntu-26.04-armを設定する。これにより、ubuntu-latestの移行開始を待たずにUbuntu 26.04のランナー上でワークフローを実行し、動作を検証できる。\n\nx64とarm64の両方が正式サポートの対象であり、本番ワークフローで利用可能とされている。\n\n## ツール変更に注意\n\nUbuntu 26.04では、以前のイメージと比べてツールやツールのバージョンが更新され、一部は削除されている。特定のソフトウェアバージョンや、あらかじめインストールされたパッケージに依存するワークフローは、こうした変更によって動作しなくなる可能性がある。\n\nubuntu-latestの移行前に変更点の全一覧を確認し、Ubuntu 26上で既存ワークフローをテストすることが求められる。",
+      "bodyEn": "## Ubuntu 26.04 runner image\n\nThe Ubuntu 26.04 runner image for GitHub Actions is out of public preview and fully supported for production workflows. It is available for both x64 and arm64, allowing workflows on either architecture to use the new image directly.\n\nThe release also begins a change to the default Ubuntu environment used by GitHub Actions. The ubuntu-latest label will migrate from Ubuntu 24.04 to Ubuntu 26.04, making Ubuntu 26.04 the latest supported Ubuntu release selected through that label.\n\n## Run your workflows\n\nWorkflows can target the Ubuntu 26.04 image explicitly through the runs-on setting in a workflow file. For x64, set runs-on to ubuntu-26.04. For arm64, use ubuntu-26.04-arm.\n\nSelecting the image explicitly gives teams a way to run workflows on Ubuntu 26.04 before the ubuntu-latest migration. This also provides an opportunity to check whether existing workflow steps continue to operate with the software included in the new runner image.\n\n## Updated and removed tools\n\nUbuntu 26.04 contains updated tools and tool versions compared with earlier images. In some cases, tools or versions that were available previously have been removed.\n\nThese differences can break workflows that depend on a particular software version or assume that a package is already installed. Workflows with such dependencies should therefore be tested against Ubuntu 26 before the migration starts.\n\nUsers should review the full list of changes and verify their workflows on the new image. Testing is particularly relevant for workflows that rely on bundled tools, specific versions, or preinstalled packages, because the move of ubuntu-latest from Ubuntu 24.04 to Ubuntu 26.04 will change the image selected by default.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ubuntu-latestがUbuntu 24.04から26.04に変わるって、指定を変えなくても実行環境が切り替わるの？",
+          "en": "ubuntu-latest is moving from Ubuntu 24.04 to 26.04. Does that mean the environment changes even if I don’t update my workflow?"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。この記事では、ラベルが26.04へ移り、x64とarm64のランナーも本番ワークフロー向けに正式対応したとあるぞ。",
+          "en": "That’s right. The article says the label will move to 26.04, whose x64 and arm64 runners are now fully supported for production workflows."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、ubuntu-latestを使うチームは、住所は同じままで建物が新しくなる感じ？何が変わるか確認すればいいのかな。",
+          "en": "So for teams using ubuntu-latest, is it like keeping the same address but getting a new building? Should they check what changed inside?"
+        },
+        {
+          "s": "b",
+          "ja": "近いのう。今回の案内では、標準で26.04になる一方、更新・削除されたツールやパッケージへの依存で処理が壊れる場合があるんじゃ。",
+          "en": "Pretty close. The update says they’ll get 26.04 by default, but workflows may break if they rely on tools, versions, or preinstalled packages that changed or disappeared."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、最新版へ自動で移れるけど、使っている道具がそのままとは限らないんだね。",
+          "en": "So the environment moves to the latest supported release automatically, but the tools inside may not stay the same."
+        },
+        {
+          "s": "b",
+          "ja": "その点が大切じゃ。本文では、移行前に変更一覧を確認し、ubuntu-26.04かubuntu-26.04-armを指定して試すよう勧めておるぞ。",
+          "en": "Exactly. The post recommends reviewing the changes and testing before migration by specifying ubuntu-26.04 or ubuntu-26.04-arm in runs-on."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-18T12:32:23.983Z"
+    },
+    "4c0e0c0a8430da16": {
+      "bodyJa": "## 一般提供開始\n\nGitHub Actionsのワークフロー実行保護が、GitHub Enterprise、組織、リポジトリ向けに一般提供された。公開プレビューで利用されていた実行者とイベントのルールに加え、特定のワークフローファイルを対象にした設定と、ルールの評価・適用状況を確認するInsightsが追加されている。\n\n## 実行保護ルール\n\n実行保護では、Actionsワークフローを誰が開始できるか、どのイベントが開始条件になり得るかを制御する許可リストを定義できる。「誰」に当たる条件は実行者ルール、「何が開始するか」に当たる条件はイベントルールで管理する。Actionsはワークフローを実行する前に、この両方のルールを評価する仕組みだ。\n\n## ファイル指定\n\n一般提供では、実行保護ルールの対象をリポジトリ全体ではなく、特定のワークフローファイルに限定できるようになった。これにより、単一のリポジトリ内でも、ワークフローごとに異なるポリシーを適用できる。例として、deploy.ymlの実行を指定したチームに制限する一方、CIワークフローはすべてのコントリビューターに開放する構成が示されている。\n\n## Insights\n\nInsightsでは、Actionsが設定済みのルールをどのように評価し、適用しているかを確認できる。確認範囲はGitHub Enterprise、組織、リポジトリにまたがり、各階層で実行保護がどのように機能しているかを把握できる。",
+      "bodyEn": "## Generally available\n\nWorkflow execution protections for GitHub Actions are now generally available for GitHub Enterprise, organizations, and repositories after previously being in public preview. The protections matter because they control both who can trigger an Actions workflow and which events can start it.\n\nThe general-availability release retains the actor and event rules available during the public preview while adding workflow file targeting and insights.\n\n## Actor and event rules\n\nExecution protections use an allowlist to define the conditions under which a workflow can run. Actor rules cover who is permitted to trigger the workflow, while event rules determine what events are allowed to start it.\n\nGitHub Actions evaluates both types of rules before a run. This lets teams manage actor and event conditions together rather than treating the identity of the actor or the type of triggering event as the sole condition.\n\n## Workflow file targeting\n\nGeneral availability adds the ability to scope execution protection rules to specific workflow files. Previously used actor and event rules can therefore be applied to an individual workflow instead of covering an entire repository.\n\nThis allows one repository to use different policies for different workflows. For example, a repository can restrict deploy.yml to a designated team while leaving continuous integration workflows open to all contributors. Teams can vary both actor and event policies according to the workflow file being evaluated.\n\n## Insights across repositories\n\nThe release also adds insights showing how GitHub Actions evaluates and enforces execution protection rules. These insights are available across the enterprise, organization, and repository levels.\n\nTogether, per-file targeting and insights extend the protections beyond repository-wide rules. Specific workflow files can have distinct execution conditions, while rule evaluation and enforcement can be viewed across GitHub Enterprise, organizations, and repositories.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "公開プレビューから一般提供になって、ワークフローごとにルールを変えられるんだね。これって大きいこと？",
+          "en": "It moved from public preview to GA, and rules can now differ by workflow. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "発表では、企業・組織・リポジトリで正式に使え、リポジトリ全体ではなく個別ファイルを狙えるようになったのじゃ。一般提供は正式版になった、くらいの意味じゃよ。",
+          "en": "The announcement says it’s now officially available across enterprises, organizations, and repositories, with per-file targeting. GA basically means it has graduated to a full release."
+        },
+        {
+          "s": "a",
+          "ja": "「実行者ルール」と「イベントルール」を実行前に評価するって、つまりどういうこと？",
+          "en": "It evaluates “actor rules” and “event rules” before a run. What does that actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "本文上は、実行者が「誰」、イベントが「何をきっかけに動くか」じゃ。許可リストと照らし、両方を実行前に確認する仕組みなのじゃよ。",
+          "en": "Here, actor means who starts it, while event means what triggers it. Actions checks both against the allowlist before the workflow runs."
+        },
+        {
+          "s": "a",
+          "ja": "僕ならdeploy.ymlは指定チームだけ、CIは全コントリビューターに開く、みたいに分けてみたいな。",
+          "en": "I’d limit deploy.yml to a designated team but keep CI open to every contributor. That sounds useful."
+        },
+        {
+          "s": "b",
+          "ja": "紹介された使い方もまさにそれじゃ。対象ファイルごとに条件を設定し、企業・組織・リポジトリではルールの評価や適用状況も確認できるぞい。",
+          "en": "That’s exactly the example given. Teams can target specific files, then inspect how the rules are evaluated and enforced across enterprises, organizations, and repositories."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-18T12:33:30.287Z"
     }
   }
 }

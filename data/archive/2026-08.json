@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T07:20:31.533Z",
+  "generatedAt": "2026-09-19T09:56:38.004Z",
   "month": "2026-08",
   "count": 724,
   "entries": [
@@ -1129,7 +1129,7 @@
       "summaryEn": "Model Hardware Standard presents a common framework for AI models to control real-world equipment, helping developers assess practical physical-world applications.",
       "lang": "en",
       "publishedAt": "2026-08-28T00:40:16.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "ai-agents",
         "anthropic",
@@ -1481,7 +1481,7 @@
       "summaryEn": "Anthropic is developing an interface that lets AI models operate devices of any kind and conduct physical experiments, helping researchers automate real-world testing.",
       "lang": "en",
       "publishedAt": "2026-08-27T19:42:35.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "ai-agents",
         "anthropic",
@@ -1577,7 +1577,7 @@
       "summaryEn": "AI models can now assist in conducting physical-science experiments, showing how researchers may use AI as a practical partner in laboratory work.",
       "lang": "en",
       "publishedAt": "2026-08-27T17:54:32.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "anthropic",
         "physical-science",
@@ -2375,7 +2375,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I might be biased, but I think Dependabot is pretty amazing. It helps keep my projects up to date, ensuring I’m always using secure libraries. But because there’re frequently new vulnerabilities, there’re frequently new pull requests from Dependabot. Sometimes it’s a minor version bump. Sometimes it’s a major version upgrade. Sometimes everything will work just fine. And sometimes… well, every single developer has been caught by a breaking change. How can we best triage these pull requests? The work isn’t particularly difficult per se, but it certainly is repetitive. It’s the perfect task to offload to Copilot! With GitHub Copilot app automations , you can hand off that first round of review.",
       "excerptOrigin": "article",
       "feedSnippet": "Managing library updates can be tedious at times. Learn how the GitHub Copilot app can handle this type of repetitive task. The post GitHub Copilot app for Beginners: Automate Dependabot pull request triage appeared first on The GitHub Blog .",
@@ -2386,7 +2385,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bbffbe230b585ac7",
@@ -6884,6 +6884,8 @@
       "title": "VS Codeで動く推理ゲームエンジンを作った——AIが書いた事件が「ちゃんと解けるか」まで自動チェックする",
       "titleJa": "VS Codeで動く推理ゲームエンジンを作った——AIが書いた事件が「ちゃんと解けるか」まで自動チェックする",
       "titleEn": "A developer built a VS Code extension that statically analyzes evidence…",
+      "summaryJa": "生成AIが作った推理ゲームの証拠依存関係を静的解析し、循環参照や解けない詰まりを自動検出するVS Code拡張を個人開発。AIコンテンツの論理的整合性を機械的に保証する手法として注目される。",
+      "summaryEn": "A developer built a VS Code extension that statically analyzes evidence dependency graphs in AI-generated mystery scenarios, automatically detecting circular dependencies and unsolvable dead ends to verify that cases are actually completable.",
       "lang": "ja",
       "publishedAt": "2026-08-20T09:10:54.000Z",
       "collectedAt": "2026-08-22T22:08:54.451Z",
@@ -6899,7 +6901,7 @@
       "category": "vscode",
       "importance": 2,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "生成AIに「面白い推理事件を作って」と頼むと、 それらしい文章 は出てきます。読むぶんには悪くない。 証拠Aを手に入れるには証拠Bが要る。ところが証拠Bを手に入れるには証拠Aが要る。 人間が文章を読んで見つけるのは大変ですが、 機械なら確実に検出できます。 ただしそれは、 AIに書かせるものが「文章」ではなく「構造」である場合に限ります。 この記事は、その方針でVS Code拡張機能として推理アドベンチャーを作った記録です。 拡張機能: 昭和ミステリー （VS Code Marketplace・テスト版 v0.2.0）: ⚠️ テスト版（preview）です。事件データの形式は今後変わる可能性があります。 昭和レトロな港町を舞台にした、コマンド選択式の推理アドベンチャーです。 Ctrl+Shift+P →「昭和ミステリー: 捜査を開始する」でWebviewパネルが開きます。 index.html 952行 / extension.js 344行 / 検証器 137行 index.html 959行 / extension.js 362行 / 検証器 203行 ただしこの記事で書きたいのは、拡張機能の作り方ではありません。 中身の事件をAIに作らせるにあたって、何を作らせ、何を検査したか です。 最初は素直に、事件そのものを都度AIに生成させるつもりでした。 プレイヤーが「聞く」を選んだら、そのときAIに証言を書かせる。自由度が高くて良さそうに見えます。 要するに、 犯人が確定していない推理小説 が生成されていました。 文章としては読めるので、パッと見では気づきません。プレイして詰まってはじめて分かります。 じゃあ生成をプレイ前に1回だけにして、事件を丸ごと文章として書かせればいい——これも駄目でした。 辻褄の破綻は減りますが、今度は冒頭に書いた 依存の循環 が出ます。 AIはこの種のミスを平然とやります。しかも文章としては両方とも自然なので、 問題は「AIの推理力が足りない」ことではなく、 成果物が検査できない形をしていた ことです。",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MTk0MjQ5JTJGNzNmOGQ5ZTMxZGUxMDY1MWU2ZDQyNWRhZjMyZjhlYzZmMTk4MTZlMSUyRmxhcmdlLnBuZyUzRjE3NTgzNzU0NjY_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTJkMjdlNGMwZmQ3NzFiNTExZjIyMmJjZDQ3OTQyZTU0%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D423c6f836daa5a7a12f7f2f46b270df4?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJUE3JUU1JThCJTk1JUUzJTgxJThGJUU2JThFJUE4JUU3JTkwJTg2JUUzJTgyJUE4JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgzJUIzJUUzJTgyJTkyJUU0JUJEJTlDJUUzJTgxJUEzJUUzJTgxJTlGJUUyJTgwJTk0JUUyJTgwJTk0QUklRTMlODElOEMlRTYlOUIlQjglRTMlODElODQlRTMlODElOUYlRTQlQkElOEIlRTQlQkIlQjYlRTMlODElOEMlRTMlODAlOEMlRTYlOUMlQUMlRTUlQkQlOTMlRTMlODElQUIlRTglQTclQTMlRTMlODElOTElRTMlODIlOEIlRTMlODElOEIlRTMlODAlOEQlRTMlODIlOTIlRTYlQTklOUYlRTYlQTIlQjAlRTMlODElQTclRTYlQTQlOUMlRTglQTglQkMlRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1lN2JlOWM0YmUwMTcwOTcxNmNiODEyOTVjNmM0MDY3Ng&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBFaXRhcm9TZXRhJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MjUwMmNjZDk4ZTY2YmM3MTUwMDk1NDhhOTg1YWZiMjE&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=218b9bab778269d0b00d72eaf9d11e38",
@@ -7265,7 +7267,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "This is the third post in our GitHub Copilot app for Beginners series. If you’re just joining us, check out, GitHub Copilot app for beginners: Getting started , where we introduced the app and how it helps you work across multiple agent sessions. Our second post goes deeper on working within a session. Here, we’ll look at how to keep all of the requests and work being done on a project organized in one place. If you’ve been following along in this series, you know that real development is rarely a straight line. You fix a bug here, review a pull request there, and chase down a new idea somewhere in between. As you continue to assign tasks to Copilot and create new pull requests, you’ll quickly find yourself with several proverbial balls in the air. Being able to manage everything from one centralized location is key, and that’s exactly why the My work pane exists.",
       "excerptOrigin": "article",
       "feedSnippet": "If you’re juggling multiple Copilot sessions, use the My work pane to track what's in flight, what's done, and what's next. The post GitHub Copilot app for Beginners: Managing your work appeared first on The GitHub Blog .",
@@ -7276,7 +7277,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c341f7ca502170c7",
@@ -8586,7 +8588,7 @@
       "summaryEn": "Semantic Kernel dotnet-1.80.0 ships with updated OpenAPI HTTP client defaults, a fix for FunctionChoiceBehavior function list handling in the Gemini connector, and bumped Testcontainers packages.",
       "lang": "en",
       "publishedAt": "2026-08-18T15:12:30.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "agent",
         "dotnet",
@@ -9446,7 +9448,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "When I was in college, I joined the beta for one of the first versions of AI inline completions in VS Code. It felt like a game changer. Since then, GenAI has fundamentally changed software development: hybrid teams where agents and humans work in tandem, with the developer at the center as visionary and orchestrator. We are living in that transition right now. As a natural byproduct of how fast innovation in GenAI has moved, we now have tools to help us plan, build, review, and ship code. But in the current state, many workflows still feel disjointed. Context gets lost across threads and surfaces, and too much time gets spent reviewing agent-generated work. Agents can produce changes faster than any human can review them, and most developer tools were not originally designed for multi-agent orchestration.",
       "excerptOrigin": "article",
       "feedSnippet": "Chat is great for intent, but agent work gets lost in the scroll. Here is how I use canvases with my agentic workflows—and why your workflow also deserves a canvas. The post How canvases make agentic workflows visible, steerable, and cost-efficient appeared first on The GitHub Blog .",
@@ -9457,7 +9458,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "15181461c82404fc",
@@ -11894,7 +11896,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "How many tabs do you have open alongside your pull request? Imagine picking up a new issue in your product’s free-trial onboarding flow: make the “invite your teammates” step optional. Support keeps flagging the step as a friction point as signups increase. Quick win, right? Is this even the right change? Are the dependencies I’m touching clean? Is it safe to deploy right now? Each answer lives in a different tool, so working through the pull request means carrying the same context across four places. GitHub agent apps bring the tools you need to answer those questions to where you’re already working, powered by the same platform and harness as our own Copilot cloud agent .",
       "excerptOrigin": "article",
       "feedSnippet": "See how four GitHub agent apps can help you scope, secure, roll out, and ship a feature across the SDLC–all without leaving GitHub. The post How to bring your software delivery workflow into GitHub with agent apps appeared first on The GitHub Blog .",
@@ -11905,7 +11906,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bed40e9d96da51fa",
@@ -15136,8 +15138,8 @@
       "excerptOrigin": "article"
     },
     {
-      "id": "e33edd69f7816887",
-      "source": "openai-news",
+      "id": "7873e00dd904f32f",
+      "source": "openai-blog",
       "sourceType": "blog",
       "url": "https://openai.com/index/how-enterprises-put-ai-to-work",
       "title": "From assistance to execution: How enterprises put AI to work",
@@ -15147,7 +15149,7 @@
       "summaryEn": "OpenAI research shows enterprises are shifting AI use from simple assistance to autonomous execution via ChatGPT and Codex, with frontier adopters pulling significantly ahead of peers.",
       "lang": "en",
       "publishedAt": "2026-08-12T06:00:00.000Z",
-      "collectedAt": "2026-09-18T02:10:00.648Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -16985,7 +16987,7 @@
       "summaryEn": "Anthropic shares dispatches from Iceland exploring how locals think about and relate to AI, offering a cultural perspective on attitudes toward the technology.",
       "lang": "en",
       "publishedAt": "2026-08-10T14:30:52.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "anthropic",
         "iceland",
@@ -20865,7 +20867,7 @@
       "summaryEn": "Semantic Kernel for .NET bumps to v1.79.0 with an SDK update from 10.0.301 to 10.0.302, a form-data dependency patch, and a CodeQL false-positive suppression for internal HTTP code.",
       "lang": "en",
       "publishedAt": "2026-08-06T11:33:35.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "agent",
         "dotnet",
@@ -20935,7 +20937,7 @@
       "summaryEn": "A patch release of Semantic Kernel for Python fixing OpenAPI server variable encoding, consolidating Dependabot updates, and suppressing a CodeQL false positive in the HTTP utility.",
       "lang": "en",
       "publishedAt": "2026-08-06T09:55:22.000Z",
-      "collectedAt": "2026-09-13T21:51:58.010Z",
+      "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
         "agent",
         "bugfix",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T16:30:49.072Z",
+  "generatedAt": "2026-09-19T16:54:15.335Z",
   "month": "2026-09",
   "count": 209,
   "entries": [
@@ -42,21 +42,24 @@
       "url": "https://qiita.com/locolisu/items/747d725c56ea6858c31f",
       "title": "複数Codexの「実行中・エラー・承認待ち」をどう分けて監視するか――Locolisu AI Task Monitorの技術構成",
       "titleJa": "複数Codexの「実行中・エラー・承認待ち」をどう分けて監視するか――Locolisu AI Task Monitorの技術構成",
-      "titleEn": "",
+      "titleEn": "How to Monitor Multiple Codex Tasks by Running, Error, and Approval-Pending States: Locolisu AI Task Monitor Architecture",
       "lang": "ja",
       "publishedAt": "2026-09-19T05:30:16.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
+        "ai-agents",
+        "local-monitoring",
         "qiita",
+        "task-management",
         "vscode"
       ],
       "category": "codex",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "複数のVS CodeでCodexを並行して動かしていると、画面を見ただけでは次の違いが分かりにくくなります。 ロコリス研究所では、この区別を一つのブラウザ画面で確認するために「Locolisu AI Task Monitor」を開発しました。 Task Monitorは、AIの代わりに成果を評価するシステムではありません。複数のCodex作業について、現在の状態と、人間に残っている確認作業を見失わないためのローカル監視ツールです。 開発を始めた背景は、Noteの 複数AIを並行して使うと、どれを確認したか分からなくなる――Task Monitorを作った理由 にまとめています。本記事では、Task Monitorの画面がどの情報から作られ、なぜ複数の状態を分けているのかを、順を追って説明します。 Task Monitorの画面には、現在対応する必要があるCodexの作業がカードとして並びます。 この場合、AIはもう動いていませんが、人間の仕事は残っています。差分、実画面、テスト結果などを確認し、問題がなければカードの「承認する」を押します。 一方、AI状態が「実行中」なら、まだ結果確認へ進む段階ではありません。「エラー」なら、正常終了として承認するのではなく、まずエラー内容を確認します。 このように、Task Monitorは状態を一語にまとめず、「AIはどうなっているか」と「人間の確認は終わったか」を分けて表示します。 Task Monitorでは、Codexの作業を二つの単位で扱います。 一つのSessionでも、「この不具合を調べてください」「その原因を修正してください」「関連テストを実行してください」のように、複数の依頼が続きます。 Session全体に「承認済み」を付けると、どの依頼の結果を確認したのか分かりません。そのため現在は、一回の依頼に対応するoperation単位で実行状態と承認状態を持たせています。",
-      "feedSnippet": "複数のVS CodeでCodexを並行して動かしていると、画面を見ただけでは次の違いが分かりにくくなります。 まだAIが処理している エラーで止まっている AIの処理は終わったが、人間がまだ確認していない 人間の確認まで終わっている ロコリス研究所では、この区別を一つの...",
       "excerptOrigin": "article",
+      "feedSnippet": "複数のVS CodeでCodexを並行して動かしていると、画面を見ただけでは次の違いが分かりにくくなります。 まだAIが処理している エラーで止まっている AIの処理は終わったが、人間がまだ確認していない 人間の確認まで終わっている ロコリス研究所では、この区別を一つの...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JUE0JTg3JUU2JTk1JUIwQ29kZXglRTMlODElQUUlRTMlODAlOEMlRTUlQUUlOUYlRTglQTElOEMlRTQlQjglQUQlRTMlODMlQkIlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODMlQkIlRTYlODklQkYlRTglQUElOEQlRTUlQkUlODUlRTMlODElQTElRTMlODAlOEQlRTMlODIlOTIlRTMlODElQTklRTMlODElODYlRTUlODglODYlRTMlODElOTElRTMlODElQTYlRTclOUIlQTMlRTglQTYlOTYlRTMlODElOTklRTMlODIlOEIlRTMlODElOEIlRTIlODAlOTUlRTIlODAlOTVMb2NvbGlzdSUyMEFJJTIwVGFzayUyME1vbml0b3IlRTMlODElQUUlRTYlOEElODAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZDVhYTljM2E0NGE3MWFmMjg3MjI4MzdmNWZlYjhkOA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=78ed90bca3ab7d3f8ceb4e58ce36e1f4",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JUE0JTg3JUU2JTk1JUIwQ29kZXglRTMlODElQUUlRTMlODAlOEMlRTUlQUUlOUYlRTglQTElOEMlRTQlQjglQUQlRTMlODMlQkIlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODMlQkIlRTYlODklQkYlRTglQUElOEQlRTUlQkUlODUlRTMlODElQTElRTMlODAlOEQlRTMlODIlOTIlRTMlODElQTklRTMlODElODYlRTUlODglODYlRTMlODElOTElRTMlODElQTYlRTclOUIlQTMlRTglQTYlOTYlRTMlODElOTklRTMlODIlOEIlRTMlODElOEIlRTIlODAlOTUlRTIlODAlOTVMb2NvbGlzdSUyMEFJJTIwVGFzayUyME1vbml0b3IlRTMlODElQUUlRTYlOEElODAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZDVhYTljM2E0NGE3MWFmMjg3MjI4MzdmNWZlYjhkOA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=78ed90bca3ab7d3f8ceb4e58ce36e1f4",
@@ -73,12 +76,15 @@
       "url": "https://qiita.com/neko_the_shadow/items/91f63262655bebf4355c",
       "title": "VS CodeでTypeScriptの補完や型チェックが重いときの対処法",
       "titleJa": "VS CodeでTypeScriptの補完や型チェックが重いときの対処法",
-      "titleEn": "",
+      "titleEn": "How to Fix Slow TypeScript Completion and Type Checking in VS Code",
       "lang": "ja",
       "publishedAt": "2026-09-19T02:47:12.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
+        "performance",
         "qiita",
+        "tsserver",
+        "typescript",
         "vscode"
       ],
       "category": "vscode",
@@ -86,8 +92,16 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "大規模な TypeScript プロジェクトを開いていると、VS Code の補完や型チェックが重くなったり、 tsserver がクラッシュしたりすることがあります。 このような場合は、 tsserver に割り当てる最大メモリ量を増やすことで改善することがあります。 \"js/ts.tsserver.maxMemory\" : 4096 4096 は tsserver に割り当てる最大メモリ量（MB）を表します。プロジェクトの規模に応じて適宜変更してください。",
+      "excerptOrigin": "article",
       "feedSnippet": "はじめに 大規模な TypeScript プロジェクトを開いていると、VS Code の補完や型チェックが重くなったり、tsserver がクラッシュしたりすることがあります。 このような場合は、tsserver に割り当てる最大メモリ量を増やすことで改善することがありま...",
-      "excerptOrigin": "article"
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTA1ODU5JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzA5NzUzP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1hMGIwMjJiYTQyMDhiMDc2NmYwMTgwYjA0OWMxMzdlNw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D44b5635cb9c38eb66e89fa5a15d83767?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJUE3VHlwZVNjcmlwdCVFMyU4MSVBRSVFOCVBMyU5QyVFNSVBRSU4QyVFMyU4MiU4NCVFNSU5RSU4QiVFMyU4MyU4MSVFMyU4MiVBNyVFMyU4MyU4MyVFMyU4MiVBRiVFMyU4MSU4QyVFOSU4NyU4RCVFMyU4MSU4NCVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBRSVFNSVBRiVCRSVFNSU4NyVBNiVFNiVCMyU5NSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWYzZGYwMmQyOGE1YzE4NTMwMDYzYzcxOGJlMTUyMzRl&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBuZWtvX3RoZV9zaGFkb3cmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jZDQ2NGU2Y2I4ZmExNTEwZTYxYTFiMGNlMDM5ZTA1YQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e1df75c50eca18b818412c87fbdf4302",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTA1ODU5JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzA5NzUzP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1hMGIwMjJiYTQyMDhiMDc2NmYwMTgwYjA0OWMxMzdlNw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D44b5635cb9c38eb66e89fa5a15d83767?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJUUzJTgxJUE3VHlwZVNjcmlwdCVFMyU4MSVBRSVFOCVBMyU5QyVFNSVBRSU4QyVFMyU4MiU4NCVFNSU5RSU4QiVFMyU4MyU4MSVFMyU4MiVBNyVFMyU4MyU4MyVFMyU4MiVBRiVFMyU4MSU4QyVFOSU4NyU4RCVFMyU4MSU4NCVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBRSVFNSVBRiVCRSVFNSU4NyVBNiVFNiVCMyU5NSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPWYzZGYwMmQyOGE1YzE4NTMwMDYzYzcxOGJlMTUyMzRl&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBuZWtvX3RoZV9zaGFkb3cmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jZDQ2NGU2Y2I4ZmExNTEwZTYxYTFiMGNlMDM5ZTA1YQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e1df75c50eca18b818412c87fbdf4302",
+        "alt": "VS CodeでTypeScriptの補完や型チェックが重いときの対処法",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "57b7e18fa3fcb515",
@@ -96,11 +110,16 @@
       "url": "https://qiita.com/mylifewithviolin/items/d42b1c9a6e397babc482",
       "title": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ１）",
       "titleJa": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ１）",
-      "titleEn": "",
+      "titleEn": "Implementing a VSCode Language Server (LSP) for the Japanese Programming Language Mind 9: Step 1",
       "lang": "ja",
       "publishedAt": "2026-09-19T01:28:37.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
+        "ai-assisted-development",
+        "character-encoding",
+        "lsp",
+        "markdown",
+        "mind9",
         "qiita",
         "vscode"
       ],
@@ -109,8 +128,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事はその最初のステップで、この記事でLSPができているわけではありません。 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブンな感じでいきます。自力では完全には実装できないのでAIだのみではありますが、大枠の適切な進め方は理解しているという前提です。(VSCode拡張でシンタックスハイライトやスニペットは自力で実装可能でその自スキルを背景にAIで拡張していきます。） markdown形式は人間が読むときはhtmlほど美麗に体裁が整うわけではないので、そっちを期待するとこんなのやとなりますが、今日のAI伴奏開発では必須といえるファイル形式です。というわけで、最初のステップはEUCエンコードで記述されたhtmlをUTF-8のmdに変換します。 C:\\developments\\vscode\\mind9languagespec\\doc>dir *.html 2026/08/02 17:59 2,952 00-Cover.html 2026/08/02 17:59 9,338 00-Introduction.html 2026/08/02 17:59 19,464 01-Mechanism.html 2026/08/02 17:59 55,895 02-Program-Hyoki.html 2026/08/02 17:59 50,682 03-Control-syntax.html 2026/08/02 17:59 50,376 04-Data-and_variable.html 2026/08/02 17:59 17,814 05-Array.html 2026/08/02 17:59 27,296 indexBase.html 2026/08/02 17:59 72,638 indexGUI.html 2026/08/02 17:59 10,852 indexOperation.html 2026/08/02 17:59 4,183 operation",
-      "feedSnippet": "はじめに 日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事はその最初のステップで、この記事でLSPができているわけではありません。 採用工法 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "feedSnippet": "はじめに 日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事はその最初のステップで、この記事でLSPができているわけではありません。 採用工法 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブ..."
     },
     {
       "id": "720d0ed82cef45fe",
@@ -349,7 +368,7 @@
       "summaryEn": "The new AgentCore runtime recovers memory after sessions end and keeps cold-start latency steady across image sizes and concurrency levels, enabling faster, cost-efficient production agents.",
       "lang": "en",
       "publishedAt": "2026-09-18T15:31:34.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
         "agent",
         "agentcore-runtime",
@@ -2187,7 +2206,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -5970,7 +5989,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -6764,7 +6783,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "collectedAt": "2026-09-19T16:54:00.660Z",
       "tags": [
         "agent",
         "deepmind",

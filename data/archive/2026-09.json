@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-19T13:38:17.284Z",
+  "generatedAt": "2026-09-19T16:30:49.072Z",
   "month": "2026-09",
-  "count": 206,
+  "count": 209,
   "entries": [
     {
       "id": "f04e081bedaa1914",
@@ -34,6 +34,83 @@
         "height": 0,
         "source": "media"
       }
+    },
+    {
+      "id": "9122b940be023f80",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/locolisu/items/747d725c56ea6858c31f",
+      "title": "複数Codexの「実行中・エラー・承認待ち」をどう分けて監視するか――Locolisu AI Task Monitorの技術構成",
+      "titleJa": "複数Codexの「実行中・エラー・承認待ち」をどう分けて監視するか――Locolisu AI Task Monitorの技術構成",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-19T05:30:16.000Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "複数のVS CodeでCodexを並行して動かしていると、画面を見ただけでは次の違いが分かりにくくなります。 ロコリス研究所では、この区別を一つのブラウザ画面で確認するために「Locolisu AI Task Monitor」を開発しました。 Task Monitorは、AIの代わりに成果を評価するシステムではありません。複数のCodex作業について、現在の状態と、人間に残っている確認作業を見失わないためのローカル監視ツールです。 開発を始めた背景は、Noteの 複数AIを並行して使うと、どれを確認したか分からなくなる――Task Monitorを作った理由 にまとめています。本記事では、Task Monitorの画面がどの情報から作られ、なぜ複数の状態を分けているのかを、順を追って説明します。 Task Monitorの画面には、現在対応する必要があるCodexの作業がカードとして並びます。 この場合、AIはもう動いていませんが、人間の仕事は残っています。差分、実画面、テスト結果などを確認し、問題がなければカードの「承認する」を押します。 一方、AI状態が「実行中」なら、まだ結果確認へ進む段階ではありません。「エラー」なら、正常終了として承認するのではなく、まずエラー内容を確認します。 このように、Task Monitorは状態を一語にまとめず、「AIはどうなっているか」と「人間の確認は終わったか」を分けて表示します。 Task Monitorでは、Codexの作業を二つの単位で扱います。 一つのSessionでも、「この不具合を調べてください」「その原因を修正してください」「関連テストを実行してください」のように、複数の依頼が続きます。 Session全体に「承認済み」を付けると、どの依頼の結果を確認したのか分かりません。そのため現在は、一回の依頼に対応するoperation単位で実行状態と承認状態を持たせています。",
+      "feedSnippet": "複数のVS CodeでCodexを並行して動かしていると、画面を見ただけでは次の違いが分かりにくくなります。 まだAIが処理している エラーで止まっている AIの処理は終わったが、人間がまだ確認していない 人間の確認まで終わっている ロコリス研究所では、この区別を一つの...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JUE0JTg3JUU2JTk1JUIwQ29kZXglRTMlODElQUUlRTMlODAlOEMlRTUlQUUlOUYlRTglQTElOEMlRTQlQjglQUQlRTMlODMlQkIlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODMlQkIlRTYlODklQkYlRTglQUElOEQlRTUlQkUlODUlRTMlODElQTElRTMlODAlOEQlRTMlODIlOTIlRTMlODElQTklRTMlODElODYlRTUlODglODYlRTMlODElOTElRTMlODElQTYlRTclOUIlQTMlRTglQTYlOTYlRTMlODElOTklRTMlODIlOEIlRTMlODElOEIlRTIlODAlOTUlRTIlODAlOTVMb2NvbGlzdSUyMEFJJTIwVGFzayUyME1vbml0b3IlRTMlODElQUUlRTYlOEElODAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZDVhYTljM2E0NGE3MWFmMjg3MjI4MzdmNWZlYjhkOA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=78ed90bca3ab7d3f8ceb4e58ce36e1f4",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU4JUE0JTg3JUU2JTk1JUIwQ29kZXglRTMlODElQUUlRTMlODAlOEMlRTUlQUUlOUYlRTglQTElOEMlRTQlQjglQUQlRTMlODMlQkIlRTMlODIlQTglRTMlODMlQTklRTMlODMlQkMlRTMlODMlQkIlRTYlODklQkYlRTglQUElOEQlRTUlQkUlODUlRTMlODElQTElRTMlODAlOEQlRTMlODIlOTIlRTMlODElQTklRTMlODElODYlRTUlODglODYlRTMlODElOTElRTMlODElQTYlRTclOUIlQTMlRTglQTYlOTYlRTMlODElOTklRTMlODIlOEIlRTMlODElOEIlRTIlODAlOTUlRTIlODAlOTVMb2NvbGlzdSUyMEFJJTIwVGFzayUyME1vbml0b3IlRTMlODElQUUlRTYlOEElODAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZDVhYTljM2E0NGE3MWFmMjg3MjI4MzdmNWZlYjhkOA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=78ed90bca3ab7d3f8ceb4e58ce36e1f4",
+        "alt": "複数Codexの「実行中・エラー・承認待ち」をどう分けて監視するか――Locolisu AI Task Monitorの技術構成",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "67e49fb6cf60a70a",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/neko_the_shadow/items/91f63262655bebf4355c",
+      "title": "VS CodeでTypeScriptの補完や型チェックが重いときの対処法",
+      "titleJa": "VS CodeでTypeScriptの補完や型チェックが重いときの対処法",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-19T02:47:12.000Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "大規模な TypeScript プロジェクトを開いていると、VS Code の補完や型チェックが重くなったり、 tsserver がクラッシュしたりすることがあります。 このような場合は、 tsserver に割り当てる最大メモリ量を増やすことで改善することがあります。 \"js/ts.tsserver.maxMemory\" : 4096 4096 は tsserver に割り当てる最大メモリ量（MB）を表します。プロジェクトの規模に応じて適宜変更してください。",
+      "feedSnippet": "はじめに 大規模な TypeScript プロジェクトを開いていると、VS Code の補完や型チェックが重くなったり、tsserver がクラッシュしたりすることがあります。 このような場合は、tsserver に割り当てる最大メモリ量を増やすことで改善することがありま...",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "57b7e18fa3fcb515",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mylifewithviolin/items/d42b1c9a6e397babc482",
+      "title": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ１）",
+      "titleJa": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ１）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-19T01:28:37.000Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事はその最初のステップで、この記事でLSPができているわけではありません。 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブンな感じでいきます。自力では完全には実装できないのでAIだのみではありますが、大枠の適切な進め方は理解しているという前提です。(VSCode拡張でシンタックスハイライトやスニペットは自力で実装可能でその自スキルを背景にAIで拡張していきます。） markdown形式は人間が読むときはhtmlほど美麗に体裁が整うわけではないので、そっちを期待するとこんなのやとなりますが、今日のAI伴奏開発では必須といえるファイル形式です。というわけで、最初のステップはEUCエンコードで記述されたhtmlをUTF-8のmdに変換します。 C:\\developments\\vscode\\mind9languagespec\\doc>dir *.html 2026/08/02 17:59 2,952 00-Cover.html 2026/08/02 17:59 9,338 00-Introduction.html 2026/08/02 17:59 19,464 01-Mechanism.html 2026/08/02 17:59 55,895 02-Program-Hyoki.html 2026/08/02 17:59 50,682 03-Control-syntax.html 2026/08/02 17:59 50,376 04-Data-and_variable.html 2026/08/02 17:59 17,814 05-Array.html 2026/08/02 17:59 27,296 indexBase.html 2026/08/02 17:59 72,638 indexGUI.html 2026/08/02 17:59 10,852 indexOperation.html 2026/08/02 17:59 4,183 operation",
+      "feedSnippet": "はじめに 日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事はその最初のステップで、この記事でLSPができているわけではありません。 採用工法 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブ...",
+      "excerptOrigin": "article"
     },
     {
       "id": "720d0ed82cef45fe",
@@ -272,7 +349,7 @@
       "summaryEn": "The new AgentCore runtime recovers memory after sessions end and keeps cold-start latency steady across image sizes and concurrency levels, enabling faster, cost-efficient production agents.",
       "lang": "en",
       "publishedAt": "2026-09-18T15:31:34.000Z",
-      "collectedAt": "2026-09-18T22:03:45.531Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
       "tags": [
         "agent",
         "agentcore-runtime",
@@ -286,6 +363,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Today we are announcing the new AgentCore runtime, a capability of Amazon Bedrock AgentCore built for the speed, flexibility, and cost efficiency that production agents demand. It reclaims memory as sessions release it and delivers consistent cold starts regardless of image size or concurrency.",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -295,8 +373,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b59273b12f1a24bb",
@@ -539,6 +616,7 @@
       "publishedAt": "2026-09-17T22:08:55.000Z",
       "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
+        "agent",
         "cline",
         "desktop",
         "release",
@@ -1104,7 +1182,6 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "The GitHub Copilot CLI , GitHub Copilot app , and GitHub Copilot SDK are all backed by the Copilot agent runtime, an agentic harness that can be embedded into applications and services. It was originally written in TypeScript on Node.js and the V8 JavaScript engine for what is now the GitHub Copilot cloud agent (CCA), and the runtime stayed on that stack as the runtime and its capabilities grew rapidly. That has now changed. Using the GitHub Copilot app and the Copilot CLI, we completely rewrote the runtime into more than 800,000 lines of production Rust. AI agents wrote most of the code, spanning 128 pull requests that landed in main and shipped incrementally rather than waiting for a single cutover at the end. The few inevitable regressions were discovered and fixed quickly along the way, while the performance of the runtime improved by orders of magnitude.",
       "excerptOrigin": "article",
       "feedSnippet": "A rewrite this size wasn't affordable before agents. Here's what porting the Copilot agent runtime to 800,000 lines of production Rust actually took. The post Migrating the GitHub Copilot runtime to Rust, using Copilot appeared first on The GitHub Blog .",
@@ -1115,7 +1192,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6864600a6e7244b3",
@@ -1945,9 +2023,11 @@
       "publishedAt": "2026-09-15T05:53:27.000Z",
       "collectedAt": "2026-09-19T09:56:22.743Z",
       "tags": [
+        "agent",
         "agent-plugins",
         "cline",
         "mcp",
+        "mcp-server",
         "plugin-management",
         "release"
       ],
@@ -2107,7 +2187,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-18T22:03:45.531Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -2451,7 +2531,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I run marketing for GitHub in Japan and Korea, and events are the heartbeat of it: a recurring webinar series for enterprise developers, community meetups in Tokyo, invite-only executive sessions in Seoul. What does a developer in this market actually need right now? Which topics are worth an hour of their time, and who should be in the room? I’d happily spend all day on those questions. What follows the decisions is another matter. Once an event is greenlit, a fixed sequence begins: Duplicate a landing page on our event platform. Generate a set of UTM-tagged links: one for each channel, each formatted just so. Draft the invitation email and file a request with the team that sends it. Add the event to two project boards. Every morning until the event: download the registrant list, clean it up, post a status update for stakeholders.",
       "excerptOrigin": "article",
       "feedSnippet": "If you can write down how you do your work, you can automate it. Here's what I did to support GitHub's APAC marketing team. The post Marketing ops as code: Automating events from planning to follow-up on GitHub appeared first on The GitHub Blog .",
@@ -2462,7 +2541,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "93dcd14a5e3a0d95",
@@ -2731,7 +2811,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "When an agent makes a change to your code, you want to review it, run it, and see what changed. Great news: now you can do all three without having to leave the GitHub Copilot app . Before, doing those three jobs would mean having to bounce between your editor, terminal window, and web browser. But when these steps live side by side as built-in panels in the Copilot app, checking your agent’s work is simple. Let’s walk through each of the panels in the app and how we’ll use them to complete the AI coding loop. The diff panel (a diff is a before and after comparison) shows exactly what lines were added, removed, or changed, with additions highlighted in green and deletions in red. This gives you complete clarity, so you can choose what happens. You can accept changes, leave comments, or ask Copilot to make changes. You’re in complete control and make the final decisions.",
       "excerptOrigin": "article",
       "feedSnippet": "Checking agent-generated code usually means hopping between tabs. Learn how to view diffs, run terminal commands, and preview web apps side by side in the GitHub Copilot app. The post GitHub Copilot app for Beginners: Using the diff, terminal, and browser appeared first on The GitHub Blog .",
@@ -2742,7 +2821,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c213d15843ae4aca",
@@ -4857,8 +4937,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -4868,7 +4946,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "b3860ff03421d355",
@@ -5404,7 +5484,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -5415,7 +5494,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -5794,7 +5874,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -5805,7 +5884,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6625a77e4710b219",
@@ -5890,7 +5970,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-18T22:03:45.531Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -6684,7 +6764,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-18T22:03:45.531Z",
+      "collectedAt": "2026-09-19T16:30:32.850Z",
       "tags": [
         "agent",
         "deepmind",

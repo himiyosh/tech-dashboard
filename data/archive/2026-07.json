@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T16:30:46.783Z",
+  "generatedAt": "2026-09-20T17:08:07.278Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -1056,7 +1056,15 @@
       "archiveTier": "warm",
       "contentSnippet": "AIに作業を任せる際の設計原則と実践手順。モデル選定やプロンプトの文体論は扱わない 2022〜2024年は Prompt Engineering （指示の書き方）が中心でした。しかし本番運用では、次のような限界が露呈しています。 その結果、業界の焦点は Prompt → Context → Harness → Loop という4層構造へと移行しています。これらは競合する概念ではなく、 同じスタックの異なるレイヤー です。 Agent = Model + Harness — エージェントの価値はモデル単体ではなく、周辺のHarnessで決まります。（ LangChain 、 martinfowler.com の Harness Engineering で体系化） Loop Engineering は Harness の中の「反復制御層」として実装される場合が多いです。4層は整理のためのモデルであり、厳密な包含関係はツールや設計によって変わります。 「AIが自分で検証する」は正しい方向です。ただし、 LLMの自己レビューだけでは不十分 です。 これを Evidence-Gated Lifecycle Control （証拠ゲート付きライフサイクル制御）と呼びます。研究提案 Proof-or-Stop （2026年7月、プレプリント段階）では、次の原則が提唱されています。 Don't trust the agent, trust the evidence. エージェントの「完了しました」は 主張 （claim）に過ぎません。ライフサイクル状態を進めるのは、機械的に検証可能な証拠だけです。 ループの価値が出るのは 「手順は明確だが反復が多い」 タスクです。テスト修正、lint対応、定型的なリファクタ、ドキュメント生成などが該当します。 Before — プロンプトだけの場合、指示は次の一行で終わります。 After — Harness・Loop・証拠ゲートを組み込むと、次のようになります。 1. [Plan] PR diffと関連issueを読み、修正方針を3行で提示 2.",
       "feedSnippet": "! TL;DR — 3つの原則 「賢いプロンプトを書く」のではなく、ガードレール付きの自律ループを設計する AIに作業を任せ、失敗を検知してAI自身が改善ループを回す 完了判定は主観ではなく、機械的な証拠（テスト・lint・E2E）で行う 項目 内容 対象読者 開発業務でAIを日常的に使っている人、作業の委譲方法に悩んでいる人 スコープ AIに作業を任せる際の設計原則と実践手順。モデル選定やプロンプトの文体論は扱わない 読む順番 概念の理解 → 1〜4章 / すぐ実践 → 7章と11章 情報の鮮度 ツール情報は2026年7月時点 1. 課題：な...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--DhVWqSt0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25AB%25E4%25BD%259C%25E6%25A5%25AD%25E3%2582%2592%25E4%25BB%25BB%25E3%2581%259B%25E3%2582%258B%25E8%25A8%25AD%25E8%25A8%2588%2520%25E2%2580%2594%2520Harness%25E3%2583%25BBLoop%25E3%2583%25BB%25E8%25A8%25BC%25E6%258B%25A0%25E3%2582%25B2%25E3%2583%25BC%25E3%2583%2588%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Ryuya%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2JlYWFmNzA2ZTAuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--DhVWqSt0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588%25E3%2581%25AB%25E4%25BD%259C%25E6%25A5%25AD%25E3%2582%2592%25E4%25BB%25BB%25E3%2581%259B%25E3%2582%258B%25E8%25A8%25AD%25E8%25A8%2588%2520%25E2%2580%2594%2520Harness%25E3%2583%25BBLoop%25E3%2583%25BB%25E8%25A8%25BC%25E6%258B%25A0%25E3%2582%25B2%25E3%2583%25BC%25E3%2583%2588%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Ryuya%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2JlYWFmNzA2ZTAuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "AIエージェントに作業を任せる設計 — Harness・Loop・証拠ゲート",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "c7f1ae54c7241920",
@@ -32675,7 +32683,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-20T11:00:34.288Z",
+      "collectedAt": "2026-09-20T17:07:49.969Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39006,7 +39014,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-20T11:00:34.288Z",
+      "collectedAt": "2026-09-20T17:07:49.969Z",
       "tags": [
         "mcp",
         "mcp-server",

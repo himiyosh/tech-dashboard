@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-20T15:30:49.673Z",
+  "generatedAt": "2026-09-20T16:30:46.783Z",
   "month": "2026-09",
-  "count": 211,
+  "count": 212,
   "entries": [
+    {
+      "id": "84cad0787fe938c5",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/swirhen/items/9673d1bef54a86f3056a",
+      "title": "Antigravity IDEのチャット欄で（以下略）の続きの続き ～Antigravity IDEの不満点を非公式パッチにしてリリースしたよという話",
+      "titleJa": "Antigravity IDEのチャット欄で（以下略）の続きの続き ～Antigravity IDEの不満点を非公式パッチにしてリリースしたよという話",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-20T08:19:18.000Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "gemini",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "前回の記事（ Antigravity IDEのチャット欄でEnter改行できない問題を、AI自身に本体パッチ当ててもらって解決した話の続き ～Antigravity IDEの不満点をAntigravity自身にハックさせて解決した話 ）（タイトル長ぇ） では、Antigravity IDEの「チャットでEnter改行できない」「セッション一覧がない」「名前変更できない」「ピン留めできない」という不満を、 Antigravity自身に本体（ workbench.desktop.main.js ）をハックさせて解決した話 を書きました。 しかし、実際に日々使い倒していく中で、いくつか新たな課題が出てきました。 「これ、拡張機能（Extension）として切り離せないの？」という疑問 そこで今回、AIとペアプロしながらさらにコードをブラッシュアップし、 使い勝手の向上・モジュール分離・自動インストーラー化を行い、GitHubリポジトリとして正式リリース（v1.0.1）しました！ ワンクリック導入用 ZIP : Releases v1.0.1 前回からの差分として、実用性を極限まで高めるための以下の改善が入っています。 ドロワー一覧は基本的に更新時刻が新しい順（ピン留め優先）で並びますが、 「現在開いているセッション」はそのソート順を無視して、必ずリストの最上位（index 0）に固定表示 されるようにしました。 会話を切り替える際、今いる位置を基準に迷わず他のセッションへジャンプできます。 現在開いているセッションの左端には、ピュアCSSで描画された 青い二重丸（ラジオ型）インジケーター を表示。 もしそのセッションがピン留めされている場合は、青いラジオアイコンの右隣に金色のピン留めアイコンが並んで表示されるため、「ピン留めされた重要なセッションを開いている」状態が一目で分かります。 ドロワー（ F4 ）を開いた瞬間、たまたまマウスカーソルが置かれていた過去セッションにフォーカスが奪われてしまう問題がありました。",
+      "feedSnippet": "はじめに（前回のあらすじ） 前回の記事（Antigravity IDEのチャット欄でEnter改行できない問題を、AI自身に本体パッチ当ててもらって解決した話の続き ～Antigravity IDEの不満点をAntigravity自身にハックさせて解決した話）（タイトル長...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkYyMDk3ODAlM0Z2JTNEND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9Y2IxYTY4NGU4Yzc2MmRhYWI2MDc5MDI2MzFmODFlOWY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D57822a82ee7b808a47f8efca942bb4c0?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QW50aWdyYXZpdHklMjBJREUlRTMlODElQUUlRTMlODMlODElRTMlODMlQTMlRTMlODMlODMlRTMlODMlODglRTYlQUMlODQlRTMlODElQTclRUYlQkMlODglRTQlQkIlQTUlRTQlQjglOEIlRTclOTUlQTUlRUYlQkMlODklRTMlODElQUUlRTclQjYlOUElRTMlODElOEQlRTMlODElQUUlRTclQjYlOUElRTMlODElOEQlMjAlRUYlQkQlOUVBbnRpZ3Jhdml0eSUyMElERSVFMyU4MSVBRSVFNCVCOCU4RCVFNiVCQSU4MCVFNyU4MiVCOSVFMyU4MiU5MiVFOSU5RCU5RSVFNSU4NSVBQyVFNSVCQyU4RiVFMyU4MyU5MSVFMyU4MyU4MyVFMyU4MyU4MSVFMyU4MSVBQiVFMyU4MSU5NyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU3ODY0Y2Q0OWUzZGI4MWRiYTVhOWY2MmMyMGFjMGZj&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzd2lyaGVuJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9YzZkMzVmY2E3NzNjNDBjNDc0MGFlODAzY2ViNmU2YjM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=1bbd5ce60868bfb1eaabd9033fd34f0c",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkYyMDk3ODAlM0Z2JTNEND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9Y2IxYTY4NGU4Yzc2MmRhYWI2MDc5MDI2MzFmODFlOWY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D57822a82ee7b808a47f8efca942bb4c0?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QW50aWdyYXZpdHklMjBJREUlRTMlODElQUUlRTMlODMlODElRTMlODMlQTMlRTMlODMlODMlRTMlODMlODglRTYlQUMlODQlRTMlODElQTclRUYlQkMlODglRTQlQkIlQTUlRTQlQjglOEIlRTclOTUlQTUlRUYlQkMlODklRTMlODElQUUlRTclQjYlOUElRTMlODElOEQlRTMlODElQUUlRTclQjYlOUElRTMlODElOEQlMjAlRUYlQkQlOUVBbnRpZ3Jhdml0eSUyMElERSVFMyU4MSVBRSVFNCVCOCU4RCVFNiVCQSU4MCVFNyU4MiVCOSVFMyU4MiU5MiVFOSU5RCU5RSVFNSU4NSVBQyVFNSVCQyU4RiVFMyU4MyU5MSVFMyU4MyU4MyVFMyU4MyU4MSVFMyU4MSVBQiVFMyU4MSU5NyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU3ODY0Y2Q0OWUzZGI4MWRiYTVhOWY2MmMyMGFjMGZj&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzd2lyaGVuJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9YzZkMzVmY2E3NzNjNDBjNDc0MGFlODAzY2ViNmU2YjM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=1bbd5ce60868bfb1eaabd9033fd34f0c",
+        "alt": "Antigravity IDEのチャット欄で（以下略）の続きの続き ～Antigravity IDEの不満点を非公式パッチにしてリリースしたよという話",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "c74cbf600aa4a70d",
       "source": "qiita-vscode",
@@ -13,7 +44,7 @@
       "titleEn": "Automatically Remove Trailing Whitespace on Save in VS Code",
       "lang": "ja",
       "publishedAt": "2026-09-20T01:29:50.000Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "markdown",
         "qiita",
@@ -79,7 +110,7 @@
       "titleEn": "How to Monitor Multiple Codex Tasks by Running, Error, and Approval-Pending States: Locolisu AI Task Monitor Architecture",
       "lang": "ja",
       "publishedAt": "2026-09-19T05:30:16.000Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "ai-agents",
         "local-monitoring",
@@ -452,7 +483,7 @@
       "summaryEn": "The new AgentCore runtime recovers memory after sessions end and keeps cold-start latency steady across image sizes and concurrency levels, enabling faster, cost-efficient production agents.",
       "lang": "en",
       "publishedAt": "2026-09-18T15:31:34.000Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "agent",
         "agentcore-runtime",
@@ -466,6 +497,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Today we are announcing the new AgentCore runtime, a capability of Amazon Bedrock AgentCore built for the speed, flexibility, and cost efficiency that production agents demand. It reclaims memory as sessions release it and delivers consistent cold starts regardless of image size or concurrency.",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -475,8 +507,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b59273b12f1a24bb",
@@ -2083,7 +2114,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Today, we are announcing the availability of Agent Substrate on Google Kubernetes Engine (GKE). Agent Substrate is an open-source, secure-by-default agent execution runtime engineered to run millions of sandboxes with 10x higher density than standard container runtimes . Purpose-built for the era of autonomous agents, Substrate delivers sub-500ms resume operations at over 500 suspend/resume activations per second with native zero-trust kernel and network isolation. Agent Substrate is available as an open-source solution that runs on any Kubernetes infrastructure and is optimized for GKE. Leading AI teams are already building on it: Nous Research , the team behind the Hermes Agent , is actively building on top of Agent Substrate. Hermes is currently ranked the #1 AI agent globally by OpenRo",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_2dtrRM6.max-1000x1000.jpg",
@@ -2092,7 +2122,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "60582ab80f6848d9",
@@ -2338,7 +2369,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -6129,7 +6160,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -6923,7 +6954,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-20T10:00:32.236Z",
+      "collectedAt": "2026-09-20T16:30:33.094Z",
       "tags": [
         "agent",
         "deepmind",

@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-21T03:30:50.245Z",
+  "generatedAt": "2026-09-21T04:30:46.262Z",
   "month": "2026-09",
-  "count": 213,
+  "count": 214,
   "entries": [
+    {
+      "id": "96933876dd199bed",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mylifewithviolin/items/7e0636affba44b7ff362",
+      "title": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ２）～予約語一覧mdからLSP原型～",
+      "titleJa": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ２）～予約語一覧mdからLSP原型～",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-20T23:40:23.000Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事は第２ステップで、LSPの原型を実装します。 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブンな感じでいきます。自力では量的に手動実装できないのでAIだのみではありますが、大枠の適切な進め方は理解しているという前提です。(VSCode拡張でシンタックスハイライトやスニペットは自力で実装可能でその自スキルを背景にAIで拡張していきます。） ステップ２ 予約語・変数構造体定義・処理単語の一覧.mdからLSP原型実装 前回のステップ でMind９の言語ヘルプHTMLのmarkdown変換が完了しましたので、本ステップではそのmdから予約語・変数構造体定義・処理単語の一覧.mdを抽出し、LSPがカバーする範囲をいったん確認し、その後LSP原型の実装へ進行します。 具体的には下図のようなvscode-extention開発プロジェクトフォルダにMind９の言語ヘルプmdが格納されたmanual-mdフォルダを配置します。 2025/01/13 13:30 20 .gitignore 2025/01/13 13:30 <DIR> .vscode 2025/07/21 13:54 1,745 language-configuration.json 2026/09/21 00:14 153,395 package-lock.json 2026/09/21 00:14 2,237 package.json 2025/07/21 15:07 1,361 README.md 2026/09/21 00:20 605 tsconfig.json 2024/11/17 14:08 3,098 vsc-extension-quickstart.md Windows11アプリケーションのMicrosoft Copilot。昨年末から日本語プログラミング言語あおい（Re:Mind）の原型を作成してもらった生成AI 1 2 3 。モードは「無料プラン」。",
+      "feedSnippet": "はじめに 日本語プログラミング言語Mindのバージョン９のVSCode用言語サーバー(LSP)を実装してみます。本記事は第２ステップで、LSPの原型を実装します。 採用工法 工法は日本語プログラミング言語あおいコンパイラの開発と同様AIドリブンな感じでいきます。自力では...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjEyMzI3NjQzMyUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yNGMzZjEzM2QyNDE4NzQ4MTY3ZDM3MWQ0OGU1OGRkZA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7ebcb320c5978159ee9ae6edbf54a74d?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU2JTk3JUE1JUU2JTlDJUFDJUU4JUFBJTlFJUUzJTgzJTk3JUUzJTgzJUFEJUUzJTgyJUIwJUUzJTgzJUE5JUUzJTgzJTlGJUUzJTgzJUIzJUUzJTgyJUIwJUU4JUE4JTgwJUU4JUFBJTlFTWluZCVFRiVCQyU5OSVFMyU4MSVBRVZTQ29kZSVFNyU5NCVBOCVFOCVBOCU4MCVFOCVBQSU5RSVFMyU4MiVCNSVFMyU4MyVCQyVFMyU4MyU5MCVFMyU4MyVCQyUyOExTUCUyOSVFMyU4MiU5MiVFNSVBRSU5RiVFOCVBMyU4NSVFMyU4MSU5OSVFMyU4MiU4QiVFRiVCQyU4OCVFMyU4MiVCOSVFMyU4MyU4NiVFMyU4MyU4MyVFMyU4MyU5NyVFRiVCQyU5MiVFRiVCQyU4OSVFRiVCRCU5RSVFNCVCQSU4OCVFNyVCNCU4NCVFOCVBQSU5RSVFNCVCOCU4MCVFOCVBNiVBNyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU4YzZiNWFkMGMwMTk3NzA4ZTVlNzc1ZmQzZWVkYWQy&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBteWxpZmV3aXRodmlvbGluJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MTI4MWM1ZmRmNDY2ZTAwYmEyMmQ0MmQ0Njk3OWEyYjM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=3925bb5c8fcfc9d801b26e0262872f0d",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMuZ2l0aHVidXNlcmNvbnRlbnQuY29tJTJGdSUyRjEyMzI3NjQzMyUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0yNGMzZjEzM2QyNDE4NzQ4MTY3ZDM3MWQ0OGU1OGRkZA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7ebcb320c5978159ee9ae6edbf54a74d?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUU2JTk3JUE1JUU2JTlDJUFDJUU4JUFBJTlFJUUzJTgzJTk3JUUzJTgzJUFEJUUzJTgyJUIwJUUzJTgzJUE5JUUzJTgzJTlGJUUzJTgzJUIzJUUzJTgyJUIwJUU4JUE4JTgwJUU4JUFBJTlFTWluZCVFRiVCQyU5OSVFMyU4MSVBRVZTQ29kZSVFNyU5NCVBOCVFOCVBOCU4MCVFOCVBQSU5RSVFMyU4MiVCNSVFMyU4MyVCQyVFMyU4MyU5MCVFMyU4MyVCQyUyOExTUCUyOSVFMyU4MiU5MiVFNSVBRSU5RiVFOCVBMyU4NSVFMyU4MSU5OSVFMyU4MiU4QiVFRiVCQyU4OCVFMyU4MiVCOSVFMyU4MyU4NiVFMyU4MyU4MyVFMyU4MyU5NyVFRiVCQyU5MiVFRiVCQyU4OSVFRiVCRCU5RSVFNCVCQSU4OCVFNyVCNCU4NCVFOCVBQSU5RSVFNCVCOCU4MCVFOCVBNiVBNyVFMiU4MCVBNiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU4YzZiNWFkMGMwMTk3NzA4ZTVlNzc1ZmQzZWVkYWQy&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBteWxpZmV3aXRodmlvbGluJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9MTI4MWM1ZmRmNDY2ZTAwYmEyMmQ0MmQ0Njk3OWEyYjM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=3925bb5c8fcfc9d801b26e0262872f0d",
+        "alt": "日本語プログラミング言語Mind９のVSCode用言語サーバー(LSP)を実装する（ステップ２）～予約語一覧mdからLSP原型～",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "a1d999935a800f85",
       "source": "langchain-releases",
@@ -47,7 +78,7 @@
       "titleEn": "Another Sequel to the Antigravity IDE Chat Story: Releasing My Gripes as an Unofficial Patch",
       "lang": "ja",
       "publishedAt": "2026-09-20T08:19:18.000Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "antigravity-ide",
         "chat-session-management",
@@ -81,7 +112,7 @@
       "titleEn": "Automatically Remove Trailing Whitespace on Save in VS Code",
       "lang": "ja",
       "publishedAt": "2026-09-20T01:29:50.000Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "markdown",
         "qiita",
@@ -520,7 +551,7 @@
       "summaryEn": "The new AgentCore runtime recovers memory after sessions end and keeps cold-start latency steady across image sizes and concurrency levels, enabling faster, cost-efficient production agents.",
       "lang": "en",
       "publishedAt": "2026-09-18T15:31:34.000Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "agent",
         "agentcore-runtime",
@@ -534,6 +565,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Today we are announcing the new AgentCore runtime, a capability of Amazon Bedrock AgentCore built for the speed, flexibility, and cost efficiency that production agents demand. It reclaims memory as sessions release it and delivers consistent cold starts regardless of image size or concurrency.",
       "excerptOrigin": "article-unavailable",
       "image": {
@@ -543,8 +575,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b59273b12f1a24bb",
@@ -2151,7 +2182,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Today, we are announcing the availability of Agent Substrate on Google Kubernetes Engine (GKE). Agent Substrate is an open-source, secure-by-default agent execution runtime engineered to run millions of sandboxes with 10x higher density than standard container runtimes . Purpose-built for the era of autonomous agents, Substrate delivers sub-500ms resume operations at over 500 suspend/resume activations per second with native zero-trust kernel and network isolation. Agent Substrate is available as an open-source solution that runs on any Kubernetes infrastructure and is optimized for GKE. Leading AI teams are already building on it: Nous Research , the team behind the Hermes Agent , is actively building on top of Agent Substrate. Hermes is currently ranked the #1 AI agent globally by OpenRo",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/images/1_2dtrRM6.max-1000x1000.jpg",
@@ -2160,7 +2190,8 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "60582ab80f6848d9",
@@ -2406,7 +2437,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -6197,7 +6228,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -6991,7 +7022,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-20T22:11:18.900Z",
+      "collectedAt": "2026-09-21T04:30:32.392Z",
       "tags": [
         "agent",
         "deepmind",

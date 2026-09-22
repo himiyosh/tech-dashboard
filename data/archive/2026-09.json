@@ -1,8 +1,85 @@
 {
-  "generatedAt": "2026-09-22T10:00:50.564Z",
+  "generatedAt": "2026-09-22T10:34:32.050Z",
   "month": "2026-09",
-  "count": 229,
+  "count": 232,
   "entries": [
+    {
+      "id": "bca159504a540cde",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mabotokyo/items/52a09de68f6e9bbe5009",
+      "title": "【VS Code】彻底解决光标/鼠标点击位置错位问题（含 Cloud Shell 与 Cloud Workstations 解决方案）",
+      "titleJa": "【VS Code】彻底解决光标/鼠标点击位置错位问题（含 Cloud Shell 与 Cloud Workstations 解决方案）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-22T10:23:04.000Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "在使用 VS Code（包含基于浏览器的 Web IDE，如 Google Cloud Shell Editor 或 Google Cloud Workstations）时，你是否遇到过以下烦人的情况？ 删除字符或输入中英文混排、特殊符号时，光标跳动位置发生偏移。 这种情况通常是由于 Monaco Editor（VS Code 核心编辑器）的等宽字体渲染优化算法与当前浏览器环境/系统字体度量差异导致的。本文将介绍该问题的通用解决方案，并给出在 Google Cloud Shell 和 Cloud Workstations 环境下的具体操作步骤。 VS Code 编辑器默认开启了针对等宽字体（Monospace Font）的快速测量和渲染优化。然而，在以下场景下该机制容易出现字符宽度计算失误： 浏览器缩放比例（Zoom Level）或高 DPI 显示器渲染比例非标准 100%。 远程 Web IDE（Web 版 VS Code）无法精确获取客户端本地字体度量信息。 通过配置 \"editor.disableMonospaceOptimizations\": true，强制编辑器逐字符精确计算渲染位置，即可彻底解决错位问题。 \"editor.disableMonospaceOptimizations\": true 保存文件（Ctrl + S / Cmd + S），设置即刻生效。 2.",
+      "feedSnippet": "前言 在使用 VS Code（包含基于浏览器的 Web IDE，如 Google Cloud Shell Editor 或 Google Cloud Workstations）时，你是否遇到过以下烦人的情况？ 鼠标点击某一行代码，光标却落在了几个字符之前或之后。 选中文本时...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkYteUVmTHNSNzNyYWMlMkZBQUFBQUFBQUFBSSUyRkFBQUFBQUFBQUhZJTJGdFk5Ujc0bjBtVWslMkZwaG90by5qcGclM0ZzeiUzRDUwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1hYmQ3M2NiZDFiYzk1ODE5NmNhMzAyYzdlMWI1ZjhkMw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3d3d50794a2dffccff68e81d0eb881e3?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwVlMlMjBDb2RlJUUzJTgwJTkxJUU1JUJEJUJCJUU1JUJBJTk1JUU4JUE3JUEzJUU1JTg2JUIzJUU1JTg1JTg5JUU2JUEwJTg3JTJGJUU5JUJDJUEwJUU2JUEwJTg3JUU3JTgyJUI5JUU1JTg3JUJCJUU0JUJEJThEJUU3JUJEJUFFJUU5JTk0JTk5JUU0JUJEJThEJUU5JTk3JUFFJUU5JUEyJTk4JUVGJUJDJTg4JUU1JTkwJUFCJTIwQ2xvdWQlMjBTaGVsbCUyMCVFNCVCOCU4RSUyMENsb3VkJTIwV29ya3N0YXRpb25zJTIwJUU4JUE3JUEzJUU1JTg2JUIzJUU2JTk2JUI5JUU2JUExJTg4JUVGJUJDJTg5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9M2YxMGJkMDExOWM2NjhmNGU4Njc3MDA5MWNiNWFmMTM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBtYWJvdG9reW8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yMDdlZWYxODEzMjFkYTczMTAxMTQzMzQ0ODBiNzFkOQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=d6008c9693ece7a3b11841cc1b3e19a2",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkYteUVmTHNSNzNyYWMlMkZBQUFBQUFBQUFBSSUyRkFBQUFBQUFBQUhZJTJGdFk5Ujc0bjBtVWslMkZwaG90by5qcGclM0ZzeiUzRDUwP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1hYmQ3M2NiZDFiYzk1ODE5NmNhMzAyYzdlMWI1ZjhkMw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D3d3d50794a2dffccff68e81d0eb881e3?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwVlMlMjBDb2RlJUUzJTgwJTkxJUU1JUJEJUJCJUU1JUJBJTk1JUU4JUE3JUEzJUU1JTg2JUIzJUU1JTg1JTg5JUU2JUEwJTg3JTJGJUU5JUJDJUEwJUU2JUEwJTg3JUU3JTgyJUI5JUU1JTg3JUJCJUU0JUJEJThEJUU3JUJEJUFFJUU5JTk0JTk5JUU0JUJEJThEJUU5JTk3JUFFJUU5JUEyJTk4JUVGJUJDJTg4JUU1JTkwJUFCJTIwQ2xvdWQlMjBTaGVsbCUyMCVFNCVCOCU4RSUyMENsb3VkJTIwV29ya3N0YXRpb25zJTIwJUU4JUE3JUEzJUU1JTg2JUIzJUU2JTk2JUI5JUU2JUExJTg4JUVGJUJDJTg5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9M2YxMGJkMDExOWM2NjhmNGU4Njc3MDA5MWNiNWFmMTM&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBtYWJvdG9reW8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz0yMDdlZWYxODEzMjFkYTczMTAxMTQzMzQ0ODBiNzFkOQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=d6008c9693ece7a3b11841cc1b3e19a2",
+        "alt": "【VS Code】彻底解决光标/鼠标点击位置错位问题（含 Cloud Shell 与 Cloud Workstations 解决方案）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "ee25ef3b22f4a1ce",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mabotokyo/items/09e444b293f30469ed8b",
+      "title": "Fixing VS Code Cursor and Mouse Click Misalignment (Works for Cloud Shell & Cloud Workstations)",
+      "titleJa": "",
+      "titleEn": "Fixing VS Code Cursor and Mouse Click Misalignment (Works for Cloud Shell & Cloud Workstations)",
+      "lang": "en",
+      "publishedAt": "2026-09-22T10:19:44.000Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "cursor",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Fixing VS Code Cursor and Mouse Click Misalignment (Works for Cloud Shell & Cloud Workstations) Have you ever experienced cursor misalignment in VS Code or web-based IDEs like Google Cloud Shell Editor and Google Cloud Workstations? Clicking a character causes the cursor to appear several characters away from the actual mouse position. Highlighted text ranges don't match the boundaries of the selected characters. Typing mixed character sets (such as CJK + Latin characters) or emojis causes the caret to drift. This issue typically arises when Monaco Editor’s monospace font rendering optimization conflicts with browser font metrics and display scaling . This guide details how to fix the issue permanently and includes step-by-step configurations for Google Cloud Shell and Google Cloud Workstations .",
+      "feedSnippet": "Introduction Have you ever experienced cursor misalignment in VS Code or web-based IDEs like Google Cloud Shell Editor and Google Cloud ...",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "3024932ad08cf788",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/mabotokyo/items/12c0a32c149056cf9612",
+      "title": "【VS Code】カーソルやマウスのクリック位置がズレる問題を根本解決（Cloud Shell・Cloud Workstations対応）",
+      "titleJa": "【VS Code】カーソルやマウスのクリック位置がズレる問題を根本解決（Cloud Shell・Cloud Workstations対応）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-22T10:15:33.000Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Code（または Google Cloud Shell Editor、Google Cloud Workstations などの Web 版 VS Code）を使用していて、以下のような現象に悩まされたことはありませんか？ コードをクリックした際、カーソルが数文字手前や後ろにズレて配置される。 文字列を選択したときのハイライト領域と、実際の文字の境界が合わない。 日本語と英語の混在時や、記号・絵文字を入力した際にカーソル位置が狂う。 この問題の主な原因は、 Monaco Editor（VS Code のエディタコア）の等幅フォント高速描画最適化（Monospace Optimizations）と、ブラウザ環境・OS側のフォントメトリクス（文字幅計算）の不一致 です。 本記事では、このカーソルズレを解消する設定方法と、 Google Cloud Shell および Google Cloud Workstations での具体的な適用手順を解説します。 VS Code はパフォーマンス向上のため、デフォルトで等幅フォントに対して「文字幅がすべて均一である」という前提の高速パス描画（Fast-path rendering）を行っています。 設定項目 \"editor.disableMonospaceOptimizations\": true を有効にすることで、エディタが文字ごとに正確な描画位置を計算するようになり、ズレが解消されます。 1. 一般的な VS Code / Web IDE での設定（UI操作） Preferences: Open User Settings (JSON) を入力して選択。 settings.json のルートオブジェクト内に以下を追加： \"editor.disableMonospaceOptimizations\" : true 保存（Ctrl + S / Cmd + S）すると即座に反映されます。 2.",
+      "feedSnippet": "はじめに VS Code（または Google Cloud Shell Editor、Google Cloud Workstations などの Web 版 VS Code）を使用していて、以下のような現象に悩まされたことはありませんか？ コードをクリックした際、カーソ...",
+      "excerptOrigin": "article"
+    },
     {
       "id": "5412b77154cc74cd",
       "source": "cline-releases",
@@ -15,6 +92,7 @@
       "publishedAt": "2026-09-22T08:13:58.000Z",
       "collectedAt": "2026-09-22T09:00:41.198Z",
       "tags": [
+        "agent",
         "cline",
         "output-token-limit",
         "release",
@@ -45,7 +123,7 @@
       "titleEn": "Recognition, Simulation, and Refusal: A Contamination-Aware Study of Classic Psychological Effects in LLM Agents",
       "lang": "en",
       "publishedAt": "2026-09-22T04:00:00.000Z",
-      "collectedAt": "2026-09-22T10:00:35.894Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
       "tags": [
         "arxiv",
         "benchmark",
@@ -1069,7 +1147,7 @@
       "summaryEn": "The new AgentCore runtime recovers memory after sessions end and keeps cold-start latency steady across image sizes and concurrency levels, enabling faster, cost-efficient production agents.",
       "lang": "en",
       "publishedAt": "2026-09-18T15:31:34.000Z",
-      "collectedAt": "2026-09-22T10:00:35.894Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
       "tags": [
         "agent",
         "agentcore-runtime",
@@ -2955,7 +3033,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-22T10:00:35.894Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -6748,7 +6826,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-22T10:00:35.894Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -7542,7 +7620,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-22T10:00:35.894Z",
+      "collectedAt": "2026-09-22T10:34:15.924Z",
       "tags": [
         "agent",
         "deepmind",

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-23T20:50:58.076Z",
-  "count": 1139,
+  "generatedAt": "2026-09-23T22:00:52.782Z",
+  "count": 1138,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -4369,82 +4369,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事は、ローカルのgitフックやCIだけに頼らず、クラウド側へガバナンスを移す必要を指摘しておるよ。",
           "en": "Exactly. The article says governance should shift to cloud-side policies rather than relying only on local git hooks and CI."
-        }
-      ]
-    },
-    "bc292a6a6e3ce0e4": {
-      "bodyJa": "MCP（Model Context Protocol）サーバーに複数のツールを定義したところ、VS Code の GitHub Copilot がそのうち一方しか呼び出さなくなった——。開発者向けブログで共有されたこの体験談は、MCP を使ってエージェント機能を拡張する際に見落としがちな落とし穴を浮き彫りにしている。\n\nMCP は、Anthropic が提唱した、大規模言語モデル（LLM）と外部ツールやデータソースを接続するためのオープンな規格である。VS Code はエージェントモードでこの MCP に対応しており、ローカルやリモートの MCP サーバーが公開する「ツール」を Copilot が必要に応じて呼び出せる。各ツールには名前と説明（description）、入力スキーマが与えられ、モデルはユーザーの指示とこれらのメタ情報を突き合わせて、どのツールを実行するかを判断する仕組みだ。\n\n今回の問題は、サーバー側に複数のツールを登録したにもかかわらず、Copilot が特定の一つばかりを選び、もう一方を呼ばないというものだった。原因として考えられるのは、ツールの説明文が曖昧だったり、機能の境界が重なっていたりして、モデルが両者を区別できていないケースである。ツール名や説明が似通っていると、LLM が「同じ役割」と解釈し、処理を片方に寄せてしまう可能性がある。\n\n対処としては、各ツールの説明文を具体的にし、いつ・どのような入力で使うべきかを明示することが有効とされる。名前を明確に差別化し、想定するユースケースや出力形式を description に書き込むことで、モデルの選択精度が上がると見られる。ツールの粒度を見直し、役割が重複しないよう再設計するアプローチも考えられるだろう。\n\nこうした挙動は Copilot に限った話ではない。ツール選択は最終的に LLM の判断に委ねられるため、Anthropic の Claude や OpenAI の function calling でも、説明の質がツール呼び出しの成否を左右する。MCP の採用は OpenAI をはじめ各社へ広がりつつあり、サーバー実装のノウハウは今後さらに重要度を増すとみられる。ツールを「増やす」だけでなく、モデルが正しく使い分けられるよう「伝える」設計が問われている。",
-      "bodyEn": "The Model Context Protocol (MCP) has quickly become a common way to connect large language models to external tools and data, and a recent developer report highlights a subtle pitfall: when several tools are registered on a single MCP server, GitHub Copilot in Visual Studio Code may consistently reach for only one of them. For teams building custom MCP servers to extend Copilot's agent capabilities, understanding why this happens matters, because a tool that is never invoked effectively does not exist.\n\nMCP, introduced by Anthropic in late 2024 and since adopted across a range of editors and assistants, defines a standard interface through which a client — such as VS Code's Copilot Chat in agent mode — can discover and call the tools that a server exposes. Each tool typically advertises a name, a natural-language description, and a JSON Schema describing its input parameters. The model does not execute the tools directly; instead, it reads these advertised descriptions and decides, based on the user's request and the surrounding context, which tool to call and with what arguments. That decision is probabilistic and driven by the language model, not by deterministic routing logic.\n\nThis design is precisely where the reported problem appears to originate. According to the author, defining two tools on the same server led Copilot to invoke only one of them, even in situations where the other tool seemed to be the better match. The likely cause is that the tool descriptions and schemas were similar enough that the model could not reliably distinguish between them, or that one description was phrased broadly enough to appear to cover both use cases. When descriptions overlap, the model tends to converge on whichever tool seems most generally applicable, leaving the second tool unused.\n\nThe practical takeaway is that tool metadata is not boilerplate; it is effectively the prompt that steers the model's selection. The workaround discussed centers on making each tool's purpose unambiguous. That includes writing distinct, specific descriptions that state clearly when the tool should and should not be used, choosing tool names that reflect narrow responsibilities, and tightening the input schemas so the required arguments differ in ways the model can key on. Explicitly noting the intended trigger conditions — for example, describing one tool as handling read operations and the other as handling writes — appears to help the model disambiguate. Reducing the number of tools per server, or splitting responsibilities so each tool has a single clear job, is another commonly recommended practice.\n\nThis behavior is not unique to Copilot. Because tool selection is delegated to the underlying model, the same ambiguity can affect other MCP clients and function-calling implementations, including Claude Desktop, Cursor, and applications built directly on the OpenAI or Anthropic function-calling APIs. Vendors have documented that model performance tends to degrade as the number of available tools grows and as their descriptions become less distinct, which is why guidance often suggests keeping tool counts modest and descriptions precise.\n\nFor context, VS Code added support for MCP servers to Copilot's agent mode over the course of 2025, allowing developers to plug in local or remote servers that expose custom capabilities alongside built-in features. GitHub Copilot's agent mode can chain multiple tool calls to accomplish a task, which makes reliable tool selection even more consequential: if the agent never considers a tool, entire branches of intended functionality remain inaccessible. Debugging such issues can be awkward, since the failure is silent — there is no error, just an unused tool.\n\nThe broader lesson from this report is that building an MCP server is as much an exercise in clear communication with a language model as it is in software engineering. Developers are encouraged to test their servers with realistic prompts, inspect which tools the client actually calls, and iterate on descriptions much as one would refine a prompt. As MCP adoption continues to expand across editors and agents, treating tool descriptions as a first-class part of the design — rather than an afterthought — is likely to become a standard part of the workflow.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T23:58:25.002Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "MCPサーバーにツールを2つ入れたのに、Copilotが片方しか呼ばないって、どういうこと？",
-          "en": "They added two tools to the MCP server, but Copilot would call only one? What does that mean?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、AIに複数の機能を用意したのに、一方しか使われなかったのじゃ。記事ではその原因と対処法を解説しておるよ。",
-          "en": "Simply put, they gave the AI multiple capabilities, but it used only one. According to the article, the author explains the cause and a workaround."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が困るの？片方が動けば十分じゃないの？",
-          "en": "Why is that a problem? Isn’t it enough if one tool works?"
-        },
-        {
-          "s": "b",
-          "ja": "用途の違うツールを使い分けてもらいたいのに、狙いどおり呼ばれないのが困る点じゃな。複数ツールのMCP連携で起きる落とし穴というわけじゃ。",
-          "en": "The problem is that different tools are meant for different jobs, yet Copilot may not invoke them as intended. That’s the multi-tool MCP integration pitfall highlighted here."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど。ツールを追加できても、Copilotが全部を正しく呼べるか確認が必要なんだね。",
-          "en": "Got it. Even if you can add more tools, you still need to check whether Copilot can invoke each one properly."
-        },
-        {
-          "s": "b",
-          "ja": "そのとおりじゃ。記事によれば、原因と対処法を押さえることが、複数ツールのMCPサーバーを作る際の見どころじゃよ。",
-          "en": "Exactly. According to the article, understanding the cause and workaround is the key takeaway when building an MCP server with multiple tools."
-        }
-      ]
-    },
-    "02f88ae00298799f": {
-      "bodyJa": "近年、Claude Code や GitHub Copilot のエージェントモード、OpenAI の Codex など、自律的にコードを書き換える「コーディングエージェント」が急速に普及している。こうしたツールを安全かつ効果的に使う鍵として、バージョン管理システム Git との組み合わせ方が注目されている。Web フレームワーク Django の共同作者であり、Datasette の開発者としても知られる Simon Willison が、その実践的なパターンをまとめており、今回紹介する記事はその内容を読み解いたものだ。\n\n背景にあるのは、エージェントが一度に広範囲のファイルを書き換えるという特性だ。人間のレビューが追いつかないうちに大量の変更が加わるため、意図しない破壊やデグレードが起こりやすい。ここで Git が「安全網」として機能する。作業前にコミットして状態を確定しておけば、エージェントの提案が期待外れでも git checkout や git reset で即座に元へ戻せる。変更の差分を diff で確認しながら段階的に取り込む運用が、リスクを抑える基本となる。\n\nWillison が重視する手法の一つが、エージェントの作業を専用ブランチに隔離することだ。メインブランチを汚さずに試行錯誤でき、良い結果だけをマージできる。さらに git worktree を使えば、同一リポジトリの複数ブランチを別ディレクトリとして同時に展開でき、複数のエージェントを並行して走らせる運用にも応用できるとされる。コミットについても、機能単位でこまめに区切り、後から履歴をたどりやすくする戦略が推奨されている。\n\nこうした発想は、エージェントを「信頼できるが検証は必要な協力者」として扱う考え方に根ざしている。Git のコミット履歴は、エージェントが何をどの順で変更したかを記録する監査ログとしても価値を持つ。実際、多くのエージェント系ツールが自動コミットやチェックポイント機能を備えつつあり、業界全体でこの方向性が共有されつつあると見られる。\n\nもっとも、これらはあくまで経験則に基づくパターンであり、プロジェクトの規模やチーム構成によって最適解は変わり得る。とはいえ、Git という枯れた技術を土台にすることで、新しいエージェント活用のリスクを大きく下げられる点は、多くの開発者にとって参考になるだろう。",
-      "bodyEn": "Coding agents such as GitHub Copilot's agent mode, Claude Code, OpenAI's Codex CLI, and similar tools can now edit files, run commands, and iterate on a codebase with limited human intervention. That autonomy raises an obvious question: how do you keep an agent's changes reviewable, reversible, and safe? A recent Zenn post takes up that question by walking through Simon Willison's practical patterns for pairing coding agents with Git, and it is worth reading because it treats version control not as an afterthought but as the primary control surface for working with AI-driven automation.\n\nThe central idea is that Git is what makes agentic coding tolerable. When an agent can rewrite dozens of files in a single run, the ability to inspect a clean diff, discard unwanted work, and return to a known-good state becomes essential rather than optional. Willison has long argued that the risk profile of these tools changes dramatically once every change is captured as a commit, because a bad edit is no longer a disaster but simply something to revert. The article frames Git less as a backup mechanism and more as an interactive safety net that lets developers grant agents more freedom precisely because mistakes are cheap to undo.\n\nBranch management is one of the load-bearing patterns. The recommendation is to let an agent operate on a dedicated feature branch rather than directly on main, so its output can be evaluated in isolation and merged only after review. This mirrors ordinary team practice, but it takes on extra importance when the \"contributor\" is a model that may misunderstand intent or introduce subtle regressions. Keeping agent work on separate branches also makes it straightforward to run more than one experiment, compare approaches, and abandon the ones that do not pan out without polluting the main line of history.\n\nCommit strategy is the other pillar. The patterns favor frequent, small, well-scoped commits so that each unit of work is easy to understand and easy to roll back. Committing before handing control to an agent establishes a clean checkpoint, and committing after a successful step preserves progress incrementally. This granularity pays off during review, because a reviewer can read the diff for a single logical change instead of trying to reason about a sprawling, monolithic edit. It also improves the quality of the model's own context, since a coherent commit history gives the agent a clearer picture of how the project has evolved.\n\nThe article also touches on Git worktrees, a feature that lets you check out multiple branches into separate directories from the same repository. Worktrees appear to be a natural fit for running several agents, or several attempts, in parallel without the overhead of cloning the repository repeatedly. Each worktree gives an agent its own isolated working copy, which reduces the chance of concurrent runs stepping on one another. This is an area where tooling is still maturing, and the practicality of heavy parallelism likely depends on the size of the project and the compute available.\n\nUnderlying all of this is the discipline of reviewing diffs before merging. None of the patterns advocate trusting agent output blindly. Instead they position the human as the reviewer of record, using Git's diffing and staging tools to accept, amend, or reject work chunk by chunk. That posture aligns with a broader industry consensus that current models remain capable of confident errors, so a human checkpoint before code reaches production is prudent.\n\nFor context, these patterns sit alongside a wave of related moves across the tooling landscape. GitHub has been extending Copilot toward more autonomous, pull-request-oriented workflows; Anthropic's Claude Code and OpenAI's Codex CLI operate directly in the terminal against local repositories; and editors like Cursor and Windsurf lean heavily on the same review-and-revert loop. A prerequisite for benefiting from any of them is basic fluency with Git branching, staging, diffing, and reverting, since those primitives are exactly what turn an unpredictable agent into a manageable collaborator.\n\nThe takeaway from the article is measured rather than triumphant. Combining coding agents with Git does not eliminate the need for judgment, but it lowers the cost of experimentation and makes agent-generated changes auditable. For developers weighing how much autonomy to grant these tools, adopting deliberate branch and commit conventions appears to be a low-effort way to capture more of the upside while containing the downside.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T23:59:08.805Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "コーディングエージェントにGitまわりも任せるって、具体的には何をするの？",
-          "en": "What does it actually mean to let a coding agent handle Git work too?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、記事ではブランチ管理やコミットの進め方をエージェントと組み合わせる手法を紹介しておるよ。",
-          "en": "Simply put, the article introduces ways to combine coding agents with Git practices such as branch management and commit strategies."
-        },
-        {
-          "s": "a",
-          "ja": "ブランチやコミットをうまく使うと、何が嬉しいの？",
-          "en": "What’s the benefit of using branches and commits well with an agent?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、AIによる自動化を開発でより安全かつ効果的に活用しやすくなるのがポイントじゃよ。",
-          "en": "According to the article, the key benefit is making AI-driven automation safer and more effective in development."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、エージェントに任せつつ、Gitの進め方もきちんと考えるのが大事なんだね！",
-          "en": "So the idea is to delegate to the agent while still being deliberate about how Git is used!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。この記事はガイドの要約と紹介なので、詳しく確かめるなら原文にあたることが強く勧められておるよ。",
-          "en": "Exactly. Since this article summarizes and introduces the guide, it strongly recommends checking the original for the full details."
         }
       ]
     },
@@ -42474,44 +42398,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T15:30:34.441Z"
     },
-    "e308cad69399bfa1": {
-      "bodyJa": "## AI時代の進捗\n\nOpenAIは、AI時代における社会・経済・安全面の進捗を測るスコアカードの枠組みを公開した。AIの影響を可視化・追跡する基準を設け、説明責任と透明性を高めることを目指す取り組みだ。\n\n## ROIとコスト\n\nOpenAIのCFO、Sarah Friarは、実用的な指標として、役に立つ仕事、成功したタスク当たりのコスト、信頼性、コンピュートに対するリターンを挙げた。これらを通じてAIのROIを測る考え方を示している。",
-      "bodyEn": "## AI scorecard\n\nOpenAI introduced a scorecard framework for measuring and tracking AI progress across social, economic, and safety dimensions. The framework matters because it aims to improve accountability and transparency in assessing how AI development affects the world.\n\n## Useful work and compute\n\nSarah Friar, OpenAI’s CFO, presents the scorecard as a practical way to measure return on investment. Its measures focus on useful work, cost per successful task, dependability, and return on compute. These criteria establish a basis for making AI’s effects more visible and tracking progress across the framework’s stated dimensions.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "評価軸が4つもあるんだね。AIの成果を測る方法として、これって大きいこと？",
-          "en": "There are four measures here. Is that a big step for judging what AI actually delivers?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、成果だけでなくコストや信頼性まで追える実用的な物差しとして示しておる。説明責任を高める一歩じゃな。",
-          "en": "The article presents them as a practical yardstick covering results, cost, and dependability—not just output. That could be a meaningful step toward accountability."
-        },
-        {
-          "s": "a",
-          "ja": "「計算資源の見返り」って、それって何？つまりどういうこと？",
-          "en": "“Return on compute”—what’s that? What does it actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでいうのは、AIに使った計算資源に対して、どれだけ価値ある成果が返ったかを見る考え方じゃ。投入と成果の釣り合いじゃよ。",
-          "en": "Here, it means asking how much useful value came back from the computing resources spent. In everyday terms, it’s the balance between what went in and what came out."
-        },
-        {
-          "s": "a",
-          "ja": "自分なら、AIツールを選ぶときに、成功した作業のコストや安定性を比べてみたいな。",
-          "en": "I’d use this when choosing an AI tool, comparing the cost of successful tasks and how dependable it is."
-        },
-        {
-          "s": "b",
-          "ja": "よい使い方じゃ。示された枠組みに沿うなら、役立つ仕事・成功時のコスト・信頼性・計算資源の見返りを一緒に見るのが大切じゃよ。",
-          "en": "That’s a sensible use. Under the proposed framework, you’d consider useful work, cost per successful task, dependability, and return on compute together."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-19T09:57:26.184Z"
-    },
     "be0a087202162317": {
       "bodyJa": "OpenAIは2026年7月9日、新たなフロンティアモデル「GPT-5.6」を発表した。同社はこのモデルを、多様なユースケースに合わせて知能をスケールさせる設計と位置づけ、開発者や企業が複雑なタスクをこれまで以上に効率よく処理できる点を強調している。\n\n公式の説明によれば、GPT-5.6は「トークンごとにより多くの知能」「1ドルあたりのより高い性能」「最も困難な作業に対して必要なときに引き出せる能力」を特徴に掲げる。これは単に応答の賢さを高めるだけでなく、コストと計算資源のバランスを重視する方向性を示していると見られる。近年の大規模言語モデル(LLM)では、推論に費やす計算量を状況に応じて調整し、簡単な問いには軽快に、難しい問いには深く考えて答えるアプローチが広がっており、GPT-5.6もその流れを汲むものと考えられる。\n\n今回の発表は、OpenAIが展開してきたGPT-5系列の延長線上に位置づけられる。バージョン番号が小刻みに進む形は、大規模な刷新というより、性能・効率・使い勝手を継続的に磨き込む改良の一環である可能性がある。開発者向けの文脈で語られている点からは、コード生成や自動化といった実務的な用途での活用が意識されているとみられる。\n\nこうした「性能あたりのコスト」を訴求する動きは、業界全体の競争と無関係ではない。GoogleやAnthropicなどの競合各社も高性能モデルの投入と価格・効率の改善を進めており、限られた予算で最大の成果を求める企業ユーザーにとって、モデル選択の基準は単なる賢さから総合的な費用対効果へと移りつつある。\n\n一方で、今回公開された抜粋からは、具体的な料金体系や対応範囲、既存モデルからの移行方法までは明らかになっていない。実際の性能や使い勝手は、今後公開されるベンチマークや利用者の検証を通じて評価が定まっていくとみられる。GPT-5.6が掲題どおり「野心に応える」体験を提供できるかは、今後の実運用が試金石となるだろう。",
       "bodyEn": "OpenAI has introduced GPT-5.6, describing it as a frontier model built to scale intelligence across a wide range of use cases. The company frames the release around three claims: more intelligence from every token, stronger performance per dollar, and more capability on demand for the hardest work developers and enterprises take on. For teams that already build on OpenAI's platform, the update matters because it targets the two constraints that most often limit real-world deployment: cost and the reliability of complex reasoning.\n\nThe positioning suggests an incremental but meaningful step in the GPT-5 line rather than a wholly new architecture. \"Intelligence from every token\" points to efficiency gains in how the model processes and generates text, while \"performance per dollar\" is an economic framing that emphasizes output quality relative to compute spend. OpenAI has not, in the material provided, published specific pricing tiers or benchmark figures, so the practical size of these gains will become clearer as developers test the model against their own workloads. As with prior releases, independent evaluation tends to lag the announcement by days or weeks.\n\nThe phrase \"more capability on demand\" appears to describe a model that can scale the depth of its reasoning to the difficulty of a task. This is consistent with a broader industry direction in which providers separate quick, low-cost responses from slower, more deliberate problem-solving, sometimes exposed as adjustable effort or reasoning settings. If GPT-5.6 follows that pattern, users would be able to dial up analytical depth for demanding problems while keeping routine requests fast and inexpensive, though the exact controls have not been detailed here.\n\nThe release sits within OpenAI's Codex ecosystem, which centers on software engineering and agentic coding workflows. Codex has grown from an autocomplete-style assistant into tooling that can plan, edit across files, run tasks, and operate through command-line and IDE integrations. A more capable and cost-efficient base model is likely to feed directly into these developer experiences, where long-running tasks and repeated model calls make per-token efficiency especially consequential. Enterprises running coding agents at scale are among the most sensitive to the performance-per-dollar equation, since small unit-cost differences compound quickly across large volumes.\n\nFor context, GPT-5.6 continues OpenAI's practice of shipping frequent point releases rather than waiting for a single large generational jump. This cadence lets the company push improvements in reasoning, efficiency, and tool use without the disruption of a major version change, and it mirrors how rivals iterate as well. Anthropic's Claude family and Google's Gemini models compete directly on similar axes of reasoning quality, context handling, and cost, and each provider has leaned into agentic capabilities and coding as priority use cases. The competitive pressure has helped drive down the effective price of high-quality inference over successive releases.\n\nProspective adopters should keep a few prerequisites in mind. Access typically arrives first through the API and select product surfaces before broader rollout, and availability can vary by region and platform. Migrating to a new model usually requires revalidating prompts, evaluation suites, and guardrails, because behavioral changes—even improvements—can shift outputs in ways that affect downstream systems. Teams that maintain automated test harnesses and regression checks are generally better placed to adopt a new model quickly and safely.\n\nIt is also worth treating headline efficiency and capability claims with measured expectations until they are corroborated. \"Performance per dollar\" and \"intelligence per token\" are useful directional signals, but their impact depends heavily on the specific task, prompt design, and the mix of simple versus complex requests in a given application. Some workloads may see substantial improvement, while others may see more modest gains.\n\nIn sum, GPT-5.6 is presented as a frontier model aimed at delivering scalable reasoning, better economics, and greater capability for demanding tasks, with clear relevance to OpenAI's coding-focused Codex tools. The stated goals align with where the market has been heading, and the meaningful test will be how the model performs on real developer and enterprise workloads once pricing, availability, and independent benchmarks are fully known.",
@@ -42739,6 +42625,82 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:17:07.441Z"
+    },
+    "12da469ced1da55a": {
+      "bodyJa": "物理AIロボットの推論をオンボードGPUだけで処理する構成には、性能、バッテリー持続時間、拡張性を制限する可能性がある。推論をエッジやクラウドのGPUへオフロードする研究では、実環境で動くロボットに複数の利点が示されている。\n\n## オンボードGPU\n\nロボット本体のGPUだけで物理AIの推論を実行する方法は、オンボードで処理が完結する一方、ロボットの性能を制約し得ると説明されている。また、推論に使うAI計算処理は消費電力が大きく、バッテリー持続時間にも影響する。さらに、利用できる計算資源が本体側に限られることは、システムの拡張性にも関わる。\n\n## 推論オフロード\n\nこの制約に対し、推論処理をエッジまたはクラウドのGPUへ移す手法が提示されている。ロボット側では軽量なオンボードハードウェアを使い、AIの推論を遠隔のGPUで担う構成だ。これにより、オンボードGPUだけでは扱いにくい、より大規模なAIモデルを利用できるとされる。\n\n## 移動マニピュレーション\n\n代表的な移動マニピュレーションのワークロードでは、推論オフロードによってタスクの成功率が向上した。加えて、動的に変化する実環境において、ロボットがより効果的に応答できることも示された。大規模モデルの利用と成功率、応答性の改善が、同じオフロード構成の利点として確認されている。\n\n## 稼働時間\n\n消費電力の大きいオンボードのAI計算処理を、軽量なハードウェアと遠隔推論に置き換えることで、バッテリー持続時間を大幅に改善できると説明されている。充電から次の充電までの稼働時間を延ばせるため、実環境で動く物理AIロボットの長時間運用にもつながる。",
+      "bodyEn": "## A core assumption\n\nPhysical AI robots do not necessarily need to run all inference on onboard GPUs. This matters because the location of AI computation can affect robot performance, battery life, scalability, and operation in dynamic, real-world environments.\n\nThe research challenges the assumption that physical AI inference should run exclusively on the robot’s onboard GPUs. It finds that this approach can constrain performance and scalability while also placing demands on battery life. Instead, inference can be offloaded to GPUs at the edge or in the cloud, allowing the robot to rely on remote AI computation rather than performing every inference task onboard.\n\n## Measurable benefits\n\nAcross representative mobile manipulation workloads, inference offloading produced measurable benefits. The research reports higher task success rates when inference was moved to edge or cloud GPUs. Remote GPU inference also supported the use of larger AI models than an exclusively onboard approach.\n\nOffloading additionally helped robots respond more effectively in dynamic, real-world environments. Together, these results connect the placement of inference with practical outcomes: whether a robot completes mobile manipulation tasks successfully, what size of AI model it can use, and how effectively it responds as conditions change.\n\nThe findings therefore present remote inference as more than a change in where computation occurs. In the tested workloads, it was associated with improved success, access to bigger models, and stronger responsiveness in real environments.\n\n## Longer between charges\n\nBattery life is another central advantage identified by the research. Power-hungry onboard AI compute can be replaced with lightweight onboard hardware while inference is handled remotely. This arrangement can substantially improve battery life.\n\nExtending battery life enables robots to operate for longer periods between charges. The research consequently links inference offloading not only to task performance and model size, but also to operating time. For physical AI robots intended to work in real-world deployments, edge or cloud GPU inference can improve runtime while supporting more capable models and more effective responses.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ロボットの推論を本体GPUからエッジやクラウドへ移すと、作業の成功率まで上がったの？ どうして？",
+          "en": "Moving inference from the robot’s GPU to edge or cloud GPUs actually improved task success? How did that work?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、移動しながら物を扱う代表的な作業で成功率が向上したとしておる。推論、つまりAIの判断を遠隔GPUに任せ、より大きなモデルも使えたそうじゃ。",
+          "en": "The article reports higher success on representative mobile-manipulation tasks. By sending inference—the AI’s decision-making—to remote GPUs, the robots could also use larger models."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、頭脳を全部背負わず、近くやクラウドの助っ人に考えてもらう感じ？ 長く動かしたいロボットに役立つのかな。",
+          "en": "So it’s like the robot asks a nearby or cloud-based helper to think instead of carrying the whole brain? Could that help robots run longer?"
+        },
+        {
+          "s": "b",
+          "ja": "そんな捉え方じゃ。研究では、消費電力の大きい本体内のAI計算を軽い機器と遠隔推論に置き換え、充電までの稼働時間を延ばせるとしておる。",
+          "en": "That’s a good way to picture it. The study says replacing power-hungry onboard AI compute with lighter hardware and remote inference can extend operating time between charges."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、推論を外へ移すことで、大きなモデルを使えて、成功率や稼働時間も伸ばせる可能性があるんだね！",
+          "en": "Wow—offloading inference could mean larger models, better task success, and longer runtime!"
+        },
+        {
+          "s": "b",
+          "ja": "ただ、示された成果の対象は代表的な移動マニピュレーション作業じゃ。実環境での応答性や拡張性への利点として受け取るのがよいのう。",
+          "en": "One caveat: the reported results cover representative mobile-manipulation workloads. The takeaway here is the potential benefit for responsiveness and scalability in real-world deployments."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T20:52:10.433Z"
+    },
+    "774f1617db93954c": {
+      "bodyJa": "## ローカルサンドボックス\n\nGitHub Copilotアプリに、ローカルサンドボックスが導入された。意図しないコマンドが実行された場合に備え、マシン上のファイル、ネットワークリソース、認証情報へのアクセスを制限し、潜在的な影響を抑えるための仕組みだ。\n\n設定はプロジェクト単位で行い、ローカルリポジトリと作業ツリーのセッションに適用する。すべてのプロジェクトへ一律に適用するのではなく、それぞれの条件に合わせてアクセス方針を指定できる。\n\n## ファイルと通信\n\nファイルシステムについては、追加で読み書きを許可するフォルダー、読み取り専用で許可するフォルダー、アクセスを拒否するフォルダーのリストを設定できる。これにより、セッションから操作できる範囲と、変更を認めない範囲を分けられる。\n\nネットワークでは、外部インターネットへの送信通信と、ローカルネットワークへの接続に関する設定を用意する。ファイル操作だけでなく、コマンドがアクセス可能な通信先も制御対象となる。\n\n## 認証情報\n\n認証情報へのアクセスも個別に扱われる。認証済みHTTPSによるGit操作で使うGit認証情報と、GitHub CLIの認証に使うGitHub CLI認証情報が対象だ。サンドボックス内のセッションに、これらの認証情報の利用をどこまで認めるかをプロジェクト設定として指定する。\n\n## 適用ポリシー\n\nプロジェクト設定は、サンドボックス化されたセッションの開始時にアプリが要求するポリシーを表す。企業管理の設定が適用される場合、実際に有効となるポリシーは、プロジェクト側の指定より厳しくなることがある。\n\nOSが要求されたポリシーを強制できない場合、サンドボックスなしで処理を続けるのではなく、サンドボックス化されたシェルはエラーで失敗する。ローカルサンドボックスは初期状態では無効であり、利用にはプロジェクトごとの設定が必要となる。",
+      "bodyEn": "## Local sandboxing\n\nThe GitHub Copilot app adds local sandboxing that can be configured per project for local repository and working tree sessions. It matters because limiting access to files, network resources, and credentials can reduce the potential impact of unintended commands on a user’s machine.\n\nLocal sandboxing is off by default. When enabled and configured for a project, its settings define the policy that the app requests whenever a sandboxed session starts.\n\n## Filesystem and network\n\nFilesystem controls allow projects to specify additional read/write folders, additional read-only folders, and denied folders. These lists determine which additional locations a sandboxed session requests permission to modify, which it can only read, and which it cannot access.\n\nNetwork controls cover both outbound internet access and local network access. Together with the filesystem restrictions, these settings let each project describe the access required for its local repository or working tree sessions, rather than applying one configuration across every project.\n\n## Git credentials\n\nCredential controls cover two specific forms of authentication. Git credentials can be made available for authenticated HTTPS Git operations, while GitHub CLI credentials can be provided for GitHub CLI authentication.\n\nThese options place credential access within the project’s requested sandbox policy. Combined with file and network controls, they limit the resources available to commands during a sandboxed session.\n\n## Effective policy\n\nThe policy configured for a project is the policy requested by the app when the session begins. The effective policy may be more restrictive when enterprise-managed settings apply, so a project’s requested access does not necessarily determine the full access ultimately granted.\n\nEnforcement also depends on the operating system. If the operating system cannot enforce the requested policy, the sandboxed shell fails with an error instead of running without a sandbox.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GitHub Copilotアプリに、プロジェクトごとのローカルサンドボックスが入ったんだね。これって大きいこと？",
+          "en": "The GitHub Copilot app now has local sandboxing for each project. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、意図しないコマンドの影響を、ファイル・通信・認証情報の制限で抑えられるとしておる。プロジェクト別に決められるのがポイントじゃ。",
+          "en": "The article says it can reduce harm from unintended commands by restricting files, networks, and credentials. The key change is that the policy can be set per project."
+        },
+        {
+          "s": "a",
+          "ja": "サンドボックスって、つまりどういうこと？アプリを箱の中に閉じ込める感じ？",
+          "en": "What does “sandbox” mean here? Is it like keeping the app inside a box?"
+        },
+        {
+          "s": "b",
+          "ja": "言葉の意味としては、処理を限られた範囲に閉じ込める仕組みじゃ。今回は、フォルダーや通信、認証情報へのアクセスを絞るのう。",
+          "en": "Broadly, a sandbox keeps a process within set boundaries. Here, it limits folder access, network connections, and access to credentials."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、必要なフォルダーだけ読み書き可にして、通信も絞って使いたいな。これなら安心して試せそう！",
+          "en": "I’d allow read and write access only for the folders I need, then restrict networking too. That sounds more reassuring to try!"
+        },
+        {
+          "s": "b",
+          "ja": "ただし、記事だと初期状態ではオフじゃ。OSが方針を強制できなければエラーで止まり、企業管理の設定でさらに厳しくなる場合もあるぞ。",
+          "en": "One caveat: the article says it’s off by default. If the OS can’t enforce the policy, the sandboxed shell errors out, and enterprise-managed settings may make it stricter."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T20:52:52.804Z"
     }
   }
 }

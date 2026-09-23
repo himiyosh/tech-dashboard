@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-23T07:45:10.395Z",
-  "count": 1136,
+  "generatedAt": "2026-09-23T10:00:48.164Z",
+  "count": 1138,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42625,6 +42625,82 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:43:11.880Z"
+    },
+    "8a94d8275f5d9bc0": {
+      "bodyJa": "GitHub Copilotアプリが、企業管理の設定を通じたOpenTelemetry（OTel）の構成に対応した。管理者はエージェントの活動データを組織の互換性のある監視ツールへ送り、セッションの分析や実行経路の調査に利用できる。\n\n## OTel対応\n\nOTelは、オープンソースの可観測性フレームワークだ。GitHub Copilotアプリでは、企業が管理する設定からOTelを構成し、エージェントがどのように動作し、モデルやツールとどのようにやり取りしたかを監視できる。活動データの出力先には、組織が利用する対応済みの監視ツールを指定する。\n\n## セッション分析\n\n管理者は、エージェントのセッション内で発生した処理の流れを追跡できる。記録の対象には、AIモデルへのリクエストや、エージェントが使用したツールが含まれる。これにより、セッション全体の流れと、モデル呼び出しやツール利用の関係を監視基盤上で確認できる。\n\n## 実行経路の調査\n\n予期しない動作が発生した場合は、エージェント実行のトレースを段階ごとに確認できる。組織が既に利用している互換性のある監視ツールへデータを送ることで、個々の処理をたどりながら実行経路を調査できる。\n\n## 企業での一元管理\n\nテレメトリー設定はチームをまたいで適用でき、開発者が個別に構成する必要はない。利用するには、企業のmanaged-settings.jsonファイルでtelemetryプロパティを設定する。そこでデータのエクスポートを有効にし、受信先となるエンドポイントを指定する。",
+      "bodyEn": "## OpenTelemetry Configuration\n\nThe GitHub Copilot app now supports OpenTelemetry configuration through enterprise-managed settings. This matters because administrators can export agent activity data to compatible monitoring tools, giving teams a centralized way to examine how Copilot agents perform and interact with models and tools.\n\nOpenTelemetry, also called OTel, is an open source observability framework. In this implementation, it can send agent traces to an organization’s existing monitoring tools. Those traces provide information about agent execution, including requests to AI models and the tools used during a session.\n\n## Analyze Agent Sessions\n\nTeams can use the exported activity data to follow the flow of an agent session. The records show the sequence of activity across model requests and tool use, allowing teams to examine the path taken during execution within their monitoring systems.\n\nThe same step-by-step traces can help teams investigate unexpected agent behavior. Rather than reviewing activity separately from their established monitoring setup, organizations can receive the data at a specified endpoint and examine it through compatible tools already used for monitoring.\n\n## Manage Monitoring Centrally\n\nAdministrators can apply telemetry settings across teams through the enterprise-managed configuration. This avoids requiring each developer to configure telemetry individually and provides centralized oversight of how agent activity data is exported.\n\nTo enable the export, an administrator configures the telemetry property in the enterprise’s managed-settings.json file. The configuration also specifies the endpoint that will receive the data. Once applied, these managed settings determine how agent traces are sent to the organization’s compatible observability systems for session analysis, execution-path investigation, and monitoring across teams.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でCopilotエージェントを使うとき、普段の管理や調査は何が変わるの？",
+          "en": "When teams use Copilot agents at work, what changes in day-to-day monitoring and troubleshooting?"
+        },
+        {
+          "s": "b",
+          "ja": "管理者がモデル呼び出しやツール利用の記録を監視基盤へ送り、実行の流れを追えるようになるんじゃ。OpenTelemetryは観測データを扱うオープンソースの仕組みじゃよ。",
+          "en": "Admins can send model calls and tool-use records to monitoring systems, then trace how sessions unfold. OpenTelemetry is an open-source framework for handling observability data."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ チームごとに設定していた感じ？",
+          "en": "Wasn’t that possible before? Did each team have to configure it separately?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、開発者が個別設定する代わりに、企業の管理設定をチーム横断で適用できる点が違いとして示されておる。以前の詳しい仕様までは触れていないのう。",
+          "en": "The stated difference is centralized enterprise settings across teams instead of individual developer configuration. It doesn’t spell out the earlier setup in more detail."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、エージェントの動きをまとめて追えて、想定外の挙動も調べやすくなることだね。",
+          "en": "So the big win is seeing agent activity in one place and making unexpected behavior easier to investigate."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。次はmanaged-settings.jsonでテレメトリを有効化し、送信先エンドポイントをどう指定するかに注目じゃよ。",
+          "en": "Exactly. Next, focus on enabling telemetry in managed-settings.json and specifying the endpoint that receives the exported data."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T09:07:03.178Z"
+    },
+    "f7f17bc326d98d09": {
+      "bodyJa": "## 支援付き承認\n\nGitHub Copilot for JetBrains 1.18.0では、エージェント作業の承認や会話を制御する新機能が追加された。低リスクの操作では承認による中断を減らしつつ、高リスクの判断は利用者に委ねることで、安全性を保ちながら作業を効率化できると説明されている。\n\n支援付き承認は、Copilotエージェントセッション向けのパブリックプレビューとして導入されたAI支援機能だ。リスクが低いツール呼び出しは自動的に承認される一方、よりリスクが高い操作では、引き続き利用者に判断を求める。すべての操作を一律に自動承認するのではなく、リスクに応じて承認方法を分ける仕組みとなる。\n\n## 会話の再編集\n\nCopilotエージェントセッションでは、以前に送信したユーザーメッセージを再編集できるようになった。置き換えるメッセージを送信する前に、Copilotは会話とファイル変更の両方を巻き戻す。これにより、過去の指示を書き換える際は、会話だけでなく、その後に行われたファイル変更も戻した状態から置き換えられる。\n\n## 組織共有スキル\n\n組織向けには、共有スキルと共有指示が追加された。GitHub Copilot for JetBrains 1.18.0では、エージェントとの会話を個別に制御する機能に加え、組織内でスキルや指示を共有する仕組みも利用できる。\n\n## CodexとMCP\n\nCodexエージェントでは、プランをレビューできるようになった。また、MCPツールには永続的なコントロールが加わり、継続して管理できる。支援付き承認、会話の再編集、組織で共有するスキルや指示と合わせ、エージェントセッションとツール利用に対する制御範囲が広げられている。",
+      "bodyEn": "## Copilot for JetBrains\n\nGitHub Copilot for JetBrains 1.18.0 adds new controls for agent sessions, including AI-assisted tool approvals, editable messages, shared organizational guidance, plan review, and persistent MCP controls. The changes matter because they reduce approval interruptions for low-risk actions while leaving higher-risk decisions with the user.\n\nThe release also gives organizations a way to share skills and instructions. Alongside the conversation and tool-management changes, this shared guidance is intended to support safer agent workflows.\n\n## AI-assisted tool approvals\n\nAI-assisted tool approvals, also called assisted approvals, are available in public preview for Copilot agent sessions. The feature automatically approves tool calls classified as low risk.\n\nHigher-risk actions are handled differently: Copilot continues to prompt the user for a decision. This distinction is intended to streamline low-risk activity without removing user control over actions carrying greater risk.\n\nAs a result, users should encounter fewer approval interruptions for low-risk tool calls. The approval requirement remains in place when an action is considered higher risk.\n\n## Re-edit a previous message\n\nUsers can now re-edit a previous user message during a Copilot agent session. This provides more control over an existing agent conversation rather than limiting changes to new messages added at the end.\n\nBefore the replacement message is sent, Copilot rewinds both the conversation and the associated file changes. The revised message therefore follows the rewind of those earlier conversational and file-level changes.\n\n## Plans and MCP tools\n\nThe update also supports reviewing plans with the Codex agent. This adds plan review to the controls available for agent-based work in JetBrains.\n\nMCP tools can be managed with persistent controls. Together with assisted approvals, message re-editing, and shared organizational skills and instructions, these controls expand how users and organizations can manage Copilot agent sessions.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段のコーディングで、Copilotに作業を任せると何が変わるの？確認ばかりで手が止まらなくなる？",
+          "en": "What changes when I let Copilot handle coding tasks? Will I keep getting stopped for approval prompts?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、低リスク操作は自動承認され、高リスク操作だけ人が判断するんじゃ。会話の修正や組織での指示共有もできるぞい。",
+          "en": "The article says low-risk actions can be approved automatically, while higher-risk ones still need your decision. You can also revise conversations and share organizational guidance."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？特に、一度送った指示を直したいときはどう違う？",
+          "en": "Wasn’t that possible before? What’s different when I want to fix an instruction I already sent?"
+        },
+        {
+          "s": "b",
+          "ja": "今回から過去のメッセージを再編集でき、送信前に会話とファイル変更が巻き戻ると説明されておる。従来の詳しい挙動までは示されておらんのう。",
+          "en": "It now lets you re-edit an earlier message, rewinding the conversation and file changes before you resend. The piece doesn’t spell out the previous behavior in detail."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、低リスクの確認は任せつつ、大事な判断は自分で握れるのが一番の収穫だね。指示のやり直しも楽そう！",
+          "en": "So the big win is letting low-risk approvals happen automatically while keeping important decisions in my hands. Redoing instructions sounds easier too!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。次はパブリックプレビュー中の支援付き承認に加え、Codexエージェントの計画レビューやMCPの永続設定にも注目じゃ。",
+          "en": "Exactly. Next, keep an eye on assisted approvals during public preview, along with Codex agent plan reviews and persistent MCP controls."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T09:07:55.765Z"
     }
   }
 }

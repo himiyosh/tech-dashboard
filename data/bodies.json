@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T06:00:46.279Z",
+  "generatedAt": "2026-09-23T06:58:17.626Z",
   "count": 1138,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -2431,44 +2431,6 @@
           "s": "b",
           "ja": "その通りじゃ。どちらがどれだけ速いかは、記事のベンチマーク結果を見て確認するのがポイントじゃよ。",
           "en": "Exactly. The key is to check the article’s benchmark results before deciding which version is faster and by how much."
-        }
-      ]
-    },
-    "3377e6f4d425d156": {
-      "bodyJa": "セキュリティ運用の現場では、日々大量のアラートを人手でさばく負荷が長年の課題となってきた。今回取り上げるのは、Microsoft のクラウド型 SIEM/SOAR である Microsoft Sentinel と、コード生成支援ツール GitHub Copilot を組み合わせ、脅威検出からインシデント対応までを一気通貫で自動化する「AI SoC ハーネス」の構築手法を解説した記事である。\n\n前提として、SOC(Security Operations Center)は組織のログを集約・分析し、攻撃の兆候を検知して対応する部門を指す。Sentinel はこの中核を担う製品で、KQL(Kusto Query Language)による検索、プレイブックによる自動対応、脅威インテリジェンスの取り込みなどを備える。ただし検知ルールの作成やクエリの調整、対応手順の整備には専門知識と工数が必要で、ここが自動化の余地とされてきた。\n\n記事が提案する「ハーネス」とは、こうした一連のワークフローをつなぎ合わせ、AI が補助する枠組みを指すと見られる。具体的には、GitHub Copilot を使って KQL クエリや Logic Apps/プレイブックのコード、検知ロジックの雛形を生成し、アナリストの実装負担を軽減する狙いがある。開発環境上で Copilot に自然言語で指示を与え、Sentinel 側で動く自動化資産を素早く用意するアプローチと考えられる。\n\n背景には、生成 AI をセキュリティ運用へ応用する動きの広がりがある。Microsoft は本来、セキュリティ特化型の Microsoft Security Copilot を提供しており、Sentinel との統合による調査支援を進めている。本記事はそれとは別に、コーディング支援である GitHub Copilot を運用自動化の資産づくりに転用する点に独自性があると位置づけられる。同様の発想は他社でも見られ、SOAR やハイパーオートメーションと AI を掛け合わせる潮流の一環といえる。\n\n期待される効果は、反復作業の削減とアナリストの高付加価値業務への集中である。一方で、AI が生成したクエリや対応コードは誤検知や過剰な自動対応を招く可能性があり、本番投入前の検証やレビュー、権限設計は不可欠だ。生成物の品質は指示の精度に左右されるため、プロンプトの工夫や既存ルールとの整合確認も欠かせない。SOC の完全自動化を目指すより、人の判断を残しつつ効率化を図る現実的な設計として、今後こうした手法の検証事例が増えていく可能性がある。",
-      "bodyEn": "Security operations teams face a persistent gap between the volume of alerts they receive and the human capacity to triage them. A recent walkthrough published on Zenn explores one response to that problem: combining Microsoft Sentinel with GitHub Copilot to construct what the author calls an \"AI SoC harness,\" a scaffolding that stitches together detection, enrichment, and response steps so that much of the routine analyst workload can be handled or accelerated by AI.\n\nMicrosoft Sentinel is Microsoft's cloud-native SIEM and SOAR platform, built on Azure. As a SIEM (security information and event management) system, it ingests logs and telemetry from across an environment; as a SOAR (security orchestration, automation and response) layer, it can trigger automated playbooks when detections fire. Analysts typically write detection logic and hunting queries in Kusto Query Language, or KQL, and build response automation using Azure Logic Apps. The friction the article addresses is that these components are powerful but require fluency in KQL, Logic Apps connectors, and the Sentinel data schema, which slows down both rule authoring and incident handling.\n\nThe proposed harness uses GitHub Copilot as a coding assistant to lower that barrier. In practice this appears to mean using Copilot to draft and refine KQL detection queries, generate boilerplate for Logic Apps playbooks, produce infrastructure-as-code definitions such as ARM or Bicep templates for deploying Sentinel resources, and write the glue scripts that connect Sentinel's APIs to external systems. Because Copilot is trained on large amounts of public code, it can suggest query patterns and automation snippets from natural-language prompts, which the author frames as a way to move from threat detection through to incident response with less manual coding. The term \"harness\" is apt: rather than a single product, it describes a repeatable structure of prompts, templates, and automation that a team assembles and version-controls, likely in a GitHub repository alongside their detection content.\n\nAn important distinction worth clarifying is that GitHub Copilot is not the same as Microsoft Security Copilot. GitHub Copilot is a general-purpose developer tool that assists with writing code, whereas Microsoft Security Copilot is a separate, security-specific generative AI product designed to summarize incidents, guide investigations, and integrate directly with Sentinel and Microsoft Defender XDR. The approach described here uses the developer-focused tool to build and maintain the automation itself, which is a different and complementary pattern to deploying Security Copilot for in-console analyst assistance. Readers evaluating either option should keep the two products separate when planning licensing and workflow design.\n\nThe broader context is an industry-wide push toward what vendors increasingly call agentic security operations, where AI systems do not merely surface information but take graduated actions under human oversight. Microsoft, Google with its Chronicle and Gemini-based tooling, and CrowdStrike among others have all announced AI features aimed at automating tier-one SOC tasks such as alert triage, enrichment, and drafting incident reports. A harness built on Sentinel and Copilot fits this trend from the practitioner side: it treats detection engineering and response automation as software that can be co-authored with AI, kept in source control, tested, and continuously improved. The prerequisites are familiar to platform-engineering teams, including a working knowledge of Azure, the Sentinel data connectors relevant to the environment, and comfortable use of Git-based workflows.\n\nSeveral caveats deserve emphasis. AI-generated KQL and automation code should be reviewed and tested before deployment, because a flawed detection rule can produce false negatives that miss real threats or false positives that amplify alert fatigue. Automated response actions carry operational risk if they can isolate hosts or disable accounts without adequate guardrails, so human-in-the-loop approval for consequential steps remains a common recommendation. There are also data-handling considerations when security telemetry or code is exposed to AI services, which teams should reconcile with their compliance requirements. As a blog-sourced tutorial rather than an official reference architecture, the piece is best read as a practical pattern to adapt rather than a turnkey solution. Still, it reflects a genuine and growing interest in using mainstream developer AI tools to reduce the engineering overhead of running a modern SOC.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T05:22:23.882Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「AI SoCハーネス」って何？ AIがセキュリティ対応を全部やる仕組みなの？",
-          "en": "What’s an “AI SoC harness”? Is it a system where AI handles all the security work?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、Microsoft SentinelとGitHub Copilotをつなぎ、脅威検出から対応までを自動化する仕組みじゃな。",
-          "en": "Simply put, it connects Microsoft Sentinel with GitHub Copilot to automate workflows from threat detection through incident response, according to the article."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ セキュリティで本当に使えるかも確かめられる？",
-          "en": "What’s the benefit? Can you also check whether it’s actually useful for security work?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、SOC担当者の負担を大きく減らせるそうじゃ。実際に手を動かすPoCの進め方で、有用性を評価できる形じゃよ。",
-          "en": "The article says it can significantly reduce analysts’ workload. It also presents a hands-on PoC process for evaluating whether the approach is useful."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、AIに任せようと唱えるだけじゃなく、組み合わせて作り、試して評価するんだね。",
-          "en": "So it’s not just saying, “Let AI handle it.” You build the setup, try it, and evaluate it."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事は構築と評価の手順を扱っているので、PoCで実際にどんな結果が出るかが見どころじゃな。",
-          "en": "Exactly. Since the article focuses on building and evaluating the setup, the key point is what results emerge from the PoC."
         }
       ]
     },
@@ -42701,6 +42663,44 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:43:11.880Z"
+    },
+    "b81e3b027c5f082f": {
+      "bodyJa": "## Google AIプラン\n\nGoogle AIプランの加入者は、Google Colabのプレミアム特典を利用できるようになった。高速なアクセラレータや、より強力なマシンへの優先アクセスに加え、Google AI Ultraでは長時間の学習を支える機能も提供される。\n\n## 高速アクセラレータ\n\nGoogle AIの加入者には、Colabで高速なアクセラレータと高性能なマシンが優先的に提供される。通常の利用機能だけでなく、処理性能に関わるプレミアムなColab特典へのアクセスがGoogle AIプランに組み込まれる形となる。\n\nGoogle AIプランは、Colabのプレミアム特典に加え、拡張されたクラウドストレージ、Googleの最も高性能なモデルへの幅広いアクセス、Geminiアプリの強化機能、Workspaceとの統合も含むと説明されている。\n\n## Ultraの追加機能\n\nGoogle AI Ultraの加入者は、中断のないバックグラウンド実行とPremium GPUも利用できる。これにより、ブラウザのタブを開いたままにしなくても、長時間の学習処理を完了できるとされる。\n\nまた、開発者向けツールについては、Google AntigravityやGoogle AI StudioへのプレミアムアクセスもGoogle AIプランに含まれる。\n\n## Colab契約\n\nすでにColabを契約している場合、その契約内容に変更はない。Google AIプランの特典は既存のColab契約と重ねて利用でき、プレミアムなColab機能へ、さらに多くアクセスできるようになる。",
+      "bodyEn": "## Premium Google Colab benefits\n\nGoogle Colab is now included among the benefits offered through Google AI plans. The change matters for subscribers running demanding or lengthy work because it provides priority access to faster accelerators and more powerful machines.\n\nStarting with the announcement, Google AI subscribers receive these premium Colab benefits through their plans. Priority access is intended to give subscribers greater access to the faster accelerators and higher-powered machines available in Colab.\n\n## Google AI Ultra subscribers\n\nGoogle AI Ultra subscribers receive additional Colab capabilities. These include uninterrupted background execution and Premium GPU access.\n\nBackground execution allows long training runs to continue without requiring the user to keep a browser tab open. This means a lengthy run can finish while operating in the background rather than depending on an open browser session. Premium GPU access is also specifically included among the additional benefits unlocked for Ultra subscribers.\n\n## Google AI plans\n\nAccording to the announcement, Google AI plans are now the best way to obtain premium Colab benefits. The plans also include expanded cloud storage, broader access to Google’s most capable models, enhanced features in the Gemini app, and Workspace integrations.\n\nSubscribers additionally receive premium access to developer tools, including Google Antigravity and Google AI Studio. These benefits are offered alongside the Colab access rather than as replacements for the faster accelerators, more powerful machines, background execution, or Premium GPU access described for the relevant plan levels.\n\n## Existing Colab subscriptions\n\nPeople who already subscribe to Colab do not need to change their existing subscriptions. The announcement says there are no changes to those subscriptions.\n\nGoogle AI subscription benefits can also be stacked with an existing Colab subscription. Doing so provides even more access to premium Colab features, while allowing the current Colab subscription to remain in place.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段ColabでAIを学習させるとき、何が変わるの？ブラウザをずっと開いておかなくてよくなる？",
+          "en": "What changes when I train AI in Colab? Can I finally close the browser instead of leaving it open?"
+        },
+        {
+          "s": "b",
+          "ja": "Google AIでは高速アクセラレータや高性能マシンが優先提供されるんじゃ。Ultraなら、ブラウザを閉じても長時間の処理を続けられるとあるぞ。",
+          "en": "Google AI subscribers get priority access to faster accelerators and stronger machines. The post says Ultra also keeps long jobs running after you close the browser."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！前のGoogle AIプランでは、こういうColabの機能は使えなかったの？",
+          "en": "Wow, that’s great! Were these Colab features unavailable through Google AI plans before?"
+        },
+        {
+          "s": "b",
+          "ja": "以前との細かな比較までは示されておらんが、今回から特典に加わる形じゃ。既存のColab契約には変更がないとも説明されておる。",
+          "en": "The post doesn’t give a detailed before-and-after comparison, but these benefits are being added now. It also says existing Colab subscriptions won’t change."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、Ultraなら重い学習をブラウザに張り付かず続けられることだね。Premium GPUも使えるんだ。",
+          "en": "The biggest win is that Ultra can keep heavy training jobs going without babysitting a browser tab. And it includes Premium GPU access too."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。次は自分にUltraが必要か、既存のColab契約と特典を重ねるかに注目するとよいのう。",
+          "en": "Exactly. Next, consider whether you need Ultra and whether stacking its benefits with an existing Colab subscription makes sense for you."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T06:06:41.927Z"
     }
   }
 }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-24T20:00:54.214Z",
+  "generatedAt": "2026-09-24T21:01:01.601Z",
   "month": "2026-09",
-  "count": 285,
+  "count": 286,
   "entries": [
     {
       "id": "2835af2044a289da",
@@ -9,14 +9,16 @@
       "sourceType": "release",
       "url": "https://github.com/langchain-ai/langchain/releases/tag/langchain-core%3D%3D1.6.5",
       "title": "langchain-core==1.6.5",
-      "titleJa": "",
+      "titleJa": "langchain-core 1.6.5 リリース",
       "titleEn": "langchain-core==1.6.5",
       "lang": "en",
       "publishedAt": "2026-09-24T18:11:24.000Z",
       "collectedAt": "2026-09-24T20:00:36.123Z",
       "tags": [
         "agent",
+        "core-library",
         "langchain",
+        "patch-release",
         "release"
       ],
       "category": "agent-fw",
@@ -41,10 +43,10 @@
       "sourceType": "blog",
       "url": "https://devblogs.microsoft.com/foundry/egress-controls-hosted-agent/",
       "title": "Control where your hosted agent connects with network egress in Foundry Agent Service",
-      "titleJa": "",
+      "titleJa": "Foundry Agent Serviceのネットワーク送信制御でホスト型エージェントの接続先を管理",
       "titleEn": "Control where your hosted agent connects with network egress in Foundry Agent Service",
-      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「Control where your hosted agent connects with network egress in Foundry Agent Service」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Control where your hosted agent connects with network egress in Foundry Agent Service",
+      "summaryJa": "Foundry Agent Serviceのネットワーク送信制御プレビューは、ホスト型エージェントの接続先をコード外の明示的なポリシーで制限し、実際の通信を観察して検証できる。SLAがなく本番向けではないが、開発・評価時に意図しない外部送信を把握したい開発者に役立つ。",
+      "summaryEn": "Foundry Agent Service previews network egress controls that define destinations outside agent code. Without an SLA or production support, they help teams test outbound access.",
       "lang": "en",
       "publishedAt": "2026-09-24T17:55:06.000Z",
       "collectedAt": "2026-09-24T20:00:36.123Z",
@@ -52,13 +54,16 @@
         "agent",
         "ai",
         "foundry",
-        "microsoft"
+        "hosted-agents",
+        "microsoft",
+        "network-egress",
+        "preview",
+        "security"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Keep destination rules outside your agent code. Observe real calls, then test an explicit outbound boundary Preview. This walkthrough is for development and evaluation. Network egress controls are not GA, have no preview SLA, and are not intended for production use. [1] Imagine an invoice agent that looks up a vendor and checks a payment record. Its job needs two APIs. Then a document includes an unfamiliar upload link, or a new helper library follows a URL you did not expect. The question is no longer just “Which tools did I give the agent?” It is “Where can this process send a request?” In this walkthrough, we will give that invoice agent an explicit destination policy, observe its calls in a test environment, and check that an unapproved destination stays unreachable when enforcement is enabled. The application still owns its business logic and authentication.",
       "feedSnippet": "Define and attach an outbound policy to a hosted agent in Microsoft Foundry, observe calls in Audit, and verify allowed and denied destinations under Enforced mode. The post Control where your hosted agent connects with network egress in Foundry Agent Service appeared first on Microsoft Foundry Blog .",
       "excerptOrigin": "article",
@@ -69,6 +74,36 @@
         "width": 0,
         "height": 0,
         "source": "og"
+      },
+      "evergreen": true
+    },
+    {
+      "id": "5e3f99e5cfa30c6f",
+      "source": "cline-releases",
+      "sourceType": "release",
+      "url": "https://github.com/cline/cline/releases/tag/v4.1.21",
+      "title": "Cline Releases v4.1.21",
+      "titleJa": "",
+      "titleEn": "Cline Releases v4.1.21",
+      "lang": "en",
+      "publishedAt": "2026-09-24T16:16:10.000Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
+      "tags": [
+        "cline",
+        "release"
+      ],
+      "category": "cline",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Added New provider: ai&amp;, an OpenAI-compatible endpoint serving open-weight models from Japan. Changed Refreshed the model catalog to 6,386 models across 209 providers. The resolved default model changes for 19 providers that do not pin one, 11 of them to Claude Opus 5.5 (including GitHub Copilot and Vertex). If you use one of those providers without pinning a model, expect a different default. Raised the minimum js-yaml version to 4.3.2 to pick up a security fix in the parser used to read rule and skill frontmatter. Fixed Long replies on local models (llama.cpp, Ollama, LM Studio) that hit the output-token limit now compact the conversation and retry once instead of ending the task. These servers cap generation at whatever context is left, regardless of the output budget you set. If co",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/in/15368?s=60&v=4",
+        "alt": "Cline Releases v4.1.21",
+        "width": 0,
+        "height": 0,
+        "source": "media"
       }
     },
     {
@@ -77,25 +112,28 @@
       "sourceType": "blog",
       "url": "https://devblogs.microsoft.com/foundry/from-chatbots-to-automated-assistants-routines-in-microsoft-foundry-are-now-generally-available/",
       "title": "From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available",
-      "titleJa": "",
+      "titleJa": "チャットボットから自動化エージェントへ：Microsoft FoundryのRoutinesが一般提供開始",
       "titleEn": "From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available",
-      "summaryJa": "このエントリは microsoft-foundry から収集した copilot 領域の最新アップデートです。原題:「From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available",
+      "summaryJa": "Microsoft FoundryのRoutinesが一般提供となり、エージェントはGitHubの新規issueやMicrosoft Teamsの投稿を契機に処理を継続できる。対話待ちではない業務自動化を必要とする組織に役立つ。",
+      "summaryEn": "Microsoft Foundry Routines are now generally available, letting agents act on new GitHub issues or Microsoft Teams messages and sustain workflows without chat prompts.",
       "lang": "en",
       "publishedAt": "2026-09-24T15:00:57.000Z",
       "collectedAt": "2026-09-24T20:00:36.123Z",
       "tags": [
+        "agent",
         "ai",
+        "automation",
         "foundry",
-        "microsoft"
+        "microsoft",
+        "routines"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "contentSnippet": "Agents are rapidly evolving beyond chat. The first generation of agents waited for a person to send a message. Today, organizations want agents that can monitor work, respond to business events, and continue tasks over time. An agent might triage a newly opened GitHub issue, respond when a message appears in a Microsoft Teams channel, […] The post From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available appeared first on Microsoft Foundry Blog .",
       "evergreen": true,
-      "knowledgeEligible": false,
-      "contentSnippet": "Agents are rapidly evolving beyond chat. The first generation of agents waited for a person to send a message. Today, organizations want agents that can monitor work, respond to business events, and continue tasks over time. An agent might triage a newly opened GitHub issue, respond when a message appears in a Microsoft Teams channel, […] The post From Chatbots to Automated Agents: Routines in Microsoft Foundry Are Now Generally Available appeared first on Microsoft Foundry Blog ."
+      "knowledgeEligible": false
     },
     {
       "id": "6b54ab7b6e6855f1",
@@ -109,7 +147,7 @@
       "summaryEn": "AlloyDB previews PostgreSQL for agents, launching isolated instances within seconds and scaling them down automatically. Agent fleets gain live data without burdening critical systems.",
       "lang": "en",
       "publishedAt": "2026-09-24T14:30:00.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "agent",
         "alloydb",
@@ -123,8 +161,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered",
-      "evergreen": true
+      "evergreen": true,
+      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered"
     },
     {
       "id": "2720d05187170c6b",
@@ -205,7 +243,7 @@
       "titleEn": "Cline Desktop v0.0.35",
       "lang": "en",
       "publishedAt": "2026-09-24T08:34:33.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "cline",
         "desktop",
@@ -237,7 +275,7 @@
       "titleEn": "Cline CLI v3.0.65",
       "lang": "en",
       "publishedAt": "2026-09-24T05:54:42.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "cline",
         "llama-cpp",
@@ -271,7 +309,7 @@
       "titleEn": "Cline SDK v0.0.86",
       "lang": "en",
       "publishedAt": "2026-09-24T05:43:55.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "cline",
         "context-compaction",
@@ -304,7 +342,7 @@
       "titleEn": "Ollama Releases v0.34.4",
       "lang": "en",
       "publishedAt": "2026-09-24T04:45:43.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "apple-silicon",
         "macos",
@@ -474,7 +512,7 @@
       "titleEn": "v0.34.4-rc1: mlxrunner: Update XGrammar to 0.2.7 for structured outputs",
       "lang": "en",
       "publishedAt": "2026-09-23T23:36:46.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "gemma-4",
         "mlx",
@@ -652,7 +690,7 @@
       "titleEn": "Inside Anthropic's molecular biology lab",
       "lang": "en",
       "publishedAt": "2026-09-23T18:01:32.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "anthropic",
         "life-sciences",
@@ -1021,7 +1059,7 @@
       "titleEn": "v0.34.4-rc0: mlx: speed up Qwen 3.8 prompt processing (#18550)",
       "lang": "en",
       "publishedAt": "2026-09-23T00:53:23.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "gemma-4",
         "mlx",
@@ -1368,7 +1406,7 @@
       "titleEn": "Cline Releases v4.1.20",
       "lang": "en",
       "publishedAt": "2026-09-22T20:45:19.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "cline",
         "model-catalog",
@@ -1400,7 +1438,7 @@
       "titleEn": "Ollama Releases v0.34.3",
       "lang": "en",
       "publishedAt": "2026-09-22T20:42:48.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "api",
         "apple-silicon",
@@ -1606,7 +1644,7 @@
       "titleEn": "NVIDIA Isaac ROS 5.0 Advances Agentic, Open Source Robotics Development",
       "lang": "en",
       "publishedAt": "2026-09-22T12:00:41.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -2676,7 +2714,7 @@
       "titleEn": "Ollama Releases v0.34.3-rc1",
       "lang": "en",
       "publishedAt": "2026-09-19T00:15:35.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "apple-silicon",
         "hugging-face",
@@ -2710,7 +2748,7 @@
       "titleEn": "Ollama Releases v0.34.3-rc0",
       "lang": "en",
       "publishedAt": "2026-09-18T21:10:53.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "github",
         "ollama",
@@ -3189,7 +3227,7 @@
       "titleEn": "Ollama Releases v0.34.2",
       "lang": "en",
       "publishedAt": "2026-09-17T23:04:24.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "desktop-app",
         "macos",
@@ -3364,7 +3402,7 @@
       "titleEn": "Ollama Releases v0.34.2-rc3",
       "lang": "en",
       "publishedAt": "2026-09-17T18:49:24.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "local-llm",
         "ollama",
@@ -3431,7 +3469,7 @@
       "titleEn": "v0.34.2-rc2: mlxrunner: Release freed KV buffers during speculative decode",
       "lang": "en",
       "publishedAt": "2026-09-17T16:45:01.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "memory-management",
         "mlx",
@@ -3940,7 +3978,7 @@
       "titleEn": "v0.34.2-rc1: mlxrunner: lay out model by contract, checkpoint and construction",
       "lang": "en",
       "publishedAt": "2026-09-16T21:06:08.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "code-refactoring",
         "mlxrunner",
@@ -4533,8 +4571,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Introducing Foundry Dev Pack: One Command to Start Building on Microsoft Foundry Setting up your Microsoft Foundry environment just got a lot simpler. We launched Foundry Dev Pack to consolidate initial installation steps into a single setup process. The Foundry Dev Pack is an all-in-one installer that prepares your machine for Foundry development by installing the tools that you’ll need across your terminal, IDE, or coding agents. Scaffold, deploy, evaluate, and automate from the terminal. Includes Azure CLI ( az ), Azure Developer CLI ( azd ) and the Microsoft Foundry Extension for azd . Give coding agents reusable guidance for Foundry workflows. Build, test, evaluate, and deploy from the VS Code editor. Installed only if VS Code is present. Design and deploy hosted agents from a guided canvas. Installed only if GitHub Copilot App is present.",
       "excerptOrigin": "article",
       "feedSnippet": "Foundry Dev Pack prepares your machine for Microsoft Foundry development with an all-in-one installer for the tools you need across the terminal, VS Code, and coding agents. The post Introducing Foundry Dev Pack: One Command to Start Building on Microsoft Foundry appeared first on Microsoft Foundry Blog .",
@@ -4545,7 +4581,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "8217b1ba9172bfd3",
@@ -5552,6 +5590,8 @@
       "title": "AI Scan for pull request APIs in public preview",
       "titleJa": "プルリクエスト向けAI Scan APIが公開プレビューに",
       "titleEn": "AI Scan for pull request APIs in public preview",
+      "summaryJa": "GitHub code scanningのプルリクエスト向けAI Scanを、組織・リポジトリ単位のREST APIで取得・変更できる公開プレビューが始まりました。組織側で無効な場合は個別設定で上書きできず、選択したリポジトリへの導入を自動化できます。",
+      "summaryEn": "GitHub code scanning adds public-preview REST APIs for reading and changing AI Scan settings across organizations and individual repositories, helping teams automate selective rollout.",
       "lang": "en",
       "publishedAt": "2026-09-10T20:20:58.000Z",
       "collectedAt": "2026-09-16T13:52:10.940Z",
@@ -5567,7 +5607,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "You can now manage GitHub code scanning’s AI Scan for pull request enablement with REST API endpoints at the organization and repository levels. This public preview gives teams a programmatic way to roll out AI-powered security detections for pull requests across select repositories without manually configuring each setting in the GitHub UI. Use the new organization and repository APIs to read and update whether AI Scan for pull requests is enabled. Organization settings control whether pull request scans can run across the organization, and repository settings let you turn scans on or off for individual repositories. Repository settings do not override an organization-level disabled state. To view and update the status of AI Scan for selected repositories, users can use the /orgs/{org}/code-scanning/ai-scan and /repos/{owner}/{repo}/code-scanning/ai-scan endpoints.",
       "excerptOrigin": "article",
       "feedSnippet": "You can now manage GitHub code scanning’s AI Scan for pull request enablement with REST API endpoints at the organization and repository levels. This public preview gives teams a programmatic… The post AI Scan for pull request APIs in public preview appeared first on The GitHub Blog .",
@@ -5641,8 +5681,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Azure AI Speech continues to deliver regular improvements to LLM Speech throughout the year, helping developers build more accurate and capable voice experiences. We’re announcing LLM Speech 2607 , our latest model update, which brings improvements in multilingual recognition and mixed-language audio inputs, along with an enhanced experience for the phrase list feature. Whether you’re building voice agents, meeting transcription solutions, contact center experiences, or online meeting applications, LLM Speech 2607 delivers transcripts you can trust for high-stakes, high-volume communication with no changes to your application architecture. Try it out now in the Foundry Playground (Azure Speech – Speech to Text), or see REST API or SDK modalities in our public docs .",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how Azure AI Speech LLM 2607 improves multilingual and mixed-language recognition, lowers latency, and simplifies domain-specific customization with enhanced phrase lists. The post Announcing Azure AI Speech LLM 2607: Better Multilingual Accuracy, Easier Customization appeared first on Microsoft Foundry Blog .",
@@ -5653,7 +5691,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "6172f21847b07791",
@@ -5976,8 +6016,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Microsoft Foundry’s July and August 2026 updates make Hosted Agents, Voice Live integration, and Toolboxes generally available; expand Claude tools hosted on Azure; update Model Router’s regions and model pool; add Foundry Local capabilities; and advance the Python, JavaScript, Java, and .NET SDKs. Author’s note : After a long summer break and a small US holiday, we have a lot to catch up on! I’ve brought July and August’s Foundry updates together in one roundup, with code examples and migration notes to help you get started. Hosted Agents, Voice Live integration, and Toolboxes are now generally available, giving developers a managed runtime for agent code, real-time voice, and reusable tools managed outside the agent. Claude deployments hosted on Azure add structured outputs, Web search, Web fetch, MCP connector, and Tool search, with the MCP connector using the beta API.",
       "excerptOrigin": "article",
       "feedSnippet": "Catch up on July and August in Microsoft Foundry: stable Hosted Agent and Toolbox SDK paths, Claude tools on Azure-hosted deployments, Model Router updates, local inference improvements, and the SDK migrations worth checking before you upgrade. The post What’s new in Microsoft Foundry: July and August 2026 appeared first on Microsoft Foundry Blog .",
@@ -5988,7 +6026,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "d0a7ad44880423f4",
@@ -8011,7 +8051,7 @@
       "summaryEn": "Semantic Kernel .NET 1.80.1 updates the SDK to 10.0.303 and refreshes OpenAPI dependencies, CI configuration, and tests, improving reliability for .NET developers.",
       "lang": "en",
       "publishedAt": "2026-09-03T18:41:24.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "agent",
         "ci",
@@ -9434,7 +9474,7 @@
       "summaryEn": "Claude Fable 5.1 is introduced as a new model version. While capabilities and availability are not detailed, viewers can quickly identify the Claude lineup update.",
       "lang": "en",
       "publishedAt": "2026-09-01T19:21:24.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "anthropic",
         "claude-fable-5-1",
@@ -9459,7 +9499,7 @@
       "summaryEn": "Claude Fable 5.1 is introduced as a new version in an Anthropic YouTube video, helping Claude users and developers track the latest model update.",
       "lang": "en",
       "publishedAt": "2026-09-01T18:02:31.000Z",
-      "collectedAt": "2026-09-24T15:00:39.839Z",
+      "collectedAt": "2026-09-24T21:00:43.600Z",
       "tags": [
         "anthropic",
         "claude-fable",

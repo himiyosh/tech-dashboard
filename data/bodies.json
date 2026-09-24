@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-24T04:30:46.189Z",
-  "count": 1139,
+  "generatedAt": "2026-09-24T05:30:44.503Z",
+  "count": 1140,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42739,6 +42739,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:17:07.441Z"
+    },
+    "d9eb9b12a750774d": {
+      "bodyJa": "## v0.34.4\n\nOllama v0.34.4が公開された。断続的に発生する「model not found」エラーへの対処に加え、思考モデルの構造化出力やMLXでの処理が改善され、ローカル利用時の信頼性と性能を高める変更が盛り込まれている。\n\n## serverの修正\n\nserverでは、モデルの利用時に断続的に発生していた「model not found」エラーが修正された。また、思考モデルに対する構造化出力を、単一のパスで適用するよう変更された。構造化出力に関する処理を1回で行う形に整理した更新となる。\n\n## appの検出処理\n\nappでは、ChatGPTおよびCodexの検出時にSystem Eventsを使用しないよう変更された。あわせて、基盤部分ではllama.cppのバージョンが更新されている。これらはserverのエラー修正や構造化出力の変更とは別に、アプリ側の検出処理と構成要素を更新する内容だ。\n\n## MLXの高速化\n\nMLXでは、Gemma 4の画像解像度を動的に選択する処理が追加された。固定的に扱うのではなく、画像解像度を動的に決める変更となっている。さらに、Qwen 3.8のプロンプト処理が高速化されたほか、MLX自体のバージョンも引き上げられた。変更履歴の範囲はv0.34.3からv0.34.4-rc0までとされている。",
+      "bodyEn": "## Ollama v0.34.4\n\nOllama v0.34.4 focuses on reliability and performance for local users. Released on September 24, 2026, it fixes intermittent model lookup failures, streamlines structured output for thinking models, and includes several MLX-related improvements.\n\nThe changes cover the server, app, llama.cpp, and MLX components rather than introducing a single headline feature.\n\n## Model not found errors\n\nThe server now fixes intermittent “model not found” errors. Because these failures were sporadic, the update is intended to make model lookup more reliable during local use.\n\nThe server also changes how structured outputs are handled with thinking models. In v0.34.4, structured outputs are applied in a single pass, simplifying that part of the processing flow.\n\n## ChatGPT/Codex detection\n\nThe app has been changed to avoid System Events when performing ChatGPT/Codex detection. The release notes do not describe further behavioral changes associated with this adjustment.\n\nOllama v0.34.4 also includes a llama.cpp version update and an MLX version bump. These dependency updates appear alongside the more specific server, app, and MLX changes in the release.\n\n## MLX improvements\n\nFor Gemma 4, MLX can now select image resolution dynamically. This adds adaptive handling of Gemma 4 images rather than relying on a single fixed resolution selection.\n\nMLX also speeds up prompt processing for Qwen 3.8. Together with the model lookup fix, this performance improvement is one of the changes aimed directly at the experience of local users.\n\nThe published full changelog is presented as the comparison from v0.34.3 to v0.34.4-rc0.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Ollama v0.34.4で、たまに出る「model not found」が直ったって、モデル自体が消えていたわけじゃないの？",
+          "en": "Ollama v0.34.4 fixes the occasional “model not found” error. Does that mean the model itself wasn’t actually disappearing?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、断続的なモデル検索の失敗を修正したとしているぞ。モデルが消えたというより、見つける処理への対処じゃな。",
+          "en": "The article says it fixes intermittent model lookup failures. So it addresses the process that finds a model, rather than saying the model vanished."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、棚にある本を時々見失うのが直る感じ？ローカルで使う人ほど、呼び出しが安定するってことかな。",
+          "en": "So it’s like no longer losing track of a book that’s still on the shelf? Does that make local use more reliable?"
+        },
+        {
+          "s": "b",
+          "ja": "記載された変更では、思考モデルの構造化出力も1回で適用するぞ。決まった形の回答を扱う処理がすっきりする、という意味じゃ。",
+          "en": "The listed changes also apply structured output to thinking models in one pass. Structured output means answers in a set format, so handling them should be more streamlined."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、ローカル利用で検索の失敗を減らし、決まった形式の回答や処理速度も改善した更新なんだね！",
+          "en": "So this update reduces lookup failures for local users while improving formatted answers and processing speed. Nice!"
+        },
+        {
+          "s": "b",
+          "ja": "リリース内容では、MLXでGemma 4の画像解像度を動的に選び、Qwen 3.8のプロンプト処理も高速化しておる。改善点ごとに対象が違う点は押さえたいのう。",
+          "en": "The release also adds dynamic Gemma 4 image resolution and faster Qwen 3.8 prompt processing in MLX. Just remember that each improvement targets a different area."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-24T04:36:45.383Z"
     }
   }
 }

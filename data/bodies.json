@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-24T01:30:53.059Z",
-  "count": 1136,
+  "generatedAt": "2026-09-24T02:12:31.873Z",
+  "count": 1137,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42625,6 +42625,44 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:43:11.880Z"
+    },
+    "74d79f268b0ba471": {
+      "bodyJa": "## 2つのボット\n\nCursorは、コードリリースの最終工程を担う2つのボットとして、RolloutsとSecurity Reviewの提供を開始した。Rolloutsはデプロイ中の変更を環境ごとに監視し、Security ReviewはすべてのPRを確認して、悪用可能なバグを報告する。どちらもTeamsプランと企業プランで利用できる。\n\n## Rollouts\n\nRolloutsはすべてのPRにモニターを割り当て、変更がデプロイされる過程を追跡する。FiretigerのChange MonitorsをBot Development Kitで再構築したCursor版の機能とされる。ダッシュボードから有効化し、ソース管理、デプロイシステム、テレメトリプロバイダーを接続すると、次のPRから監視が始まる。\n\n## モニタリングプラン\n\nPRがオープンされると、Rolloutsはdiffと、変更が影響するシステムを読み取り、モニタリングプランをPRコメントとして投稿する。プランには、特定されたリスク、変更が意図する効果、確認対象のシグナル、検証を難しくする計測上の不足点が記載される。PR上で内容を編集した場合は、編集後のプランが使われる。\n\n## 環境ごとの判定\n\n変更のコミットに対応するデプロイイベントをきっかけに、Rolloutsはログ、メトリクス、トレースを対象としてプランを実行する。判定は環境ごとに行われ、結果は「正常を確認済み」「リグレッションを検出」「判定不能」のいずれかで報告される。このため、ステージングで検証済みでも、本番環境では問題として検出される場合がある。\n\nRolloutsはエラーやレイテンシーのシグナルに加え、変更が意図した効果を発揮しているかも確認し、判定時点でPRへ結果を報告する。リグレッションを検出した場合は、原因と疑われる変更を特定し、その作成者へ通知する。Security Reviewは、PR内の悪用可能な欠陥を探す役割を担う。",
+      "bodyEn": "## Rollouts and Security Review\n\nCursor is adding two bots for the final stage of releasing code: Rollouts and Security Review. Available on Teams and Enterprise plans, they automate deployment validation and checks for exploitable flaws in pull requests.\n\nRollouts monitors changes as they are deployed and reports their health separately for each environment. Security Review checks every PR and reports bugs that could be exploited.\n\n## Monitoring Every PR\n\nRollouts assigns a monitor to every PR and follows the change through deployment. It can be enabled from the dashboard by connecting source control, the deployment system, and the telemetry provider. Monitoring begins with the next PR.\n\nWhen a PR is opened, Rollouts reads the diff and identifies the systems affected by the change. It then posts a monitoring plan as a PR comment. The plan describes identified risks, the intended effect of the change, the signals that will be checked, and any gaps in instrumentation that could make validation difficult.\n\nThe plan can be edited directly in the PR. If it is changed, Rollouts uses the edited version.\n\n## Per-Environment Deployment Checks\n\nA deployment event corresponding to the change’s commit triggers Rollouts. The bot executes its plan against logs, metrics, and traces, checking each environment independently.\n\nAs a result, a change validated in staging may still be detected as problematic in production. Rollouts checks error and latency signals while also determining whether the change is producing its intended effect. Once it reaches a verdict, it reports the result in the PR as “verified healthy,” “regression detected,” or “inconclusive.”\n\nIf Rollouts detects a regression, it identifies the change suspected of causing it and notifies the change’s author. The feature is Cursor’s version of Firetiger’s Change Monitors, rebuilt with the Bot Development Kit.\n\n## Security Review\n\nSecurity Review focuses on the code before release by checking every PR for exploitable bugs. It reports any such flaws it finds, complementing Rollouts’ environment-by-environment deployment monitoring.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "リリース直前を2つのボットが担当するんだ！ これって大きいこと？",
+          "en": "Two bots now handle the final release stage? Wow—does that make a big difference?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、Rolloutsが環境別の動作確認、Security ReviewがPRの悪用可能な欠陥探しを担う。判断と安全確認を自動化できる点が大きいのう。",
+          "en": "The article says Rollouts checks deployments by environment, while Security Review finds exploitable PR flaws. Automating both release decisions and safety checks is the big step here."
+        },
+        {
+          "s": "a",
+          "ja": "「リグレッションを検出」って、つまりどういうこと？",
+          "en": "What does “detecting a regression” actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "リグレッションは、変更後に以前より悪くなることじゃ。今回はログなどを調べ、疑わしい変更を特定して作成者へ知らせる仕組みじゃよ。",
+          "en": "A regression means a change made something worse. Here, Rollouts examines signals such as logs, identifies the suspected change, and alerts its author."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、PRごとの監視プランを見て、必要なら編集してからリリース判断に使いたいな！",
+          "en": "I’d review each PR’s monitoring plan, tweak it if needed, then use the results to help decide whether to release."
+        },
+        {
+          "s": "b",
+          "ja": "現実にはTeamsか企業プランで、ソース管理・デプロイ・テレメトリの接続が必要じゃ。有効化すると次のPRから監視が始まるぞ。",
+          "en": "In practice, it requires a Teams or Enterprise plan plus source control, deployment, and telemetry connections. Once enabled, monitoring starts with the next PR."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-24T01:36:46.679Z"
     }
   }
 }

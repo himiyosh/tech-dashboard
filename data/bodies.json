@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T16:00:56.143Z",
+  "generatedAt": "2026-09-24T17:00:52.333Z",
   "count": 1142,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -42436,44 +42436,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T18:43:11.880Z"
     },
-    "fc5ae9be70c108b0": {
-      "bodyJa": "## Bugs4Q\n\n本研究は、バグを含むQiskit量子プログラムを大規模言語モデル（LLM）で自動修復し、その性能をBugs4Qで評価したものである。量子ソフトウェア開発における自動修復の可能性だけでなく、現時点での限界も明らかにしている点が重要となる。\n\n## 評価の前提\n\nBugs4Qは、実在する量子プログラムの欠陥を収録した、広く利用されているベンチマークとされる。一方、その評価では、ベンチマークに付与されたラベルが引き続き有効であることに加え、生成された修正が対象環境で実行できることが前提になる。本研究は、LLMが修正案を生成できるかだけでなく、こうした評価上の前提も含めて検証している。\n\n## 67件の欠陥\n\n評価対象はBugs4Qの二つのバージョンで、重複を除いた実在のQiskit欠陥67件が含まれる。実行可能なテストが欠けている項目にはテストを追加し、すべての項目を改めて実行した。これにより、ラベルだけに依存せず、修正後のプログラムを実際に対象環境で動かせるかを確認する構成となっている。\n\n## 六つのリリース\n\n再実行には、固定された六つのQiskitリリースが使われた。対象は0.25.0、0.45.0、1.0.0、1.1.1、2.0.0、2.3.1である。複数のリリースにわたって全項目を検証することで、Bugs4Qを用いたLLM修復評価について、生成された修正の実行可能性とベンチマークラベルの有効性を併せて扱っている。",
-      "bodyEn": "## Repairing Qiskit Programs\n\nThe study evaluates large language models on automatically repairing buggy Qiskit quantum programs with the Bugs4Q benchmark. The work matters because it examines both the promise and the current limitations of LLM-based repair for quantum software.\n\nRather than treating generated fixes alone as sufficient evidence of successful repair, the evaluation also considers whether those fixes execute in the intended target environment.\n\n## Bugs4Q Benchmark\n\nBugs4Q is described as a widely used benchmark containing real quantum defects. The researchers evaluate two versions of Bugs4Q that together contain 67 unique real Qiskit defects.\n\nThe paper focuses on an important issue in using this benchmark: its evaluation assumes that benchmark labels remain valid. If those labels do not remain valid under the evaluated conditions, they cannot simply be treated as an unquestioned basis for assessing generated repairs.\n\n## Executable Tests\n\nThe evaluation also addresses whether generated fixes can actually execute in the target environment. To support this process, the researchers add executable tests where they are missing.\n\nThis makes execution part of the benchmark evaluation rather than relying only on the existing entries and labels. The approach connects the assessment of an LLM-generated fix to its behavior under executable testing, while also examining the assumptions already built into Bugs4Q.\n\n## Six Pinned Qiskit Releases\n\nAll benchmark entries are re-run across six pinned Qiskit releases: 0.25.0, 0.45.0, 1.0.0, 1.1.1, 2.0.0, and 2.3.1. Using pinned releases gives the evaluation explicitly defined target environments for running the entries and generated fixes.\n\nBy combining two Bugs4Q versions, 67 unique real defects, added executable tests, and repeated execution across these six releases, the study evaluates LLM-based repair while checking the validity and executability assumptions underlying the benchmark.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "67件の実在する欠陥を、6つのQiskitリリースで再実行したんだって。これって大きいこと？",
-          "en": "They reran 67 real defects across six Qiskit releases. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、1つの環境だけでなく6リリースをまたいで確かめておる。修復性能と評価の前提を広く検証した形じゃな。",
-          "en": "The paper checks six releases rather than just one environment. That broadens the test beyond repair performance to the assumptions behind the evaluation."
-        },
-        {
-          "s": "a",
-          "ja": "「固定したQiskitリリース」って何？つまりどういうこと？",
-          "en": "What are “pinned Qiskit releases”? What does that actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "「固定」は、使う版をあらかじめ指定することじゃ。研究では6つの版それぞれで全項目を動かし直しておるよ。",
-          "en": "“Pinned” means choosing an exact software version in advance. In this study, every entry was rerun on each of the six specified releases."
-        },
-        {
-          "s": "a",
-          "ja": "自分なら、壊れたQiskitコードをLLMに直してもらって、テストまで任せたいな。もう実用的に使えそう？",
-          "en": "I’d have an LLM fix my broken Qiskit code and handle the testing too. Does this mean it’s ready for practical use?"
-        },
-        {
-          "s": "b",
-          "ja": "期待はあるが、まだ慎重に、じゃ。論文はラベルの有効性や、生成した修正が対象環境で動くことを前提とし、欠けた実行可能テストも追加しておる。",
-          "en": "Promising, but caution is warranted. The authors flag valid labels and executable fixes in the target environment as assumptions, and they had to add executable tests where those were missing."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-18T12:45:18.361Z"
-    },
     "fded42167c81e87a": {
       "bodyJa": "## エージェントAI\n\n本論文は、データ集約型システムの検証にエージェントAIと再利用可能なプロパティテンプレートを組み合わせる手法を提案する。複雑なデータ処理コードやデータパイプラインの正しさを、少ない手作業で確認することが主眼だ。\n\n## 形式的証明とテスト\n\n提案手法では、プロパティテンプレートを用いて、形式的証明とプロパティベーステストを自動化する。検証対象ごとに一から作業するのではなく、再利用可能なテンプレートをエージェントが扱うことで、信頼性の検証に必要な手作業を減らし、検証コストを大幅に削減できるとされる。\n\nAIによるコード生成のコストが低下する一方、意図の仕様化と検証が新たなボトルネックになったとの認識が、この手法の前提に置かれている。",
       "bodyEn": "## Data-Intensive Computing\n\nThe paper proposes combining AI agents with reusable property templates to verify data-intensive systems. This matters because, as AI makes code generation cheaper, intent specification and validation are becoming a new bottleneck in software engineering.\n\n## Property Templates\n\nThe proposed method uses property templates to support agentic proofs and property-based testing. According to the summary, AI agents apply these reusable templates to automate formal proofs and correctness testing for complex data-processing code and data pipelines.\n\nThe approach focuses on expressing properties that can be used across verification tasks rather than relying entirely on manual validation. It brings formal proof and property-based testing together within an agent-assisted process.\n\n## Intent Specification and Validation\n\nThe paper presents this combination as a response to the durability challenges of AI-driven coding. By automating parts of proof and testing, the method is intended to reduce the manual effort and verification cost involved in establishing the correctness of complex data pipelines.",
@@ -42853,6 +42815,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-19T21:57:20.546Z"
+    },
+    "da655a3978f43b5d": {
+      "bodyJa": "## AIケミスト\n\nOpenAIとMolecule.oneは、GPT-5.4を用いたほぼ自律型AIケミストが、医薬品化学における重要で難しい反応を改善したと示した。AIが現実の科学研究を加速し得る可能性を示す成果とされる。\n\n## 実験の自律化\n\nこのAIエージェントは、医薬品合成に関わる実験を自律的に設計し、実行した。その過程で困難な化学反応の改善に成功しており、実験計画だけでなく実行まで独立して担った点が特徴となる。",
+      "bodyEn": "## Near-autonomous AI chemist\n\nOpenAI and Molecule.one used a near-autonomous AI chemist running GPT-5.4 to improve a difficult reaction in medicinal chemistry. The result matters because it demonstrates AI’s potential to accelerate real-world scientific discovery.\n\n## Designed and executed experiments\n\nThe AI agent independently designed and executed experiments intended to improve the key drug-making reaction. Its work succeeded in improving this challenging step in pharmaceutical synthesis.\n\nBy taking on both experimental design and execution with near autonomy, the agent advanced medicinal chemistry research and showed how AI can contribute to practical scientific work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "薬を作る研究の現場で、普段の仕事は何が変わるの？ AIが実験までしてくれるってこと？",
+          "en": "What could this change in day-to-day drug research? Does it mean AI can actually run experiments?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、GPT-5.4を使うAIケミストが実験をほぼ自律的に設計・実行し、難しい反応を改善したんじゃ。研究を速める可能性があるのう。",
+          "en": "The article says a GPT-5.4-powered AI chemist designed and ran experiments with near autonomy, improving a difficult reaction. That could potentially speed up research."
+        },
+        {
+          "s": "a",
+          "ja": "前はAIにはできなかったの？ 「ほぼ自律」になったことで、何が違うんだろう。",
+          "en": "Couldn’t AI do that before? What’s different about it being “near-autonomous”?"
+        },
+        {
+          "s": "b",
+          "ja": "従来との詳しい比較は示されておらんよ。今回わかるのは、AIエージェントが自ら実験を設計・実行し、反応を改善したことじゃ。",
+          "en": "The piece doesn’t give a detailed comparison with earlier systems. What it does show is an AI agent independently designing and executing experiments that improved the reaction."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、AIが案を出すだけでなく、実験を組み立てて動かし、難しい反応を良くできたことなんだね。へえ、すごい！",
+          "en": "So the big takeaway is that AI didn’t just suggest ideas—it planned and carried out experiments that improved a tough reaction. Wow, that’s impressive!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。記事が示すのは研究を加速できる可能性じゃから、その可能性が実際の科学研究でどう広がるかに注目じゃのう。",
+          "en": "Exactly. The article presents this as a sign that AI could accelerate research, so the next question is how far that potential can extend in real scientific work."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T18:17:07.441Z"
     }
   }
 }

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-24T05:30:44.503Z",
-  "count": 1140,
+  "generatedAt": "2026-09-24T06:30:41.701Z",
+  "count": 1141,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -1823,44 +1823,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事によれば公開後にアクセス計測の誤りも発覚したので、防御だけでなく計測の確かさも見どころじゃよ。",
           "en": "Exactly. The article also found an analytics error after launch, so reliable measurement is another key point alongside the safeguards."
-        }
-      ]
-    },
-    "72780eb250ba9c5b": {
-      "bodyJa": "大規模言語モデル（LLM）の選定では、「どちらが賢いか」という推論精度の比較が注目されがちだ。しかし、Moonshot AI 系の Kimi K3 と Anthropic の Claude Fable 5 を実際のタスクで突き合わせた今回のハンズオン検証は、実用上の差が推論力そのものよりも、出力トークン予算の柔軟性と回答の検証しやすさに現れることを示した。\n\n検証では、両モデルに同種のタスクを与えて出力を比較した。純粋な正答率や推論の深さでは決定的な差は見られなかったという。むしろ実務で効いてくるのは、モデルがどれだけ長い出力を許容し、その量を状況に応じて調整できるかという「出力予算」の設計だった。長い推論過程や大規模なコード生成を求める場面では、出力上限や生成の打ち切り挙動がそのまま作業効率に直結するためだ。\n\nもう一つの軸が「検証性」である。回答が正しいかどうかを人間が確かめやすい形で提示されるかは、実運用での信頼性を左右する。根拠や中間ステップが追いやすい出力は、誤りの発見や修正を容易にし、結果として総合的な生産性を高める可能性がある。逆に結論だけが示される形式では、精度が高くても検証コストがかさみやすい。\n\nこうした視点は、近年のモデル評価の潮流とも重なる。MMLU や GSM8K といった従来のベンチマークは知識や推論力を数値化するのに有用だが、実タスクでの使い勝手を必ずしも反映しない。OpenAI や Google、Anthropic をはじめ各社が推論特化モデルを相次いで投入するなか、単一のスコアではなく、出力制御や説明可能性を含めた多面的な評価が求められつつある。\n\n今回の比較が示すのは、モデル選定を「賢さ」の一元的な尺度で決めるのではなく、扱うタスクの性質に応じた判断軸を持つことの重要性だ。長文生成や監査が前提の業務では出力予算と検証性が、対話的な用途では応答速度やコストが優先されるなど、要件ごとに最適解は変わる。ベンチマークの数字を鵜呑みにせず、自らのユースケースで実測する姿勢が、実務では引き続き有効だと言えそうだ。",
-      "bodyEn": "A recent hands-on comparison published on Qiita pitted Moonshot AI's Kimi K3 against Anthropic's Claude Fable 5, and its central finding runs against a common assumption in model evaluation. Rather than raw reasoning accuracy separating the two systems, the author reports that the practical gap emerged in two less-discussed dimensions: how flexibly each model handles output token budgets, and how easily their answers can be verified. For teams choosing between frontier models, this reframing matters because it shifts attention away from headline benchmark scores toward the operational qualities that shape day-to-day usefulness.\n\nAccording to the write-up, both models performed comparably on tasks that stress pure inference. When problems required multi-step logic, structured decomposition, or careful chains of deduction, the two systems landed close enough that the difference was hard to attribute to reasoning capability alone. This aligns with a broader trend across the industry, where leading models have converged on similar performance ceilings for many standard reasoning tasks, making differentiation on those axes increasingly marginal.\n\nThe more meaningful distinctions, the author argues, appeared elsewhere. Output budget flexibility refers to how gracefully a model adapts the length and depth of its responses to the space it is given. A model that can compress a thorough answer into a tight token limit, or expand appropriately when allowed more room, tends to be easier to deploy in production settings where cost and latency are constrained. The comparison suggests the two models handle this trade-off differently, and that the difference is visible in real workflows even when abstract reasoning scores look similar. This is a practical concern because output tokens are typically the more expensive side of API pricing, and predictable, controllable verbosity directly affects operating costs.\n\nVerifiability, the second axis, concerns how straightforward it is for a user to check whether an answer is correct. The report indicates that responses which expose their intermediate steps, cite constraints clearly, or structure conclusions in a way that invites inspection are more valuable in practice than responses that are merely correct but opaque. When a human or an automated system must validate output before acting on it, a model that makes verification cheaper reduces the total effort of using it. This echoes a growing emphasis in applied AI on trust and auditability rather than accuracy in isolation.\n\nSome context on the models helps frame the results. Kimi K3 is the presumed successor in Moonshot AI's Kimi line, a family that has drawn attention for long-context handling and competitive pricing in the Chinese and international markets. Claude Fable 5 appears to be positioned within Anthropic's Claude series, which has historically emphasized safety, instruction following, and reliability. The naming and specifications described in the post should be treated as reflecting the author's testing environment, since independent details on these particular releases remain limited.\n\nIt is worth stressing the methodological caveats that any single hands-on comparison carries. The results reflect the specific tasks, prompts, and token settings the author chose, and outcomes on other workloads may differ. Blog-level benchmarks rarely control for prompt optimization, temperature settings, or version drift, all of which can move results substantially. The piece is best read as a directional signal and a proposed evaluation framework rather than a definitive ranking, and the author frames it as a way to rethink selection criteria rather than to crown a winner.\n\nThe takeaway sits alongside a wider shift in how practitioners evaluate large language models. As standard benchmarks such as MMLU-style knowledge tests and math reasoning suites saturate, attention is moving toward operational metrics: cost per useful answer, controllability, tool-use reliability, and the ease of building verification loops around a model. Frameworks like these are increasingly relevant as agentic systems chain many model calls together, where small inefficiencies in output length or verifiability compound across steps.\n\nFor readers weighing model choices, the practical advice implied by the comparison is to test candidates on representative tasks with realistic token constraints, and to weight how easily outputs can be checked. Reasoning parity among top models means the deciding factors are likely to be these softer, workflow-oriented qualities. The report offers a useful reminder that the best model on paper is not always the most economical or trustworthy one in production.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-18T01:37:45.008Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "推論力より「出力予算」と「検証性」で差が出たって、つまりどういうこと？",
-          "en": "They found bigger differences in “output budget” and “verifiability” than reasoning. What does that actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、記事では答えを出せる量の柔軟さと、答えが正しいか確かめやすいかが実用上の差になったそうじゃよ。",
-          "en": "Simply put, the article says the practical gap came from flexibility in how much a model could output and how easily its answers could be checked."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ 推論精度だけ比べるより、実際に使えるモデルを選びやすくなるってこと？",
-          "en": "Why is that useful? Does it make choosing a model for real tasks easier than just comparing reasoning accuracy?"
-        },
-        {
-          "s": "b",
-          "ja": "そういう見方じゃな。記事は通信成功を示すHTTP 200だけでなく、終了理由や途中計算、実行可能コードまで確認しておる。",
-          "en": "That’s the idea. The article checks not only HTTP 200, which signals a successful request, but also finish reasons, intermediate calculations, and executable code."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、返事が来ただけでは成果物の完成とは限らないんだね。長さの余裕と確かめやすさも大事、と分かったよ。",
-          "en": "Oh, so getting a response doesn’t necessarily mean the deliverable is complete. I get it—output room and checkability matter too."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃよ。モデル選びでは推論力だけで決めず、実タスクで最後まで出せるか、検証できるかを見るのがポイントじゃな。",
-          "en": "Exactly. The takeaway is not to choose on reasoning alone, but to check whether the model can finish real tasks and produce answers you can verify."
         }
       ]
     },
@@ -4106,44 +4068,6 @@
         }
       ]
     },
-    "42f963fe925e9768": {
-      "bodyJa": "AIコーディングツール「Cursor」の誤操作によって約170GBものデータが失われた——。ある開発者の実体験をきっかけに、同種の事故を防ぐための安全運用プロトコル「WRF Deck」が考案され、AI支援開発におけるリスク管理の話題として注目を集めている。\n\nCursorは、大規模言語モデル（LLM）を組み込んだコードエディタで、近年はチャットで指示するだけでファイルの編集やターミナルコマンドの実行までをこなす「エージェント」機能が普及している。人手を介さずに一連の作業を自動で進められる利便性の裏で、AIが意図しない破壊的な操作を実行してしまうリスクが以前から指摘されてきた。今回の事例も、ファイル削除やディレクトリ操作といったコマンドがAIによって実行され、大量のデータ消失につながった可能性がある。\n\nこうした事故は、AIが生成・実行するコマンドを人間が十分に確認しないまま承認してしまう点に一因があると見られる。特にrmのような不可逆な操作は、一度実行されると復旧が難しい。バックアップやバージョン管理（Gitなど）が徹底されていない環境では、被害が一気に拡大しやすい。\n\n考案された「WRF Deck」は、こうした失敗を繰り返さないための具体的な手順をまとめた運用ルールだと説明されている。AIに作業を任せる前後で確認すべき項目を整理し、破壊的な操作の前に一拍置く仕組みを設けることで、事故の芽を摘むことを狙っているものと見られる。\n\n背景には、GitHub CopilotやClaude Code、Windsurf、Devinなど、コード生成から実行までを自律的に担う「エージェント型」ツールが急速に広がっている状況がある。作業効率が高まる一方で、権限をどこまで与えるか、どの操作に人間の承認を挟むかといった設計が安全性を大きく左右する。多くのツールはコマンド実行前に確認を求める設定や、変更範囲を限定するサンドボックス的な仕組みを備えつつある。\n\n今回の教訓は、個別ツールの不具合というより、AIに自動実行を委ねる際の運用体制そのものに関わる。定期的なバックアップ、バージョン管理の活用、そして破壊的コマンドに対する慎重な承認フローの整備が、AI時代の開発における基本的な防御策として改めて重要になりそうだ。",
-      "bodyEn": "AI-assisted coding tools have made it dramatically easier to generate, refactor, and run code from natural-language prompts, but a recent account from a developer illustrates how that same automation can carry real risk. Writing on Zenn, the developer described losing roughly 170 GB of data after an operation performed through Cursor, the AI-centric code editor, went wrong. In response, they published a safety protocol they call \"WRF Deck,\" intended to reduce the chance of similar incidents.\n\nThe core issue centers on how modern AI coding assistants operate. Cursor, which is built on a fork of Visual Studio Code, offers an agent mode in which the model can not only suggest edits but also execute file operations and terminal commands on the user's behalf. This capability is useful for tasks like scaffolding projects, cleaning up directories, or running build scripts, but it also means the assistant can issue destructive commands—such as recursive deletions—if a prompt is ambiguous, a path is misinterpreted, or the user approves an action without fully reviewing it. Some tools include an auto-run or \"YOLO\" mode that reduces the number of confirmation prompts, which speeds up workflows but removes a key human checkpoint.\n\nAccording to the account, the data loss appears to have stemmed from exactly this class of problem: an AI-initiated operation that removed far more than intended. While the specific commands are described from the author's perspective and cannot be independently verified here, the scenario is consistent with documented failure modes in agentic tooling, where a single misdirected delete or overwrite can cascade across a large directory tree.\n\nThe WRF Deck protocol is presented as a set of steps to prevent recurrence rather than a piece of software. Based on the description, it functions as a checklist or operating discipline applied before allowing an AI agent to perform potentially irreversible actions. The emphasis appears to be on verifying scope, requiring explicit review of destructive commands, and maintaining recoverable copies of important data so that a mistaken operation does not become permanent. The author frames it as risk management for AI-assisted development, an area that has received less attention than the productivity gains such tools promise.\n\nFor readers weighing similar precautions, several established practices align with the protocol's apparent goals. Keeping projects under version control with Git limits the damage of accidental edits, though it does not protect large binary assets or files stored outside the repository. Regular, automated backups—ideally following a rule such as keeping multiple copies across separate locations—remain the most reliable defense against irreversible loss. Running agents inside a sandbox, a container, or a directory with limited permissions can also constrain what an assistant is able to touch. Many teams additionally disable auto-execution for shell commands, so that any deletion or system-level action requires a deliberate human confirmation.\n\nThe incident arrives amid rapid growth in agentic coding tools. Beyond Cursor, offerings such as GitHub Copilot's agent features, Anthropic's Claude Code, and editors like Windsurf have expanded the degree to which AI can act directly on a codebase and the surrounding system. As these agents gain the ability to run terminal commands, manage files, and chain multiple steps together, the balance between convenience and safety becomes more consequential. Vendors have responded with permission prompts, allowlists, and confirmation dialogs, but the effectiveness of those guardrails still depends heavily on how individual users configure and heed them.\n\nThe broader takeaway from the Zenn post is not that Cursor or AI coding in general is uniquely dangerous, but that granting software the authority to execute commands demands the same caution long applied to running unfamiliar scripts. A protocol like WRF Deck reflects a growing recognition that AI-assisted workflows need explicit safeguards, not just faster output. Whether this particular framework gains wider adoption is unclear, but the underlying lesson—verify before you automate, and always keep a recoverable copy—applies regardless of which tool a developer chooses.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T22:53:20.709Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Cursorの操作で170GBが一瞬で消えたって怖いね。「WRF Deck」って何？",
-          "en": "Losing 170 GB in an instant because of a Cursor operation sounds terrifying. What exactly is “WRF Deck”?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、事故の振り返りから作られた再発防止用の安全運用プロトコルじゃよ。簡単に言うと、安全に作業するための手順じゃな。",
-          "en": "According to the article, it’s a safety protocol created after reviewing the accident. Put simply, it’s a set of steps for working more safely and preventing a repeat."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？AIに気をつけてって頼むだけじゃ足りないのかな。",
-          "en": "So what’s the practical benefit? Isn’t it enough to just tell the AI to be careful?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、進捗や制約、次の作業がチャット履歴に散らばり、作業状態を管理できないことが多くの事故につながると見ておる。具体的な手順で備えるわけじゃ。",
-          "en": "The article links many incidents to poor work-state management, with progress, constraints, and next steps scattered across chat history. The protocol addresses that risk with concrete procedures."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど。AI任せにせず、作業の状態を整理して、事故を防ぐ手順を決めるのがWRF Deckなんだね。",
-          "en": "Got it. WRF Deck means not leaving everything to the AI—it’s about organizing the work state and following steps designed to prevent accidents."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事で示される具体的な手順を、AI支援開発の安全管理にどう生かすかが見どころじゃな。",
-          "en": "That’s the idea. The key point is how its concrete steps can be applied to risk management in AI-assisted development."
-        }
-      ]
-    },
     "cb06b217fc6fb23a": {
       "bodyJa": "GitHub Copilot を日々使い込むほど気になってくる「どれくらい使っているのか」と「履歴がたまり続けている」という二つの悩みを、一つの VS Code 拡張機能で解決しようという試みが登場した。ある開発者が、Copilot の利用状況をダッシュボードで可視化しつつ、蓄積するチャット履歴を安全に削除できる拡張を個人開発したと公開している。\n\n背景には、Copilot の課金体系の変化がある。GitHub は近年、無償枠に加えて有償プランを整理し、より高性能なモデルの呼び出しを「プレミアムリクエスト」として一定回数に制限する方式を導入している。こうした仕組みのもとでは、自分がどのモデルをどの程度使っているかを把握しておくことが、無駄な超過や意図しないコスト増を避けるうえで重要になる。しかし標準の VS Code 上では、利用量を一目で振り返る手段が乏しいのが実情だ。\n\nもう一つの課題がチャット履歴の肥大化である。Copilot Chat や近年強化されたエージェント的な対話機能を使うと、やり取りの記録がローカルに蓄積されていく。履歴は文脈の再利用に役立つ一方で、時間の経過とともにストレージを圧迫したり、過去の不要なやり取りが残り続けたりする可能性がある。今回の拡張は、こうした履歴を利用者が把握したうえで、必要な範囲だけを安全に掃除できる点を主眼に置いていると見られる。\n\n利用量の把握とストレージ管理という、性質の異なる二つの作業を単一のツールにまとめた点がこの拡張の特徴といえる。VS Code の拡張エコシステムは活発で、Copilot 周辺でもトークン使用量の推定やプロンプト管理を補助するサードパーティ製ツールが数多く公開されている。公式機能が追いつかない細かな運用ニーズを、コミュニティの個人開発が補完する構図は珍しくない。\n\n一方で、この種の拡張を導入する際には注意も必要だ。履歴の削除は取り消しが難しい操作であり、対象範囲やバックアップの有無を事前に確認しておくことが望ましい。また、利用状況の集計方法が公式の課金カウントと完全に一致するとは限らないため、あくまで目安として捉えるのが無難だろう。とはいえ、増え続ける AI 支援のログを自分の手で管理したいという需要は今後も高まる可能性があり、こうした軽量ツールの実用性は小さくない。",
       "bodyEn": "GitHub Copilot has become a fixture in many developers' daily workflows, yet two mundane problems tend to go unaddressed: knowing how much you actually use it, and managing the chat history that quietly piles up over time. A developer has built a Visual Studio Code extension that tackles both, pairing a usage dashboard with a tool for safely clearing accumulated Copilot chat records, according to a post published on the Japanese developer platform Zenn. The appeal is practical rather than flashy: it folds usage visibility and storage maintenance into a single interface.\n\nThe extension appears aimed at individual users rather than team administrators. GitHub already offers organization- and enterprise-level reporting through its own dashboards and a Copilot metrics API, but individuals on personal or Business plans often have limited insight into their own patterns of use. By surfacing usage statistics directly inside the editor, the extension lets users gauge their activity without leaving VS Code or signing into a separate web console. That kind of at-a-glance awareness has grown more relevant as GitHub has moved parts of Copilot toward usage-based billing, where certain \"premium\" requests against more capable models are metered, making it useful to understand consumption before it translates into cost.\n\nThe second half of the tool addresses storage. Copilot Chat retains conversation history so that context can persist across sessions, but that data keeps growing, and over months of heavy use it can occupy noticeable disk space and clutter the interface. The extension provides a way to review and delete this history in a controlled manner, which the developer frames as a \"safe\" cleanup. That distinction matters, because manually editing the files where VS Code and its extensions keep state can risk corrupting a workspace or removing data unintentionally. A purpose-built routine that targets only the relevant records is less error-prone than digging through storage directories by hand.\n\nTechnically, VS Code extensions are typically written in TypeScript or JavaScript and distributed through the Visual Studio Marketplace or the Open VSX registry. They run within the editor's extension host and can access defined storage locations, invoke the editor's APIs, and render custom views such as webview-based panels for dashboards. Chat and workspace state in VS Code is commonly held in local databases and JSON files under the user's profile directory. It is likely that the extension reads from and manages these locations to compile its statistics and perform its cleanup, though the precise data sources and the exact metrics it exposes are best confirmed against the extension's own documentation, since the internal formats used by Copilot are not part of a stable public contract and can change between releases.\n\nThe project also fits a broader industry context. AI coding assistants have proliferated, with alternatives such as Cursor, Sourcegraph's Cody, Amazon Q Developer, and Windsurf competing alongside Copilot, and each accumulates its own logs, caches, and conversation data as it becomes embedded in everyday coding. As these tools mature, a secondary ecosystem of companion utilities has emerged to help users observe, tune, and maintain them. Extensions that track token or request usage, manage prompt libraries, or clean up generated artifacts reflect the same instinct on display here: the assistant is useful, but it needs housekeeping.\n\nFor readers considering the tool, a few caveats are worth keeping in mind. Individually built extensions can vary in maintenance and support, and because this one interacts with Copilot-related data, it is prudent to review its permissions and understand what it deletes before running a cleanup, ideally after confirming that any important chat context has been preserved elsewhere. Users on managed or enterprise devices may also be subject to organizational policies governing which extensions can be installed.\n\nEven so, the underlying idea is a sensible one. Rather than treating usage analytics and storage hygiene as separate chores handled by separate tools, the extension consolidates them where the work already happens, inside the editor. As AI assistance becomes a standard layer of the development environment, small utilities that make its footprint visible and manageable are likely to remain valuable, and this project is a concrete example of a developer scratching a common itch and sharing the result with the wider community.",
@@ -4293,44 +4217,6 @@
           "s": "b",
           "ja": "その理解でよいぞ。どの概念やパターンが自分の開発に合うか、実際にデモで確かめるのが見どころじゃな。",
           "en": "That’s right. The key is to explore the demos and see which concepts, patterns, or architectures fit the agent you want to develop."
-        }
-      ]
-    },
-    "7fd88aafef0c1bf5": {
-      "bodyJa": "Claude CodeやOpenAIのCodex、GitHub Copilotといったコーディングエージェントが、開発者の手元を離れてクラウド上で自律的に動くケースが増えている。こうした環境では、ローカルのgitフックやCIチェックだけではmainブランチを守り切れないという構造的な問題を、Zennに公開された記事が指摘している。\n\nこれまで多くのチームは、コミット前にpre-commitフックでリンターやテストを走らせ、さらにプルリクエスト時にCIで検査するという二段構えでコード品質を担保してきた。しかしローカルフックはあくまで開発者の端末上で動く仕組みであり、実行するかどうかは最終的にクライアント側の裁量に委ねられる。悪意がなくても、設定漏れや--no-verifyオプションで簡単に回避できてしまう。\n\nエージェントがクラウドで動くようになると、この前提はさらに崩れる。人間のレビューを介さずにブランチを切り、コミットし、場合によっては直接pushやマージまで実行する可能性があるためだ。端末という「境界」が存在しないため、クライアント側に置いたガードは意味をなさなくなる。記事は、監視や制御の重心をローカルからクラウド側へ移す必要があると論じている。\n\n具体的な対策として挙げられるのが、GitHubやGitLabが提供するブランチ保護ルールやリポジトリ側のポリシー設定だ。mainへの直接pushを禁止し、必須のステータスチェックや所定の承認者によるレビューを通過しなければマージできないよう構成すれば、どのクライアントから来た変更であっても一律に規制できる。エージェント用のアクセストークンやサービスアカウントに与える権限を最小限に絞ることも有効とされる。\n\n背景には、AIエージェントの実行環境がIDEのプラグインから、クラウドのサンドボックスや非同期タスクへと広がっている流れがある。GitHub Copilotのcoding agentやAnthropicのClaude Codeなどは、割り当てられたタスクを裏側で処理してPRを提出する形態を取り始めた。生産性が上がる一方で、誰が何をマージできるのかというガバナンスをサーバー側で明示的に定義し直すことが、今後いっそう重要になると見られる。",
-      "bodyEn": "The rapid adoption of autonomous AI coding agents is exposing a structural weakness in how many teams protect their most important branch. As tools such as Anthropic's Claude Code, OpenAI's Codex, and GitHub Copilot increasingly run in cloud environments rather than only on a developer's laptop, the traditional safeguards that live locally, like git hooks and developer-side checks, no longer sit in the path of every change. This matters because the main branch is usually the source of truth for production, and a single unvetted merge can propagate quickly through automated pipelines.\n\nThe core issue is where enforcement actually happens. Client-side git hooks, such as pre-commit and pre-push scripts, execute only on the machine that runs them. They were designed for a world in which a human engineer cloned a repository, configured their environment, and pushed from that same machine. Hooks are not distributed with the repository by default, they can be skipped with flags like --no-verify, and they simply do not run in an environment that never installed them. When an agent operates in an ephemeral cloud sandbox, opens a pull request through an API, or commits from a hosted runner, those local controls are effectively absent.\n\nContinuous integration checks are stronger because they run on shared infrastructure, but the article argues they are still insufficient on their own. CI validates the contents of a proposed change, yet it does not inherently govern who or what is allowed to merge, whether a review occurred, or whether a check can be bypassed. If a workflow has permission to push directly, or if required checks are not enforced as a merge gate, a passing build does not guarantee that policy was respected. Agents that hold write credentials can, in principle, act faster than any human reviewer can intervene.\n\nThis is why the recommended posture is to move governance to the server side, closer to the repository itself. On platforms like GitHub, this means branch protection rules or the newer repository rulesets, which can require pull requests before merging, mandate a minimum number of approving reviews, require that specific status checks pass, enforce linear history or signed commits, and prevent force pushes to protected branches. Crucially, these rules can be configured so they apply to everyone, including administrators and automation, rather than trusting each actor to enforce them locally. CODEOWNERS files can further require review from designated maintainers for sensitive paths.\n\nThe identity of the agent also becomes central to enforcement. Whether a change arrives from a GitHub App, a fine-grained personal access token, or an OAuth-scoped integration, the permissions attached to that identity determine what the agent can do. Scoping tokens narrowly, avoiding broad write access, and treating agent credentials with the same care as human credentials all reduce the blast radius if an agent behaves unexpectedly or is misdirected by a crafted prompt. Environment protection rules and required reviewers for deployments add another layer between a merged change and production.\n\nContext helps explain why this shift is happening now. Claude Code, Codex, and Copilot have each moved toward more autonomous, cloud-hosted modes. GitHub's Copilot coding agent, for example, can be assigned an issue and produce a pull request on its own, running in a hosted environment rather than the developer's terminal. Codex has offered cloud-based execution, and Claude Code can operate in sandboxes and CI-like settings. These modes are convenient, but they relocate work away from the individual machine where local guardrails traditionally lived.\n\nFor teams evaluating their exposure, a few prerequisites are worth confirming. Protected branches should reject direct pushes and require pull requests. Required status checks should be marked as mandatory rather than advisory. Merge permissions should be restricted, and automation identities should be inventoried and least-privileged. Audit logging and, where available, artifact or build provenance can help reconstruct what an agent did after the fact.\n\nNone of this eliminates the value of local hooks or CI, which remain useful for fast feedback and catching mistakes early. The article's argument is narrower: as more code originates from agents running outside the developer's machine, controls that only exist on that machine cannot be the last line of defense. The main branch appears best protected when policy is enforced by the platform itself, applied uniformly to humans and agents alike.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T23:58:08.852Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AIエージェントがクラウドで動くと、どうしてローカル監視だけではmainを守れないの？",
-          "en": "Why can’t local monitoring protect main once AI agents start working in the cloud?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、実行場所がPCや一時コンテナ、クラウドなどに分散し、1台では全作業を見張れないからじゃよ。",
-          "en": "According to the article, agents now run across PCs, temporary containers, and cloud tasks, so one machine can’t watch all their work."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、クラウド側のブランチ保護やアクセス制御に移すと、何がうれしいの？",
-          "en": "So what’s the benefit of moving branch protection and access controls to the cloud side?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、実行場所に関係なく、変更がmainへ入る共通の入口でルールを適用できるんじゃ。",
-          "en": "Simply put, rules can be enforced at the shared gateway into main, no matter where the agent did its work."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！全エージェントを追いかけるより、mainへの入口をしっかり守るってことだね。",
-          "en": "Got it! Instead of chasing every agent, you secure the shared entrance to main."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事は、ローカルのgitフックやCIだけに頼らず、クラウド側へガバナンスを移す必要を指摘しておるよ。",
-          "en": "Exactly. The article says governance should shift to cloud-side policies rather than relying only on local git hooks and CI."
         }
       ]
     },
@@ -41980,310 +41866,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-23T20:52:52.804Z"
     },
-    "4c9d688cf44b534e": {
-      "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、巨大な差分と多数のレビューコメントを扱っても高速で滑らかに確認できるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、一つの変更としてレビューする場面を重視した取り組みだ。\n\n## 分割しにくい作業\n\n作業を小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を反映するうえで有効と説明されている。しかし、広範なリファクタリングや移行には、きれいに分割できず、一つのプルリクエストとして扱わなければならないものもある。さらに、レビュー中のやり取りが加わることで、プルリクエスト全体は一段と大きくなる。そのため、差分だけでなく、長く積み重なった会話も含めて快適に表示することが求められる。\n\n## 画面の刷新\n\n新しいプルリクエスト画面は、差分とレビュー上の会話が非常に大きい状態でも、操作感を高速かつ滑らかに保つことを要件として再構築された。対象は単にファイル数の多い変更ではなく、変更行とインラインレビューコメントが同時に大量に存在するケースまで含まれる。巨大な変更を一つの画面で追う際の性能を中心に据えた設計とされる。\n\n## 性能の検証\n\n検証には、見つけられた中で最大のオープンソースのプルリクエストが使われた。この変更は2,200ファイルにまたがり、変更行は100万行を超え、インラインレビューコメントも400件以上含んでいた。GitHub Copilotアプリは、この極端な規模のプルリクエストを開き、大規模な差分と長い議論を扱う場合でも表示性能を保てるかを確かめた。",
-      "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes that produce exceptionally large diffs and extensive review conversations. This matters when broad refactors or migrations must land as a single change and cannot be divided cleanly into smaller pull requests.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When work cannot be separated cleanly, teams can be left with one pull request that becomes very large. The review conversation can make it grow further as inline comments accumulate.\n\n## Pull request view\n\nThe rebuilt view was designed around a specific requirement: the review experience should remain fast and smooth even when both the diff and its associated conversation are enormous. The focus is therefore not only on displaying a large number of changed files and lines, but also on supporting the discussion attached to those changes.\n\nThis is particularly relevant to teams reviewing migrations and refactors that need to remain unified. Instead of assuming that every large change can be reorganized into a stack of smaller pull requests, the app’s approach accounts for cases where reviewers must work through one extensive change.\n\n## Extreme pull request\n\nTo test the rebuilt experience, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments.\n\nThat case combined a massive diff with a substantial review conversation, matching the conditions the rebuilt pull request view was intended to address. According to the announcement, the GitHub Copilot app made even this extreme pull request performant, allowing large differences and long discussions to be reviewed smoothly.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "2,200ファイル、変更行は100万超、コメントも400件超って桁がすごい！ これって大きいこと？",
-          "en": "2,200 files, over a million changed lines, and 400-plus comments—those numbers are wild! Is that really huge?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、見つけられた最大のプルリクエストとして試しておる。差分も議論も極端に大きい例じゃな。",
-          "en": "The article calls it the biggest pull request they could find. It’s an extreme case, with both an enormous diff and a very long review discussion."
-        },
-        {
-          "s": "a",
-          "ja": "「スタックしたプルリクエスト」ならレビューしやすいってあるけど、つまりどういうこと？",
-          "en": "It says stacked pull requests make reviews easier. What does that mean?"
-        },
-        {
-          "s": "b",
-          "ja": "一般には、大きな作業を小さな変更に分けて順に出す方法じゃ。ただ本文の例のように、きれいに分けられない変更もあるのう。",
-          "en": "Generally, it means splitting a large job into smaller changes submitted in sequence. But this piece notes that some changes simply can’t be divided cleanly."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、大きな移行やリファクタリングを確認するときに使いたいな。長い議論も追いやすそう！",
-          "en": "I’d use it to review a big migration or refactor. It sounds handy for following a long discussion too!"
-        },
-        {
-          "s": "b",
-          "ja": "紹介された画面は、分割しにくい巨大な差分や議論でも速く滑らかに確認できるよう作り直されたものじゃ。そこが現実的な狙いじゃよ。",
-          "en": "The rebuilt view is designed to stay fast and smooth when a change can’t be split and both the diff and discussion become massive. That’s the practical goal described here."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-23T19:36:51.399Z"
-    },
-    "3109af25bedf6259": {
-      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に書き換えられた。3つの提供形態に共通するランタイムの大規模な移行であり、実装は80万行を超えるプロダクションRustとなった。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスである。GitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKはいずれも、このランタイムを基盤として動作する。\n\nもともとは、現在のGitHub Copilot cloud agent向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして開発された。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## 80万行超のRust\n\n今回の移行では、GitHub Copilot appとCopilot CLIを使い、ランタイム全体をRustで書き直した。完成したコードは80万行を超え、その大半をAIエージェントが作成したと説明されている。\n\n単なる一部分の置き換えではなく、CopilotのCLI、アプリ、SDKを支えるランタイムそのものを対象とした全面的な再実装となっている。\n\n## 128件のPR\n\n移行作業は128件のプルリクエストに分けられ、それぞれがmainへ取り込まれた。最後に一度だけ切り替える方式ではなく、段階的に出荷する形で進められた点が特徴だ。\n\nその過程では避けられない少数のリグレッションが発生したものの、順次発見され、速やかに修正された。ランタイムの性能についても、桁違いに改善したとされている。",
-      "bodyEn": "## Copilot agent runtime\n\nGitHub has rewritten the Copilot agent runtime from TypeScript on Node.js into Rust, using the GitHub Copilot app and GitHub Copilot CLI during the migration. The change matters because this shared runtime backs the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its capabilities continued to grow while it remained on its original technology stack.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript on Node.js and the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, also referred to as CCA.\n\nAs the runtime and its capabilities expanded rapidly, it continued using that stack. GitHub has now replaced that implementation with a production Rust codebase rather than retaining the original TypeScript, Node.js, and V8 foundation.\n\n## More than 800,000 lines\n\nThe completed Rust rewrite contains more than 800,000 lines of production code. AI agents produced most of that code through work spanning 128 pull requests.\n\nThe GitHub Copilot app and Copilot CLI were used to carry out the rewrite. This made the migration itself an example of Copilot being applied to a large production codebase, with AI agents responsible for most of the resulting implementation.\n\n## Shipped incrementally\n\nThe 128 pull requests landed in the main branch and shipped incrementally. The team did not wait for a single cutover at the end before delivering the rewritten runtime.\n\nAccording to the announcement, the migration introduced a few regressions, which were discovered and fixed quickly during the incremental rollout. It also says runtime performance improved by orders of magnitude. Because the runtime supports the GitHub Copilot CLI, app, and SDK, the benefits of the Rust implementation extend across all three.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "80万行超をRustで書き直して、AIが128件のPRで大半を作ったの？ これって大きいこと？",
-          "en": "Over 800,000 lines rewritten in Rust, with AI producing most of it across 128 PRs? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "かなり大規模じゃ。この記事では、全面書き換えを一度に切り替えず、128件に分けて段階的に本番へ入れたとしておる。",
-          "en": "It’s a major rewrite. The article says they shipped it gradually through 128 PRs instead of waiting for one huge final switchover."
-        },
-        {
-          "s": "a",
-          "ja": "Node.js上のTypeScriptからRustへ移行って、つまりどういうこと？ 見た目だけ変えたの？",
-          "en": "What does moving from TypeScript on Node.js to Rust actually mean? Was it just a surface-level change?"
-        },
-        {
-          "s": "b",
-          "ja": "見た目ではなく、AIエージェントを動かす土台そのものを別の言語で作り直したのじゃ。本文では「完全に書き換えた」とされておる。",
-          "en": "Not just the surface—the machinery running the AI agents was rebuilt in another language. The piece describes it as a complete rewrite."
-        },
-        {
-          "s": "a",
-          "ja": "自分ならCopilot CLIで、前よりキビキビ動くか試したいな。アプリやSDKにも効果があるの？",
-          "en": "I’d try Copilot CLI and see if it feels snappier. Does the improvement carry over to the app and SDK too?"
-        },
-        {
-          "s": "b",
-          "ja": "3つとも同じランタイムが土台なので、改善はCLI、アプリ、SDKに及ぶのじゃ。記事だと性能は桁違いに向上し、少数の不具合も早く修正されたそうじゃよ。",
-          "en": "All three share that runtime, so the benefits extend to the CLI, app, and SDK. The article reports orders-of-magnitude performance gains, with the few regressions found and fixed quickly."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-17T13:58:03.669Z"
-    },
-    "8156421f827a3dc7": {
-      "bodyJa": "## GitHubでコード化\n\nGitHub上でイベント運営の定型工程をコード化し、企画からフォローアップまでを自動化する実践が紹介されている。日本と韓国のマーケターが、繰り返し発生する作業ではなく、テーマや参加者の検討に集中できるようにする取り組みだ。\n\n## 企画で問うこと\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナー、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、この市場の開発者が現在何を必要としているのか、どのテーマなら1時間を費やす価値があるのか、誰に参加してもらうべきかを考える。\n\n## 定型工程の自動化\n\nイベントの実施が決まると、固定された一連の工程が始まる。イベントプラットフォーム上のランディングページを複製し、チャネルごとに指定の形式でUTMタグ付きリンクを作成する。さらに、招待メールの文面を用意して配信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。こうした手順をGitHub上でコード化し、自動化の対象としている。\n\n## フォローアップ\n\nイベント当日まで毎朝、登録者リストをダウンロードして整理し、関係者向けの状況更新を投稿する作業も発生する。ページ複製やリンク作成、招待メール依頼に加えて、このフォローアップも自動化することで、運営上の反復作業を減らし、企画と参加者理解に注力できる構成となっている。",
-      "bodyEn": "## Events Are the Heartbeat\n\nEvent operations for GitHub marketing in Japan and Korea are being codified on GitHub, automating routine work from planning through follow-up. This matters because it lets marketers concentrate on understanding what developers need, which topics deserve their time, and who should participate.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul. Deciding the topic and audience remains central to the marketing work.\n\n## A Fixed Sequence Begins\n\nOnce an event is approved, a fixed operational sequence starts. A landing page must be duplicated on the event platform, followed by the creation of UTM-tagged links for each channel. Every link must use the required formatting.\n\nThe invitation email must also be drafted, and a request must be filed with the team responsible for sending it. The event then needs to be added to two project boards. These defined steps make the event process suitable for codification and automation on GitHub.\n\n## Every Morning Until the Event\n\nThe work continues after the initial setup. Every morning until the event, the registrant list is downloaded and cleaned up. A status update is then posted for stakeholders.\n\nAutomating these recurring steps extends the approach beyond page creation and link generation. It covers ongoing event operations and follow-up rather than treating automation as a one-time setup task.\n\n## Topics and Audiences\n\nThe practical goal is to reduce the time marketers spend carrying out the same fixed sequence for each approved event. Page duplication, channel-specific UTM link creation, invitation email requests, project-board updates, registrant processing, stakeholder reporting, and follow-up can be handled as codified operations.\n\nWith those routine tasks automated, marketers in Japan and Korea can focus more directly on event planning and participant understanding: what developers in the market need now, which subjects are worth an hour of their time, and which people should be in the room.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "イベント担当者の毎日の仕事は、これで何が変わるの？企画に使える時間が増えるってこと？",
-          "en": "What changes in an event marketer’s daily work? Does this mean more time for planning?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、ページ複製やUTMリンク作成、招待メール依頼、フォローアップを自動化し、企画や参加者理解に集中できるとしておるぞ。",
-          "en": "The article says page duplication, UTM link creation, invitation requests, and follow-up can be automated, freeing marketers to focus on topics and audiences."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！前はそういう作業を自動化できなかったの？",
-          "en": "Wow, that sounds great! Couldn’t those tasks be automated before?"
-        },
-        {
-          "s": "b",
-          "ja": "自動化できなかったとは書かれておらんのう。従来は開催決定後に定型作業が続き、毎朝リスト整理や状況共有もしていたと描かれておる。",
-          "en": "It doesn’t say automation was previously impossible. It describes a fixed post-approval workflow, including daily registrant cleanup and stakeholder updates."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、繰り返し作業をGitHubで回して、人はテーマや参加者を考えることに集中できる点なんだね。",
-          "en": "So the big win is running repetitive work through GitHub, while people concentrate on the right topics and attendees."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。紹介されている範囲では、企画からフォローアップまで定型工程をどこまでコード化できるかが注目点じゃよ。",
-          "en": "Exactly. From what’s presented, the key point is how much of the standard workflow—from planning through follow-up—can be codified."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-16T18:18:54.907Z"
-    },
-    "b310b2c06dbd9321": {
-      "bodyJa": "GitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証をアプリ内で完結できる。差分、ターミナル、ブラウザーが組み込まれており、エージェントの作業を確かめたい初心者にも流れを追いやすい構成となっている。\n\n## アプリ内で完結\n\nこれまで変更内容を確認し、コードを実行して、その結果を見るには、エディター、ターミナルウィンドウ、ウェブブラウザーを行き来する必要があった。GitHub Copilotアプリでは、それぞれの作業に使うパネルが横並びの形で内蔵されている。確認に必要な場所を切り替え続けるのではなく、一つのアプリ内でエージェントの作業を順番に確かめられる。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較したものだ。差分パネルには、追加、削除、変更された行が具体的に表示される。追加部分は緑、削除部分は赤で強調されるため、エージェントがコードのどこに手を加えたのかを見分けられる。\n\n表示された変更に対して、利用者はそのまま受け入れるだけでなく、コメントを残したり、Copilotに修正を依頼したりできる。変更内容を確認したうえで、どの対応を取るかを利用者自身が選び、最終的な判断を行う仕組みである。\n\n## 実行と結果の検証\n\nターミナルパネルはコードの実行に、ブラウザーは結果の検証に使う。差分パネルで編集内容を確認し、ターミナルで実行し、ブラウザーで結果を見るという一連の作業を、GitHub Copilotアプリから離れずに進められる。変更を読むだけで終わらず、実際に動かして結果まで確かめるところまでが、アプリ内のパネルでつながっている。",
-      "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings code review, execution, and result verification together in one place. This matters for beginners who want to check an agent’s work without moving repeatedly among an editor, terminal window, and web browser.\n\nBuilt-in panels place these steps side by side in the app. The workflow is designed around three basic tasks after an agent changes code: examining what changed, running the code, and seeing the result.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies the exact lines that were added, removed, or changed, highlighting additions in green and deletions in red.\n\nThis view lets users inspect an agent’s edits directly before deciding what to do with them. Rather than treating the changes as final, users can review the specific modifications and choose the next action.\n\n## Terminal and browser\n\nThe built-in terminal panel allows code to be run without leaving the GitHub Copilot app. The browser sits alongside the diff and terminal panels, allowing users to verify the result in the same working environment.\n\nPreviously, completing these tasks meant switching among an editor, a terminal window, and a web browser. Keeping the three panels together makes it simpler to move from reviewing an edit to running the code and checking the outcome.\n\n## Complete control\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The agent’s work can therefore be inspected and revised before any final decision is made.\n\nTogether, the diff, terminal, and browser panels support the full AI coding loop inside the app: review what the agent changed, run the code, verify the result, and decide whether the work should be accepted or changed.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "差分確認、コード実行、結果の検証を1つのアプリで全部できるんだ！ 3つがまとまるのって大きいこと？",
-          "en": "Wow, one app can handle all three: reviewing changes, running code, and checking the result. Is bringing them together a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、以前はエディター、ターミナル、ブラウザーを行き来していたそうじゃ。それが横並びの内蔵パネルになり、確認しやすくなったんじゃよ。",
-          "en": "The article says those tasks previously meant jumping among an editor, terminal, and browser. Now the built-in panels sit side by side, making the agent’s work easier to check."
-        },
-        {
-          "s": "a",
-          "ja": "「差分」って何？ コードが変わった場所を見つける仕組みってこと？",
-          "en": "What’s a “diff”? Is it a way to spot where the code changed?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでいう差分は、変更前と変更後の比較じゃ。追加は緑、削除は赤で示され、どの行が変わったか分かるのう。",
-          "en": "Here, a diff means a before-and-after comparison. Added lines appear in green and deleted ones in red, so you can see exactly what changed."
-        },
-        {
-          "s": "a",
-          "ja": "僕ならまず差分を見て、ターミナルで動かして、ブラウザーで結果を確かめたいな。アプリを離れなくていいのは安心かも！",
-          "en": "I’d review the diff first, run the code in the terminal, then check the result in the browser. Staying in one app sounds reassuring!"
-        },
-        {
-          "s": "b",
-          "ja": "本文にある通り、変更は受け入れるほか、コメントしたり修正を頼んだりもできるぞ。最後にどうするか決めるのは利用者じゃ。",
-          "en": "As described, you can accept changes, leave comments, or ask Copilot to revise them. The user still makes the final call."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-16T18:19:22.629Z"
-    },
-    "855d6eb9ada55a72": {
-      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
-      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
-          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
-          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
-        },
-        {
-          "s": "a",
-          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
-          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
-          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
-          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
-        },
-        {
-          "s": "b",
-          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
-          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T15:12:32.259Z"
-    },
-    "b68f08d5b78fdf2b": {
-      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
-      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
-          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
-          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
-        },
-        {
-          "s": "a",
-          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
-          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
-        },
-        {
-          "s": "b",
-          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
-          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
-          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
-        },
-        {
-          "s": "b",
-          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
-          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:46:10.596Z"
-    },
-    "c3242eb99cc5f08b": {
-      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
-      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
-          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
-          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
-        },
-        {
-          "s": "a",
-          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
-          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
-        },
-        {
-          "s": "b",
-          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
-          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
-          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
-        },
-        {
-          "s": "b",
-          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
-          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:50:27.117Z"
-    },
-    "614c15e2239ab54e": {
-      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
-      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
-          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
-          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
-          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
-          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
-          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
-          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
-        }
-      ],
-      "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T18:43:11.880Z"
-    },
     "74d79f268b0ba471": {
       "bodyJa": "## 2つのボット\n\nCursorは、コードリリースの最終工程を担う2つのボットとして、RolloutsとSecurity Reviewの提供を開始した。Rolloutsはデプロイ中の変更を環境ごとに監視し、Security ReviewはすべてのPRを確認して、悪用可能なバグを報告する。どちらもTeamsプランと企業プランで利用できる。\n\n## Rollouts\n\nRolloutsはすべてのPRにモニターを割り当て、変更がデプロイされる過程を追跡する。FiretigerのChange MonitorsをBot Development Kitで再構築したCursor版の機能とされる。ダッシュボードから有効化し、ソース管理、デプロイシステム、テレメトリプロバイダーを接続すると、次のPRから監視が始まる。\n\n## モニタリングプラン\n\nPRがオープンされると、Rolloutsはdiffと、変更が影響するシステムを読み取り、モニタリングプランをPRコメントとして投稿する。プランには、特定されたリスク、変更が意図する効果、確認対象のシグナル、検証を難しくする計測上の不足点が記載される。PR上で内容を編集した場合は、編集後のプランが使われる。\n\n## 環境ごとの判定\n\n変更のコミットに対応するデプロイイベントをきっかけに、Rolloutsはログ、メトリクス、トレースを対象としてプランを実行する。判定は環境ごとに行われ、結果は「正常を確認済み」「リグレッションを検出」「判定不能」のいずれかで報告される。このため、ステージングで検証済みでも、本番環境では問題として検出される場合がある。\n\nRolloutsはエラーやレイテンシーのシグナルに加え、変更が意図した効果を発揮しているかも確認し、判定時点でPRへ結果を報告する。リグレッションを検出した場合は、原因と疑われる変更を特定し、その作成者へ通知する。Security Reviewは、PR内の悪用可能な欠陥を探す役割を担う。",
       "bodyEn": "## Rollouts and Security Review\n\nCursor is adding two bots for the final stage of releasing code: Rollouts and Security Review. Available on Teams and Enterprise plans, they automate deployment validation and checks for exploitable flaws in pull requests.\n\nRollouts monitors changes as they are deployed and reports their health separately for each environment. Security Review checks every PR and reports bugs that could be exploited.\n\n## Monitoring Every PR\n\nRollouts assigns a monitor to every PR and follows the change through deployment. It can be enabled from the dashboard by connecting source control, the deployment system, and the telemetry provider. Monitoring begins with the next PR.\n\nWhen a PR is opened, Rollouts reads the diff and identifies the systems affected by the change. It then posts a monitoring plan as a PR comment. The plan describes identified risks, the intended effect of the change, the signals that will be checked, and any gaps in instrumentation that could make validation difficult.\n\nThe plan can be edited directly in the PR. If it is changed, Rollouts uses the edited version.\n\n## Per-Environment Deployment Checks\n\nA deployment event corresponding to the change’s commit triggers Rollouts. The bot executes its plan against logs, metrics, and traces, checking each environment independently.\n\nAs a result, a change validated in staging may still be detected as problematic in production. Rollouts checks error and latency signals while also determining whether the change is producing its intended effect. Once it reaches a verdict, it reports the result in the PR as “verified healthy,” “regression detected,” or “inconclusive.”\n\nIf Rollouts detects a regression, it identifies the change suspected of causing it and notifies the change’s author. The feature is Cursor’s version of Firetiger’s Change Monitors, rebuilt with the Bot Development Kit.\n\n## Security Review\n\nSecurity Review focuses on the code before release by checking every PR for exploitable bugs. It reports any such flaws it finds, complementing Rollouts’ environment-by-environment deployment monitoring.",
@@ -42740,43 +42322,499 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:17:07.441Z"
     },
-    "d9eb9b12a750774d": {
-      "bodyJa": "## v0.34.4\n\nOllama v0.34.4が公開された。断続的に発生する「model not found」エラーへの対処に加え、思考モデルの構造化出力やMLXでの処理が改善され、ローカル利用時の信頼性と性能を高める変更が盛り込まれている。\n\n## serverの修正\n\nserverでは、モデルの利用時に断続的に発生していた「model not found」エラーが修正された。また、思考モデルに対する構造化出力を、単一のパスで適用するよう変更された。構造化出力に関する処理を1回で行う形に整理した更新となる。\n\n## appの検出処理\n\nappでは、ChatGPTおよびCodexの検出時にSystem Eventsを使用しないよう変更された。あわせて、基盤部分ではllama.cppのバージョンが更新されている。これらはserverのエラー修正や構造化出力の変更とは別に、アプリ側の検出処理と構成要素を更新する内容だ。\n\n## MLXの高速化\n\nMLXでは、Gemma 4の画像解像度を動的に選択する処理が追加された。固定的に扱うのではなく、画像解像度を動的に決める変更となっている。さらに、Qwen 3.8のプロンプト処理が高速化されたほか、MLX自体のバージョンも引き上げられた。変更履歴の範囲はv0.34.3からv0.34.4-rc0までとされている。",
-      "bodyEn": "## Ollama v0.34.4\n\nOllama v0.34.4 focuses on reliability and performance for local users. Released on September 24, 2026, it fixes intermittent model lookup failures, streamlines structured output for thinking models, and includes several MLX-related improvements.\n\nThe changes cover the server, app, llama.cpp, and MLX components rather than introducing a single headline feature.\n\n## Model not found errors\n\nThe server now fixes intermittent “model not found” errors. Because these failures were sporadic, the update is intended to make model lookup more reliable during local use.\n\nThe server also changes how structured outputs are handled with thinking models. In v0.34.4, structured outputs are applied in a single pass, simplifying that part of the processing flow.\n\n## ChatGPT/Codex detection\n\nThe app has been changed to avoid System Events when performing ChatGPT/Codex detection. The release notes do not describe further behavioral changes associated with this adjustment.\n\nOllama v0.34.4 also includes a llama.cpp version update and an MLX version bump. These dependency updates appear alongside the more specific server, app, and MLX changes in the release.\n\n## MLX improvements\n\nFor Gemma 4, MLX can now select image resolution dynamically. This adds adaptive handling of Gemma 4 images rather than relying on a single fixed resolution selection.\n\nMLX also speeds up prompt processing for Qwen 3.8. Together with the model lookup fix, this performance improvement is one of the changes aimed directly at the experience of local users.\n\nThe published full changelog is presented as the comparison from v0.34.3 to v0.34.4-rc0.",
+    "99f808001b0a061f": {
+      "bodyJa": "## ルート一覧\n\n「Laravel Routes Explorer」は、Laravelプロジェクトのルート一覧をVSCodeのサイドバーに表示し、エンドポイントから対応するソースコードへ移動できる拡張です。URLを処理するコントローラやルート定義を探す手間を減らし、プロジェクト内の実装を確認しやすくします。\n\n## 直接ジャンプ\n\nアクティビティバーのアイコンからルート一覧を開き、目的の行をクリックすると、対応するコントローラのメソッドやルートの定義元へ直接ジャンプできます。「この画面のURLはどのコントローラで処理されているのか」を調べる際に、エンドポイントと実装箇所の対応を一覧から追える仕組みです。\n\n## 複数ルート対応\n\nLaravelプロジェクトでは、ルートファイルがroutes/web.phpだけでなく、複数のファイルに分かれている場合があります。ゼロからプロジェクトを読み始める人にとっては、対象のルートがどこにあり、その先でどの処理が呼ばれるのかを把握することが難しくなります。この拡張は、ルート情報をサイドバーで可視化し、定義元や処理箇所を直接開けるようにすることで、その確認を支援します。\n\n## GitHub公開\n\n対象として想定されているのは、Laravel開発でURLとコントローラの対応を探す手間を感じている人や、VSCode拡張を一度作ってみたいエンジニアです。VSCode Extension APIの知識は前提とされていません。ソースコードと、VSCode拡張のパッケージファイルであるvsixはGitHubで公開されています。",
+      "bodyEn": "## Laravel Routes Explorer\n\nLaravel Routes Explorer is a VSCode extension that displays a Laravel project’s routes in the editor sidebar and provides one-click navigation to the corresponding controller method or route definition. It is intended to reduce the effort required to determine which part of the source code handles a particular URL.\n\nThe extension is aimed both at developers who want to try building a VSCode extension and at people who encounter this navigation problem during Laravel development. Knowledge of the VSCode Extension API is not assumed.\n\n## VSCode Sidebar\n\nThe route list is available from an icon in the VSCode activity bar. Selecting a route opens either the relevant controller method or the location where that route is defined.\n\nThis provides a direct connection between endpoint information and implementation. That connection can otherwise be difficult to establish when beginning to examine an unfamiliar project, particularly when route definitions are divided across multiple files rather than being contained only in routes/web.php.\n\n## URLs and Controllers\n\nThe extension grew out of experience with a three-week internship in Kumamoto. The organization’s regular development work centers on Laravel, and interns work with actual projects written in Laravel.\n\nMany participants arrive after learning basic programming language concepts at university but with almost no knowledge of web frameworks. Before investigating a bug, they first need to identify where the relevant source is located and inspect the current implementation themselves, even when AI is available to assist with research.\n\nA recurring obstacle is matching endpoints to source code. Interns repeatedly need help finding which controller handles a page’s URL. Because route files may be split into several locations, explaining that relationship in a general way is difficult. Laravel Routes Explorer was created to lower this initial knowledge barrier by making the source directly accessible from the endpoint list.\n\n## Source Code and vsix\n\nThe source code and the vsix package file for Laravel Routes Explorer are published on GitHub. The vsix file is the package format for the VSCode extension.",
       "chat": [
         {
           "s": "a",
-          "ja": "Ollama v0.34.4で、たまに出る「model not found」が直ったって、モデル自体が消えていたわけじゃないの？",
-          "en": "Ollama v0.34.4 fixes the occasional “model not found” error. Does that mean the model itself wasn’t actually disappearing?"
+          "ja": "Laravelで「このURLはどこで処理？」と探す作業、普段は何が変わるの？",
+          "en": "When I’m working in Laravel and wondering, “Where is this URL handled?”, what changes in my day-to-day work?"
         },
         {
           "s": "b",
-          "ja": "この記事では、断続的なモデル検索の失敗を修正したとしているぞ。モデルが消えたというより、見つける処理への対処じゃな。",
-          "en": "The article says it fixes intermittent model lookup failures. So it addresses the process that finds a model, rather than saying the model vanished."
+          "ja": "この記事では、VSCodeのサイドバーでルートを選ぶと、対応するコントローラの処理や定義元へ直接飛べるのじゃ。",
+          "en": "The article says you can pick a route in VSCode’s sidebar and jump straight to its controller method or route definition."
         },
         {
           "s": "a",
-          "ja": "じゃあ、棚にある本を時々見失うのが直る感じ？ローカルで使う人ほど、呼び出しが安定するってことかな。",
-          "en": "So it’s like no longer losing track of a book that’s still on the shelf? Does that make local use more reliable?"
+          "ja": "へえ、すごい！ 前はそこへすぐ飛べなかったの？",
+          "en": "Oh, that’s neat! Couldn’t developers jump there directly before?"
         },
         {
           "s": "b",
-          "ja": "記載された変更では、思考モデルの構造化出力も1回で適用するぞ。決まった形の回答を扱う処理がすっきりする、という意味じゃ。",
-          "en": "The listed changes also apply structured output to thinking models in one pass. Structured output means answers in a set format, so handling them should be more streamlined."
+          "ja": "紹介された現場では、URLと実装の対応を探し、何度も教える手間があったそうじゃ。ルートファイルが複数の場合もあるのう。",
+          "en": "In the situation described, people had to trace URLs to their code, often with repeated guidance. Route files could also be split across multiple files."
         },
         {
           "s": "a",
-          "ja": "つまり、ローカル利用で検索の失敗を減らし、決まった形式の回答や処理速度も改善した更新なんだね！",
-          "en": "So this update reduces lookup failures for local users while improving formatted answers and processing speed. Nice!"
+          "ja": "つまり、URLから実装場所を探す最初のつまずきを、1クリックで減らせるのが一番の収穫だね！",
+          "en": "So the big win is reducing that first hurdle—finding the code behind a URL—to a single click!"
         },
         {
           "s": "b",
-          "ja": "リリース内容では、MLXでGemma 4の画像解像度を動的に選び、Qwen 3.8のプロンプト処理も高速化しておる。改善点ごとに対象が違う点は押さえたいのう。",
-          "en": "The release also adds dynamic Gemma 4 image resolution and faster Qwen 3.8 prompt processing in MLX. Just remember that each improvement targets a different area."
+          "ja": "そうじゃな。次は、GitHubで公開されたソースコードとvsixを確認できる点にも注目じゃよ。",
+          "en": "Exactly. Another useful detail is that the source code and VSIX package are available on GitHub."
         }
       ],
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-24T04:36:45.383Z"
+      "generatedAt": "2026-09-24T05:36:34.677Z"
+    },
+    "a53938eee41fdd48": {
+      "bodyJa": "2026年9月、GPT-6 Astra、Claude Opus 5.5、GPT-6 Sol、GPT-6 Lunaが相次いで登場し、GitHub Copilotのモデル一覧にも追加された。モデル選びでは、料金だけでなく、結果の確認しやすさや作業範囲に応じた使い分けが重要になる。\n\n## GPT-6 Luna\n\n最初に試す候補として挙げられているのがGPT-6 Lunaだ。低コストで応答も速いため、出力結果を人間がすぐ確認できる作業に向くとされる。\n\nGPT-6 Solで一度うまく処理できた作業も、手順書やSkillとして整理すれば、次回からLunaへ回せる。確認可能な定型作業をLunaに移すことで、用途に応じた使い分けがしやすくなる。\n\n## GPT-6 Sol\n\n拡張機能の更新結果や料金の出典を照合する作業、複数の資料やファイルを横断する調査と修正にはGPT-6 Solが選ばれている。SolはCopilot Pro+以上、またはBusiness／Enterpriseで利用できるモデルだ。\n\nSolを親として使い、軽い下調べだけをLunaのサブエージェントへ切り出す方法も示されている。\n\n## 別系統のモデル\n\nLunaやSolで作業が詰まった場合は、Claude Sonnet 5など別系統のモデルを試す。長い作業の立て直しにはClaude Opus 5.5、長期の自律的な作業にはGPT-6 Astraが検討対象となる。\n\n## creditsの見方\n\n実画面に表示された1.4 credits、約2.1円と、料金図にある60 credits、約90円は別の数字だ。60 creditsは、入力と出力をそれぞれ100万トークン使うと仮定した比較用の試算である。\n\nコストと参考スコアを示す4象限図も掲載されているが、スコアには第三者サイトの値が使われている。図は筆者が作成したものだ。",
+      "bodyEn": "## Choosing September 2026 Models\n\nThe September 2026 GitHub Copilot model lineup presents a practical choice based on pricing and use case. Several new models appeared during the month, making it useful to distinguish between fast, inexpensive work and more demanding research or correction tasks.\n\nGPT-6 Astra arrived in the first half of the month. On September 22, Claude Opus 5.5 and GPT-6 Sol and Luna followed, with their releases occurring about an hour apart.\n\n## GPT-6 Luna\n\nGPT-6 Luna is the recommended starting point because it is inexpensive and responds quickly. It is positioned for work whose results a person can check immediately.\n\nTasks that previously succeeded with GPT-6 Sol may also be moved to Luna after the process has been reviewed and documented as instructions or a Skill. This makes Luna suitable for repeatable work with a clear procedure, especially when the output remains easy to verify.\n\nLuna can also serve as a sub-agent for lightweight preliminary research assigned by a parent Sol process.\n\n## GPT-6 Sol\n\nGPT-6 Sol is the choice for checking sources behind extension updates or pricing information, as well as for research and fixes spanning multiple documents or files. It is available with Copilot Pro+ or higher, and with Business or Enterprise.\n\nIf Luna and Sol cannot complete a task, another model family such as Claude Sonnet 5 can be tried. Claude Opus 5.5 is presented as an option for recovering during long tasks, while GPT-6 Astra can be considered for long-term autonomous work.\n\n## Pricing and Use Case\n\nThe 1.4 credits shown on an actual screen, equivalent to about 2.1 yen, should not be confused with the 60 credits, or about 90 yen, shown in the pricing figure. The latter is a comparison estimate based on an assumption of using one million input tokens and one million output tokens.\n\nA four-quadrant chart compares cost with reference scores. The scores come from a third-party site, and the figure itself was created by the author.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Lunaは安くて速いってあるけど、1.4 creditsと60 creditsはなぜ違うの？ 同じ料金じゃないの？",
+          "en": "Luna is described as cheap and fast, but why do I see both 1.4 credits and 60 credits? Aren’t those the same price?"
+        },
+        {
+          "s": "b",
+          "ja": "本文では、実画面の1.4 credits（約2.1円）と、入出力を各100万トークン使う仮定の60 credits（約90円）は別物じゃ。",
+          "en": "The article separates them: 1.4 credits, about ¥2.1, is from the actual screen, while 60 credits, about ¥90, is an estimate assuming one million input and output tokens each."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、すぐ答え合わせできる小さな作業はLuna、複数ファイルを調べて直す仕事はSol、と道具を分ける感じ？",
+          "en": "So it’s like using Luna for small tasks I can quickly verify, and Sol for research and fixes across multiple files?"
+        },
+        {
+          "s": "b",
+          "ja": "紹介されている使い分けはその形じゃ。Solは出典照合や複数資料の調査・修正向けで、Pro+以上かBusiness／Enterpriseで選べるぞ。",
+          "en": "That’s the split presented here. Sol is for source checking and work across multiple documents, and it’s available on Pro+ or higher, Business, and Enterprise."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、まずLunaで試して、広い範囲を調べたり直したりするならSolに渡すんだね。へえ、選びやすい！",
+          "en": "So I start with Luna, then hand things to Sol when the job involves broader research or fixes. Nice—that makes choosing much easier!"
+        },
+        {
+          "s": "b",
+          "ja": "そういう整理じゃのう。ただし、掲載された4象限図の参考スコアは第三者サイトの値なので、数字の扱いには注意が必要じゃ。",
+          "en": "That’s the idea. One caution: the reference scores in the four-quadrant chart come from a third-party site, so treat those numbers carefully."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-24T05:37:12.258Z"
+    },
+    "c45ef450c3820855": {
+      "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、巨大な差分と多数のレビューコメントを扱っても高速で滑らかに確認できるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、一つの変更としてレビューする場面を重視した取り組みだ。\n\n## 分割しにくい作業\n\n作業を小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を反映するうえで有効と説明されている。しかし、広範なリファクタリングや移行には、きれいに分割できず、一つのプルリクエストとして扱わなければならないものもある。さらに、レビュー中のやり取りが加わることで、プルリクエスト全体は一段と大きくなる。そのため、差分だけでなく、長く積み重なった会話も含めて快適に表示することが求められる。\n\n## 画面の刷新\n\n新しいプルリクエスト画面は、差分とレビュー上の会話が非常に大きい状態でも、操作感を高速かつ滑らかに保つことを要件として再構築された。対象は単にファイル数の多い変更ではなく、変更行とインラインレビューコメントが同時に大量に存在するケースまで含まれる。巨大な変更を一つの画面で追う際の性能を中心に据えた設計とされる。\n\n## 性能の検証\n\n検証には、見つけられた中で最大のオープンソースのプルリクエストが使われた。この変更は2,200ファイルにまたがり、変更行は100万行を超え、インラインレビューコメントも400件以上含んでいた。GitHub Copilotアプリは、この極端な規模のプルリクエストを開き、大規模な差分と長い議論を扱う場合でも表示性能を保てるかを確かめた。",
+      "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes that produce exceptionally large diffs and extensive review conversations. This matters when broad refactors or migrations must land as a single change and cannot be divided cleanly into smaller pull requests.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When work cannot be separated cleanly, teams can be left with one pull request that becomes very large. The review conversation can make it grow further as inline comments accumulate.\n\n## Pull request view\n\nThe rebuilt view was designed around a specific requirement: the review experience should remain fast and smooth even when both the diff and its associated conversation are enormous. The focus is therefore not only on displaying a large number of changed files and lines, but also on supporting the discussion attached to those changes.\n\nThis is particularly relevant to teams reviewing migrations and refactors that need to remain unified. Instead of assuming that every large change can be reorganized into a stack of smaller pull requests, the app’s approach accounts for cases where reviewers must work through one extensive change.\n\n## Extreme pull request\n\nTo test the rebuilt experience, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments.\n\nThat case combined a massive diff with a substantial review conversation, matching the conditions the rebuilt pull request view was intended to address. According to the announcement, the GitHub Copilot app made even this extreme pull request performant, allowing large differences and long discussions to be reviewed smoothly.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "2,200ファイル、変更行は100万超、コメントも400件超って桁がすごい！ これって大きいこと？",
+          "en": "2,200 files, over a million changed lines, and 400-plus comments—those numbers are wild! Is that really huge?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、見つけられた最大のプルリクエストとして試しておる。差分も議論も極端に大きい例じゃな。",
+          "en": "The article calls it the biggest pull request they could find. It’s an extreme case, with both an enormous diff and a very long review discussion."
+        },
+        {
+          "s": "a",
+          "ja": "「スタックしたプルリクエスト」ならレビューしやすいってあるけど、つまりどういうこと？",
+          "en": "It says stacked pull requests make reviews easier. What does that mean?"
+        },
+        {
+          "s": "b",
+          "ja": "一般には、大きな作業を小さな変更に分けて順に出す方法じゃ。ただ本文の例のように、きれいに分けられない変更もあるのう。",
+          "en": "Generally, it means splitting a large job into smaller changes submitted in sequence. But this piece notes that some changes simply can’t be divided cleanly."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、大きな移行やリファクタリングを確認するときに使いたいな。長い議論も追いやすそう！",
+          "en": "I’d use it to review a big migration or refactor. It sounds handy for following a long discussion too!"
+        },
+        {
+          "s": "b",
+          "ja": "紹介された画面は、分割しにくい巨大な差分や議論でも速く滑らかに確認できるよう作り直されたものじゃ。そこが現実的な狙いじゃよ。",
+          "en": "The rebuilt view is designed to stay fast and smooth when a change can’t be split and both the diff and discussion become massive. That’s the practical goal described here."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T19:36:51.399Z"
+    },
+    "981300c54c259020": {
+      "bodyJa": "## リモート開発\n\nVisual Studio Code 1.139では、リモートプロジェクトに対するDev Container対応が拡張された。SSH、Tunnel、WSLホスト上にあるプロジェクトのDev Container内でエージェントを実行でき、リモート開発環境とエージェントセッションを組み合わせて利用できる。\n\n## エージェントホスト\n\nエージェントホストは、Agent Host Protocol（AHP）を基盤とする専用プロセスでエージェントハーネスを実行する。この仕組みにより、複数のVisual Studio Codeウィンドウから同じセッションへ接続できる。ウィンドウごとに別のセッションとして扱うのではなく、共通のセッションへアクセスできる構成となっている。\n\n## セッション一覧\n\n大規模なエージェントセッション一覧の処理も改善された。多数のセッションを含む一覧を従来より速く読み込めるほか、画面内により多くのセッションを表示できる。セッション名は一覧上で直接変更できるため、名称を直すために別の操作画面へ移る必要がない。セッション数が多い環境で、目的の項目を確認し、整理する際の操作が簡素化される。\n\n## エディター体験\n\n日常的な編集では、折り返された行を一目で識別しやすくなった。また、入力中に閉じ括弧が重複することを避ける改善も含まれる。更新はVisual Studio Codeの「Check for Updates」から確認できるほか、.deb、.rpm、.tar.gz、Arm向け手順、Snapが案内されている。今後の機能を試す方法としてはInsiders buildが示されている。",
+      "bodyEn": "## Remote Dev Container sessions\n\nVisual Studio Code 1.139 focuses on remote agent sessions, large session lists, and everyday editing improvements. The release streamlines workflows by extending where agents can run while making sessions and wrapped text easier to manage.\n\nAgents can now run inside a project’s Dev Container when that project is on SSH, Tunnel, or WSL hosts. This extends Dev Container support to remote projects rather than limiting these sessions to other project locations.\n\n## Session list improvements\n\nThe release improves performance when loading large agent session lists. It also fits more sessions on the screen, allowing users to view a greater portion of the list at once.\n\nSession names can be changed in place. Together, faster loading, greater on-screen density, and in-place renaming are intended to make large collections of sessions easier to navigate and maintain.\n\n## Editor experience\n\nVisual Studio Code 1.139 includes two refinements for routine editing. Wrapped lines can be identified at a glance, making it clearer when displayed text continues from an earlier part of the same line.\n\nThe editor also avoids creating duplicate closing brackets as users type. These changes target the everyday editing experience alongside the release’s larger remote-development and session-management updates.\n\n## Agent Host Protocol\n\nThe agent host runs agent harnesses in a dedicated process based on the Agent Host Protocol, or AHP. This design allows the same agent session to be accessed from multiple Visual Studio Code windows.\n\nThe release is available in .deb, .rpm, and .tar.gz formats, with Arm instructions and Snap also referenced. Users who already have Visual Studio Code installed can use Check for Updates. Upcoming features are available through the Insiders build.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "SSHやWSL先で開発している人は、普段の作業がどう変わるの？エージェントを使える場所が増えるってこと？",
+          "en": "For people developing over SSH or WSL, what changes in their daily work? Does this mean they can use agents in more places?"
+        },
+        {
+          "s": "b",
+          "ja": "今回のリリースでは、SSH、Tunnel、WSL先でも、開発環境をまとめたDev Container内でエージェントを動かせるんじゃ。リモート開発が快適になるのう。",
+          "en": "The release says agents can now run inside a project’s Dev Container over SSH, Tunnel, or WSL. A Dev Container packages the development environment, so remote work should feel smoother."
+        },
+        {
+          "s": "a",
+          "ja": "前はリモート先のDev Containerだと動かせなかったの？ほかにも以前との違いはある？",
+          "en": "So agents couldn’t run in a remote Dev Container before? What else has changed from the previous experience?"
+        },
+        {
+          "s": "b",
+          "ja": "1.139でリモート先まで対応が広がった形じゃ。変更点として、大きなセッション一覧の高速化や表示数の増加、その場での名前変更、折り返し行の識別改善も挙がっておる。",
+          "en": "Remote Dev Container support expands with 1.139. The listed changes also include faster large session lists, more sessions onscreen, in-place renaming, and easier identification of wrapped lines."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、リモート先でもプロジェクトのDev Container内でエージェントを動かせることだね。作業場所の壁が減りそう！",
+          "en": "The biggest win is running agents inside the project’s Dev Container even when it’s remote. That sounds like one less barrier in the workflow!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。リリースノート上では、同じセッションへ複数のVS Codeウィンドウから接続できる点も示されておるから、そこにも注目じゃよ。",
+          "en": "Indeed. The release notes also say multiple VS Code windows can connect to the same session, so that capability is worth watching too."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T12:34:26.181Z"
+    },
+    "5abef27db3a07c1b": {
+      "bodyJa": "## v1.21.0\n\nZed Editor v1.21.0がリリースされた。シンタックスハイライト表示やMarkdown内のコードブロックの描画高速化に加え、言語サーバー操作の選択機能と、長時間のエージェント実行を支える設定が盛り込まれている。\n\n## 描画の高速化\n\nシンタックスハイライトされたファイルと、Markdownに含まれるコードブロックの描画が高速化された。コードの表示に関わる処理を改善する更新だが、具体的な速度やベンチマーク値は示されていない。また、言語サーバーのコマンドを選択できるコマンドピッカーも追加された。\n\n## スリープ抑止\n\n新しいagent.prevent_idle_sleep設定は、エージェントのスレッドが実行されている間、システムがアイドル状態のスリープに入ることを防ぐ。この設定はデフォルトで有効とされ、長時間にわたるエージェント処理中もシステムを起動状態に保てる。Threads Sidebarの幅を調整するagent.threads_sidebar_default_width設定も加わった。\n\n## AIモデル対応\n\nBYOKでは、AnthropicのClaude Opus 5.5と、OpenAIのGPT-6 Astra、Sol、Lunaをサポートする。DeepSeek Flash 4.1への対応も追加された。さらにSuperGrokのサインイン機能が導入され、SuperGrokの契約者はAgent PanelでGrokモデルを利用できる。",
+      "bodyEn": "## Faster rendering\n\nZed Editor v1.21.0 focuses on faster rendering, language-server command access, and support for longer AI-assisted coding sessions. The release matters for users working with syntax-highlighted files, Markdown code blocks, and agent threads that may run long enough for the system to become idle.\n\nRendering has been accelerated in syntax-highlighted files and in code blocks embedded in Markdown. These improvements specifically target highlighted content rather than describing a broader performance change across the editor.\n\n## Language server command picker\n\nThe release adds a language-server command picker. This provides a selection function for language server operations, complementing the rendering improvements included in the same update.\n\nThe available release information does not describe individual commands or additional configuration for the picker. The stated change is the addition of the picker itself.\n\n## Agent sleep prevention\n\nA new agent.prevent_idle_sleep setting prevents idle system sleep while agent threads are running. It is enabled by default and is intended to support long-running agent turns without the system entering idle sleep.\n\nZed Editor v1.21.0 also adds the agent.threads_sidebar_default_width setting. This allows users to configure the width of the Threads Sidebar.\n\n## BYOK support\n\nThe update introduces BYOK support for Claude Opus 5.5 from Anthropic and GPT-6 Astra, Sol, and Luna from OpenAI. It also adds support for DeepSeek Flash 4.1.\n\nSuperGrok sign-in is now available for SuperGrok subscribers. Once signed in, those subscribers can use Grok models in the Agent Panel. Together with idle-sleep prevention and Threads Sidebar width configuration, these additions expand the controls and model options available during agent-based work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Markdownのコードブロックや色付きのコード表示が速くなったって、編集画面の描画が待たされにくくなるってこと？",
+          "en": "Markdown code blocks and color-highlighted code render faster now—does that mean less waiting for the editor to draw everything?"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。この記事では、シンタックスハイライト付きファイルとMarkdown内コードブロックの描画を高速化したとしておる。",
+          "en": "That's right. The release says syntax-highlighted files and code blocks inside Markdown now render faster."
+        },
+        {
+          "s": "a",
+          "ja": "長いAI作業を任せる人には、パソコンが途中で居眠りしないよう見張ってくれる機能が役立つ、って感じ？",
+          "en": "So for someone handing off a long AI task, it’s like having a guard that keeps the computer from dozing off?"
+        },
+        {
+          "s": "b",
+          "ja": "そのイメージじゃ。リリース内容では、エージェントの処理中にアイドルスリープを防ぐ設定が標準で有効になっておる。",
+          "en": "Exactly. The notes say a default-on setting prevents idle system sleep while agent threads are running."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、表示を軽快にしつつ、AIに長い作業を任せやすくした更新なんだね。へえ、実用的！",
+          "en": "So it makes rendering snappier while making long AI tasks easier to leave running. That sounds practical!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。ただし説明上、スリープ抑止はエージェントのスレッド実行中が対象じゃ。そこは範囲を分けて捉えるとよいのう。",
+          "en": "Indeed. One detail to note: the stated sleep prevention applies while agent threads are running, so keep that scope in mind."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-23T19:37:52.770Z"
+    },
+    "7a0655d9164546a1": {
+      "bodyJa": "## CodeQL CLI\n\nCodeQL CLI 2.27.0から、全対応プラットフォーム向けのCodeQLバンドルが非推奨となった。2027年3月中旬には、この全プラットフォーム対応バンドルが削除される予定であり、利用者は環境別パッケージへ移行する必要がある。\n\n## 全対応バンドル\n\n非推奨の対象は、codeql-bundle.tar.gzとcodeql-bundle.tar.zstである。これらはCodeQL CLI 2.27.0まで、サポートされているすべてのプラットフォーム向けバイナリをまとめて含む配布物として提供されている。\n\n非推奨化の時点では直ちに削除されるわけではないが、削除時期は2027年3月中旬とされている。以後は、サポート対象のオペレーティングシステムとアーキテクチャに対応した、プラットフォーム固有のバンドルをダウンロードする形になる。\n\n## Linux ARM64\n\nCodeQL 2.27.0では、Linux ARM64のサポートが追加された。ただし、Linux ARM64向けバイナリはプラットフォーム固有のダウンロードでのみ提供され、全プラットフォーム対応バンドルには含まれない。\n\nこのため、Linux ARM64の利用者は専用の配布物を選ぶ必要がある。ほかの対応環境についても、使用するOSとアーキテクチャに合ったバンドルへの切り替えが求められる。対応プラットフォームの詳細は、サポート対象プラットフォームに関するドキュメントで案内されている。",
+      "bodyEn": "## All-platform CodeQL bundle\n\nStarting with CodeQL CLI 2.27.0, the all-platform CodeQL bundle is marked as deprecated. This matters because teams using the combined download need to move to packages built for their supported operating system and architecture before the bundle is removed.\n\nThe deprecation applies to codeql-bundle.tar.gz and codeql-bundle.tar.zst. These archives contain binaries for all platforms supported up to this release. The change affects the combined bundle rather than the availability of platform-specific downloads.\n\n## Platform-specific bundle\n\nUsers should download the platform-specific bundle that matches their supported operating system and architecture. This replaces the approach of obtaining binaries for all supported platforms through a single combined archive.\n\nThe required package therefore depends on the environment where CodeQL will run. Teams using the all-platform archive will need to adopt the corresponding platform-specific packages as part of the transition away from codeql-bundle.tar.gz or codeql-bundle.tar.zst.\n\nThe documentation about supported platforms provides further information about the operating systems and architectures covered by these downloads.\n\n## Linux ARM64 support\n\nCodeQL 2.27.0 adds support for Linux ARM64. Its binaries are available only through platform-specific downloads, so Linux ARM64 users must select the dedicated package for that operating system and architecture.\n\nLinux ARM64 binaries will not be included in the all-platform bundle. As a result, the combined archive is not an option for obtaining the Linux ARM64 binaries, even before the all-platform bundle’s planned removal.\n\n## Mid-March 2027\n\nThe all-platform CodeQL bundle is planned for removal in mid-March 2027. Until that removal point, it is marked as deprecated beginning with CodeQL CLI 2.27.0.\n\nTeams currently relying on the combined bundle should transition to platform-specific packages. The same distribution approach covers Linux ARM64 users through its dedicated download while preparing other supported environments for the removal of the all-platform archive.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "CodeQL CLI 2.27.0で「全部入り」のバンドルが非推奨って、すぐ使えなくなるの？何に替えるの？",
+          "en": "The all-platform bundle is deprecated in CodeQL CLI 2.27.0. Does that mean it stops working right away, and what replaces it?"
+        },
+        {
+          "s": "b",
+          "ja": "非推奨は今すぐ停止という意味ではないぞ。この記事では2027年3月中旬に廃止し、OSとアーキテクチャ別のバンドルへ移すとしておる。",
+          "en": "Deprecated doesn’t mean gone immediately. The post says removal is planned for mid-March 2027, and users should switch to bundles for their operating system and architecture."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、道具箱を丸ごともらうより、自分の環境用だけ選ぶ感じ？Linux ARM64の人も対応できるの？",
+          "en": "So it’s like choosing the tool kit for your own setup instead of taking every kit at once? What about Linux ARM64 users?"
+        },
+        {
+          "s": "b",
+          "ja": "そんなイメージじゃ。案内上はLinux ARM64にも対応し、そのバイナリは環境別ダウンロードだけで提供されるのう。",
+          "en": "That’s the idea. The notice says Linux ARM64 is supported, with its binaries available only through the platform-specific download."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、2027年3月中旬までに、自分のOSとアーキテクチャに合う配布物へ移ればいいんだね。",
+          "en": "Got it—we need to move to the package matching our OS and architecture before mid-March 2027."
+        },
+        {
+          "s": "b",
+          "ja": "そういう移行が必要じゃよ。記載ではLinux ARM64版は全部入りに含まれないので、環境別の配布物を選ぶ点に注意じゃ。",
+          "en": "Yes, that migration is required. One stated caveat is that Linux ARM64 binaries won’t be included in the all-platform bundle, so users must choose the platform-specific package."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-22T15:16:53.673Z"
+    },
+    "655fd12194d5c751": {
+      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に書き換えられた。3つの提供形態に共通するランタイムの大規模な移行であり、実装は80万行を超えるプロダクションRustとなった。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスである。GitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKはいずれも、このランタイムを基盤として動作する。\n\nもともとは、現在のGitHub Copilot cloud agent向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして開発された。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## 80万行超のRust\n\n今回の移行では、GitHub Copilot appとCopilot CLIを使い、ランタイム全体をRustで書き直した。完成したコードは80万行を超え、その大半をAIエージェントが作成したと説明されている。\n\n単なる一部分の置き換えではなく、CopilotのCLI、アプリ、SDKを支えるランタイムそのものを対象とした全面的な再実装となっている。\n\n## 128件のPR\n\n移行作業は128件のプルリクエストに分けられ、それぞれがmainへ取り込まれた。最後に一度だけ切り替える方式ではなく、段階的に出荷する形で進められた点が特徴だ。\n\nその過程では避けられない少数のリグレッションが発生したものの、順次発見され、速やかに修正された。ランタイムの性能についても、桁違いに改善したとされている。",
+      "bodyEn": "## Copilot agent runtime\n\nGitHub has rewritten the Copilot agent runtime from TypeScript on Node.js into Rust, using the GitHub Copilot app and GitHub Copilot CLI during the migration. The change matters because this shared runtime backs the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its capabilities continued to grow while it remained on its original technology stack.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript on Node.js and the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, also referred to as CCA.\n\nAs the runtime and its capabilities expanded rapidly, it continued using that stack. GitHub has now replaced that implementation with a production Rust codebase rather than retaining the original TypeScript, Node.js, and V8 foundation.\n\n## More than 800,000 lines\n\nThe completed Rust rewrite contains more than 800,000 lines of production code. AI agents produced most of that code through work spanning 128 pull requests.\n\nThe GitHub Copilot app and Copilot CLI were used to carry out the rewrite. This made the migration itself an example of Copilot being applied to a large production codebase, with AI agents responsible for most of the resulting implementation.\n\n## Shipped incrementally\n\nThe 128 pull requests landed in the main branch and shipped incrementally. The team did not wait for a single cutover at the end before delivering the rewritten runtime.\n\nAccording to the announcement, the migration introduced a few regressions, which were discovered and fixed quickly during the incremental rollout. It also says runtime performance improved by orders of magnitude. Because the runtime supports the GitHub Copilot CLI, app, and SDK, the benefits of the Rust implementation extend across all three.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "80万行超をRustで書き直して、AIが128件のPRで大半を作ったの？ これって大きいこと？",
+          "en": "Over 800,000 lines rewritten in Rust, with AI producing most of it across 128 PRs? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "かなり大規模じゃ。この記事では、全面書き換えを一度に切り替えず、128件に分けて段階的に本番へ入れたとしておる。",
+          "en": "It’s a major rewrite. The article says they shipped it gradually through 128 PRs instead of waiting for one huge final switchover."
+        },
+        {
+          "s": "a",
+          "ja": "Node.js上のTypeScriptからRustへ移行って、つまりどういうこと？ 見た目だけ変えたの？",
+          "en": "What does moving from TypeScript on Node.js to Rust actually mean? Was it just a surface-level change?"
+        },
+        {
+          "s": "b",
+          "ja": "見た目ではなく、AIエージェントを動かす土台そのものを別の言語で作り直したのじゃ。本文では「完全に書き換えた」とされておる。",
+          "en": "Not just the surface—the machinery running the AI agents was rebuilt in another language. The piece describes it as a complete rewrite."
+        },
+        {
+          "s": "a",
+          "ja": "自分ならCopilot CLIで、前よりキビキビ動くか試したいな。アプリやSDKにも効果があるの？",
+          "en": "I’d try Copilot CLI and see if it feels snappier. Does the improvement carry over to the app and SDK too?"
+        },
+        {
+          "s": "b",
+          "ja": "3つとも同じランタイムが土台なので、改善はCLI、アプリ、SDKに及ぶのじゃ。記事だと性能は桁違いに向上し、少数の不具合も早く修正されたそうじゃよ。",
+          "en": "All three share that runtime, so the benefits extend to the CLI, app, and SDK. The article reports orders-of-magnitude performance gains, with the few regressions found and fixed quickly."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-17T13:58:03.669Z"
+    },
+    "2576bf8a180858a9": {
+      "bodyJa": "## GitHubでコード化\n\nGitHub上でイベント運営の定型工程をコード化し、企画からフォローアップまでを自動化する実践が紹介されている。日本と韓国のマーケターが、繰り返し発生する作業ではなく、テーマや参加者の検討に集中できるようにする取り組みだ。\n\n## 企画で問うこと\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナー、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、この市場の開発者が現在何を必要としているのか、どのテーマなら1時間を費やす価値があるのか、誰に参加してもらうべきかを考える。\n\n## 定型工程の自動化\n\nイベントの実施が決まると、固定された一連の工程が始まる。イベントプラットフォーム上のランディングページを複製し、チャネルごとに指定の形式でUTMタグ付きリンクを作成する。さらに、招待メールの文面を用意して配信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。こうした手順をGitHub上でコード化し、自動化の対象としている。\n\n## フォローアップ\n\nイベント当日まで毎朝、登録者リストをダウンロードして整理し、関係者向けの状況更新を投稿する作業も発生する。ページ複製やリンク作成、招待メール依頼に加えて、このフォローアップも自動化することで、運営上の反復作業を減らし、企画と参加者理解に注力できる構成となっている。",
+      "bodyEn": "## Events Are the Heartbeat\n\nEvent operations for GitHub marketing in Japan and Korea are being codified on GitHub, automating routine work from planning through follow-up. This matters because it lets marketers concentrate on understanding what developers need, which topics deserve their time, and who should participate.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul. Deciding the topic and audience remains central to the marketing work.\n\n## A Fixed Sequence Begins\n\nOnce an event is approved, a fixed operational sequence starts. A landing page must be duplicated on the event platform, followed by the creation of UTM-tagged links for each channel. Every link must use the required formatting.\n\nThe invitation email must also be drafted, and a request must be filed with the team responsible for sending it. The event then needs to be added to two project boards. These defined steps make the event process suitable for codification and automation on GitHub.\n\n## Every Morning Until the Event\n\nThe work continues after the initial setup. Every morning until the event, the registrant list is downloaded and cleaned up. A status update is then posted for stakeholders.\n\nAutomating these recurring steps extends the approach beyond page creation and link generation. It covers ongoing event operations and follow-up rather than treating automation as a one-time setup task.\n\n## Topics and Audiences\n\nThe practical goal is to reduce the time marketers spend carrying out the same fixed sequence for each approved event. Page duplication, channel-specific UTM link creation, invitation email requests, project-board updates, registrant processing, stakeholder reporting, and follow-up can be handled as codified operations.\n\nWith those routine tasks automated, marketers in Japan and Korea can focus more directly on event planning and participant understanding: what developers in the market need now, which subjects are worth an hour of their time, and which people should be in the room.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "イベント担当者の毎日の仕事は、これで何が変わるの？企画に使える時間が増えるってこと？",
+          "en": "What changes in an event marketer’s daily work? Does this mean more time for planning?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、ページ複製やUTMリンク作成、招待メール依頼、フォローアップを自動化し、企画や参加者理解に集中できるとしておるぞ。",
+          "en": "The article says page duplication, UTM link creation, invitation requests, and follow-up can be automated, freeing marketers to focus on topics and audiences."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！前はそういう作業を自動化できなかったの？",
+          "en": "Wow, that sounds great! Couldn’t those tasks be automated before?"
+        },
+        {
+          "s": "b",
+          "ja": "自動化できなかったとは書かれておらんのう。従来は開催決定後に定型作業が続き、毎朝リスト整理や状況共有もしていたと描かれておる。",
+          "en": "It doesn’t say automation was previously impossible. It describes a fixed post-approval workflow, including daily registrant cleanup and stakeholder updates."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、繰り返し作業をGitHubで回して、人はテーマや参加者を考えることに集中できる点なんだね。",
+          "en": "So the big win is running repetitive work through GitHub, while people concentrate on the right topics and attendees."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。紹介されている範囲では、企画からフォローアップまで定型工程をどこまでコード化できるかが注目点じゃよ。",
+          "en": "Exactly. From what’s presented, the key point is how much of the standard workflow—from planning through follow-up—can be codified."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T18:18:54.907Z"
+    },
+    "433004a6bd914ded": {
+      "bodyJa": "GitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証をアプリ内で完結できる。差分、ターミナル、ブラウザーが組み込まれており、エージェントの作業を確かめたい初心者にも流れを追いやすい構成となっている。\n\n## アプリ内で完結\n\nこれまで変更内容を確認し、コードを実行して、その結果を見るには、エディター、ターミナルウィンドウ、ウェブブラウザーを行き来する必要があった。GitHub Copilotアプリでは、それぞれの作業に使うパネルが横並びの形で内蔵されている。確認に必要な場所を切り替え続けるのではなく、一つのアプリ内でエージェントの作業を順番に確かめられる。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較したものだ。差分パネルには、追加、削除、変更された行が具体的に表示される。追加部分は緑、削除部分は赤で強調されるため、エージェントがコードのどこに手を加えたのかを見分けられる。\n\n表示された変更に対して、利用者はそのまま受け入れるだけでなく、コメントを残したり、Copilotに修正を依頼したりできる。変更内容を確認したうえで、どの対応を取るかを利用者自身が選び、最終的な判断を行う仕組みである。\n\n## 実行と結果の検証\n\nターミナルパネルはコードの実行に、ブラウザーは結果の検証に使う。差分パネルで編集内容を確認し、ターミナルで実行し、ブラウザーで結果を見るという一連の作業を、GitHub Copilotアプリから離れずに進められる。変更を読むだけで終わらず、実際に動かして結果まで確かめるところまでが、アプリ内のパネルでつながっている。",
+      "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings code review, execution, and result verification together in one place. This matters for beginners who want to check an agent’s work without moving repeatedly among an editor, terminal window, and web browser.\n\nBuilt-in panels place these steps side by side in the app. The workflow is designed around three basic tasks after an agent changes code: examining what changed, running the code, and seeing the result.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies the exact lines that were added, removed, or changed, highlighting additions in green and deletions in red.\n\nThis view lets users inspect an agent’s edits directly before deciding what to do with them. Rather than treating the changes as final, users can review the specific modifications and choose the next action.\n\n## Terminal and browser\n\nThe built-in terminal panel allows code to be run without leaving the GitHub Copilot app. The browser sits alongside the diff and terminal panels, allowing users to verify the result in the same working environment.\n\nPreviously, completing these tasks meant switching among an editor, a terminal window, and a web browser. Keeping the three panels together makes it simpler to move from reviewing an edit to running the code and checking the outcome.\n\n## Complete control\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The agent’s work can therefore be inspected and revised before any final decision is made.\n\nTogether, the diff, terminal, and browser panels support the full AI coding loop inside the app: review what the agent changed, run the code, verify the result, and decide whether the work should be accepted or changed.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "差分確認、コード実行、結果の検証を1つのアプリで全部できるんだ！ 3つがまとまるのって大きいこと？",
+          "en": "Wow, one app can handle all three: reviewing changes, running code, and checking the result. Is bringing them together a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、以前はエディター、ターミナル、ブラウザーを行き来していたそうじゃ。それが横並びの内蔵パネルになり、確認しやすくなったんじゃよ。",
+          "en": "The article says those tasks previously meant jumping among an editor, terminal, and browser. Now the built-in panels sit side by side, making the agent’s work easier to check."
+        },
+        {
+          "s": "a",
+          "ja": "「差分」って何？ コードが変わった場所を見つける仕組みってこと？",
+          "en": "What’s a “diff”? Is it a way to spot where the code changed?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでいう差分は、変更前と変更後の比較じゃ。追加は緑、削除は赤で示され、どの行が変わったか分かるのう。",
+          "en": "Here, a diff means a before-and-after comparison. Added lines appear in green and deleted ones in red, so you can see exactly what changed."
+        },
+        {
+          "s": "a",
+          "ja": "僕ならまず差分を見て、ターミナルで動かして、ブラウザーで結果を確かめたいな。アプリを離れなくていいのは安心かも！",
+          "en": "I’d review the diff first, run the code in the terminal, then check the result in the browser. Staying in one app sounds reassuring!"
+        },
+        {
+          "s": "b",
+          "ja": "本文にある通り、変更は受け入れるほか、コメントしたり修正を頼んだりもできるぞ。最後にどうするか決めるのは利用者じゃ。",
+          "en": "As described, you can accept changes, leave comments, or ask Copilot to revise them. The user still makes the final call."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T18:19:22.629Z"
+    },
+    "43dc5941df4bfd39": {
+      "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
+      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "オフライン評価でOpus 5の基準と同等以上、しかも推定コストは低かったんだね。これって大きいこと？",
+          "en": "HydraFusion matched or beat the Opus 5 baseline in offline tests, with lower estimated cost. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "品質を保ちながら費用を抑えられる可能性を示した点は大きいのう。ただ、この記事で確認できるのは管理されたオフライン評価での結果じゃ。",
+          "en": "It’s notable because it suggests quality may be maintained at lower cost. But the article only reports results from controlled offline evaluations."
+        },
+        {
+          "s": "a",
+          "ja": "「マルチモデル連携」って、つまりどういうこと？モデルを何個も同時に動かすの？",
+          "en": "What does “multi-model orchestration” mean? Are several models running at the same time?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、選んだコーディング作業を複数のモデルへ振り分ける仕組みじゃ。一般には、仕事に応じて担当を選ぶ司令塔のような考え方じゃよ。",
+          "en": "Here, selected coding tasks are routed across multiple models. More generally, think of it as a coordinator choosing which model handles each job."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、自分ならコーディング作業に合うモデルを選んでもらって、効率よく進めたいな！",
+          "en": "Nice! I’d want it to pick a suitable model for my coding task so I could work more efficiently."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方を目指した機能じゃのう。ただし現時点ではGitHub Copilotの研究プレビューで、示された品質とコストもオフライン評価でのものじゃよ。",
+          "en": "That’s the kind of assistance it aims to provide. For now, though, it’s a GitHub Copilot research preview, and its quality and cost claims come from offline evaluations."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:12:32.259Z"
+    },
+    "d94b84bc16af2780": {
+      "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
+      "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "同じプロジェクトで複数のAIエージェントを動かしても、作業がぶつからないの？ どう分けているんだろう。",
+          "en": "You can run several AI agents on one project without their work colliding? How are they kept separate?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、タスクごとに独立した「エージェントセッション」として動くんじゃ。各セッションは開始から完了まで別々に進むぞ。",
+          "en": "The article says each task runs as its own isolated “agent session.” Each session proceeds independently from start to finish."
+        },
+        {
+          "s": "a",
+          "ja": "洗濯機を何台も同時に回すみたいに、開発者が別々の作業をまとめて進められるってこと？",
+          "en": "So it’s like running several washing machines at once, letting developers move different tasks forward together?"
+        },
+        {
+          "s": "b",
+          "ja": "そういうイメージじゃよ。本文では、一つの完了を待たずに別のタスクを始められ、待ち時間を減らせるとしておる。",
+          "en": "That’s the idea. The piece says developers can start another task without waiting for the first to finish, reducing idle time."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、同じプロジェクトの仕事を独立させて、並行で進められるんだね。へえ、すごい！",
+          "en": "So tasks in the same project stay separate and can run in parallel. That’s pretty neat!"
+        },
+        {
+          "s": "b",
+          "ja": "うむ。紹介されているセッション画面では、各カードのタイトルと進み具合を確認しながら、複数の作業を管理できるのが要点じゃ。",
+          "en": "Exactly. The sessions view described here lets you manage multiple tasks while checking each card’s title and progress."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:46:10.596Z"
+    },
+    "dd3872b4a6c4bf09": {
+      "bodyJa": "## タスク品質\n\nGitHub Copilotは、タスク品質を犠牲にせず、AIコーディングのコスト効率を高める考え方を示している。重要なのは出力を単純に短くすることではなく、コーディング作業全体を迅速かつ効率的に、適切な文脈を使って完了させることだと説明されている。\n\n## トークン数\n\n個々のやり取りで消費するトークン数だけでは、効率を有意義に測れないとされる。目標はトークンをできるだけ減らすことではなく、タスクを前へ進めるために必要な量の文脈を利用することにある。したがって、一回の応答の短さと、作業全体のコスト効率は分けて捉える必要がある。\n\n## 適切な文脈\n\nツールの応答が簡潔でも、エージェントに必要な情報が欠けていれば、追加の呼び出しや作業が発生する場合がある。その結果、タスクの完了が遅くなり、最終的なコストも高くなり得る。GitHub Copilotの最適化では、個々のツール呼び出しではなく、タスクの成果を基準にする方針が示されている。\n\n## 反復出力\n\n記事では、この原則を実践するGitHub Copilotの4つの変更を扱うとしている。抜粋で具体的に示されているのは、有用な文脈を維持しながら反復的な出力を減らすこと、タスクに価値を加えない書式を取り除くこと、有用な動作を変えずに指示を短くすることだ。いずれも、必要な情報や品質を削るのではなく、作業全体にとって不要な処理を抑える最適化として説明されている。",
+      "bodyEn": "## Output quality is important\n\nGitHub Copilot is examining how to improve the cost efficiency of AI coding without sacrificing task quality. The key issue is that making each interaction shorter does not necessarily make the overall coding workflow faster or less expensive.\n\nAccording to the source, true efficiency means completing work quickly and efficiently while providing the right context. For that reason, the token count of an individual interaction is not, by itself, a meaningful measure of efficiency. Focusing only on fewer tokens can overlook additional processing required across the full task.\n\n## Right amount of context\n\nThe goal is not simply to minimize token use, but to provide the amount of context needed to move a task forward. A concise tool response may omit information the coding agent needs. When that happens, the agent may require additional calls or more work to obtain the missing details.\n\nThose extra steps can make the task both slower and more expensive, even though the initial response used fewer tokens. The source therefore frames cost optimization around the end-to-end coding workflow rather than the apparent efficiency of a single interaction.\n\nPreserving useful context is part of this approach. At the same time, GitHub Copilot aims to reduce repetitive output so that necessary information remains available without repeatedly generating the same material.\n\n## Optimize for the outcome\n\nThe stated principle is to optimize for the outcome rather than the individual tool call. The post says it examines four changes in GitHub Copilot that apply this principle, although the supplied excerpt explicitly describes three of them.\n\nThe identified changes are preserving useful context while reducing repetitive output, removing formatting that adds no value to the task, and shortening instructions without changing useful behavior. Together, these changes target unnecessary computation while retaining information and behavior that contribute to completing the coding task. The measure of efficiency is therefore whether the work advances effectively without compromising output quality, not whether every response is as short as possible.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1回の応答のトークン数が少なくても、全体では遅く高くなることがあるんだ！これって大きいこと？",
+          "en": "Even if one response uses fewer tokens, the whole task can still take longer and cost more? Wow—is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな視点の転換じゃ。この記事では、応答の短さより、必要な文脈を使って作業全体を進めた結果を重視しておる。",
+          "en": "It’s a meaningful shift in focus. The post values the overall task outcome and the right context, rather than simply making each response shorter."
+        },
+        {
+          "s": "a",
+          "ja": "「必要な文脈」って何？たくさん渡すほどいいわけじゃないなら、つまりどういうこと？",
+          "en": "What does “the right context” mean? If more isn’t always better, how should I think about it?"
+        },
+        {
+          "s": "b",
+          "ja": "文脈は、AIが作業を進めるための手がかりじゃ。ここで述べているのは、不足で追加の呼び出しを招かないよう、有用な情報を保つことじゃよ。",
+          "en": "Context is the set of clues the AI needs to work. Here, the point is to preserve useful information so missing details don’t trigger extra calls."
+        },
+        {
+          "s": "a",
+          "ja": "僕なら、必要な情報は残して、同じ説明や飾りの書式だけ減らしたいな。これなら効率よくなるかも？",
+          "en": "I’d keep the necessary details but trim repeated explanations and decorative formatting. Could that make my workflow more efficient?"
+        },
+        {
+          "s": "b",
+          "ja": "狙いは合っておるのう。紹介された変更も、反復出力や価値のない書式を減らしつつ、有用な動作と品質を落とさないのが条件じゃ。",
+          "en": "That’s the right idea. The changes described reduce repetitive output and no-value formatting, but only while preserving useful behavior and task quality."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:50:27.117Z"
+    },
+    "02ed65f309f500b4": {
+      "bodyJa": "## Copilot\n\nGitHub Copilotアプリを使い、Dependabotが作成するライブラリ更新用プルリクエストのトリアージを自動化する初心者向けチュートリアルだ。反復的な依存関係管理に伴う手作業を大幅に減らせる点が主題となっている。\n\n## トリアージ\n\n対象となるのは、ライブラリ更新の管理時に発生するDependabotプルリクエストのトリアージだ。記事では、GitHub Copilotアプリにこの種の繰り返し作業を処理させる方法を学べると説明されている。日常的な更新管理を手作業で進める負担の削減に焦点を当てた内容だ。",
+      "bodyEn": "## GitHub Copilot app for Beginners\n\nThis beginner-focused tutorial explains how to use the GitHub Copilot app to automate triage of Dependabot pull requests. It matters because managing routine library updates can be tedious and repetitive, requiring manual effort that the app can reduce.\n\nThe tutorial focuses specifically on pull requests created by Dependabot for library updates. Rather than presenting a different feature or new product, it describes using the GitHub Copilot app to handle this recurring dependency-management task.\n\n## Automate Dependabot pull request triage\n\nThe automation target is the triage of library-update pull requests. According to the summary, applying the GitHub Copilot app to this process can substantially reduce the work involved in repetitive dependency management.\n\nThe article is framed for beginners and provides a tutorial on automating that defined task.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Dependabotのプルリクエストを「トリアージ」するって何？ Copilotが何を自動化するの？",
+          "en": "What does “triaging” Dependabot pull requests mean? What exactly does Copilot automate?"
+        },
+        {
+          "s": "b",
+          "ja": "簡単に言うと、ライブラリ更新の提案を整理・仕分けすることじゃな。記事では、その反復作業をGitHub Copilotアプリに任せる方法を解説しておる。",
+          "en": "Simply put, it means sorting and handling library update proposals. According to the article, the GitHub Copilot app can automate that repetitive work."
+        },
+        {
+          "s": "a",
+          "ja": "それって何が嬉しいの？ 更新のたびに人が確認する手間が減るってこと？",
+          "en": "Why is that useful? Does it mean less manual work whenever libraries need updating?"
+        },
+        {
+          "s": "b",
+          "ja": "その理解でよいぞ。記事によれば、日常的なライブラリ更新管理にかかる手作業を大幅に減らせるんじゃ。",
+          "en": "That’s the idea. The article says it can significantly reduce the manual effort involved in routine library update management."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど！ Dependabotの更新提案をCopilotで仕分けして、繰り返し作業を軽くできるんだね。",
+          "en": "Got it! Copilot can sort Dependabot’s update proposals and take some of the weight out of repetitive work."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。初心者向けチュートリアルなので、自動化の進め方を学べる点が見どころじゃよ。",
+          "en": "Exactly. Since it’s a beginner-focused tutorial, the key takeaway is learning how to set up that automation step by step."
+        }
+      ],
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-08-30T18:43:11.880Z"
     }
   }
 }

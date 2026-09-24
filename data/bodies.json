@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T03:30:46.642Z",
+  "generatedAt": "2026-09-24T04:30:46.189Z",
   "count": 1139,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -1899,44 +1899,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事では推論コストの削減が競争力の鍵としており、Vera Rubinの費用対効果がどう生きるかが見どころじゃな。",
           "en": "Exactly. The article frames lower inference costs as a competitive key, so the point to watch is how Vera Rubin’s cost efficiency supports that."
-        }
-      ]
-    },
-    "bb9bc3cbd6fcc508": {
-      "bodyJa": "AIエージェントに開発作業をどこまで任せられるのか。Claudeのサブエージェント機能を軸に、チーム編成を19体から5〜7体へと絞り込んだ実験の記録が公開され、実務でのエージェント体制設計における具体的な指針を示している。\n\n近年、Anthropicの「Claude Code」をはじめとするコーディング支援ツールでは、単一のAIに全工程を任せるのではなく、役割を分担した複数のサブエージェントを組み合わせる手法が注目を集めている。サブエージェントとは、特定のタスクに特化した子エージェントを親セッションから呼び出し、調査・実装・レビューなどを分業させる仕組みを指す。理論上はエージェントを増やすほど専門性が高まると考えられるが、実際には管理コストや連携の複雑さが増す傾向がある。\n\n今回の記事では、当初19体という多数のエージェントを用意したものの、かえって指示の重複やコンテキストの分断が生じたという。そこで役割を再整理し、5〜7体程度へ集約したところ、セッション全体の見通しと成果の質が改善したと報告されている。エージェント数の削減が一律に有効とは限らないが、タスクの粒度と人間の監督範囲を踏まえた適正規模が存在する可能性を示唆している。\n\n記事の要点は「任せる仕事・任せない仕事」の切り分けにある。定型的な調査、コード生成、テストの実行といった検証可能な作業は委譲しやすい一方、設計方針の決定やトレードオフの判断など、文脈依存で後戻りが難しい領域は人間が握るべきだとする整理は、プロンプトエンジニアリングの実践知として参考になる。\n\n同様の課題意識は業界全体で共有されつつある。OpenAIやGoogleもエージェント間の協調を実現する枠組みを模索しており、複数エージェントを束ねるオーケストレーションの設計は今後の焦点になると見られる。個人開発の現場から現れたこうした知見が、チーム規模の開発体制にどこまで一般化できるかは、引き続き検証が求められる段階にある。",
-      "bodyEn": "The third installment in a series on AI-driven development tackles a practical question that many teams face once they start automating with large language models: how many specialized AI agents does a project actually need? Written for the Qiita community and centered on Anthropic's Claude, the article describes an experiment in which the author scaled a working team of AI agents down from 19 to roughly five to seven, and uses that reduction to draw conclusions about which tasks are safe to delegate and which still benefit from human oversight.\n\nThe core architecture combines two building blocks that Claude Code users will recognize: sessions and sub-agents. A session is the persistent working context in which a conversation and its accumulated state unfold, while a sub-agent is a scoped worker with its own instructions, its own context window, and often a restricted set of tools. In this model a primary or orchestrating agent breaks a larger goal into smaller pieces and hands them to sub-agents, each of which reports back without polluting the main conversation's context. The appeal is clear: separating concerns keeps the top-level reasoning focused and can reduce the token bloat that tends to degrade performance in long-running tasks.\n\nThe headline finding is that more agents did not translate into better results. The initial roster of 19 agents, apparently organized around narrowly defined roles, proved difficult to coordinate and maintain. Overlapping responsibilities, ambiguous handoffs, and the overhead of routing work between many specialists appear to have outweighed the benefits of fine-grained specialization. Consolidating to a smaller set of five to seven broader agents is presented as the more sustainable configuration, where each agent covers a coherent area of responsibility rather than a single micro-task.\n\nMuch of the article's practical value lies in its attempt to codify what should and should not be handed off. Tasks described as good candidates for delegation tend to be well-bounded and verifiable, the kind of work where the definition of done is explicit and the output can be checked mechanically or by tests. Work that is retained under closer human control, by contrast, involves ambiguous requirements, architectural decisions with long-term consequences, or judgment calls where an incorrect autonomous action would be costly to reverse. This framing echoes a broader theme in the current agent-tooling conversation: autonomy is most reliable when the surrounding guardrails, acceptance criteria, and feedback loops are strong.\n\nThe discussion sits within a fast-moving ecosystem. Anthropic has been building out Claude Code as a terminal-based coding assistant, and sub-agents are among several features, alongside memory files, custom commands, and hooks, aimed at making longer and more structured workflows manageable. Comparable orchestration ideas appear in frameworks such as LangGraph, Microsoft's AutoGen, CrewAI, and OpenAI's Assistants and Agents tooling, all of which grapple with the same design tension between a single capable agent and a coordinated team of narrower ones. The recurring lesson across these tools is that multi-agent designs add coordination cost, so the number and granularity of agents should be justified by a real gain in reliability or clarity.\n\nFor readers new to these concepts, a few prerequisites help. The context window is the finite amount of text a model can consider at once, which is why isolating sub-agent work matters. Prompt engineering, the careful specification of each agent's role, constraints, and output format, remains central, because a sub-agent is only as dependable as the instructions and tools it is given. And the orchestrator pattern, in which one agent plans and delegates while others execute, is the structural backbone that the article's session-plus-sub-agent setup embodies.\n\nAs a single practitioner's account rather than a controlled study, the results should be read as informed guidance rather than definitive benchmarks; the optimal number of agents is likely to vary with project size, domain, and tolerance for error. Still, the underlying principle is a useful counterweight to the assumption that adding more specialized agents automatically improves an AI-assisted workflow. The more durable takeaway is to match delegation to task verifiability and to keep the human in the loop where consequences are hard to undo.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-18T01:39:01.334Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「セッション×サブエージェント」って何？ AIを19体から5〜7体に減らしたのも気になる！",
-          "en": "What does “sessions plus sub-agents” mean? I’m also curious why the team went from 19 AI agents down to just 5–7!"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、セッションはAIとの作業単位、サブエージェントは仕事を分担する補助役じゃな。記事では両者を組み合わせて体制を試しておる。",
-          "en": "Put simply, a session is a unit of work with AI, while sub-agents are helpers assigned specific work. According to the article, the experiment combines both to organize the project team."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、数を絞ると何が嬉しいの？ 少ないほど良いってこと？",
-          "en": "Oh, interesting! What’s the benefit of narrowing the team down? Does that mean fewer agents are always better?"
-        },
-        {
-          "s": "b",
-          "ja": "記事が示すのは、単に少なければ良いという話ではないぞ。実験を通じて、AIに任せる仕事と人が見る仕事の判断基準を整理したんじゃ。",
-          "en": "The article doesn’t claim fewer is always better. It says the experiment helped clarify practical criteria for what AI can handle and what still needs human oversight."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、19体から5〜7体へ絞りながら、AIに任せる範囲を見極めたんだね。数より役割分担が大事そう！",
-          "en": "So they narrowed 19 agents down to 5–7 while figuring out what AI should handle. Sounds like clear roles matter more than the raw headcount!"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事では5〜7体という結果だけでなく、委譲できる業務をどう判断するかが実践的な見どころじゃよ。",
-          "en": "Exactly. According to the article, the key takeaway isn’t only the 5–7-agent result, but the practical way it evaluates which tasks can safely be delegated."
         }
       ]
     },
@@ -42739,6 +42701,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-19T21:57:20.546Z"
+    },
+    "da655a3978f43b5d": {
+      "bodyJa": "## AIケミスト\n\nOpenAIとMolecule.oneは、GPT-5.4を用いたほぼ自律型AIケミストが、医薬品化学における重要で難しい反応を改善したと示した。AIが現実の科学研究を加速し得る可能性を示す成果とされる。\n\n## 実験の自律化\n\nこのAIエージェントは、医薬品合成に関わる実験を自律的に設計し、実行した。その過程で困難な化学反応の改善に成功しており、実験計画だけでなく実行まで独立して担った点が特徴となる。",
+      "bodyEn": "## Near-autonomous AI chemist\n\nOpenAI and Molecule.one used a near-autonomous AI chemist running GPT-5.4 to improve a difficult reaction in medicinal chemistry. The result matters because it demonstrates AI’s potential to accelerate real-world scientific discovery.\n\n## Designed and executed experiments\n\nThe AI agent independently designed and executed experiments intended to improve the key drug-making reaction. Its work succeeded in improving this challenging step in pharmaceutical synthesis.\n\nBy taking on both experimental design and execution with near autonomy, the agent advanced medicinal chemistry research and showed how AI can contribute to practical scientific work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "薬を作る研究の現場で、普段の仕事は何が変わるの？ AIが実験までしてくれるってこと？",
+          "en": "What could this change in day-to-day drug research? Does it mean AI can actually run experiments?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、GPT-5.4を使うAIケミストが実験をほぼ自律的に設計・実行し、難しい反応を改善したんじゃ。研究を速める可能性があるのう。",
+          "en": "The article says a GPT-5.4-powered AI chemist designed and ran experiments with near autonomy, improving a difficult reaction. That could potentially speed up research."
+        },
+        {
+          "s": "a",
+          "ja": "前はAIにはできなかったの？ 「ほぼ自律」になったことで、何が違うんだろう。",
+          "en": "Couldn’t AI do that before? What’s different about it being “near-autonomous”?"
+        },
+        {
+          "s": "b",
+          "ja": "従来との詳しい比較は示されておらんよ。今回わかるのは、AIエージェントが自ら実験を設計・実行し、反応を改善したことじゃ。",
+          "en": "The piece doesn’t give a detailed comparison with earlier systems. What it does show is an AI agent independently designing and executing experiments that improved the reaction."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、AIが案を出すだけでなく、実験を組み立てて動かし、難しい反応を良くできたことなんだね。へえ、すごい！",
+          "en": "So the big takeaway is that AI didn’t just suggest ideas—it planned and carried out experiments that improved a tough reaction. Wow, that’s impressive!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃ。記事が示すのは研究を加速できる可能性じゃから、その可能性が実際の科学研究でどう広がるかに注目じゃのう。",
+          "en": "Exactly. The article presents this as a sign that AI could accelerate research, so the next question is how far that potential can extend in real scientific work."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-16T18:17:07.441Z"
     }
   }
 }

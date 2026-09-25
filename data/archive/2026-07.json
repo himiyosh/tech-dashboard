@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T07:47:58.925Z",
+  "generatedAt": "2026-09-25T09:00:52.402Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -7015,7 +7015,15 @@
       "archiveTier": "warm",
       "contentSnippet": "Model Context Protocol（MCP）の公式ブログが、2026-07-28に仕様の大規模改定（通称「ステートレス化」）を正式リリースしたと発表しました。対象読者は、MCPサーバーやMCPクライアントをTypeScriptで開発している、またはこれから開発しようとしているエンジニアです。 「仕様が変わったなら、まず公式SDKがどうなったか見てみよう」と思い、 npm で実際に @modelcontextprotocol/sdk を確認したところ、想定と違う光景に出会いました。本記事はその場で実際に実行したコマンドと出力をもとに書いています。 MCP公式ブログによると、2026-07-28仕様の最大の変更は「セッション概念の廃止」です。 The base protocol is going stateless — no more Mcp-Session-Id, no more initialize handshake, every request stands on its own. 出典: The 2026-07-28 MCP Specification Release Candidate （Model Context Protocol公式ブログ） 同ブログによれば、リリース候補（RC）は2026年5月21日に公開され、SDK開発者・クライアント実装者が実運用のワークロードで検証できるよう 10週間の検証ウィンドウ が設けられていました。この検証ウィンドウが明けたのが本日2026-07-28です。あわせて、機能の非推奨化には最低12ヶ月の告知期間を義務付ける新しいライフサイクルポリシー（Active → Deprecated → Removed）も導入されています。 ハンドシェイク廃止。セッションは必要な場合のみ opt-in ここまでは公式ブログの要約（二次情報）です。ここから先は、実際に手を動かして確認した内容になります。 まず、もっとも広く使われている公式パッケージ @modelcontextprotocol/sdk の状態を確認しました。",
       "feedSnippet": "はじめに Model Context Protocol（MCP）の公式ブログが、2026-07-28に仕様の大規模改定（通称「ステートレス化」）を正式リリースしたと発表しました。対象読者は、MCPサーバーやMCPクライアントをTypeScriptで開発している、またはこれ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJTIwU0RLJUUzJTgxJUFFbnBtJUUzJTgyJTkyJUU3JUEyJUJBJUU4JUFBJThEJUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgyJTg5JUUzJTgwJTgxJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgzJUFDJUUzJTgyJUI5JUU0JUJCJTk1JUU2JUE3JTk4JUUzJTgxJUFFJUU3JUEyJUJBJUU1JUFFJTlBJUU2JTk3JUE1JUUzJTgxJUFCOSVFMyU4MyU5MSVFMyU4MyU4MyVFMyU4MiVCMSVFMyU4MyVCQyVFMyU4MiVCOCVFMyU4MSVCOCVFNSU4OCU4NiVFOCVBMyU4MiVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSU4NCVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU5N2ZhNDJlYWMwOTM3MWVhNzdjNmRiMGU4NGNkYWY4&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=70e3ecb5c1713cecffe9cc0269983b9e",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJTIwU0RLJUUzJTgxJUFFbnBtJUUzJTgyJTkyJUU3JUEyJUJBJUU4JUFBJThEJUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgyJTg5JUUzJTgwJTgxJUUzJTgyJUI5JUUzJTgzJTg2JUUzJTgzJUJDJUUzJTgzJTg4JUUzJTgzJUFDJUUzJTgyJUI5JUU0JUJCJTk1JUU2JUE3JTk4JUUzJTgxJUFFJUU3JUEyJUJBJUU1JUFFJTlBJUU2JTk3JUE1JUUzJTgxJUFCOSVFMyU4MyU5MSVFMyU4MyU4MyVFMyU4MiVCMSVFMyU4MyVCQyVFMyU4MiVCOCVFMyU4MSVCOCVFNSU4OCU4NiVFOCVBMyU4MiVFMyU4MSU5NyVFMyU4MSVBNiVFMyU4MSU4NCVFMyU4MSU5RiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTU5N2ZhNDJlYWMwOTM3MWVhNzdjNmRiMGU4NGNkYWY4&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=70e3ecb5c1713cecffe9cc0269983b9e",
+        "alt": "MCP SDKのnpmを確認したら、ステートレス仕様の確定日に9パッケージへ分裂していた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "7dc48312f1506bab",
@@ -8210,6 +8218,8 @@
       "title": "The Official Ruby SDK for MCP Reaches 1.0",
       "titleJa": "MCP公式Ruby SDKがバージョン1.0に到達",
       "titleEn": "The Official Ruby SDK for MCP Reaches 1.0",
+      "summaryJa": "MCP公式Ruby SDKがv1.0に達し、安定した公開APIとTier 2要件の完全準拠（適合率100%）を実現。RubyでMCPサーバーを構築する開発者に信頼できる基盤を提供する。",
+      "summaryEn": "The official MCP Ruby SDK hits v1.0 with a stable public API and a 100% Tier 2 conformance pass rate, giving Ruby developers a production-ready foundation for building MCP servers.",
       "lang": "en",
       "publishedAt": "2026-07-27T09:00:00.000Z",
       "collectedAt": "2026-09-25T04:00:32.518Z",
@@ -8222,7 +8232,7 @@
       "category": "mcp",
       "importance": 3,
       "halfLife": "architecture",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Version 1.0.0 of the official Ruby SDK for the Model Context Protocol is now available. This is the first stable release of the mcp gem : the public API is now stable, and breaking changes ship only in major releases, following the Semantic Versioning policy documented in VERSIONING.md . Alongside the release, the Ruby SDK now meets every Tier 2 requirement of the SDK tiering system , as recorded in the Tier 2 assessment , and development toward Tier 1 is ongoing. The 1.0 release implements the 2025-06-18 and 2025-11-25 specification revisions and passes 100% of the server and client conformance scenarios.",
       "excerptOrigin": "article",
       "feedSnippet": "The official Ruby SDK for the Model Context Protocol has reached version 1.0 with a stable public API and a 100% conformance pass rate. The SDK now meets every Tier 2 requirement of the MCP SDK tiering system, and development toward Tier 1 continues."
@@ -14583,7 +14593,7 @@
       "summaryEn": "OpenAI launched a dedicated ChatGPT program for small businesses, offering resources and support to help smaller organizations adopt AI tools and improve operational efficiency.",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -20250,7 +20260,7 @@
       "summaryEn": "OpenAI introduced a scorecard framework to measure and track AI's progress across social, economic, and safety dimensions, aiming to improve accountability and transparency in how AI development affects the world.",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -22941,7 +22951,7 @@
       "summaryEn": "OpenAI highlights growing momentum in US AI safety policy, with state and federal initiatives shaping a regulatory framework to ensure responsible AI development.",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -23087,7 +23097,7 @@
       "summaryEn": "OpenAI introduced GPT-Red, a model that leverages self-improvement techniques to enhance robustness, marking a significant step toward building more reliable and resilient AI systems.",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -24954,7 +24964,7 @@
       "summaryEn": "OpenAI published a strategic guide for managing AI investments as agentic systems become mainstream, offering practical frameworks to help organizations maximize ROI and govern autonomous AI deployments responsibly.",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -32456,7 +32466,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -34456,7 +34466,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -34534,7 +34544,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -34561,7 +34571,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -34587,7 +34597,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -35992,7 +36002,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -36441,7 +36451,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -36977,7 +36987,7 @@
       "summaryEn": "Semantic Kernel .NET v1.78.0 is out, delivering agent framework improvements and bug fixes that enhance the stability of AI-integrated .NET application development.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "agent",
         "dotnet",
@@ -37011,7 +37021,7 @@
       "summaryEn": "Semantic Kernel Python 1.44.0 delivers incremental bug fixes and improvements to the agent framework and connectors, enhancing stability for developers building AI-powered applications with the SDK.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "agent",
         "llm-orchestration",
@@ -37845,7 +37855,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -37872,7 +37882,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-25T03:00:36.711Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "case-study",
         "codex",
@@ -38117,7 +38127,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-09-24T21:53:29.268Z",
+      "collectedAt": "2026-09-25T09:00:37.694Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

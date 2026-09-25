@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-25T07:30:43.446Z",
-  "count": 1143,
+  "generatedAt": "2026-09-25T09:00:49.666Z",
+  "count": 1144,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42891,6 +42891,44 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:46:10.596Z"
+    },
+    "545f56e392d6240e": {
+      "bodyJa": "## グローバル既定\n\nGitHub Copilot BusinessおよびEnterpriseに、一般提供されている対象機能と、対応するクライアント機能を一括管理する新しいグローバル既定ポリシーが追加された。企業や組織のCopilot設定で、新機能の展開方針を統一するための仕組みとなる。\n\n## 28日間の設定\n\n新ポリシーは、今後28日間にわたって管理者が設定できる。ただし、この期間中はユーザーの機能アクセスには影響しない。管理者があらかじめ方針を構成してから、アクセスへの反映に備えられる形だ。設定した時点で対象機能の利用可否が直ちに変わるわけではない点が重要となる。\n\n## AI Controls\n\n設定は「AI Controls」ページから行う。「Copilot」サブページを開き、「Default policy for new features」に用意された選択肢からポリシーを指定する。これにより、企業または組織のCopilot設定において、対象となる新機能や対応クライアントの既定の扱いをまとめて管理できる。\n\n## 適用範囲\n\nポリシーは、企業の「Features & clients」ページで管理される対象機能に適用される。加えて、「Agents」ページにあるCopilot Code Reviewポリシーと、CopilotにおけるMCP serversのポリシーも対象となる。どの機能が対象になるか、また例外がどのように扱われるかについては、default availabilityのドキュメントで確認するよう案内されている。",
+      "bodyEn": "## Global default policy\n\nGitHub Copilot Business and Enterprise are gaining a global default policy for generally available Copilot features and supported client capabilities. The change gives administrators a way to apply a consistent rollout policy across an enterprise or organization rather than managing each eligible new feature separately.\n\nThe policy covers eligible features and clients within enterprise and organization Copilot settings. Its scope is determined by feature eligibility and documented exceptions.\n\n## AI Controls\n\nAdministrators can configure the policy from the “AI Controls” page. From there, they open the “Copilot” subpage and choose an option under “Default policy for new features.”\n\nThere is a 28-day configuration period before the policy affects users’ feature access. During that period, administrators can select the desired default, but the setting will not yet change which features users can access. This provides time to establish an organization-wide approach before access changes take effect.\n\n## Features & clients\n\nThe global default applies to eligible features managed through an enterprise’s “Features & clients” page. That page is available at https://github.com/enterprises/YOUR-ENTERPRISE-SLUG/ai-controls/copilot/features, with the enterprise’s slug used in the URL.\n\nThe policy is not limited to entries on that page. It also applies to the Copilot Code Review policy found on the “Agents” page, as well as the policy for MCP servers in Copilot.\n\n## Feature eligibility and exceptions\n\nOnly eligible features are governed by the new global default. GitHub’s documentation on default availability defines which features qualify and identifies any exceptions.\n\nAs a result, the policy provides a shared default for supported Copilot capabilities while retaining eligibility boundaries. Administrators can use the 28-day window to configure that default before it begins controlling feature access for users.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "会社でCopilotを使う人や管理者の普段の仕事は、何が変わるの？",
+          "en": "What changes day to day for companies using Copilot and the admins managing it?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、対象の新機能や対応クライアントの既定方針を一括設定でき、組織全体の展開をそろえやすくなるのじゃ。",
+          "en": "The article says admins can set one default policy for eligible new features and supported clients, making organization-wide rollouts more consistent."
+        },
+        {
+          "s": "a",
+          "ja": "前は一括で決められなかったの？ それと、設定したらすぐ全員に反映される？",
+          "en": "Couldn’t admins manage that all at once before? And does a change affect everyone immediately?"
+        },
+        {
+          "s": "b",
+          "ja": "新しいグローバル既定ポリシーが追加されたことは分かるが、以前の具体的な方法は書かれておらん。設定できる28日間は、まだ利用者のアクセスに影響しないそうじゃ。",
+          "en": "We know the global default policy is new, but the previous process isn’t described. The post says admins have 28 days to configure it before user access is affected."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、利用者に影響が出る前に、会社全体の新機能ルールをそろえる準備期間があるのが一番の収穫だね！",
+          "en": "So the big takeaway is that admins get time to align company-wide rules for new features before users are affected!"
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。次は、対象機能と例外を確認しつつ、28日間でどの既定方針を選ぶかに注目じゃよ。",
+          "en": "Exactly. The next thing to watch is which default admins choose during those 28 days, while checking feature eligibility and exceptions."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-25T07:53:53.930Z"
     }
   }
 }

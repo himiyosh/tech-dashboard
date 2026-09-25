@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-25T18:30:50.800Z",
-  "count": 1145,
+  "generatedAt": "2026-09-25T19:30:52.143Z",
+  "count": 1142,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -28628,120 +28628,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-10T01:48:33.612Z"
     },
-    "cd4487bb61aeac0b": {
-      "bodyJa": "## Linux ARM64\n\nCodeQL 2.27.0がLinux ARM64で利用可能になり、ネイティブ実行に対応した。実行環境の拡大に加え、複数言語のセキュリティ分析や解析精度も改善されており、複数環境のコードを保護する開発チームに役立つ更新とされる。\n\nLinux ARM64向けには、プラットフォーム別のリリース資産としてCodeQL CLIとCodeQL bundleが提供される。CodeQLはGitHub code scanningを支える静的解析エンジンで、コード内のセキュリティ問題の発見と修正を支援する。\n\n## セキュリティクエリ\n\n言語対応では、Rust向けの新しいセキュリティクエリが追加された。また、Java/KotlinとC#については、フレームワークの対象範囲が拡大している。これらに加え、複数の言語にわたって分析精度の改善も行われた。\n\n## プライベート設定\n\nGitHub code scanningのdefault setupでは、組織のプライベートレジストリ設定を利用できるようになった。カスタムクエリやpackを取得する際、コンテナレジストリまたはGitHub APIへの認証に、この設定を使用できる。\n\nこれにより、プライベートなGitソースやDockerレジストリに置かれたカスタムコンテンツを利用できる。認証が必要な場所からクエリやpackを取得する構成を、組織の設定と組み合わせられる形だ。\n\n## MVC検出の改善\n\nC#に関する改善として、ASP.NET Core MVCのcontrollerとactionの検出が見直された。実行時の挙動に、より近くなるよう改善されている。フレームワークの対象範囲拡大と合わせ、実際のアプリケーション構造に沿った分析精度の向上が図られている。",
-      "bodyEn": "## Linux ARM64\n\nCodeQL 2.27.0 adds native support for Linux ARM64, alongside broader language and framework coverage and analysis accuracy improvements across multiple languages. The release helps development teams secure code across multiple environments.\n\nCodeQL is the static analysis engine behind GitHub code scanning, which helps users find and remediate security issues in their code. With this release, CodeQL can run natively on Linux arm64. The CodeQL CLI and CodeQL bundle are available through the linux-arm64 per-platform release assets.\n\n## Rust security query\n\nThe release adds a new security query for Rust. It also expands framework coverage for Java/Kotlin and C#, extending the areas that CodeQL can analyze for those languages.\n\nThese changes accompany analysis accuracy improvements across multiple languages. Together, the native Linux ARM64 support, new Rust query, and wider Java/Kotlin and C# coverage broaden CodeQL 2.27.0’s support for teams working with code across platforms and languages.\n\n## Private registry configurations\n\nGitHub code scanning default setup can now use an organization’s private registry configurations for authentication. These configurations can be used to authenticate with container registries or the GitHub API when code scanning fetches custom queries or packs.\n\nThis enables default setup to use custom content from private Git sources and Docker registries. The authentication change applies specifically when retrieving those custom queries or packs.\n\n## ASP.NET Core MVC\n\nCodeQL 2.27.0 also improves ASP.NET Core MVC controller and action discovery. According to the announcement, discovery now more closely matches runtime behavior.\n\nThis C# framework improvement is part of the release’s expanded framework coverage. It sits alongside the new Rust security query, broader Java/Kotlin support, native Linux ARM64 availability, and accuracy improvements across multiple languages.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Linux ARM64を使う開発現場なら、普段のコード確認やセキュリティ対策は何が変わるの？",
-          "en": "If a development team uses Linux ARM64, what changes in its everyday code checks and security work?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、CodeQLをLinux ARM64で直接動かせて、Rustの新クエリやJava/Kotlin、C#の拡充も使えるんじゃ。ネイティブ実行は、その環境向けに直接動くという意味じゃよ。",
-          "en": "The article says CodeQL now runs directly on Linux ARM64, with a new Rust security query and broader Java/Kotlin and C# coverage. “Native” means running directly in that environment."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、前はLinux ARM64で直接動かせなかったの？ほかの言語の検査も変わった？",
-          "en": "Oh, so couldn’t it run directly on Linux ARM64 before? Did checks for other languages change too?"
-        },
-        {
-          "s": "b",
-          "ja": "2.27.0でネイティブ実行が新対応じゃが、それ以前の詳しい動かし方までは示されておらんのう。今回の説明では、複数言語の分析精度も改善されたそうじゃ。",
-          "en": "Version 2.27.0 newly supports native Linux ARM64 execution, but earlier ways of running it aren’t detailed. This release also reports analysis-accuracy improvements across multiple languages."
-        },
-        {
-          "s": "a",
-          "ja": "一番の収穫は、Linux ARM64で直接動かしつつ、複数言語のコードをより広く守れることなんだね！",
-          "en": "So the biggest win is running CodeQL directly on Linux ARM64 while protecting code across more languages and frameworks. Nice!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。もう一つ紹介されているのは、既定セットアップが非公開レジストリ設定で認証し、非公開のカスタム内容を使える点じゃよ。",
-          "en": "Exactly. Another highlighted change is that default setup can authenticate using private registry configurations, letting teams use custom content from private sources."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-10T06:46:01.556Z"
-    },
-    "03d76ca2936be94e": {
-      "bodyJa": "GitHub Copilot BusinessとGitHub Copilot Enterpriseに、エージェント操作を企業側で一元管理する権限が追加された。機密性の高い操作に細かなガードレールを設けつつ、エージェントのワークフロー全体を無効化せずに運用できる。\n\n## 企業全体の制御\n\n管理者は、エージェントによる各操作について、ブロックするか、人間の承認を必須にするか、確認なしでの実行を許可するかを中央で設定できる。操作を一律に停止するのではなく、その内容に応じて実行条件を分けられる仕組みだ。\n\n## 対象となる操作\n\n管理対象には、シェルコマンドの実行、ファイルの読み取りと編集、ネットワークドメインへの接続が含まれる。エージェントが環境に対して行う主要な操作ごとに、異なる許可レベルを適用できるため、必要な処理を維持しながら、慎重に扱うべき操作を限定できる。\n\n## 制限の強制力\n\n企業が管理する制限は、ユーザー設定やワークスペース設定では緩和できない。自動承認や、以前に保存された承認によって制限を回避することもできないため、個別環境の設定より企業側のポリシーが優先される。\n\n## チーム別ポリシー\n\n企業内の異なるチームに対し、それぞれ専用のポリシーを設定することも可能だ。これらの管理機能は、GitHub Copilotアプリ、GitHub Copilot CLI、Agent Hostを使用するVisual Studio Codeセッションで一般提供されている。",
-      "bodyEn": "## Centrally control agent operations\n\nAdministrators of GitHub Copilot Business or GitHub Copilot Enterprise can now centrally control how agent operations are handled. The controls matter because they provide fine-grained guardrails for sensitive operations without requiring organizations to disable agent workflows.\n\nFor each covered operation, administrators can determine whether it is blocked, requires human approval, or can proceed without a prompt. This places decisions about agent permissions under centralized enterprise management rather than leaving them entirely to individual users or workspaces.\n\n## Shell commands and file edits\n\nManaged permissions cover shell commands, file reads and edits, and network domains. These categories allow administrators to apply restrictions to agent actions involving command execution, file access and modification, and network connections.\n\nThe controls therefore address several types of operations that may require different levels of oversight. An enterprise can block selected actions, require approval before they proceed, or permit them to run without prompting.\n\n## Managed restrictions\n\nManaged restrictions cannot be weakened through user settings or workspace settings. They also cannot be weakened by auto-approval or by approvals that were saved previously.\n\nEnterprises can provide specialized policies for different teams. This allows agent-operation safeguards to vary between enterprise teams while remaining centrally managed and enforceable.\n\n## Generally available\n\nThe controls are generally available in the GitHub Copilot app, GitHub Copilot CLI, and Visual Studio Code sessions that use Agent Host. Across these environments, enterprise-managed permissions can enforce team safeguards for shell, file, and network agent actions.\n\nGitHub also provides information about enterprise managed permissions and directs feedback and implementation questions to a GitHub Community discussion.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "シェル、ファイル、ネットワークの3種類を企業側で制御できるようになったんだね。これって大きいこと？",
-          "en": "Companies can now control three areas: shell, file, and network actions. Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、エージェント全体を止めず、慎重に扱いたい操作だけ細かく制限できるとしておる。安全策を企業全体でそろえられる変化じゃな。",
-          "en": "The article says companies can restrict sensitive actions without shutting down agent workflows entirely. That makes it a meaningful shift toward consistent safeguards across the organization."
-        },
-        {
-          "s": "a",
-          "ja": "「管理権限」って、つまりどういうこと？ ユーザーが自分で決める設定とは違うの？",
-          "en": "What exactly are “managed permissions”? How are they different from settings users choose themselves?"
-        },
-        {
-          "s": "b",
-          "ja": "企業の管理者が、操作をブロックするか、人の承認を求めるか、そのまま進めるか決める仕組みじゃ。ここではユーザー側で制限を弱められんのう。",
-          "en": "They’re rules set by company admins: block an action, require human approval, or let it proceed. In this case, users and workspace settings can’t weaken those restrictions."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、チームごとにファイル編集は承認必須、みたいに使いたいな。アプリでもCLIでも同じようにできるの？",
-          "en": "I’d make file edits require approval for certain teams. Can the same kind of policy work in the app and CLI too?"
-        },
-        {
-          "s": "b",
-          "ja": "本文の範囲では、アプリ、CLI、Agent Hostを使うVS Codeで利用できるぞ。ただし、設定するのはCopilot BusinessかEnterpriseの管理者じゃ。",
-          "en": "The post lists the app, CLI, and VS Code sessions using Agent Host. But these controls must be configured by a Copilot Business or Enterprise administrator."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-10T06:46:39.601Z"
-    },
-    "15557014764628de": {
-      "bodyJa": "## リポジトリルールセット\n\nGitHubのリポジトリルールセットに、シークレットスキャンの警告が残るプルリクエストのマージをブロックする新ルールが追加された。認証情報を含むコードが、警告を未解決のままマージされることを防ぐための保護機能となる。\n\nリポジトリルールセットは、複数のリポジトリに拡張可能な保護を設定する仕組みだ。新ルールは選択したリポジトリに対して有効化でき、プルリクエストがシークレットスキャンの警告を新たに発生させた場合にマージを阻止する。\n\n## シークレットスキャン\n\n設定するルールは、プルリクエスト上のシークレットスキャン警告が解決済みであることを要求する。バイパス権限を持たない開発者は、検出された各警告を解決しなければブロックを解除できない。\n\n標準設定では、オープン中のプルリクエストを対象にルールが実行され、プロバイダーパターンによって見つかったシークレットをブロックする。必要に応じて、カスタムパターンや汎用パターンなど、ほかのカテゴリーもブロック対象に追加できる。\n\n## 公開プレビュー\n\nこのルールは公開プレビューとして提供されており、GitHub Secret ProtectionまたはGitHub Advanced Securityの顧客が利用できる。プルリクエストのマージ条件として警告の解決を求めることで、権限を持たない開発者による認証情報の混入を防げる。\n\n## プッシュ保護\n\nプッシュ保護は、新ルールとは異なる段階でシークレットを止める。シークレットがリポジトリへ到達する前のプッシュ時点で阻止するのに対し、新ルールはプルリクエストに生じた警告が解決されるまでマージをブロックする。",
-      "bodyEn": "## Repository rulesets\n\nGitHub repository rulesets now include a public-preview rule that can block a pull request from being merged until its secret-scanning alerts are resolved. The protection matters because it helps teams prevent exposed credentials from entering merged code.\n\nRepository rulesets are designed to add scalable protections across repositories. The new rule applies that model to secrets introduced by pull requests, making alert resolution a condition for merging rather than leaving the alerts unresolved when code is merged.\n\n## Secret scanning alerts\n\nThe rule is called “require secret scanning alerts are resolved on pull requests.” When enabled, it blocks merging if a pull request introduces alerts covered by the rule.\n\nDevelopers who do not have bypass permissions must resolve every alert to clear the block. Users with bypass permissions are not subject to that requirement in the same way.\n\nBy default, the rule runs on open pull requests. Its default configuration blocks secrets identified through provider patterns. The rule can also be configured to cover additional categories, including custom patterns and generic patterns.\n\n## Selected repositories\n\nThe rule can be enabled for selected repositories through repository rulesets. This allows the merge requirement to be added across the repositories chosen for the protection.\n\nThe feature is available in public preview for customers with GitHub Secret Protection or GitHub Advanced Security. Its focus is specifically on preventing pull requests with unresolved secret-scanning alerts from being merged.\n\n## Push protection\n\nThe pull-request rule operates at the merge stage, after secret-scanning alerts have been introduced by a pull request. Push protection acts earlier: it stops a secret during the push, before the secret reaches the repository.\n\nTogether, the descriptions distinguish two enforcement points. Push protection prevents the secret from reaching the repository, while the repository ruleset prevents a pull request from merging until the applicable alerts have been resolved.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でコードを確認してマージするとき、普段の作業は何が変わるの？うっかり認証情報が入っても止めてくれる？",
-          "en": "What changes when we review and merge code at work? Will it stop us if credentials accidentally slip in?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、シークレットスキャンの警告が残るプルリクエストはマージできないんじゃ。回避権限がない開発者は、警告を一つずつ解消する必要があるぞ。",
-          "en": "The article says a pull request can’t be merged while secret-scanning alerts remain. Developers without bypass permission must resolve every alert first."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？プッシュ時に止める仕組みとは何が違うの？",
-          "en": "Wasn’t that possible before? How is this different from stopping a secret when code is pushed?"
-        },
-        {
-          "s": "b",
-          "ja": "本文で比べているのは、リポジトリ到達前のプッシュ時に止めるPush protectionと、PRのマージを止める新ルールじゃ。ほかの従来手段までは示されておらんのう。",
-          "en": "The piece contrasts push protection, which stops a secret before it reaches the repository, with the new rule that blocks PR merges. It doesn’t detail other previous options."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！PRにシークレットの警告が出たら、解消するまでマージを止められるのが一番の収穫だね。",
-          "en": "Got it! The big takeaway is that if a PR triggers a secret alert, merging can be blocked until it’s resolved."
-        },
-        {
-          "s": "b",
-          "ja": "今回示された範囲では、対象は公開プレビュー中のGitHub Secret ProtectionまたはGitHub Advanced Securityの顧客じゃ。customやgeneric patternsも追加設定できる点に注目じゃよ。",
-          "en": "For now, it’s in public preview for GitHub Secret Protection or GitHub Advanced Security customers. Also note that custom and generic patterns can be configured."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-10T06:47:34.199Z"
-    },
     "f58108e633032e1d": {
       "bodyJa": "## 個人向けMuse\n\nMuseは、誰もが使える世界初の個人向けAIエージェントとして発表された。安全性とプライバシーを重視した個人支援により、幅広い利用者が日々の目標へ効率よく、着実に近づけるようにするものとされる。\n\n## 先回りの支援\n\n特徴は、利用者の目標に関わるニーズを見越し、達成に向けて先回りして支援することだ。さらに、目標に沿ったアイデアも提案すると説明されている。個人に対する支援と提案を組み合わせ、目標への継続的な進捗を助けるエージェントとして位置づけられている。",
       "bodyEn": "## Personal AI Agent\n\nMuse has been announced as the world’s first personal AI agent built for everyone. Its significance lies in combining proactive help with idea suggestions so that a broad range of people can move toward their daily goals more efficiently and steadily.\n\nMuse is described as anticipating needs related to a person’s goals. It can then provide assistance intended to help that person make consistent progress.\n\n## Secure, Private Assistance\n\nSecurity and privacy are central to how Muse is presented. The personal assistance is designed to be secure and privacy-focused while supporting users as they work toward what they want to achieve.\n\nMuse also recommends ideas alongside its proactive support. Together, these capabilities are intended to help more people approach their goals through ongoing, goal-related assistance.",
@@ -29317,44 +29203,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-11T06:48:01.862Z"
-    },
-    "d0a7ad44880423f4": {
-      "bodyJa": "## 全アカウント\n\nnpmは、リカバリーコードを使ったログインに成功したアカウントへ、72時間の一時的なセキュリティ保留を適用する。これまで高影響アカウントだけが対象だった保護を全npmアカウントへ広げ、アカウント乗っ取り後の不正な公開を抑える変更となる。\n\n## 72時間の保留\n\n保留中は、パッケージの公開と、セキュリティ上重要な書き込み操作が一時停止される。対象にはアクセストークンの作成も含まれる。リカバリーコードが侵害された場合でも、ログイン直後に公開やトークン作成を実行できない状態にすることで、アカウント乗っ取りの試みを遅らせ、悪意ある公開のリスクを低減すると説明されている。\n\nこの保留は72時間が経過すると自動的に終了する。完全なアクセスを取り戻すために、利用者側で追加の操作をしたり、サポートへ解除を依頼したりする必要はない。\n\n## 継続できる操作\n\n制限されるのは公開やアクセストークン作成などであり、保留中もnpmへのログインは可能だ。パッケージの閲覧とインストールも継続できる。リカバリーコードによるログイン後、すべての利用を停止するのではなく、セキュリティ上重要な書き込み操作を一定時間止める仕組みとなっている。\n\n## npm Support\n\nリカバリーコードを使ってログインしていないにもかかわらず、予期せず公開が制限された場合は、直ちにnpm Supportへ連絡するよう案内されている。",
-      "bodyEn": "## Recovery-code sign-in\n\nnpm now places a temporary 72-hour security hold on every account after a successful recovery-code sign-in. The measure matters because it slows account-takeover attempts and reduces the risk of malicious package publishing when a recovery code has been compromised.\n\nThe protection previously applied only to high-impact accounts. It has now been extended to all npm accounts, so the same temporary restrictions follow any successful sign-in that uses a recovery code.\n\n## During the hold\n\nPublishing is paused for the duration of the security hold. Other security-sensitive write operations are also unavailable, including the creation of access tokens.\n\nThe hold does not prevent all account activity. Users can continue to sign in, browse packages, and install packages while the restrictions are active. The change therefore limits actions that could be used to alter account security or publish malicious packages without blocking package discovery and installation.\n\n## Full access\n\nThe 72-hour hold expires automatically. Users do not need to take any action or submit a support request for full access to be restored after the hold ends.\n\nUntil then, affected accounts remain unable to publish or perform the other paused security-sensitive writes. The restrictions are tied specifically to a successful recovery-code sign-in and apply regardless of whether the account is considered high impact.\n\n## Contact npm Support\n\nA publishing block following use of a recovery code is an expected result of the expanded protection. Users should wait for the hold to expire automatically if they knowingly signed in with a recovery code.\n\nIf an account is unexpectedly blocked from publishing and its user did not sign in with a recovery code, npm says to contact npm Support immediately.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "リカバリーコードでログインすると、全アカウントが72時間も制限されるの？ これって大きいこと？",
-          "en": "A recovery-code login now restricts every account for 72 hours? Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、対象が影響の大きいアカウントだけでなく全体へ広がったんじゃ。公開などを止め、不正利用までの時間を稼ぐ変更じゃよ。",
-          "en": "The article says this expands protection from high-impact accounts to everyone. Pausing publishing and similar actions buys time against abuse."
-        },
-        {
-          "s": "a",
-          "ja": "そもそもリカバリーコードって何？ それでログインすると警戒されるって、つまりどういうこと？",
-          "en": "What exactly is a recovery code? Why does signing in with one trigger extra caution?"
-        },
-        {
-          "s": "b",
-          "ja": "一般には、通常の認証が使えないときに復旧用として使うコードじゃ。今回は、そのコードでのログイン成功を保留開始の合図にしておる。",
-          "en": "Generally, it’s a code used to regain access when normal authentication isn’t available. Here, a successful recovery-code login starts the security hold."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら緊急時に使って、72時間は閲覧やパッケージ導入だけ続けるかな。終わればまた公開できるんだよね？",
-          "en": "I’d use it in an emergency, then stick to browsing and installing packages for 72 hours. Publishing comes back afterward, right?"
-        },
-        {
-          "s": "b",
-          "ja": "記事だと、保留は自動で切れ、手続きやサポート依頼なしで全機能が戻るぞ。使っていないのに公開できなければ、すぐnpm Supportへ連絡じゃ。",
-          "en": "The hold expires automatically, with no action or support request needed. But if publishing is blocked and you didn’t use a recovery code, contact npm Support right away."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-11T06:47:56.160Z"
     },
     "5b425696576159b9": {
       "bodyJa": "## 大規模な作業\n\nCursorに、機能開発や移行、アプリ全体の構築といった大規模な作業を扱うProjectsが登場した。数か月にわたるコンテキストを維持し、数千のサブエージェントへタスクを委任できる点が中核となる。\n\nProjectsは左側のナビゲーションから利用できる。betaとして提供され、本日よりすべてのユーザーへ順次展開される。\n\n## コーディネーター\n\nプロジェクト内のコーディネーターエージェントは、自らコードを書くのではなく、作業を計画して実装担当のエージェントへ委任する。必要な数のエージェントを作成・管理し、並列で実行したうえで、完成した成果物をユーザーの確認へ回す仕組みだ。\n\nProjectはクラウド上の専用コンピュータで動作するため、ノートパソコンを閉じても処理が止まらない。手元のマシンでテストが必要な場合は、コーディネーターがローカルエージェントを起動して実行する。\n\n## 共有コンテキスト\n\n各Projectは、エージェントが利用するクラウドおよびローカルマシン間で同期されるファイル群を保持する。リサーチやアーティファクトだけでなく、コードベースから学んだ内容や、ユーザーが好む作業の進め方も蓄積される。\n\nあるエージェントがサービスのテスト方法を突き止めれば、以降のエージェントも同じ手順を利用できる。共有コンテキストはProjectとともに育ち、コーディネーターは時間の経過に伴って、より効果的になると説明されている。\n\n## 定期的な作業\n\nコーディネーターには、Slackチャネルの監視、スケジュールでの実行、すべてのPRの追跡などを指示できる。ユーザーのプロンプトを待たず、検知したシグナルに応じてアクションを実行する。\n\nSlackを接続してバグ報告チャネルを指定すると、バグが報告されるたびに作業の委任が自動的に始まる。これにより、指示なしで定期的な作業を継続できる。",
@@ -30045,44 +29893,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-13T02:03:04.256Z"
-    },
-    "b26d8e63fb87e23f": {
-      "bodyJa": "## 試用対象を拡大\n\nGitHub Advanced Securityのセルフサービス試用を開始できるGitHub Enterprise Cloud企業の範囲が拡大した。対象となるライセンス数の上限が100から300へ引き上げられ、より多くの企業がGitHub Code SecurityとGitHub Secret Protectionを評価できるようになった。\n\n従来は最大100ライセンスの企業が対象だったが、今回の拡大により、最大300ライセンスの企業までセルフサービス試用を開始できる。対象範囲の変更は、GitHub Enterprise Cloudの企業に適用される。\n\n## 評価できる製品\n\nセルフサービス試用では、GitHub Code SecurityとGitHub Secret Protectionを評価できる。組織はこれらを試用し、導入前の判断を進められると説明されている。\n\n試用の開始にあたっては、GitHub Advanced Securityを対象とする。GitHub Code SecurityやGitHub Secret Protectionが、それぞれ独立した新しい試用制度として提供されるという内容ではない。\n\n## 試用の設定\n\nGitHub Advanced Securityの試用を設定するには、Enterpriseの「Billing and licensing」ページへ移動する。セルフサービス方式のため、対象となるGitHub Enterprise Cloud企業は、このページから試用開始の手続きを進める形となる。\n\n試用に関する詳細は、セルフサービスのGitHub Advanced Security試用についての案内で確認できる。\n\n## CodeQL更新\n\nCodeQL 2.27.0では、Linux ARM64のサポートが追加された。CodeQL 2.26.4ではGitHub Actionsのセキュリティ検出が改善され、CodeQL 2.26.3ではGitHub ActionsのクエリとJavaScriptのモデリングが改善されている。",
-      "bodyEn": "## More Enterprise Cloud Customers\n\nMore GitHub Enterprise Cloud customers can now start a self-service GitHub Advanced Security trial. The expanded availability matters because it gives more organizations an opportunity to evaluate GitHub Code Security and GitHub Secret Protection before deciding whether to adopt them.\n\nThe change applies to Enterprise Cloud organizations based on their number of licenses. It expands access to the self-service trial rather than introducing a different security product or a separate evaluation process.\n\n## Eligibility Has Expanded\n\nPreviously, self-service GitHub Advanced Security trials were available to enterprises with up to 100 licenses. Eligibility has now expanded to enterprises with up to 300 licenses.\n\nAs a result, organizations above the previous 100-license limit may now qualify, provided they have no more than 300 licenses. The expansion increases the range of Enterprise Cloud customers that can begin the trial without moving beyond the self-service option described in the announcement.\n\nThe stated threshold concerns enterprise license counts. The change from 100 to 300 licenses is the central eligibility update.\n\n## Evaluate Code Security\n\nThe trial is intended to let eligible organizations assess GitHub Code Security and GitHub Secret Protection. These are the two GitHub Advanced Security capabilities identified for evaluation through the trial.\n\nThe announcement frames this evaluation as a step that can take place before adoption. It therefore gives newly eligible teams the same opportunity to assess those capabilities that was previously available through self-service only to smaller Enterprise Cloud organizations within the earlier limit.\n\n## Billing and Licensing\n\nTo set up a GitHub Advanced Security trial, an eligible customer should go to the Enterprise “Billing and licensing” page. That page is the specified starting point for the self-service setup process.\n\nGitHub also directs customers to its information on self-serve GitHub Advanced Security trials for further details. The practical change is limited and specific: the setup location remains the Enterprise billing and licensing area, while the maximum eligible enterprise size rises from 100 licenses to 300.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "セルフサービス試用の対象が100ライセンスから300ライセンスに広がったって、つまりどういうこと？",
-          "en": "The self-service trial limit jumped from 100 licenses to 300. What does that actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、最大300ライセンスのEnterprise Cloud企業が自分で試用を始められるようになった、と説明しておるぞ。",
-          "en": "The article says Enterprise Cloud organizations with up to 300 licenses can now start the trial themselves."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、300ライセンスまでの組織が、導入前にセキュリティ機能を試着できるような感じ？",
-          "en": "Oh, so organizations with up to 300 licenses can sort of try on the security features before committing?"
-        },
-        {
-          "s": "b",
-          "ja": "そんなイメージじゃ。掲載内容の範囲では、Code SecurityとSecret Protectionを評価して導入判断を進めやすくなるのう。",
-          "en": "That’s the idea. The piece says teams can evaluate Code Security and Secret Protection to make a more informed adoption decision."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、より多くのEnterprise Cloud企業が、導入前に自分たちで安全機能を確かめられるんだね！",
-          "en": "So more Enterprise Cloud organizations can check the security features for themselves before adopting them!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。案内上は、対象が最大300ライセンスで、試用の設定はEnterpriseの「Billing and licensing」ページから行うぞ。",
-          "en": "Exactly. The announcement limits eligibility to 300 licenses and directs organizations to the Enterprise “Billing and licensing” page to set up the trial."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-13T02:03:40.673Z"
     },
     "9da21d9554c2ff4c": {
       "bodyJa": "## ScalafixとAI\n\nScalafixとAIを組み合わせ、不要コードの削除を自動化する手法が紹介されている。Claude Codeなどで実装量が増えやすい開発現場で、コードベースの肥大化を継続的に抑えるための取り組みだ。\n\n## 不要コード削除\n\nAIエージェントを使ったコーディングがほぼ当たり前になりつつあり、コードの追加速度も上がっていると説明されている。増え続けるコードに対し、不要部分の削除を自動化することで、チームのコード保守に役立つとされる。",
@@ -42702,7 +42512,83 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:54:20.707Z"
     },
-    "3e5e727e385d3f8c": {
+    "e66b83498065bd8a": {
+      "bodyJa": "## v1.24.0\n\nOpenHands v1.24.0が2026年9月25日にリリースされた。会話画面やクラウド上の共有自動化会話に機能が追加され、cronスケジュールの検証やCanvasの接続経路なども修正されている。\n\n## ワークスペース\n\nConversationsヘッダーから、すべてのワークスペースフォルダーを切り替えられるようになった。会話を扱う画面上で、対象となるフォルダーをまとめて切り替えるための変更となる。\n\nこのほか、OpenAIサブスクリプションのキャッシュをバックエンド単位でスコープする機能が加わった。ホーム画面では、スプラッシュ表示の文面が日々のエンジニアリング作業を中心とした表現へと見直されている。\n\n## 共有自動化会話\n\nクラウドでは、共有された自動化会話を読み取り専用で開けるようになった。共有された内容を表示しつつ、編集を伴わない形で確認できる機能として追加されている。\n\n会話に関連するSkills、Hooks、Toolsの各ダイアログについては、幅の上限が90vwに設定された。画面内でダイアログが占める横幅を制限する修正となっている。\n\n## cronとCanvas\n\n自動化のスケジュール検証では、単一の開始値を持つステップ指定のcronフィールドを受け付けるように修正された。\n\nCanvasでは、従来の「/api/cloud-proxy」経由ではなく、agent-server runtimeを直接呼び出すよう接続経路が変更された。verification confirmとcompact-contextで発生していた405への対応として実施された修正である。",
+      "bodyEn": "## What's Changed\n\nOpenHands v1.24.0 adds controls for workspace folders and read-only access to shared automation conversations, alongside fixes for scheduling validation and Canvas routing. The changes are intended to make day-to-day engineering work and team workflows smoother.\n\nThe release was published on September 25, 2026, and combines interface updates, cloud conversation behavior, backend cache scoping, and targeted bug fixes.\n\n## Features\n\nThe Conversations header can now toggle all workspace folders. This places the folder control directly in the conversation interface rather than requiring workspace folders to be handled individually elsewhere.\n\nOn cloud, shared automation conversations can now be opened in read-only mode. The release also scopes OpenAI subscription caches by backend, separating those caches according to the backend in use.\n\nA further home-screen change reframes the splash copy around day-to-day engineering work. This is a wording adjustment rather than a change to the underlying conversation or automation behavior.\n\n## Bug Fixes\n\nThe schedule validator now accepts single-start stepped cron fields. This addresses automation schedules that use that cron-field form but were not previously accepted by validation.\n\nConversation dialogs for Skills, Hooks, and Tools are now capped at 90vw. The limit prevents those dialogs from extending beyond that specified viewport-width threshold.\n\nCanvas routing has also changed. The Canvas now calls the agent-server runtime directly instead of using /api/cloud-proxy. The release associates the previous route with a 405 response during verification confirmation and compact-context operations.\n\n## Smoother Team Workflows\n\nTogether, the update concentrates on conversation navigation, shared automation visibility, schedule validation, dialog sizing, and Canvas connectivity. The workspace-folder toggle and read-only cloud conversations expand how teams can move through and inspect shared work, while the cron and Canvas fixes address specific workflow interruptions described in the release.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "会話ヘッダーから、全部のワークスペースフォルダーを切り替えられるの？ つまりどういうこと？",
+          "en": "You can toggle all workspace folders from the conversation header? What does that actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、会話画面の上部から全フォルダーを切り替えられる機能が加わったのじゃ。作業場所の選択をまとめて扱える、ということじゃよ。",
+          "en": "The article says you can now toggle all workspace folders from the conversation header. In other words, folder selection is handled right where you work."
+        },
+        {
+          "s": "a",
+          "ja": "チームで使うなら、共有ノートを開いて作業場所を選び、ほかの人の自動化も見る感じ？",
+          "en": "So for a team, is it like choosing a workspace from a shared notebook and checking someone else’s automation?"
+        },
+        {
+          "s": "b",
+          "ja": "近いのう。リリース内容では、クラウド上の共有自動化会話を読み取り専用で開けるので、内容を変えずに確認したい人に役立つのじゃ。",
+          "en": "That’s close. The release notes say shared automation chats can open read-only in the cloud, helping teammates review them without changing anything."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、作業場所の切り替えと共有内容の確認がしやすくなって、チーム開発が進めやすくなるんだね！",
+          "en": "Nice! So switching workspaces and reviewing shared activity should be easier, making team development smoother."
+        },
+        {
+          "s": "b",
+          "ja": "そうじゃな。変更一覧では共有会話は読み取り専用じゃし、cron検証やCanvas接続の修正も含まれておるぞ。",
+          "en": "Exactly. One detail to note: shared chats are read-only, and the listed changes also include fixes for cron validation and Canvas connectivity."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-25T18:37:00.520Z"
+    },
+    "090fb2acd1195bbc": {
+      "bodyJa": "## 仕事の新OS\n\nCopilotは、あらゆるモデル、フォームファクター、タスクを横断する「仕事の新OS」として構築されている。今回、Copilot史上最大とするアップデートが発表され、4つの要素を一つにまとめることで、AIを実際の仕事の流れへ組み込む方向性が示された。\n\n## Officeとの統合\n\n中心となるのは、CopilotとOfficeの双方向統合だ。OfficeがCopilotへ完全に組み込まれる一方で、CopilotもOfficeに組み込まれる。さらにTeamsからCopilotを呼び出せるため、質問への回答だけでなく、アプリの作成や利用者に代わる業務の実行までを、一連の流れとして扱えるようになると説明されている。変化するワークフローの中へAIを直接取り込む更新と位置づけられる。\n\n## Todayの先回り\n\n新たに導入される「Today」は、利用者が尋ねる前に、M365全体から重要な情報を表面化させる能動的な体験だ。必要な情報を得るたびに質問する形に限らず、重要情報を先回りして示すことで、作業を進めやすくする。\n\n今回示された変化は、AIを「考えるのを手伝って」から「実行するのを手伝って」へ移すものとされる。こうしたシステムへ指示を出し、結果を評価し、協働できる人は優位性を持つため、企業が重視するスキルも変わると説明されている。",
+      "bodyEn": "## A new OS for work\n\nMicrosoft is positioning Copilot as a new operating system for work, spanning every model, form factor, and task. Its biggest Copilot update to date matters because it aims to bring answering questions, building apps, and completing work into one connected flow.\n\nThe update is described as bringing four elements together, with the announced capabilities centered on deeper Office integration, access through Teams, and a proactive experience called Today.\n\n## Office embedded in Copilot\n\nOffice is now fully embedded in Copilot, while Copilot is also embedded in Office. This two-way integration is intended to place AI directly within the workflows people use to get work done.\n\nUsers can also invoke Copilot in Teams. Together, these changes extend Copilot across work surfaces rather than limiting it to a separate interaction. The update is designed to support a range of actions, from responding to a question to creating an app or carrying out work on a user’s behalf.\n\n## Today surfaces important information\n\nToday is a proactive experience that surfaces the most important information from across M365. Instead of requiring users to ask for that information, Today is designed to bring it forward automatically.\n\nThis approach reflects the announcement’s broader focus on changing workflows. Copilot is being integrated into the flow of work so that users can move between finding information, producing something, and completing tasks with less separation between those steps.\n\n## From help me think\n\nThe announcement characterizes the larger shift as AI moving from “help me think” to “help me do.” The emphasis is therefore not only on improving answers, but also on enabling Copilot to take a more active role in completing work.\n\nAccording to Microsoft, this shift changes the skills companies will value. People who can direct, evaluate, and work alongside these systems will have an advantage as AI becomes part of the workflow itself.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "4つの要素をまとめたCopilot史上最大の更新なんだって。これって大きいこと？",
+          "en": "They’re calling this Copilot’s biggest update yet, bringing four elements together. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、質問への回答からアプリ作成、業務代行までを一つの流れにした点を大きな変化と位置づけておるんじゃ。",
+          "en": "The article frames the big shift as one continuous flow—from answering questions to building apps and completing work on your behalf."
+        },
+        {
+          "s": "a",
+          "ja": "新しく入る「Today」って何？ つまりどういうこと？",
+          "en": "What’s the new “Today” feature? What does it actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "Todayは、頼まなくてもM365内の重要な情報を先回りして示す仕組みじゃよ。自分で探す前に必要そうなものを出すイメージじゃ。",
+          "en": "Today proactively surfaces important information from across M365 without waiting for you to ask. Think of it as bringing likely priorities to you first."
+        },
+        {
+          "s": "a",
+          "ja": "へえ、すごい！ Teamsから呼び出して、質問したりアプリを作ったり、そのまま仕事まで頼んでみたいな。",
+          "en": "Wow! I’d call it from Teams, ask questions, build an app, and then have it carry the work through."
+        },
+        {
+          "s": "b",
+          "ja": "それが目指す流れじゃのう。ただ、本文ではAIを指示し、評価し、一緒に働ける人が強みを持つとしておる。任せきりにはしないことじゃ。",
+          "en": "That’s the workflow it aims for. Still, the piece says the advantage goes to people who can direct, evaluate, and work alongside these systems—not simply hand everything over."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-25T18:37:26.993Z"
+    },
+    "93db8516427cde42": {
       "bodyJa": "## チャット中心の現状\n\nLLMの主要な操作画面として、現在もチャットが使われ続けている。その前提に疑問を投げかけ、用途に合ったUIを選ぶ視点は、AI体験を設計する開発者にとって重要な判断材料になる。\n\n現在のAIをめぐる実験が始まって3年が経過したにもかかわらず、LLMとの主要な接点は依然としてチャットだと説明されている。文章を入力し、対話形式で応答を受け取る構造が、AIを利用する際の標準的な形として扱われているという指摘だ。\n\n## textareaの皮肉\n\n本文では、HTML仕様にtextareaコンポーネントを最初に提案した人物について、AIにtextareaから質問して確認したという話が示される。ただし、その事実自体も「かなり確信している」という語り方にとどまる。\n\nこの逸話は、チャットへの疑問をチャット形式で確かめているという皮肉を含む。LLMを使う入り口として、自由記述欄に文章を入力する方式が深く定着している状況を象徴している。\n\n## 用途に合うUI\n\n提示されている中心的な主張は、チャットが誤ったUIである可能性があり、少なくとも多くの場合に最適とは限らないというものだ。対話欄を当然の前提にせず、実行したい用途に適した操作方法を選ぶ必要性が示されている。\n\nこれはチャットを全面的に否定する主張ではない。「少なくとも大半の時間」と範囲を限定し、タスクごとに異なるインタラクションを設計する視点を提案している。\n\n## タスク指向の可能性\n\nAIの最初の大規模な実装が、一人称で応答するチャットボットという、やや仕掛け的な形だったことには残念さがあると述べられている。一方で、AIをタスク指向にすれば、大きな可能性があるとされる。会話そのものを中心に置くのではなく、利用者が達成したい作業を基準にUIを考えることが、ここで示される設計上の焦点である。",
       "bodyEn": "## Chat Is the Wrong UI\n\nThree years into the current AI wave, chat remains the primary interaction surface for large language models. The author challenges that default because a conversational interface may not be the right way to handle most tasks.\n\nThe argument is not that chat can never work. Rather, it questions the assumption that an LLM experience should automatically begin with a text area and continue as a conversation. Developers designing AI interactions should instead consider whether the interface fits the specific task.\n\n## Primary Interaction Surface\n\nThe article emphasizes how persistent the chat format has been. Despite the changes experienced during the three-year AI experiment, users still primarily interact with LLMs by entering text into a conversational interface.\n\nThe author illustrates this reliance on text areas by recalling a claim about who first argued for a textarea component in the HTML specification. The author says that confidence in the claim came from asking AI about it through a textarea. The example reinforces the central point: even questions about interfaces are being handled through the same default chat interface.\n\n## First-Person Chatbot\n\nThe first large-scale implementation of AI is characterized as a gimmick: a first-person chatbot. That framing helps distinguish the current dominant presentation of AI from the broader possibilities the author sees for it.\n\nThe concern is therefore about interaction design, not simply the underlying model. Presenting AI as a chatbot makes conversation the organizing structure, even when the user is trying to complete a particular task.\n\n## Task Oriented\n\nThe article proposes task-oriented AI as a more promising direction. Instead of relying on a dialogue box for every use, developers can choose an interface suited to what the user is trying to accomplish.\n\nThis perspective makes the interface itself a design decision rather than a fixed feature of LLM-based software. Chat may remain appropriate in some cases, but the author’s argument is that it should not be treated as the correct choice most of the time.",
       "chat": [
@@ -42740,7 +42626,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-25T00:09:49.572Z"
     },
-    "c45ef450c3820855": {
+    "4c9d688cf44b534e": {
       "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、巨大な差分と多数のレビューコメントを扱っても高速で滑らかに確認できるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、一つの変更としてレビューする場面を重視した取り組みだ。\n\n## 分割しにくい作業\n\n作業を小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を反映するうえで有効と説明されている。しかし、広範なリファクタリングや移行には、きれいに分割できず、一つのプルリクエストとして扱わなければならないものもある。さらに、レビュー中のやり取りが加わることで、プルリクエスト全体は一段と大きくなる。そのため、差分だけでなく、長く積み重なった会話も含めて快適に表示することが求められる。\n\n## 画面の刷新\n\n新しいプルリクエスト画面は、差分とレビュー上の会話が非常に大きい状態でも、操作感を高速かつ滑らかに保つことを要件として再構築された。対象は単にファイル数の多い変更ではなく、変更行とインラインレビューコメントが同時に大量に存在するケースまで含まれる。巨大な変更を一つの画面で追う際の性能を中心に据えた設計とされる。\n\n## 性能の検証\n\n検証には、見つけられた中で最大のオープンソースのプルリクエストが使われた。この変更は2,200ファイルにまたがり、変更行は100万行を超え、インラインレビューコメントも400件以上含んでいた。GitHub Copilotアプリは、この極端な規模のプルリクエストを開き、大規模な差分と長い議論を扱う場合でも表示性能を保てるかを確かめた。",
       "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes that produce exceptionally large diffs and extensive review conversations. This matters when broad refactors or migrations must land as a single change and cannot be divided cleanly into smaller pull requests.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When work cannot be separated cleanly, teams can be left with one pull request that becomes very large. The review conversation can make it grow further as inline comments accumulate.\n\n## Pull request view\n\nThe rebuilt view was designed around a specific requirement: the review experience should remain fast and smooth even when both the diff and its associated conversation are enormous. The focus is therefore not only on displaying a large number of changed files and lines, but also on supporting the discussion attached to those changes.\n\nThis is particularly relevant to teams reviewing migrations and refactors that need to remain unified. Instead of assuming that every large change can be reorganized into a stack of smaller pull requests, the app’s approach accounts for cases where reviewers must work through one extensive change.\n\n## Extreme pull request\n\nTo test the rebuilt experience, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments.\n\nThat case combined a massive diff with a substantial review conversation, matching the conditions the rebuilt pull request view was intended to address. According to the announcement, the GitHub Copilot app made even this extreme pull request performant, allowing large differences and long discussions to be reviewed smoothly.",
       "chat": [
@@ -42778,7 +42664,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-23T19:36:51.399Z"
     },
-    "655fd12194d5c751": {
+    "3109af25bedf6259": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に書き換えられた。3つの提供形態に共通するランタイムの大規模な移行であり、実装は80万行を超えるプロダクションRustとなった。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスである。GitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKはいずれも、このランタイムを基盤として動作する。\n\nもともとは、現在のGitHub Copilot cloud agent向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして開発された。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## 80万行超のRust\n\n今回の移行では、GitHub Copilot appとCopilot CLIを使い、ランタイム全体をRustで書き直した。完成したコードは80万行を超え、その大半をAIエージェントが作成したと説明されている。\n\n単なる一部分の置き換えではなく、CopilotのCLI、アプリ、SDKを支えるランタイムそのものを対象とした全面的な再実装となっている。\n\n## 128件のPR\n\n移行作業は128件のプルリクエストに分けられ、それぞれがmainへ取り込まれた。最後に一度だけ切り替える方式ではなく、段階的に出荷する形で進められた点が特徴だ。\n\nその過程では避けられない少数のリグレッションが発生したものの、順次発見され、速やかに修正された。ランタイムの性能についても、桁違いに改善したとされている。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has rewritten the Copilot agent runtime from TypeScript on Node.js into Rust, using the GitHub Copilot app and GitHub Copilot CLI during the migration. The change matters because this shared runtime backs the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its capabilities continued to grow while it remained on its original technology stack.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript on Node.js and the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, also referred to as CCA.\n\nAs the runtime and its capabilities expanded rapidly, it continued using that stack. GitHub has now replaced that implementation with a production Rust codebase rather than retaining the original TypeScript, Node.js, and V8 foundation.\n\n## More than 800,000 lines\n\nThe completed Rust rewrite contains more than 800,000 lines of production code. AI agents produced most of that code through work spanning 128 pull requests.\n\nThe GitHub Copilot app and Copilot CLI were used to carry out the rewrite. This made the migration itself an example of Copilot being applied to a large production codebase, with AI agents responsible for most of the resulting implementation.\n\n## Shipped incrementally\n\nThe 128 pull requests landed in the main branch and shipped incrementally. The team did not wait for a single cutover at the end before delivering the rewritten runtime.\n\nAccording to the announcement, the migration introduced a few regressions, which were discovered and fixed quickly during the incremental rollout. It also says runtime performance improved by orders of magnitude. Because the runtime supports the GitHub Copilot CLI, app, and SDK, the benefits of the Rust implementation extend across all three.",
       "chat": [
@@ -42816,7 +42702,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-17T13:58:03.669Z"
     },
-    "2576bf8a180858a9": {
+    "8156421f827a3dc7": {
       "bodyJa": "## GitHubでコード化\n\nGitHub上でイベント運営の定型工程をコード化し、企画からフォローアップまでを自動化する実践が紹介されている。日本と韓国のマーケターが、繰り返し発生する作業ではなく、テーマや参加者の検討に集中できるようにする取り組みだ。\n\n## 企画で問うこと\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナー、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、この市場の開発者が現在何を必要としているのか、どのテーマなら1時間を費やす価値があるのか、誰に参加してもらうべきかを考える。\n\n## 定型工程の自動化\n\nイベントの実施が決まると、固定された一連の工程が始まる。イベントプラットフォーム上のランディングページを複製し、チャネルごとに指定の形式でUTMタグ付きリンクを作成する。さらに、招待メールの文面を用意して配信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。こうした手順をGitHub上でコード化し、自動化の対象としている。\n\n## フォローアップ\n\nイベント当日まで毎朝、登録者リストをダウンロードして整理し、関係者向けの状況更新を投稿する作業も発生する。ページ複製やリンク作成、招待メール依頼に加えて、このフォローアップも自動化することで、運営上の反復作業を減らし、企画と参加者理解に注力できる構成となっている。",
       "bodyEn": "## Events Are the Heartbeat\n\nEvent operations for GitHub marketing in Japan and Korea are being codified on GitHub, automating routine work from planning through follow-up. This matters because it lets marketers concentrate on understanding what developers need, which topics deserve their time, and who should participate.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul. Deciding the topic and audience remains central to the marketing work.\n\n## A Fixed Sequence Begins\n\nOnce an event is approved, a fixed operational sequence starts. A landing page must be duplicated on the event platform, followed by the creation of UTM-tagged links for each channel. Every link must use the required formatting.\n\nThe invitation email must also be drafted, and a request must be filed with the team responsible for sending it. The event then needs to be added to two project boards. These defined steps make the event process suitable for codification and automation on GitHub.\n\n## Every Morning Until the Event\n\nThe work continues after the initial setup. Every morning until the event, the registrant list is downloaded and cleaned up. A status update is then posted for stakeholders.\n\nAutomating these recurring steps extends the approach beyond page creation and link generation. It covers ongoing event operations and follow-up rather than treating automation as a one-time setup task.\n\n## Topics and Audiences\n\nThe practical goal is to reduce the time marketers spend carrying out the same fixed sequence for each approved event. Page duplication, channel-specific UTM link creation, invitation email requests, project-board updates, registrant processing, stakeholder reporting, and follow-up can be handled as codified operations.\n\nWith those routine tasks automated, marketers in Japan and Korea can focus more directly on event planning and participant understanding: what developers in the market need now, which subjects are worth an hour of their time, and which people should be in the room.",
       "chat": [
@@ -42854,7 +42740,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:18:54.907Z"
     },
-    "433004a6bd914ded": {
+    "b310b2c06dbd9321": {
       "bodyJa": "GitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証をアプリ内で完結できる。差分、ターミナル、ブラウザーが組み込まれており、エージェントの作業を確かめたい初心者にも流れを追いやすい構成となっている。\n\n## アプリ内で完結\n\nこれまで変更内容を確認し、コードを実行して、その結果を見るには、エディター、ターミナルウィンドウ、ウェブブラウザーを行き来する必要があった。GitHub Copilotアプリでは、それぞれの作業に使うパネルが横並びの形で内蔵されている。確認に必要な場所を切り替え続けるのではなく、一つのアプリ内でエージェントの作業を順番に確かめられる。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較したものだ。差分パネルには、追加、削除、変更された行が具体的に表示される。追加部分は緑、削除部分は赤で強調されるため、エージェントがコードのどこに手を加えたのかを見分けられる。\n\n表示された変更に対して、利用者はそのまま受け入れるだけでなく、コメントを残したり、Copilotに修正を依頼したりできる。変更内容を確認したうえで、どの対応を取るかを利用者自身が選び、最終的な判断を行う仕組みである。\n\n## 実行と結果の検証\n\nターミナルパネルはコードの実行に、ブラウザーは結果の検証に使う。差分パネルで編集内容を確認し、ターミナルで実行し、ブラウザーで結果を見るという一連の作業を、GitHub Copilotアプリから離れずに進められる。変更を読むだけで終わらず、実際に動かして結果まで確かめるところまでが、アプリ内のパネルでつながっている。",
       "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings code review, execution, and result verification together in one place. This matters for beginners who want to check an agent’s work without moving repeatedly among an editor, terminal window, and web browser.\n\nBuilt-in panels place these steps side by side in the app. The workflow is designed around three basic tasks after an agent changes code: examining what changed, running the code, and seeing the result.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies the exact lines that were added, removed, or changed, highlighting additions in green and deletions in red.\n\nThis view lets users inspect an agent’s edits directly before deciding what to do with them. Rather than treating the changes as final, users can review the specific modifications and choose the next action.\n\n## Terminal and browser\n\nThe built-in terminal panel allows code to be run without leaving the GitHub Copilot app. The browser sits alongside the diff and terminal panels, allowing users to verify the result in the same working environment.\n\nPreviously, completing these tasks meant switching among an editor, a terminal window, and a web browser. Keeping the three panels together makes it simpler to move from reviewing an edit to running the code and checking the outcome.\n\n## Complete control\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The agent’s work can therefore be inspected and revised before any final decision is made.\n\nTogether, the diff, terminal, and browser panels support the full AI coding loop inside the app: review what the agent changed, run the code, verify the result, and decide whether the work should be accepted or changed.",
       "chat": [
@@ -42892,7 +42778,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:19:22.629Z"
     },
-    "43dc5941df4bfd39": {
+    "855d6eb9ada55a72": {
       "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
       "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
       "chat": [
@@ -42930,7 +42816,7 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T15:12:32.259Z"
     },
-    "d94b84bc16af2780": {
+    "b68f08d5b78fdf2b": {
       "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
       "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
       "chat": [

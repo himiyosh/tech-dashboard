@@ -71,6 +71,7 @@ const c = entry("000000000000000c");
 describe("append-only major-update tracking", () => {
   it("seeds existing articles before the first run and emits its actual new article", () => {
     const state = parseMajorUpdateState(emptyIndex(), []);
+    expect(publicMajorUpdateIndex(state).latestCursor).toBe("0");
     const output = advanceMajorUpdateLedger(
       state,
       snapshot(start, [a]),

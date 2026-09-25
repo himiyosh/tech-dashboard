@@ -80,7 +80,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 
 ### 主要更新の新着履歴、RSS、記事シェア
 
-- **履歴の正本はJSON**: `/updates/index.json`に`baselineSnapshotAt`、`latestCursor`、各月の`firstCursor`/`lastCursor`/`href`を公開します。利用側は最終処理済みcursorを保持し、それより新しい月の`/updates/YYYY-MM.json`を取得して、各eventの`cursor`が大きいものからsequence順に処理します。月別履歴は期限で削除しません。静的配信なので`?since=`などのqueryは月別取得の代用になりません。前回cursorが0なら全月を順に再生できます。
+- **履歴の正本はJSON**: `/updates/index.json`に`baselineSnapshotAt`、`latestCursor`、各月の`firstCursor`/`lastCursor`/`href`を公開します。`latestCursor`、月別の`firstCursor`/`lastCursor`、各eventの`cursor`は**10進数のJSON文字列**です（初期値は`"0"`、eventは`"1"`から）。`count`はJSON数値のままです。利用側は最終処理済みcursorを文字列で保持し、大小比較は辞書順でなく`BigInt(cursor)`などの数値順で行います。新しい月の`/updates/YYYY-MM.json`を取得して、最終処理済みcursorより大きいeventをsequence順に処理します。月別履歴は期限で削除しません。静的配信なので`?since=`などのqueryは月別取得の代用になりません。前回cursorが`"0"`なら全月を順に再生できます。
 - Publisherの最初の実行では、**実行前のmain snapshot**に既にある適格記事を基準点へ登録し、その実行の新着からsequence 1で記録します。2回目以降、実効重要度 High (3/3)、実要約あり、詳細へ到達可能、hot/warm、元記事の公開日がsnapshot時刻以前、という条件を満たす記事だけをappendします。同一元記事・同一モデル発表、通常のpatch/prerelease、要約待ち、off-topic記事は出しません。`observedAt`は初めて適格になったPublisher snapshot時刻、`sourcePublishedAt`は元記事の公開日です。検索向け`publicationHold/noindex`は記事の閲覧可否ではないため、新着配信の禁止条件にはしません。
 - `/rss/major.xml`は**上記履歴の最新100件だけ**をRSSへ投影します。GUIDはstableなevent ID、`pubDate`は`observedAt`、`link`は当サイトの詳細です。RSSだけでは長期間未取得時に取りこぼすため、完全な再生にはJSONの月別cursorを使います。既存の全体RSS`/rss.xml`は変更せず、OPML`/feeds.opml`に両方を掲載します。
 - 記事詳細と主要カードのシェアは端末の共有シートを使い、非対応時はタイトルとURLをコピーします。クリップボードも使えない場合は手動コピー用ダイアログを開きます。元記事へ直接遷移するカードは元記事を共有し、当サイトの詳細は表示言語 (`?lang=en`) をURLへ保持します。

@@ -14,7 +14,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 追加
 
-- 主要情報の汎用的な新着追跡として、Node Publisherが初回は既存記事を基準点にし、以後の要約済み実効重要度 High (3/3) だけを月別append-only履歴と単調増加cursorへ記録するようにしました。JSON manifestと月別履歴は`/updates/`、RSSは最新100eventを`/rss/major.xml`で配信します。SEO向けnoindexは閲覧可能記事の追跡を止めません。外部サービスへの自動投稿はまだ有効化していません。
+- 主要情報の汎用的な新着追跡として、Node Publisherが初回は既存記事を基準点にし、以後の要約済み実効重要度 High (3/3) だけを月別append-only履歴と単調増加cursorへ記録するようにしました。JSON manifestと月別履歴は`/updates/`（cursorは初期値`"0"`を含む10進文字列）、RSSは最新100eventを`/rss/major.xml`で配信します。SEO向けnoindexは閲覧可能記事の追跡を止めません。外部サービスへの自動投稿はまだ有効化していません。
 - 記事詳細、Timeline・Knowledge の記事カード、Home の Spotlight にシェア操作を追加しました。コンパクトな Top 3・Ticker・一覧行は記事詳細から共有できます。利用可能な端末では共有シートを開き、非対応時は表示言語を保持したタイトルと記事URLをコピーします。コピーも拒否された場合は、手動で選択・コピーできるダイアログを表示します。
 
 ### 変更

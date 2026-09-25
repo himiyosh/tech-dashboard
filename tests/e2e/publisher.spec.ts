@@ -1513,10 +1513,13 @@ test.describe("Publisher generated artifact", () => {
       }>;
     };
     expect(index.schemaVersion).toBe(1);
+    expect(typeof index.latestCursor).toBe("string");
     expect(index.latestCursor).toMatch(/^(?:0|[1-9]\d*)$/);
     const allEvents: PublicUpdate[] = [];
     for (const range of index.months) {
       expect(range.href).toBe(`/updates/${range.month}.json`);
+      expect(range.firstCursor).toMatch(/^[1-9]\d*$/);
+      expect(range.lastCursor).toMatch(/^[1-9]\d*$/);
       const monthResponse = await request.get(range.href);
       expect(monthResponse.status(), range.href).toBe(200);
       expect(monthResponse.headers()["content-type"], range.href).toMatch(/^application\/json\b/);
@@ -1531,6 +1534,8 @@ test.describe("Publisher generated artifact", () => {
       expect(month.schemaVersion).toBe(1);
       expect(month.month).toBe(range.month);
       expect(month.events.length).toBe(range.count);
+      expect(typeof month.firstCursor).toBe("string");
+      expect(typeof month.lastCursor).toBe("string");
       expect(month.firstCursor).toBe(range.firstCursor);
       expect(month.lastCursor).toBe(range.lastCursor);
       allEvents.push(...month.events);

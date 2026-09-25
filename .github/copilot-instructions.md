@@ -3171,3 +3171,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: category filterはcardをDOMから削除しない。`locator("main article.card").first()`を「最初に見えている記事」と誤認し、buttonの実表示や状態を区別せずclick対象にした。
 - **対策**: markupの配線件数は全cardで検証したまま、操作・寸法・詳細遷移の対象は`article.card:visible`へ限定した。実main snapshotで7件の共有E2Eをretryなしで再実行した。
 - **教訓**: filterやtabで非表示のfeed itemはDOMに残る。data駆動E2Eの操作対象はDOM先頭でなく利用者から到達可能な可視itemを選び、SSR配線の件数検査とは別に保持する。
+
+### LL-479: 新規cursor APIは初期値を含むJSON wire型まで明示する
+- **事象**: previewの`/updates/index.json`は初期cursorを`"0"`として返したが、利用者側が数値`0`を期待する余地があった。APIは発番後もcursorを文字列にしており、要件の「単調増加」だけではJSONの型が決まらない。
+- **根本原因**: Publisherの内部sequenceはsafe integer、公開manifest・月別range・eventのcursorは`String(sequence)`なのに、READMEは保持・再生の順序だけを説明し、文字列型と辞書順比較の危険を明示していなかった。
+- **対策**: READMEへ全cursor fieldの10進JSON文字列、初期値`"0"`、`count`だけ数値、文字列保存と`BigInt`等による数値順比較を記載した。空の初回状態、発番後のrangeとevent、built previewのwire型をunit/E2Eで固定する。
+- **教訓**: cursor/IDのAPI契約は「単調」だけでなくwire型、初期値、比較方法まで公開し、`"10" < "2"`のような辞書順誤用を防ぐ。未初期化と発番後の両方のfixtureでJSONとしての型を検証する。

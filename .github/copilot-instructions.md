@@ -239,7 +239,7 @@
 - `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`tests/publisher-impact.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
-- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、`web/src/**` 全体、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - incremental shadowのrenderer、publisher client、専用Worker、D1 migration、Wrangler configもpublisher fingerprintのcritical pathへ含める。generationはrenderer shell digestと分離した固有revision、exact source commit、coverage route family、object byte、quota projectionを保持し、D1 active pointerはexpected revisionとのcompare-and-swapでだけ更新する。coverage incomplete、traffic未観測、budget超過、fingerprint不一致では`serve`へ進まずPagesへ戻す。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
@@ -3189,3 +3189,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 保存schemaはspeaker keyだけで生成当時の配役versionを持たない。Webの名前・絵だけを置き換えても、旧台本の呼びかけや博士口調が残り、反対に「旧台本は文面を変えない」と表示しながらrender時に呼称を直すと説明と実装が矛盾する。
 - **対策**: 保存JSONと記事本文は不変のまま、Web表示に限りspeaker keyと文頭/文末の明白な旧配役への呼びかけだけを整え、製品名Sora、引用、複合語は保持する。新規生成のWorker/Web personaはポコを疑問役、TECHガイドをサイト独自の回答役へ対称更新し、旧台本の表示上の再演と試作イラストであることをJA/ENで明示する。小さなオリジナルSVG spriteをページ内で1回定義し、両話者で参照してmobileでも人物像を見せ、CSSは全detailで共有する。
 - **教訓**: 生成済みcontentに配役versionが無いとき、絵とlabelの変更を「そのキャラクターが元から発言した」と扱わない。新台本のpromptと旧台本の表示provenanceを分け、台本・記事事実を上書きせず、旧名の修正は文脈が明白なvocativeだけに限定する。画像が未承認の別プロジェクトなら既存素材を流用せず文章設定から描いた試作と明示し、繰り返し表示する絵とCSSのstatic build負荷を計測する。
+
+### LL-482: 選ばれた非公開デザイン参照と元画像の公開許可を分ける
+- **事象**: 記事末尾のポコは、以前の変更が統合済みでも丸い金色の独自絵のままで、利用者が選んだ外見と一致しなかった。別リポジトリの正面・三面・表情の参照画像は`canonical`というファイル名を含む一方、manifestでは候補と明記されており、元PNGを公開リポジトリへ複製する許可も確認できていなかった。
+- **根本原因**: main/developへの統合やファイル名を利用者による造形の採用・画像バイナリの再配布許可と同一視すると、視覚的に違う絵を完成扱いするか、確認前に非公開の画像を公開してしまう。文章設定だけの抽象的な描画は、具体的な顔・耳・体型・ポーチの比率を保証しない。
+- **対策**: 非公開の参照は特定commitとSHA-256で読み取り、正面・三面・表情を局所比較する。Webには葉脈のある2枚の耳、横長クリーム色の顔、青緑のフェルト風体、斜めの肩紐とポーチを持つ独自のSVGだけを追加し、元PNGはリポジトリ、PR、Pagesへ移さない。試作の注記を維持し、実際のPR Previewを参照画像と並べた利用者の明示的な視覚承認があるまでPRをdraftのままにする。
+- **教訓**: キャラクターデザインの選択は元画像バイナリの公開許可でも、後で描く別のイラストの事前承認でもない。非公開素材はmainにあると推測せずimmutableな参照で個別に確認し、公開側はオリジナルの造形をviewportと小さなアバターで比較したうえで別途承認を待つ。
+- **追補**: 初回SVGは右目のクリーム色の内縁だけを欠き、目のgroupが存在するという構造testだけでは検出できなかった。左右の実描画を拡大して比較し、内縁が2件あることをE2Eへ固定した。対称な造形要素は親groupの存在だけでなく、左右それぞれの構造と描画を検証する。

@@ -15,23 +15,65 @@ const guide = ARTICLE_CHAT_PERSONAS.b;
 ---
 
 <section class="ed-chat" aria-labelledby="ed-chat-heading" data-article-chat data-cast-art="original-provisional">
-  {/* One per-page sprite: the characters are original interpretations, not approved reference assets. */}
   <svg class="ed-chat-sprite" aria-hidden="true" focusable="false">
-    <symbol id="ed-chat-poko-art" viewBox="0 0 120 120">
-      <path d="M37 94c-5 4-9 11-7 16 2 4 8 5 14 3l8-10m31-9c5 4 9 11 7 16-2 4-8 5-14 3l-8-10" fill="var(--important)" stroke="var(--border-strong)" stroke-width="3" stroke-linejoin="round" />
-      <path d="M27 58c-8-2-12 4-12 11 0 5 3 9 9 9m69-20c8-2 12 4 12 11 0 5-3 9-9 9" fill="none" stroke="var(--border-strong)" stroke-width="5" stroke-linecap="round" />
-      <path d="M60 14c26 0 46 21 46 52 0 27-19 42-46 42S14 93 14 66c0-31 20-52 46-52Z" fill="var(--important)" stroke="var(--border-strong)" stroke-width="3" />
-      <ellipse cx="60" cy="84" rx="25" ry="17" fill="var(--text)" opacity=".44" />
-      <ellipse cx="44" cy="55" rx="9" ry="12" fill="var(--text)" />
-      <ellipse cx="76" cy="55" rx="9" ry="12" fill="var(--text)" />
-      <circle cx="47" cy="57" r="4" fill="var(--bg-2)" />
-      <circle cx="73" cy="57" r="4" fill="var(--bg-2)" />
-      <circle cx="48" cy="55" r="1.5" fill="var(--text)" />
-      <circle cx="74" cy="55" r="1.5" fill="var(--text)" />
-      <circle cx="30" cy="71" r="5" fill="var(--danger)" opacity=".48" />
-      <circle cx="90" cy="71" r="5" fill="var(--danger)" opacity=".48" />
-      <path d="M56 72q4 5 8 0" fill="none" stroke="var(--bg-2)" stroke-width="2.5" stroke-linecap="round" />
-      <path d="M94 6c6-5 14 2 10 8-2 3-6 3-6 7m0 5h.1" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" />
+    <defs>
+      <pattern id="ed-chat-poko-fibers" width="13" height="11" patternUnits="userSpaceOnUse">
+        <path d="m2 3 2 1m6 4 2-1M5 10l2-1" fill="none" stroke="var(--poko-fiber)" stroke-width=".65" stroke-linecap="round" />
+      </pattern>
+    </defs>
+    <symbol id="ed-chat-poko-art" viewBox="0 0 144 206">
+      <g data-poko-part="leaf-left">
+        <path d="M52 45C32 44 9 32 8 8 25 2 47 20 52 45Z" fill="var(--poko-leaf)" stroke="var(--poko-leaf-shadow)" stroke-width="2" stroke-linejoin="round" />
+        <path d="M49 42C38 29 24 17 12 10m24 21-2-12m-8 5-9-1m26 13-2-9" fill="none" stroke="var(--poko-leaf-vein)" stroke-width="1.4" stroke-linecap="round" opacity=".8" />
+      </g>
+      <g data-poko-part="leaf-right">
+        <path d="M92 45c20-1 43-13 44-37-17-6-39 12-44 37Z" fill="var(--poko-leaf)" stroke="var(--poko-leaf-shadow)" stroke-width="2" stroke-linejoin="round" />
+        <path d="M95 42c11-13 25-25 37-32m-24 21 2-12m8 5 9-1m-26 13 2-9" fill="none" stroke="var(--poko-leaf-vein)" stroke-width="1.4" stroke-linecap="round" opacity=".8" />
+      </g>
+      <g data-poko-part="feet" fill="var(--poko-felt-shadow)" stroke="var(--poko-seam)" stroke-width="1.6">
+        <path d="M46 178c-7 3-12 11-11 18 0 5 4 7 12 7h9c6 0 10-3 10-8l-2-15Z" />
+        <path d="M98 178c7 3 12 11 11 18 0 5-4 7-12 7h-9c-6 0-10-3-10-8l2-15Z" />
+      </g>
+      <g data-poko-part="arms" fill="var(--poko-felt)" stroke="var(--poko-seam)" stroke-width="2">
+        <path d="M39 109c-13-1-19 13-23 27-2 9 0 14 7 16 8 2 15-5 20-17l7-20Z" />
+        <path d="M105 109c13-1 19 13 23 27 2 9 0 14-7 16-8 2-15-5-20-17l-7-20Z" />
+      </g>
+      <path data-poko-part="body" d="M49 105c-12 0-20 17-20 39v25c0 13 9 21 21 21h44c12 0 21-8 21-21v-25c0-22-8-39-20-39Z" fill="var(--poko-felt)" stroke="var(--poko-seam)" stroke-width="1.8" />
+      <path d="M49 105c-12 0-20 17-20 39v25c0 13 9 21 21 21h44c12 0 21-8 21-21v-25c0-22-8-39-20-39Z" fill="url(#ed-chat-poko-fibers)" opacity=".24" />
+      <path data-poko-part="hood" d="M72 28c33 0 59 21 59 51 0 28-23 45-59 45S13 107 13 79c0-30 26-51 59-51Z" fill="var(--poko-felt)" stroke="var(--poko-seam)" stroke-width="1.9" />
+      <path d="M72 28c33 0 59 21 59 51 0 28-23 45-59 45S13 107 13 79c0-30 26-51 59-51Z" fill="url(#ed-chat-poko-fibers)" opacity=".22" />
+      <ellipse data-poko-part="face" cx="72" cy="82" rx="49" ry="31" fill="var(--poko-cream)" stroke="var(--poko-cream-shadow)" stroke-width="2.2" />
+      <ellipse cx="72" cy="82" rx="47" ry="29" fill="none" stroke="var(--poko-stitch)" stroke-width="1.15" stroke-dasharray="3 3" opacity=".78" />
+      <path d="m34 82 2-1m80 4-2-1M63 56l2-1m14 54 2-1m-36-2 2 1m51-43 2 1" fill="none" stroke="var(--poko-stitch)" stroke-width=".7" stroke-linecap="round" opacity=".35" />
+      <g data-poko-part="cheeks" fill="var(--poko-blush)" opacity=".35">
+        <ellipse cx="37" cy="99" rx="9" ry="4.3" />
+        <ellipse cx="107" cy="99" rx="9" ry="4.3" />
+      </g>
+      <g data-poko-part="eyes">
+        <ellipse cx="47" cy="80" rx="12" ry="14" fill="var(--poko-cream-shadow)" />
+        <ellipse cx="97" cy="80" rx="12" ry="14" fill="var(--poko-cream-shadow)" />
+        <ellipse cx="47" cy="80" rx="10.5" ry="12.5" fill="var(--poko-eye-white)" />
+        <ellipse cx="97" cy="80" rx="10.5" ry="12.5" fill="var(--poko-eye-white)" />
+        <ellipse cx="97" cy="80" rx="8.5" ry="10.5" fill="var(--poko-eye-brown)" />
+        <ellipse cx="47" cy="80" rx="8.5" ry="10.5" fill="var(--poko-eye-brown)" />
+        <ellipse cx="97" cy="81" rx="6.4" ry="8" fill="var(--poko-eye-dark)" />
+        <ellipse cx="47" cy="81" rx="6.4" ry="8" fill="var(--poko-eye-dark)" />
+        <circle cx="94.5" cy="75.5" r="2.5" fill="var(--poko-eye-white)" />
+        <circle cx="44.5" cy="75.5" r="2.5" fill="var(--poko-eye-white)" />
+        <circle cx="99" cy="83.5" r="1" fill="var(--poko-eye-white)" opacity=".8" />
+        <circle cx="49" cy="83.5" r="1" fill="var(--poko-eye-white)" opacity=".8" />
+      </g>
+      <path data-poko-part="brows" d="M38 63q7-5 15-2m38 0q8-3 15 2" fill="none" stroke="var(--poko-eye-brown)" stroke-width="1.7" stroke-linecap="round" opacity=".72" />
+      <ellipse data-poko-part="nose" cx="72" cy="92" rx="3.8" ry="2.7" fill="var(--poko-nose)" />
+      <ellipse data-poko-part="mouth" cx="72" cy="103" rx="2.2" ry="2.6" fill="var(--poko-eye-dark)" />
+      <path data-poko-part="strap" d="M105 116c-10 23-29 39-49 55" fill="none" stroke="var(--poko-pouch-shadow)" stroke-width="7" stroke-linecap="round" />
+      <path d="M105 116c-10 23-29 39-49 55" fill="none" stroke="var(--poko-pouch)" stroke-width="4.6" stroke-linecap="round" />
+      <g data-poko-part="pouch">
+        <path d="M36 151c0-3 3-5 6-5h20c5 0 7 3 7 7l-2 24c0 5-3 8-9 8H40c-7 0-10-3-10-9l2-20c0-3 1-5 4-5Z" fill="var(--poko-pouch)" stroke="var(--poko-pouch-shadow)" stroke-width="2" />
+        <path d="M34 151c9 1 22 1 34 0l-1 17c0 5-4 8-10 8H44c-8 0-12-3-12-9Z" fill="var(--poko-pouch)" stroke="var(--poko-pouch-shadow)" stroke-width="1.6" />
+        <path d="M35 170q13 7 28 0" fill="none" stroke="var(--poko-stitch)" stroke-width="1" stroke-dasharray="2 2" opacity=".75" />
+        <circle cx="49" cy="166" r="3" fill="var(--poko-eye-brown)" stroke="var(--poko-pouch-shadow)" stroke-width="1" />
+      </g>
     </symbol>
     <symbol id="ed-chat-guide-art" viewBox="0 0 120 120">
       <path d="M40 102l-4 10m48-10 4 10" fill="none" stroke="var(--paper)" stroke-width="5" stroke-linecap="round" />
@@ -49,7 +91,7 @@ const guide = ARTICLE_CHAT_PERSONAS.b;
   </svg>
   <header class="ed-chat-head">
     <span class="ed-chat-duo" aria-hidden="true">
-      <span class="ed-chat-face a" data-chat-character="poko"><svg viewBox="0 0 120 120" focusable="false"><use href="#ed-chat-poko-art" /></svg></span>
+      <span class="ed-chat-face a" data-chat-character="poko"><svg viewBox="0 0 144 206" focusable="false"><use href="#ed-chat-poko-art" /></svg></span>
       <span class="ed-chat-face b" data-chat-character="tech-guide"><svg viewBox="0 0 120 120" focusable="false"><use href="#ed-chat-guide-art" /></svg></span>
     </span>
     <h2 class="ed-chat-h" id="ed-chat-heading">
@@ -63,8 +105,8 @@ const guide = ARTICLE_CHAT_PERSONAS.b;
         <span class="i18n-en" lang="en">A generated dialogue on what matters, based on article summaries and collected metadata.</span>
       </p>
       <p class="ed-chat-provenance">
-        <span class="i18n-ja">ポコの姿は文章設定から描いた試作絵。TECHガイドは当サイト独自の案内役。旧配役の台本は保存したまま、登場人物への呼びかけだけ表示時に整えます。</span>
-        <span class="i18n-en" lang="en">Poko's art is an original draft based on a written character brief. TECH Guide is this site's own companion. Earlier scripts remain stored unchanged; only clear old speaker vocatives are adjusted for display.</span>
+        <span class="i18n-ja">ポコは選ばれたデザインから描き起こした試作絵（元画像は非掲載）。TECHガイドは当サイト独自の案内役。旧配役の台本は保存したまま、明らかな呼びかけだけ表示時に整えます。</span>
+        <span class="i18n-en" lang="en">Poko is a site-drawn draft based on the selected design (source image not included). TECH Guide is this site's own companion. Earlier scripts remain stored unchanged; only clear old speaker vocatives change in the display.</span>
       </p>
     </div>
   </header>
@@ -78,12 +120,12 @@ const guide = ARTICLE_CHAT_PERSONAS.b;
       return (
         <li class={`ed-chat-turn ed-chat-${turn.s}`} data-speaker={turn.s} data-turn={index + 1}>
           <span class={`ed-chat-face ed-chat-face-outside ${turn.s}`} data-chat-character={art} aria-hidden="true">
-            <svg viewBox="0 0 120 120" focusable="false"><use href={`#${symbolId}`} /></svg>
+            <svg viewBox={art === "poko" ? "0 0 144 206" : "0 0 120 120"} focusable="false"><use href={`#${symbolId}`} /></svg>
           </span>
           <div class="ed-chat-bubble">
             <span class="ed-chat-name">
               <span class={`ed-chat-face ed-chat-face-inline ${turn.s}`} data-chat-character={art} aria-hidden="true">
-                <svg viewBox="0 0 120 120" focusable="false"><use href={`#${symbolId}`} /></svg>
+                <svg viewBox={art === "poko" ? "0 0 144 206" : "0 0 120 120"} focusable="false"><use href={`#${symbolId}`} /></svg>
               </span>
               <span class="i18n-ja">{persona.nameJa}</span>
               <span class="i18n-en" lang="en">{persona.nameEn}</span>

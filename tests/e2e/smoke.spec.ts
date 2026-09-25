@@ -12925,10 +12925,64 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
     await expect(chat.locator("#ed-chat-poko-art")).toHaveCount(1);
     await expect(chat.locator("#ed-chat-guide-art")).toHaveCount(1);
-    expect(await chat.locator("#ed-chat-poko-art > *").count()).toBeGreaterThan(8);
     expect(await chat.locator("#ed-chat-guide-art > *").count()).toBeGreaterThan(7);
+    const pokoArt = chat.locator("#ed-chat-poko-art");
+    await expect(pokoArt).toHaveAttribute("viewBox", "0 0 144 206");
+    const drawing = await pokoArt.evaluate((symbol) => {
+      const bounds = (part: string) => {
+        const node = symbol.querySelector<SVGGraphicsElement>(`[data-poko-part="${part}"]`);
+        if (!node) throw new Error(`Poko illustration is missing ${part}`);
+        const { x, y, width, height } = node.getBBox();
+        return { x, y, width, height };
+      };
+      const face = symbol.querySelector<SVGEllipseElement>('[data-poko-part="face"]');
+      const chat = symbol.closest(".ed-chat");
+      if (!face || !chat) throw new Error("Poko face or palette is missing");
+      const css = getComputedStyle(chat);
+      return {
+        parts: [...symbol.querySelectorAll("[data-poko-part]")].map((part) => part.getAttribute("data-poko-part")),
+        leftLeaf: bounds("leaf-left"),
+        rightLeaf: bounds("leaf-right"),
+        hood: bounds("hood"),
+        body: bounds("body"),
+        face: bounds("face"),
+        feet: bounds("feet"),
+        pouch: bounds("pouch"),
+        eyeRims: symbol.querySelectorAll('[data-poko-part="eyes"] ellipse[fill="var(--poko-eye-white)"]').length,
+        faceRatio: Number(face.getAttribute("rx")) / Number(face.getAttribute("ry")),
+        colors: {
+          felt: css.getPropertyValue("--poko-felt").trim(),
+          leaf: css.getPropertyValue("--poko-leaf").trim(),
+          cream: css.getPropertyValue("--poko-cream").trim(),
+          pouch: css.getPropertyValue("--poko-pouch").trim(),
+        },
+        hasRaster: /<image\b|data:image\/|\.png\b/i.test(symbol.outerHTML),
+        usesGoldBody: symbol.outerHTML.includes("var(--important)"),
+      };
+    });
+    expect(drawing.parts).toEqual([
+      "leaf-left", "leaf-right", "feet", "arms", "body", "hood", "face",
+      "cheeks", "eyes", "brows", "nose", "mouth", "strap", "pouch",
+    ]);
+    expect(drawing.face.width / drawing.hood.width).toBeGreaterThanOrEqual(0.82);
+    expect(drawing.faceRatio).toBeGreaterThan(1.4);
+    expect(drawing.body.width / drawing.hood.width).toBeLessThan(0.8);
+    expect(drawing.body.height / drawing.hood.height).toBeGreaterThan(0.8);
+    expect(drawing.eyeRims).toBe(2);
+    expect(drawing.leftLeaf.x + drawing.leftLeaf.width / 2).toBeLessThan(drawing.face.x + drawing.face.width / 2);
+    expect(drawing.rightLeaf.x + drawing.rightLeaf.width / 2).toBeGreaterThan(drawing.face.x + drawing.face.width / 2);
+    expect(Math.max(drawing.leftLeaf.y, drawing.rightLeaf.y)).toBeLessThan(drawing.face.y);
+    expect(drawing.pouch.x + drawing.pouch.width / 2).toBeLessThan(drawing.face.x + drawing.face.width / 2);
+    expect(drawing.pouch.y).toBeGreaterThan(drawing.face.y + drawing.face.height / 2);
+    expect(drawing.feet.y + drawing.feet.height).toBeGreaterThan(drawing.pouch.y + drawing.pouch.height);
+    expect(drawing.colors).toEqual({
+      felt: "#407569", leaf: "#536523", cream: "#ffe2b2", pouch: "#dfa21d",
+    });
+    expect(drawing.hasRaster).toBe(false);
+    expect(drawing.usesGoldBody).toBe(false);
     await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
     await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("試作絵");
+    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("元画像は非掲載");
     await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("旧配役の台本は保存したまま");
     const bubbles = chat.locator(".ed-chat-bubble");
     await expect(bubbles).toHaveCount(6);
@@ -12991,6 +13045,9 @@ test.describe("TECH Dashboard smoke", () => {
             width: use.getBBox().width,
             height: use.getBBox().height,
           }));
+        const chatRect = node.getBoundingClientRect();
+        const pokoRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='poko']")!.getBoundingClientRect();
+        const guideRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='tech-guide']")!.getBoundingClientRect();
         return {
           lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
             Math.round(el.getBoundingClientRect().left)))],
@@ -13002,11 +13059,19 @@ test.describe("TECH Dashboard smoke", () => {
             .filter((name) => name.getClientRects().length > 0)
             .map((name) => name.getClientRects().length),
           figures,
+          headerPortraits: {
+            poko: { left: pokoRect.left, right: pokoRect.right, width: pokoRect.width, height: pokoRect.height },
+            guide: { left: guideRect.left, right: guideRect.right, width: guideRect.width, height: guideRect.height },
+            chatRight: chatRect.right,
+          },
           overflow: document.documentElement.scrollWidth > window.innerWidth,
         };
       });
       expect(layout.overflow, `${width}px article has no horizontal scrolling`).toBe(false);
       expect(layout.castNameFragments, `${width}px keeps the cast name unbroken`).toEqual([1]);
+      expect(layout.headerPortraits.poko.height, `${width}px Poko is larger than Guide`).toBeGreaterThan(layout.headerPortraits.guide.height);
+      expect(layout.headerPortraits.guide.left, `${width}px both portraits are visible`).toBeGreaterThan(layout.headerPortraits.poko.left);
+      expect(layout.headerPortraits.guide.right, `${width}px duo stays within the panel`).toBeLessThanOrEqual(layout.headerPortraits.chatRight);
       expect(layout.figures.length, `${width}px has painted Poko + TECH Guide`).toBeGreaterThanOrEqual(2);
       for (const figure of layout.figures) {
         expect(["#ed-chat-poko-art", "#ed-chat-guide-art"]).toContain(figure.href);
@@ -13030,6 +13095,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chat.locator(".ed-chat-turn[data-speaker='b'] .ed-chat-name .i18n-en").first()).toHaveText("TECH Guide");
     await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toBeHidden();
     await expect(chat.locator(".ed-chat-provenance .i18n-en")).toBeVisible();
+    await expect(chat.locator(".ed-chat-provenance .i18n-en")).toContainText("source image not included");
     await page.emulateMedia({ reducedMotion: "reduce" });
     expect(await chat.locator(".ed-chat-duo svg").first().evaluate((svg) => ({
       animation: getComputedStyle(svg).animationName,

@@ -40,6 +40,18 @@ describe("worker/web mirror", () => {
     expect(webChat.ARTICLE_CHAT_TURNS).toBe(ARTICLE_CHAT_TURNS);
     expect(webChat.CHAT_TURN_MAX_JA_CHARS).toBe(CHAT_TURN_MAX_JA_CHARS);
     expect(webChat.CHAT_TURN_MAX_EN_CHARS).toBe(CHAT_TURN_MAX_EN_CHARS);
+    expect(ARTICLE_CHAT_PERSONAS.a).toMatchObject({
+      nameJa: "ポコ",
+      nameEn: "Poko",
+      artKey: "poko",
+    });
+    expect(ARTICLE_CHAT_PERSONAS.b).toMatchObject({
+      nameJa: "TECHガイド",
+      nameEn: "TECH Guide",
+      artKey: "tech-guide",
+    });
+    expect(ARTICLE_CHAT_PERSONAS.a.profileJa).toContain("先生ではない");
+    expect(ARTICLE_CHAT_PERSONAS.b.roleJa).toContain("TECH Dashboard 独自");
   });
 
   it("validates identically in both copies", () => {
@@ -48,6 +60,61 @@ describe("worker/web mirror", () => {
     const broken = [...chat.slice(0, 5)];
     expect(webChat.validateArticleChat(broken)).toBeNull();
     expect(validateArticleChat(broken)).toBeNull();
+  });
+});
+
+describe("legacy dialogue presentation", () => {
+  it("keeps stored a/b turns intact while presenting only clear old vocatives under the new cast", () => {
+    const oldLine: ArticleChatTurn = {
+      s: "b",
+      ja: "この記事では、過去の情報を自動で探して会話に入れる設計だというのじゃ。",
+      en: "This article says they retrieve past information unless you ask it to, Sora.",
+    };
+    const original = structuredClone(oldLine);
+    expect(webChat.presentArticleChatTurn(oldLine)).toEqual({
+      ja: oldLine.ja,
+      en: "This article says they retrieve past information unless you ask it to, Poko.",
+    });
+    expect(oldLine).toEqual(original);
+    expect(validateArticleChat([
+      { ...goodChat()[0]!, ja: "博士、これはどうなるの？", en: "Doc, why does that matter?" },
+      ...goodChat().slice(1),
+    ])).not.toBeNull();
+    expect(webChat.presentArticleChatTurn({
+      s: "a",
+      ja: "博士、これはどうなるの？",
+      en: "Doc, why does that matter?",
+    })).toEqual({
+      ja: "TECHガイド、これはどうなるの？",
+      en: "TECH Guide, why does that matter?",
+    });
+    expect(webChat.presentArticleChatTurn({
+      s: "b",
+      ja: "ソラ、記事にある数値を確かめよう。",
+      en: "The article names one figure.",
+    }).ja).toBe("ポコ、記事にある数値を確かめよう。");
+  });
+
+  it("does not rewrite the Sora product, quoted facts, or names inside other words", () => {
+    const product: ArticleChatTurn = {
+      s: "b",
+      ja: "Soraは提供終了じゃ。博士課程の話ではない。",
+      en: "According to the article, Sora is shutting down. Read the Docs for context.",
+    };
+    expect(webChat.presentArticleChatTurn(product)).toEqual({
+      ja: product.ja,
+      en: product.en,
+    });
+    expect(webChat.presentArticleChatTurn({
+      s: "a",
+      ja: "Soraの提供終了ってどういうこと？",
+      en: "The article quotes a product called \"Sora\". What does that change?",
+    }).en).toContain('"Sora"');
+    expect(webChat.presentArticleChatTurn({
+      s: "b",
+      ja: "この記事にはSoraの話がある。",
+      en: "The article calls the new model \"Sora\".",
+    }).en).toContain('"Sora"');
   });
 });
 
@@ -119,6 +186,10 @@ describe("buildArticleChatPrompt", () => {
     expect(prompt).toContain("記事情報に無い事実を持ち込まない");
     expect(prompt).toContain("水増ししない");
     expect(prompt).toContain(entry.contentSnippet);
+    expect(prompt).toContain("TECHガイドはポコ・シリーズの公式キャラクターではありません");
+    expect(prompt).toContain("TECH Guide: Warm and concise editorial voice");
+    expect(prompt).not.toContain("a = ソラ");
+    expect(prompt).not.toContain("b = 博士");
   });
 });
 

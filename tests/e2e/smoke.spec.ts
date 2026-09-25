@@ -22,6 +22,7 @@ import { isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
 import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
+import { presentArticleChatTurn, validateArticleChat } from "../../web/src/lib/article-chat.ts";
 
 /** Category count follows the taxonomy source of truth, not a hard-coded number. */
 const CATEGORY_COUNT = CATEGORY_META.length;
@@ -12901,13 +12902,178 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
-  test("the article chat reads as prose on phones and drops the cast introduction", async ({ page }) => {
-    // The chat used to open with two cast cards (name + role) and indent every
-    // bubble behind a 34px avatar, alternating sides. Measured at 375px that
-    // left 241px of text at 13.5px while the article body had 305px at 16.5px,
-    // so the generated conversation was the smallest long-form text on the
-    // page. The cast introduction is gone, and on phones the avatar moves into
-    // the name row so each bubble starts at the same edge.
+  test("Poko and the original TECH Guide remain illustrated, readable, and truthful on article detail", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: unknown }>;
+    };
+    const hasChat = (entry: { id: string }) => (
+      Array.isArray(bodyFile.bodies[entry.id]?.chat)
+      && isBuiltDetailEntry(entry as never)
+    );
+    const chatEntry = index.entries.find((entry) => entry.id === "60582ab80f6848d9" && hasChat(entry))
+      ?? index.entries.find(hasChat);
+    expect(chatEntry, "the corpus contains a built detail route carrying a chat").toBeTruthy();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/e/${chatEntry!.id}/`);
+    const chat = page.locator("[data-article-chat]");
+    await expect(chat).toBeVisible();
+    await expect(chat).toHaveAttribute("data-cast-art", "original-provisional");
+    await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
+    await expect(chat.locator("#ed-chat-poko-art")).toHaveCount(1);
+    await expect(chat.locator("#ed-chat-guide-art")).toHaveCount(1);
+    expect(await chat.locator("#ed-chat-poko-art > *").count()).toBeGreaterThan(8);
+    expect(await chat.locator("#ed-chat-guide-art > *").count()).toBeGreaterThan(7);
+    await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
+    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("試作絵");
+    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("旧配役の台本は保存したまま");
+    const bubbles = chat.locator(".ed-chat-bubble");
+    await expect(bubbles).toHaveCount(6);
+    await expect(chat.locator(".ed-chat-turn[data-speaker='a']")).toHaveCount(3);
+    await expect(chat.locator(".ed-chat-turn[data-speaker='b']")).toHaveCount(3);
+    const stored = requirePresent(
+      validateArticleChat(bodyFile.bodies[chatEntry!.id]?.chat),
+      "selected article has a valid six-turn bilingual chat",
+    );
+    expect(await chat.locator(".ed-chat-text.i18n-ja").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).ja));
+    expect(await chat.locator(".ed-chat-text.i18n-en").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).en));
+    if (chatEntry!.id === "60582ab80f6848d9") {
+      await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toContainText("AI");
+      await expect(chat.locator(".ed-chat-text.i18n-en").first()).toContainText("AI");
+    }
+    await expect(chat.locator(".ed-chat-turn .ed-chat-face-outside").first()).toBeVisible();
+    await expect(chat.locator(".ed-chat-turn .ed-chat-face-inline").first()).toBeHidden();
+    const contrastRatios = await chat.evaluate((node) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d")!;
+      const luminance = (color: string) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        const linear = (value: number) => {
+          const channel = value / 255;
+          return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+      };
+      return [...node.querySelectorAll<HTMLElement>(".ed-chat-bubble")].flatMap((bubble) => {
+        const background = luminance(getComputedStyle(bubble).backgroundColor);
+        return [...bubble.querySelectorAll<HTMLElement>(".ed-chat-name, .ed-chat-text.i18n-ja")].map((text) => {
+          const foreground = luminance(getComputedStyle(text).color);
+          return (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
+        });
+      });
+    });
+    expect(Math.min(...contrastRatios), "speaker names and prose maintain 4.5:1 contrast").toBeGreaterThanOrEqual(4.5);
+    const desktopLefts = await bubbles.evaluateAll((nodes) =>
+      [...new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().left)))],
+    );
+    expect(desktopLefts.length, "desktop alternates the bubble sides").toBeGreaterThan(1);
+
+    for (const width of [768, 414, 390, 375, 320]) {
+      await page.setViewportSize({ width, height: width === 375 ? 667 : 844 });
+      await chat.scrollIntoViewIfNeeded();
+      const layout = await chat.evaluate((node) => {
+        const text = node.querySelector<HTMLElement>(".ed-chat-text.i18n-ja")!;
+        const inside = node.querySelector<HTMLElement>(".ed-chat-turn .ed-chat-face-inline")!;
+        const outside = node.querySelector<HTMLElement>(".ed-chat-turn .ed-chat-face-outside")!;
+        const figures = [...node.querySelectorAll<SVGUseElement>(".ed-chat-duo use, .ed-chat-face-inline use")]
+          .filter((use) => use.getClientRects().length > 0)
+          .map((use) => ({
+            href: use.getAttribute("href"),
+            width: use.getBBox().width,
+            height: use.getBBox().height,
+          }));
+        return {
+          lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
+            Math.round(el.getBoundingClientRect().left)))],
+          textWidth: text.getBoundingClientRect().width,
+          fontSize: Number.parseFloat(getComputedStyle(text).fontSize),
+          insideDisplay: getComputedStyle(inside).display,
+          outsideDisplay: getComputedStyle(outside).display,
+          castNameFragments: [...node.querySelectorAll<HTMLElement>(".ed-chat-h .ed-chat-cast-name")]
+            .filter((name) => name.getClientRects().length > 0)
+            .map((name) => name.getClientRects().length),
+          figures,
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      expect(layout.overflow, `${width}px article has no horizontal scrolling`).toBe(false);
+      expect(layout.castNameFragments, `${width}px keeps the cast name unbroken`).toEqual([1]);
+      expect(layout.figures.length, `${width}px has painted Poko + TECH Guide`).toBeGreaterThanOrEqual(2);
+      for (const figure of layout.figures) {
+        expect(["#ed-chat-poko-art", "#ed-chat-guide-art"]).toContain(figure.href);
+        expect(figure.width).toBeGreaterThan(30);
+        expect(figure.height).toBeGreaterThan(40);
+      }
+      if (width <= 640) {
+        expect(layout.lefts, `${width}px bubbles align for prose reading`).toHaveLength(1);
+        expect(layout.insideDisplay).not.toBe("none");
+        expect(layout.outsideDisplay).toBe("none");
+        expect(layout.fontSize).toBeGreaterThanOrEqual(15);
+        expect(layout.textWidth, `${width}px preserves the prose measure`)
+          .toBeGreaterThanOrEqual(width === 375 ? 275 : width - 105);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(chat.getByRole("heading", { name: /Poko & TECH Guide/ })).toBeVisible();
+    await expect(chat.locator(".ed-chat-turn[data-speaker='a'] .ed-chat-name .i18n-en").first()).toHaveText("Poko");
+    await expect(chat.locator(".ed-chat-turn[data-speaker='b'] .ed-chat-name .i18n-en").first()).toHaveText("TECH Guide");
+    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toBeHidden();
+    await expect(chat.locator(".ed-chat-provenance .i18n-en")).toBeVisible();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await chat.locator(".ed-chat-duo svg").first().evaluate((svg) => ({
+      animation: getComputedStyle(svg).animationName,
+      transition: getComputedStyle(svg).transitionDuration,
+    }))).toEqual({ animation: "none", transition: "0s" });
+    await expect(chat.locator("[data-reveal]")).toHaveCount(0);
+    await expect(chat.locator("a, button, [tabindex]")).toHaveCount(0);
+  });
+
+  test("existing speaker addresses are restaged without rewriting Sora product facts", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: Array<{ s: "a" | "b"; ja: string; en: string }> }>;
+    };
+    const address = index.entries.find((entry) =>
+      isBuiltDetailEntry(entry as never)
+      && bodies.bodies[entry.id]?.chat?.some((turn) =>
+        turn.s === "b" && /,\s*Sora[.!?]\s*$/.test(turn.en) && /\byou\b/i.test(turn.en)
+      ),
+    );
+    if (address) {
+      await page.goto(`/e/${address.id}/?lang=en`);
+      const turn = page.locator("[data-article-chat] .ed-chat-b[data-speaker='b'] .ed-chat-text.i18n-en")
+        .filter({ hasText: /,\s*Poko[.!?]\s*$/ });
+      await expect(turn).toHaveCount(1);
+      await expect(turn).toBeVisible();
+    }
+    const product = index.entries.find((entry) =>
+      isBuiltDetailEntry(entry as never)
+      && bodies.bodies[entry.id]?.chat?.some((turn) =>
+        turn.s === "b" && /\bSora is shutting down\b/i.test(turn.en)
+      ),
+    );
+    test.skip(!address && !product, "No legacy vocative or Sora product remains in this built corpus; pure fixtures cover both.");
+    if (product) {
+      await page.goto(`/e/${product.id}/?lang=en`);
+      await expect(page.locator("[data-article-chat] .ed-chat-b .ed-chat-text.i18n-en")
+        .filter({ hasText: /Sora is shutting down/i })).toHaveCount(1);
+    }
+  });
+
+  test("article chat survives blocked image requests and is absent when no stored chat exists", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
@@ -12915,46 +13081,53 @@ test.describe("TECH Dashboard smoke", () => {
       bodies: Record<string, { chat?: unknown }>;
     };
     const chatEntry = index.entries.find((entry) => (
-      Array.isArray(bodyFile.bodies[entry.id]?.chat)
-      && isBuiltDetailEntry(entry as never)
+      Array.isArray(bodyFile.bodies[entry.id]?.chat) && isBuiltDetailEntry(entry as never)
     ));
-    expect(chatEntry, "the corpus contains a built detail route carrying a chat").toBeTruthy();
-
-    await page.setViewportSize({ width: 1280, height: 900 });
+    expect(chatEntry).toBeTruthy();
+    await page.route("**/*.svg", (route) => route.abort());
     await page.goto(`/e/${chatEntry!.id}/`);
-    const chat = page.locator("[data-article-chat]");
-    await expect(chat).toBeVisible();
-    await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
-    const bubbles = chat.locator(".ed-chat-bubble");
-    await expect(bubbles).toHaveCount(6);
-    // Desktop keeps the messaging layout: avatars outside, sides alternating.
-    await expect(chat.locator(".ed-chat-turn .ed-chat-face").first()).toBeVisible();
-    const desktopLefts = await bubbles.evaluateAll((nodes) =>
-      [...new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().left)))],
-    );
-    expect(desktopLefts.length, "desktop alternates the bubble sides").toBeGreaterThan(1);
+    await expect(page.locator(".ed-chat-duo [data-chat-character='poko'] svg use")).toHaveAttribute("href", "#ed-chat-poko-art");
+    await expect(page.locator(".ed-chat-duo [data-chat-character='tech-guide'] svg use")).toHaveAttribute("href", "#ed-chat-guide-art");
+    expect(await page.locator(".ed-chat-duo svg use").first().evaluate((use: SVGUseElement) => use.getBBox().width))
+      .toBeGreaterThan(30);
 
-    await page.setViewportSize({ width: 375, height: 812 });
-    await chat.scrollIntoViewIfNeeded();
-    const mobile = await chat.evaluate((node) => {
-      const bubble = node.querySelector(".ed-chat-bubble")!;
-      const text = node.querySelector(".ed-chat-text.i18n-ja")!;
-      const face = node.querySelector(".ed-chat-turn .ed-chat-face")!;
-      const name = node.querySelector(".ed-chat-name")!;
-      return {
-        lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
-          Math.round(el.getBoundingClientRect().left)))],
-        textWidth: Math.round(text.getBoundingClientRect().width),
-        fontSize: Number.parseFloat(getComputedStyle(text).fontSize),
-        faceDisplay: getComputedStyle(face).display,
-        nameEmoji: getComputedStyle(name, "::before").content,
-        bubbleWidth: Math.round(bubble.getBoundingClientRect().width),
-      };
-    });
-    expect(mobile.lefts, "every phone bubble starts at the same edge").toHaveLength(1);
-    expect(mobile.faceDisplay, "the avatar column is reclaimed on phones").toBe("none");
-    expect(mobile.nameEmoji, "the speaker emoji moves into the name row").not.toBe("none");
-    expect(mobile.fontSize, "phone chat text is at least 15px").toBeGreaterThanOrEqual(15);
-    expect(mobile.textWidth, "phone chat text keeps a readable measure").toBeGreaterThan(275);
+    const withoutChat = index.entries.find((entry) => (
+      !Array.isArray(bodyFile.bodies[entry.id]?.chat) && isBuiltDetailEntry(entry as never)
+    ));
+    if (withoutChat) {
+      await page.goto(`/e/${withoutChat.id}/`);
+      await expect(page.locator("[data-article-chat]")).toHaveCount(0);
+      await expect(page.locator("main h1")).toBeVisible();
+      await expect(page.locator("main .ed-body, main .ed-pending-summary, main .ed-tldr").first()).toBeVisible();
+    }
+  });
+
+  test("article chat portraits and dialogue survive without client JavaScript", async ({ browser, baseURL }) => {
+    if (!baseURL) throw new Error("Playwright baseURL is required for static article verification");
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: unknown }>;
+    };
+    const entry = index.entries.find((item) => (
+      Array.isArray(bodies.bodies[item.id]?.chat) && isBuiltDetailEntry(item as never)
+    ));
+    expect(entry).toBeTruthy();
+    const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+    try {
+      const staticPage = await context.newPage();
+      await staticPage.goto(new URL(`/e/${entry!.id}/`, baseURL).href);
+      const chat = staticPage.locator("[data-article-chat]");
+      await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
+      await expect(chat.locator(".ed-chat-text.i18n-ja")).toHaveCount(6);
+      await expect(chat.locator(".ed-chat-duo [data-chat-character]")).toHaveCount(2);
+      expect(await chat.locator(".ed-chat-duo svg use").first().evaluate((use: SVGUseElement) => use.getBBox().width))
+        .toBeGreaterThan(30);
+      await expect(chat.locator(".ed-chat-turn .ed-chat-face-inline").first()).toBeVisible();
+      expect(await staticPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    } finally {
+      await context.close();
+    }
   });
 });

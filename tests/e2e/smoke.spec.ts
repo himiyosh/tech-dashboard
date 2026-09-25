@@ -12981,9 +12981,12 @@ test.describe("TECH Dashboard smoke", () => {
     expect(drawing.hasRaster).toBe(false);
     expect(drawing.usesGoldBody).toBe(false);
     await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
-    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("試作絵");
-    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("元画像は非掲載");
-    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toContainText("旧配役の台本は保存したまま");
+    await expect(chat.locator(".ed-chat-notes p")).toHaveCount(1);
+    await expect(chat.locator(".ed-chat-provenance")).toHaveCount(0);
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("ポコと当サイトのTECHガイド");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("記事の要約と収集した情報");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("AI生成の対話");
+    expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);
     const bubbles = chat.locator(".ed-chat-bubble");
     await expect(bubbles).toHaveCount(6);
     await expect(chat.locator(".ed-chat-turn[data-speaker='a']")).toHaveCount(3);
@@ -13093,9 +13096,11 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chat.getByRole("heading", { name: /Poko & TECH Guide/ })).toBeVisible();
     await expect(chat.locator(".ed-chat-turn[data-speaker='a'] .ed-chat-name .i18n-en").first()).toHaveText("Poko");
     await expect(chat.locator(".ed-chat-turn[data-speaker='b'] .ed-chat-name .i18n-en").first()).toHaveText("TECH Guide");
-    await expect(chat.locator(".ed-chat-provenance .i18n-ja")).toBeHidden();
-    await expect(chat.locator(".ed-chat-provenance .i18n-en")).toBeVisible();
-    await expect(chat.locator(".ed-chat-provenance .i18n-en")).toContainText("source image not included");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toBeHidden();
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toBeVisible();
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("AI-generated conversation");
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("summary and collected source details");
+    expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);
     await page.emulateMedia({ reducedMotion: "reduce" });
     expect(await chat.locator(".ed-chat-duo svg").first().evaluate((svg) => ({
       animation: getComputedStyle(svg).animationName,

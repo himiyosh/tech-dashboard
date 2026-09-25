@@ -6061,6 +6061,7 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
   --poko-nose: #534d43;
   --poko-pouch: #dfa21d;
   --poko-pouch-shadow: #a87717;
+  container: article-chat / inline-size;
   margin: 30px 0;
   padding: 20px 18px 16px;
   border: 1px solid var(--border);
@@ -6126,14 +6127,20 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
 }
 
 .ed-chat-origin {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
   margin: 0;
   font-size: 0.84rem;
   line-height: 1.55;
   color: var(--muted);
 }
 
-.ed-chat-origin .ai-badge {
-  margin-inline-end: 6px;
+@container article-chat (max-width: 930px) {
+  .ed-chat-head { row-gap: 8px; }
+  .ed-chat-duo { grid-row: 1; }
+  .ed-chat-notes { grid-column: 1 / -1; }
 }
 
 .ed-chat-list {

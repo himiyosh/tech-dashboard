@@ -3183,3 +3183,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: `article.card:visible`は表示状態だけを保証し、`data-share-target`の`detail`/`source`を保証しない。`buildArticleSharePayload()`は内部detailだけに言語queryを付け、外部sourceのURLは変更しない契約である。
 - **対策**: 失敗したCIのimmutable main snapshotで旧テストを再現し、手動コピーのJA→ENテストは可視の`data-detail-destination="internal"`かつ`data-share-target="detail"`を選ぶ。共有URLがcanonical siteのdetail routeでquery/hashを持たないことを先に検証し、ENでは`?lang=en`が付くことを固定する。外部sourceを変更しない既存unit gateは維持する。
 - **教訓**: データ駆動のE2Eで「先頭の可視記事」を内部routeや共有payloadの代用にしない。操作対象は表示状態とdestination kindの両方で選び、URLの言語付与は内部detailと外部sourceで異なる契約として検証する。
+
+### LL-481: 保存済み対話の配役変更は新台本と旧台本のprovenanceを分ける
+- **事象**: 記事末尾のソラ/博士の対話をポコとTECHガイドへ改める際、`data/bodies.json`には`a/b`の6発言だけを持つ旧配役の台本が1,030件あり、1件は英語で聞き手へ直接`Sora`と呼びかけていた。AI製品名のSoraに言及する別記事もあるため、名前の一括置換では記事の事実まで壊れる。
+- **根本原因**: 保存schemaはspeaker keyだけで生成当時の配役versionを持たない。Webの名前・絵だけを置き換えても、旧台本の呼びかけや博士口調が残り、反対に「旧台本は文面を変えない」と表示しながらrender時に呼称を直すと説明と実装が矛盾する。
+- **対策**: 保存JSONと記事本文は不変のまま、Web表示に限りspeaker keyと文頭/文末の明白な旧配役への呼びかけだけを整え、製品名Sora、引用、複合語は保持する。新規生成のWorker/Web personaはポコを疑問役、TECHガイドをサイト独自の回答役へ対称更新し、旧台本の表示上の再演と試作イラストであることをJA/ENで明示する。小さなオリジナルSVG spriteをページ内で1回定義し、両話者で参照してmobileでも人物像を見せ、CSSは全detailで共有する。
+- **教訓**: 生成済みcontentに配役versionが無いとき、絵とlabelの変更を「そのキャラクターが元から発言した」と扱わない。新台本のpromptと旧台本の表示provenanceを分け、台本・記事事実を上書きせず、旧名の修正は文脈が明白なvocativeだけに限定する。画像が未承認の別プロジェクトなら既存素材を流用せず文章設定から描いた試作と明示し、繰り返し表示する絵とCSSのstatic build負荷を計測する。

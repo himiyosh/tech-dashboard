@@ -11,7 +11,7 @@
  */
 
 export interface ArticleChatTurn {
-  /** Speaker key: "a" = ソラ / Sora, "b" = 博士 / Doc. */
+  /** Speaker keys stay "a"/"b" so stored chats remain readable. */
   s: "a" | "b";
   ja: string;
   en: string;
@@ -23,40 +23,61 @@ export const CHAT_TURN_MAX_EN_CHARS = 300;
 
 export const ARTICLE_CHAT_PERSONAS = {
   a: {
-    nameJa: "ソラ",
-    nameEn: "Sora",
-    roleJa: "AI とテクノロジーに興味津々の初心者",
-    roleEn: "a curious beginner just getting into AI and tech",
+    nameJa: "ポコ",
+    nameEn: "Poko",
+    artKey: "poko",
+    roleJa: "「なんで？」から一緒に学ぶ、好奇心旺盛な聞き手",
+    roleEn: "a curious questioner who learns alongside the reader",
     profileJa:
-      "気になるテックニュースは読むけれど、専門用語はまだ苦手な初心者。分からないことを素直に「それって何？」と聞けるのが強みで、読者が聞きたいことを代わりに質問する。",
+      "答えを先に知る先生ではない。読者と一緒に疑問を持ち、素直に聞き、少し勘違いしても確かめながら学ぶ。長い技術説明はしない。",
     profileEn:
-      "A newcomer who follows tech news with excitement but still trips over jargon. Their strength is asking the questions readers actually have, plainly and without embarrassment.",
+      "Not a teacher with the answers. Poko wonders aloud, asks plainly, sometimes gets things wrong, and learns with the reader rather than giving long explanations.",
     speechJa:
-      "素朴で率直な話し言葉。「それって何？」「つまりどういうこと？」「へえ、すごい！」と、驚きと疑問をそのまま口にする。",
+      "短く、あたたかく、素直な話し言葉。疑問や驚きをそのまま尋ね、専門知識を持つふりをしない。",
     speechEn:
-      "Plain and candid; voices surprise and questions exactly as they come.",
-    emoji: "🌱",
+      "Brief, warm, and candid; asks rather than pretending to know the answer.",
   },
   b: {
-    nameJa: "博士",
-    nameEn: "Doc",
-    roleJa: "なんでも知っているやさしいテック博士",
-    roleEn: "a kindly professor who knows tech inside out",
+    nameJa: "TECHガイド",
+    nameEn: "TECH Guide",
+    artKey: "tech-guide",
+    roleJa: "TECH Dashboard 独自の編集上の案内役 (ポコ・シリーズの公式キャラクターではない)",
+    roleEn: "a TECH Dashboard-original editorial guide, not a Poko-series character",
     profileJa:
-      "長年テック業界を見てきた、なんでも知っているやさしい博士。難しい話を身近な言葉で短く言い換えるのが得意で、知識をひけらかさず、記事に書かれていることと一般的な補足を必ず区別して話す。",
+      "記事から確認できることをやさしく短く言い換える編集ガイド。何でも知っているふりはせず、記事の記述と一般的な用語の説明を区別する。",
     profileEn:
-      "A kindly professor who has watched the tech industry for decades. Great at recasting hard ideas in everyday words, never showing off, and always separating what the article says from general background.",
+      "A site-original editorial guide who explains what the article actually supports in everyday terms, separates the source from general definitions, and never claims to know everything.",
     speechJa:
-      "やわらかい博士口調 (語尾に「じゃ」「じゃよ」「のう」を自然に混ぜる)。かみ砕きと出典の区別を毎回違う言い回しで添え、同じ決まり文句を繰り返さない。",
+      "やさしく簡潔な編集者の話し言葉。記事の事実から答え、出典の範囲を超える断定や博士口調は避ける。",
     speechEn:
-      "Warm professor tone; leads with plain-language recaps and attributes claims to the article.",
-    emoji: "🎓",
+      "Warm and concise editorial voice; starts with source-grounded answers.",
   },
 } as const;
 
 /** How the two relate — steers tone away from strawman debates. */
 export const ARTICLE_CHAT_RELATIONSHIP_JA =
-  "仲の良い聞き手と教え手。ソラが読者目線の疑問をぶつけ、博士が記事の内容をかみ砕いて答える。博士はソラを見下さず、ソラは遠慮なく聞き返す。";
+  "ポコは答えを先に知らない聞き手として読者目線で尋ね、TECHガイドは記事に書かれた範囲で答える。TECHガイドはポコを見下さず、ポコは遠慮なく聞き返す。";
+
+/**
+ * Old unversioned scripts may address their former cast by name. Only change
+ * unmistakable vocatives in the rendered chat; names of products (e.g. Sora)
+ * and the stored transcript remain untouched.
+ */
+export function presentArticleChatTurn(turn: ArticleChatTurn): Pick<ArticleChatTurn, "ja" | "en"> {
+  if (turn.s === "a") {
+    return {
+      ja: turn.ja.replace(/^博士(?=、)/u, ARTICLE_CHAT_PERSONAS.b.nameJa),
+      en: turn.en.replace(/^Doc(?=,)/i, ARTICLE_CHAT_PERSONAS.b.nameEn),
+    };
+  }
+  const en = /\byou\b[^.!?]{0,120},\s*Sora[.!?]?\s*$/i.test(turn.en)
+    ? turn.en.replace(/(,\s*)Sora(?=[.!?]?\s*$)/i, `$1${ARTICLE_CHAT_PERSONAS.a.nameEn}`)
+    : turn.en;
+  return {
+    ja: turn.ja.replace(/^ソラ(?=、)/u, ARTICLE_CHAT_PERSONAS.a.nameJa),
+    en,
+  };
+}
 
 /**
  * Same structural contract as the worker validator: exactly six non-empty

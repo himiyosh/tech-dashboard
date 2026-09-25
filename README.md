@@ -84,6 +84,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 - Publisherの最初の実行では、**実行前のmain snapshot**に既にある適格記事を基準点へ登録し、その実行の新着からsequence 1で記録します。2回目以降、実効重要度 High (3/3)、実要約あり、詳細へ到達可能、hot/warm、元記事の公開日がsnapshot時刻以前、という条件を満たす記事だけをappendします。同一元記事・同一モデル発表、通常のpatch/prerelease、要約待ち、off-topic記事は出しません。`observedAt`は初めて適格になったPublisher snapshot時刻、`sourcePublishedAt`は元記事の公開日です。検索向け`publicationHold/noindex`は記事の閲覧可否ではないため、新着配信の禁止条件にはしません。
 - `/rss/major.xml`は**上記履歴の最新100件だけ**をRSSへ投影します。GUIDはstableなevent ID、`pubDate`は`observedAt`、`link`は当サイトの詳細です。RSSだけでは長期間未取得時に取りこぼすため、完全な再生にはJSONの月別cursorを使います。既存の全体RSS`/rss.xml`は変更せず、OPML`/feeds.opml`に両方を掲載します。
 - 記事詳細と主要カードのシェアは端末の共有シートを使い、非対応時はタイトルとURLをコピーします。クリップボードも使えない場合は手動コピー用ダイアログを開きます。元記事へ直接遷移するカードは元記事を共有し、当サイトの詳細は表示言語 (`?lang=en`) をURLへ保持します。
+- 記事詳細に有効な AI 対話がある場合は、文章設定をもとにこのサイトで新規描画したポコ（疑問を持つ聞き手）と、TECH Dashboard 独自の編集キャラクター「TECHガイド」（回答役）のイラストで表示します。ポコの絵は承認済み公式素材ではなく試作です。保存済みの旧配役の対話は上書きせず、明らかな旧名への呼びかけだけ表示時に整えます。要約・本文・対話の事実は変更せず、対話や本文が無い記事に偽のキャストや生成予告は表示しません。
 - **外部サービスへの自動投稿は未接続です。** RSSをそのまま転送せず、汎用eventのconsumer側で最終cursor、送信済みID、レート制限、失敗時の再試行・停止を管理します。通常記事の詳細URLは保持期間後に消える可能性があるため、外部への自動送信を有効化する前に恒久リンクを整備してください。
 >
 > 第2段階の増分配信は、専用R2へcontent-addressedなdetail HTMLを生成し、専用D1 pointerでshadow generationを切り替える**無効既定の検証経路**だけを追加しています。productionは引き続きPagesです。Workers Static Assetsの差分uploadをsource-level増分生成とは扱わず、全route family、search、traffic、CPU、rollbackのcutover gateが揃うまでPages buildを止めません。

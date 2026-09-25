@@ -21,7 +21,7 @@ import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "../web/src/lib/route-inventory.ts";
 
 export const PUBLISHER_DATA_PATH_RE =
-  /^data\/(?:index\.json|bodies\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json)$/;
+  /^data\/(?:index\.json|bodies\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json|updates\/(?:_index|\d{4}-\d{2})\.json)$/;
 
 export const MAX_DETAIL_ROUTE_GROWTH_PER_RUN = 250;
 export const MAX_TAG_BASE_ROUTE_GROWTH_PER_RUN = 100;
@@ -435,6 +435,9 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
     } else if (path === "data/archive/_index.json") {
       for (const family of ["archive", "sitemap", "search-index"]) routeFamilies.add(family);
       fullReasons.add("search-index-requires-a-global-rebuild");
+    } else if (/^data\/updates\/(?:_index|\d{4}-\d{2})\.json$/.test(path)) {
+      routeFamilies.add("major-rss");
+      routeFamilies.add("update-json");
     } else {
       const month = path.match(/^data\/archive\/(\d{4}-\d{2})\.json$/)?.[1];
       if (month) {
@@ -515,6 +518,7 @@ function pathsAtRef(root: string, baseRef: string): string[] {
       "data/bodies.json",
       "data/stats.json",
       "data/archive",
+      "data/updates",
     ],
     { cwd: root, encoding: "utf8" },
   );

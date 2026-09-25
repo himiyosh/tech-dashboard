@@ -31,6 +31,7 @@ import {
   planPublisherImpactFromRepository,
   type PublisherImpactPlan,
 } from "./publisher-impact.ts";
+import { prepareMajorUpdateFiles } from "./publisher-updates.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_BRIDGE_URL =
@@ -483,6 +484,7 @@ function readEffectsBundle(
 export function createLocalCommitSink(options: {
   root: string;
   dryRun: boolean;
+  prepareUpdateFiles: (expectedParentSha: string, files: readonly PublisherCommitFile[]) => PublisherCommitFile[];
   getLocalHead?: () => string;
   getRemoteHead?: (env: GithubRepositoryEnv) => Promise<string>;
   planImpact?: typeof planPublisherImpactFromRepository;
@@ -509,19 +511,20 @@ export function createLocalCommitSink(options: {
       });
       return null;
     }
-    const uniquePaths = new Set(files.map(({ path }) => path));
-    if (uniquePaths.size !== files.length) {
+    const outputFiles = [...files, ...options.prepareUpdateFiles(expectedParentSha, files)];
+    const uniquePaths = new Set(outputFiles.map(({ path }) => path));
+    if (uniquePaths.size !== outputFiles.length) {
       throw new Error("publisher commit sink requires unique output files");
     }
     const impact = (options.planImpact ?? planPublisherImpactFromRepository)({
       root: options.root,
       baseRef: expectedParentSha,
-      changedFiles: files,
+      changedFiles: outputFiles,
     });
     if (!options.dryRun) {
-      for (const file of files) writeAtomic(options.root, file);
+      for (const file of outputFiles) writeAtomic(options.root, file);
     } else {
-      for (const file of files) {
+      for (const file of outputFiles) {
         if (!PUBLISHER_DATA_PATH_RE.test(file.path)) {
           throw new Error(`publisher refused unexpected output path: ${file.path}`);
         }
@@ -529,7 +532,7 @@ export function createLocalCommitSink(options: {
     }
     options.onPrepared({
       changed: true,
-      files: files.map(({ path }) => path),
+      files: outputFiles.map(({ path }) => path),
       message,
       expectedParentSha,
       impact,
@@ -662,6 +665,21 @@ export async function runPublisherCli(
   const commitFiles = createLocalCommitSink({
     root: ROOT,
     dryRun,
+    prepareUpdateFiles: (expectedParentSha, files) => prepareMajorUpdateFiles({
+      readAtRef: (path) => {
+        try {
+          return execFileSync("git", ["show", `${expectedParentSha}:${path}`], {
+            cwd: ROOT,
+            encoding: "utf8",
+            maxBuffer: 64 * 1024 * 1024,
+            stdio: ["ignore", "pipe", "ignore"],
+          });
+        } catch {
+          throw new Error(`publisher major updates: unable to read ${path} at captured main SHA`);
+        }
+      },
+      changes: files,
+    }),
     onPrepared: (output) => Object.assign(prepared, output),
   });
   const publisherEnv: PublisherEnv = {

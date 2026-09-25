@@ -39,6 +39,12 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import { bodyBudgetPriorityRank, DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
+import {
+  MAJOR_UPDATE_INDEX_PATH,
+  MAJOR_UPDATE_MAX_INDEX_BYTES,
+  MAJOR_UPDATE_MAX_MONTH_BYTES,
+  parseMajorUpdateState,
+} from "../web/src/lib/major-update-ledger.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -950,6 +956,28 @@ describe("data/stats.json", () => {
       (bucket) => bucket.total < 0 || bucket.last30d < 0 || bucket.last30d > bucket.total,
     );
     expect(negative).toEqual([]);
+  });
+});
+
+describe("data/updates append-only tracking", () => {
+  it("keeps its indexed monthly cursor history complete and within byte budgets", () => {
+    const root = join(process.cwd(), "data", "updates");
+    const indexText = readFileSync(join(process.cwd(), MAJOR_UPDATE_INDEX_PATH), "utf8");
+    const monthFiles = readdirSync(root)
+      .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+      .sort();
+    const months = monthFiles.map((name) =>
+      JSON.parse(readFileSync(join(root, name), "utf8")) as unknown);
+    const state = parseMajorUpdateState(JSON.parse(indexText) as unknown, months);
+    expect(monthFiles).toEqual(state.index.months.map(({ month }) => `${month}.json`));
+    expect(Buffer.byteLength(indexText, "utf8")).toBeLessThanOrEqual(MAJOR_UPDATE_MAX_INDEX_BYTES);
+    for (const name of monthFiles) {
+      expect(
+        statSync(join(root, name)).size,
+        name,
+      ).toBeLessThanOrEqual(MAJOR_UPDATE_MAX_MONTH_BYTES);
+    }
+    expect(state.index.initializedAt === null || state.index.lastObservedAt !== null).toBe(true);
   });
 });
 

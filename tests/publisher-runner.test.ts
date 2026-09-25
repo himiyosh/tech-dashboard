@@ -354,11 +354,13 @@ describe("GitHub Actions publisher runner", () => {
     const sink = createLocalCommitSink({
       root,
       dryRun: false,
+      prepareUpdateFiles: () => [],
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "captured-sha",
       planImpact: () => impactPlan(),
       onPrepared: prepared,
     });
+
     await sink(
       {
         GH_TOKEN: "token",
@@ -384,11 +386,42 @@ describe("GitHub Actions publisher runner", () => {
     });
   });
 
+  it("includes tracker files in the same prepared data commit and impact plan", async () => {
+    const root = mkdtempSync(join(tmpdir(), "publisher-runner-updates-"));
+    const prepared = vi.fn();
+    const planImpact = vi.fn(() => impactPlan());
+    const sink = createLocalCommitSink({
+      root,
+      dryRun: false,
+      prepareUpdateFiles: () => [{
+        path: "data/updates/_index.json",
+        content: '{"schemaVersion":1}\n',
+      }],
+      getLocalHead: () => "captured-sha",
+      getRemoteHead: async () => "captured-sha",
+      planImpact,
+      onPrepared: prepared,
+    });
+    await sink({
+      GH_TOKEN: "token",
+      GITHUB_OWNER: "owner",
+      GITHUB_REPO: "repo",
+      GITHUB_BRANCH: "main",
+    }, "data update", [{ path: "data/index.json", content: '{"count":1}\n' }], "captured-sha");
+    expect(planImpact.mock.calls[0]?.[0].changedFiles.map((file) => file.path))
+      .toEqual(["data/index.json", "data/updates/_index.json"]);
+    expect(readFileSync(join(root, "data/updates/_index.json"), "utf8"))
+      .toBe('{"schemaVersion":1}\n');
+    expect(prepared.mock.calls[0]?.[0].files)
+      .toEqual(["data/index.json", "data/updates/_index.json"]);
+  });
+
   it("preserves snapshot validation when there are effects but no data changes", async () => {
     const prepared = vi.fn();
     const sink = createLocalCommitSink({
       root: mkdtempSync(join(tmpdir(), "publisher-runner-")),
       dryRun: false,
+      prepareUpdateFiles: () => [],
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "captured-sha",
       onPrepared: prepared,
@@ -420,6 +453,7 @@ describe("GitHub Actions publisher runner", () => {
     const dryRunSink = createLocalCommitSink({
       root,
       dryRun: true,
+      prepareUpdateFiles: () => [],
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "captured-sha",
       planImpact: () => impactPlan(),
@@ -455,6 +489,7 @@ describe("GitHub Actions publisher runner", () => {
     const staleSink = createLocalCommitSink({
       root,
       dryRun: false,
+      prepareUpdateFiles: () => [],
       getLocalHead: () => "captured-sha",
       getRemoteHead: async () => "advanced-sha",
       onPrepared: () => undefined,

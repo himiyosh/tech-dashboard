@@ -10,6 +10,7 @@ const {
   arxivFeedEntries,
   categoryMeta,
   feedEntries,
+  majorFeedEntries,
   knowledgeFeedEntries,
   summaryForLangWithFallback,
   titleForLangWithFallback,
@@ -102,10 +103,21 @@ const {
       category: "agent-fw",
     },
   ];
+  const majorFeedEntries = [{
+    ...baseEntry,
+    id: "major-announcement",
+    publicationHold: false,
+    url: "https://example.com/major-announcement",
+    titleJa: "主要なモデル発表",
+    summaryJa: "公開済みの主な発表をまとめました。",
+    category: "agent-fw",
+    importance: 3,
+  }];
   return {
     arxivFeedEntries: feedEntries.filter((entry) => entry.id === "arxiv-paper"),
     categoryMeta,
     feedEntries,
+    majorFeedEntries,
     knowledgeFeedEntries: [feedEntries[1]!, feedEntries[2]!],
     titleForLangWithFallback: vi.fn(
       (entry: { titleJa: string }) => ({
@@ -132,7 +144,40 @@ vi.mock("../web/src/lib/data.ts", () => ({
   titleForLangWithFallback,
 }));
 
+vi.mock("../web/src/lib/major-update-data.ts", () => ({
+  MAJOR_UPDATE_STATE: {
+    index: {
+      initializedAt: "2026-01-01T00:00:00.000Z",
+      lastObservedAt: "2026-01-02T00:00:00.000Z",
+      lastSequence: 1,
+      months: [{
+        month: "2026-01",
+        firstSequence: 1,
+        lastSequence: 1,
+        count: 1,
+      }],
+    },
+    months: [{
+      month: "2026-01",
+      events: majorFeedEntries.map((entry) => ({
+        ...entry,
+        sequence: 1,
+        observedAt: "2026-01-02T00:00:00.000Z",
+        sourceKey: "example.com/major-announcement",
+        topicKey: null,
+        siteUrl: "https://techdb.studio344.net/e/major-announcement/",
+      })),
+    }],
+  },
+}));
+
 const { GET: getRss } = await import("../web/src/pages/rss.xml.ts");
+const { GET: getMajorRss } = await import("../web/src/pages/rss/major.xml.ts");
+const { GET: getUpdateIndex } = await import("../web/src/pages/updates/index.json.ts");
+const {
+  GET: getUpdateMonth,
+  getStaticPaths: getUpdateMonthPaths,
+} = await import("../web/src/pages/updates/[month].json.ts");
 const { GET: getArxivRss } = await import("../web/src/pages/rss/arxiv.xml.ts");
 const { GET: getKnowledgeRss } = await import("../web/src/pages/rss/knowledge.xml.ts");
 const { GET: getOpml } = await import("../web/src/pages/feeds.opml.ts");
@@ -156,6 +201,7 @@ const {
 const {
   ARXIV_RSS_HREF,
   KNOWLEDGE_RSS_HREF,
+  MAJOR_RSS_HREF,
   RSS_ITEM_LIMIT,
   categoryRssHref,
   escapeXml,
@@ -379,6 +425,7 @@ describe("public feeds", () => {
 
   it("builds deterministic category feed URLs without query filtering", () => {
     expect(ARXIV_RSS_HREF).toBe("/rss/arxiv.xml");
+    expect(MAJOR_RSS_HREF).toBe("/rss/major.xml");
     expect(KNOWLEDGE_RSS_HREF).toBe("/rss/knowledge.xml");
     expect(categoryRssHref("agent-fw")).toBe("/rss/agent-fw.xml");
     expect(categoryRssHref("local-llm")).toBe("/rss/local-llm.xml");
@@ -404,6 +451,12 @@ describe("public feeds", () => {
     );
     expect(publicHeaders).toContain(
       "/feeds.opml\n  Content-Type: text/x-opml; charset=utf-8",
+    );
+    expect(publicHeaders).toContain(
+      "/rss/major.xml\n  Cache-Control: no-store",
+    );
+    expect(publicHeaders).toContain(
+      "/updates/*\n  Cache-Control: no-store",
     );
   });
 
@@ -441,7 +494,7 @@ describe("public feeds", () => {
 
     expect(document.opml["@_version"]).toBe("2.0");
     expect(document.opml.head.title).toBe(OPML_TITLE);
-    expect(outlines).toHaveLength(CANONICAL_CATEGORY_META.length + 3);
+    expect(outlines).toHaveLength(CANONICAL_CATEGORY_META.length + 4);
     expect(outlines).toEqual(
       expectedFeeds.map((feed) => ({
         "@_type": "rss",
@@ -498,6 +551,54 @@ describe("public feeds", () => {
         `<description>${escapeXml(buildFeedDecisionDigest(entry).text)}</description>`,
       );
     }
+  });
+
+  it("publishes event-backed major updates with an observation time and stable event GUID", async () => {
+    const response = (await getMajorRss({} as never)) as Response;
+    const xml = await response.text();
+
+    expect(response.headers.get("content-type")).toBe("application/rss+xml; charset=utf-8");
+    expect(XMLValidator.validate(xml)).toBe(true);
+    expect(xml.match(/<item>/g)).toHaveLength(1);
+    expect(xml).toContain("<title>TECH Dashboard | Major updates</title>");
+    expect(xml).toContain("<link>https://techdb.studio344.net/e/major-announcement/</link>");
+    expect(xml).toContain('<guid isPermaLink="false">urn:techdb:major:1</guid>');
+    expect(xml).toContain("<pubDate>Fri, 02 Jan 2026 00:00:00 GMT</pubDate>");
+    expect(xml).toContain("<description>出典: OpenAI Blog | 種別: 公式 | 重要度: 3/3");
+    expect(xml).not.toContain("https://example.com/agent-1</link>");
+  });
+
+  it("exposes the same append-only cursor through JSON index and monthly shard", async () => {
+    expect(getUpdateMonthPaths()).toEqual([{ params: { month: "2026-01" } }]);
+    const indexResponse = (await getUpdateIndex({} as never)) as Response;
+    const index = await indexResponse.json() as {
+      schemaVersion: number;
+      baselineSnapshotAt: string | null;
+      latestCursor: string;
+      months: Array<{ href: string; firstCursor: string; lastCursor: string }>;
+    };
+    expect(indexResponse.headers.get("content-type")).toBe("application/json; charset=utf-8");
+    expect(index.schemaVersion).toBe(1);
+    expect(index.baselineSnapshotAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(index.latestCursor).toBe("1");
+    expect(index.months).toMatchObject([{
+      href: "/updates/2026-01.json",
+      firstCursor: "1",
+      lastCursor: "1",
+    }]);
+    const monthResponse = (await getUpdateMonth({ params: { month: "2026-01" } } as never)) as Response;
+    const month = await monthResponse.json() as {
+      events: Array<{ id: string; cursor: string; observedAt: string; siteUrl: string }>;
+    };
+    expect(monthResponse.headers.get("content-type")).toBe("application/json; charset=utf-8");
+    expect(month.events).toMatchObject([{
+      id: "urn:techdb:major:1",
+      cursor: "1",
+      observedAt: "2026-01-02T00:00:00.000Z",
+      siteUrl: "https://techdb.studio344.net/e/major-announcement/",
+    }]);
+    const unknown = (await getUpdateMonth({ params: { month: "2026-02" } } as never)) as Response;
+    expect(unknown.status).toBe(404);
   });
 
   it("generates one static RSS endpoint for every valid category", () => {

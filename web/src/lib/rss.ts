@@ -6,6 +6,7 @@ import { buildFeedDecisionDigest } from "./feed-decision-digest.ts";
 export {
   ARXIV_RSS_HREF,
   KNOWLEDGE_RSS_HREF,
+  MAJOR_RSS_HREF,
   SITE_WIDE_RSS_HREF,
   categoryRssHref,
 } from "./feed-catalog.ts";
@@ -18,6 +19,13 @@ export interface RssChannel {
   link: string;
   description: string;
   lastBuildDate: string;
+}
+
+export interface RssItemOptions<T extends NormalizedEntry = NormalizedEntry> {
+  /** Override the reader destination without changing the stable source URL GUID. */
+  itemLink?: (entry: T) => string;
+  itemGuid?: (entry: T) => string;
+  itemDate?: (entry: T) => string;
 }
 
 function isXml10CodePoint(codePoint: number): boolean {
@@ -60,25 +68,29 @@ export function escapeXml(value: string): string {
   return escaped;
 }
 
-export function serializeRssFeed(
-  entries: readonly NormalizedEntry[],
+export function serializeRssFeed<T extends NormalizedEntry>(
+  entries: readonly T[],
   channel: RssChannel,
+  options: RssItemOptions<T> = {},
 ): string {
   const items = entries.slice(0, RSS_ITEM_LIMIT)
     .map((entry) => {
+      const itemLink = options.itemLink?.(entry) ?? entry.url;
+      const guid = options.itemGuid?.(entry) ?? entry.url;
+      const date = options.itemDate?.(entry) ?? entry.publishedAt;
       const title = escapeXml(titleForLangWithFallback(entry, "ja").text);
       const description = escapeXml(buildFeedDecisionDigest(entry).text);
       const tags = entry.tags
         .map((tag) => `<category>${escapeXml(tag)}</category>`)
         .join("");
-      const publishedAt = entry.publishedAt
-        ? `<pubDate>${new Date(entry.publishedAt).toUTCString()}</pubDate>`
+      const publishedAt = date
+        ? `<pubDate>${new Date(date).toUTCString()}</pubDate>`
         : "";
       return `
     <item>
       <title>${title}</title>
-      <link>${escapeXml(entry.url)}</link>
-      <guid isPermaLink="true">${escapeXml(entry.url)}</guid>
+      <link>${escapeXml(itemLink)}</link>
+      <guid isPermaLink="${options.itemGuid ? "false" : "true"}">${escapeXml(guid)}</guid>
       ${publishedAt}
       <description>${description}</description>
       <category>${escapeXml(entry.category)}</category>
@@ -100,11 +112,12 @@ export function serializeRssFeed(
 `;
 }
 
-export function createRssResponse(
-  entries: readonly NormalizedEntry[],
+export function createRssResponse<T extends NormalizedEntry>(
+  entries: readonly T[],
   channel: RssChannel,
+  options: RssItemOptions<T> = {},
 ): Response {
-  return new Response(serializeRssFeed(entries, channel), {
+  return new Response(serializeRssFeed(entries, channel, options), {
     headers: { "content-type": RSS_CONTENT_TYPE },
   });
 }

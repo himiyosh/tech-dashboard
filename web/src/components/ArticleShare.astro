@@ -1,0 +1,232 @@
+---
+import {
+  titleForLangWithFallback,
+  type NormalizedEntry,
+} from "../lib/data.ts";
+import { entryDestination } from "../lib/entry-destination.ts";
+import { SITE_URL } from "../lib/site.ts";
+
+export interface Props {
+  entry: NormalizedEntry;
+  href?: string;
+  external?: boolean;
+  variant?: "card" | "knowledge" | "featured" | "detail";
+}
+
+const { entry, href, external, variant = "card" } = Astro.props;
+const destination = entryDestination(entry);
+const shareHref = href ?? destination.href;
+const shareExternal = external ?? destination.external;
+const shareUrl = new URL(shareHref, SITE_URL);
+if (shareUrl.protocol !== "https:" && shareUrl.protocol !== "http:") {
+  throw new Error(`Invalid article share URL for ${entry.id}`);
+}
+if (!shareExternal && (
+  shareUrl.origin !== new URL(SITE_URL).origin
+  || !/^\/e\/[^/]+\/$/.test(shareUrl.pathname)
+)) {
+  throw new Error(`Article detail must use the canonical site for ${entry.id}`);
+}
+const titleJa = titleForLangWithFallback(entry, "ja").text;
+const titleEn = titleForLangWithFallback(entry, "en").text;
+const compact = variant === "featured" || variant === "knowledge";
+---
+
+<button
+  class="article-share"
+  type="button"
+  data-article-share
+  data-share-variant={variant}
+  data-share-url={shareUrl.toString()}
+  data-share-target={shareExternal ? "source" : "detail"}
+  data-share-title-ja={titleJa}
+  data-share-title-en={titleEn}
+  data-pagefind-ignore
+  hidden
+  inert
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 15V3m0 0L8 7m4-4 4 4" />
+    <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+  </svg>
+  <span class:list={["share-label", "i18n-ja", { "visually-hidden": compact }]}>{variant === "detail" ? "この記事をシェア" : "シェア"}</span>
+  <span class:list={["share-label", "i18n-en", { "visually-hidden": compact }]} lang="en">{variant === "detail" ? "Share this article" : "Share"}</span>
+  <span class="visually-hidden i18n-ja">: {titleJa}</span>
+  <span class="visually-hidden i18n-en" lang="en">: {titleEn}</span>
+</button>
+
+<script>
+  import {
+    buildArticleSharePayload,
+    type ArticleShareInput,
+    type ArticleSharePayload,
+  } from "../lib/article-share.ts";
+
+  const buttons = document.querySelectorAll<HTMLButtonElement>("button[data-article-share]");
+  if (buttons.length > 0) {
+    const live = document.createElement("div");
+    live.id = "article-share-status";
+    live.className = "visually-hidden";
+    live.style.left = "1px";
+    live.setAttribute("role", "status");
+    live.setAttribute("aria-live", "polite");
+    live.setAttribute("aria-atomic", "true");
+    document.body.append(live);
+
+    const toast = document.createElement("div");
+    toast.id = "article-share-toast";
+    toast.setAttribute("aria-hidden", "true");
+    document.body.append(toast);
+
+    const manual = document.createElement("dialog");
+    manual.id = "article-share-manual";
+    manual.setAttribute("aria-labelledby", "article-share-manual-title");
+    manual.setAttribute("aria-describedby", "article-share-manual-description");
+    const manualTitle = document.createElement("h2");
+    manualTitle.id = "article-share-manual-title";
+    const manualDescription = document.createElement("p");
+    manualDescription.id = "article-share-manual-description";
+    const manualLabel = document.createElement("label");
+    manualLabel.htmlFor = "article-share-manual-text";
+    const manualText = document.createElement("textarea");
+    manualText.id = "article-share-manual-text";
+    manualText.readOnly = true;
+    manualText.spellcheck = false;
+    const manualClose = document.createElement("button");
+    manualClose.type = "button";
+    manual.append(manualTitle, manualDescription, manualLabel, manualText, manualClose);
+    document.body.append(manual);
+
+    let dismissTimer: ReturnType<typeof setTimeout> | undefined;
+    let currentNotice: { ja: string; en: string } | null = null;
+    let manualOpener: HTMLButtonElement | null = null;
+    const activeLang = () => document.documentElement.dataset.lang === "en" ? "en" : "ja";
+    const renderManual = () => {
+      const english = activeLang() === "en";
+      manual.lang = english ? "en" : "ja";
+      manualTitle.textContent = english ? "Automatic copy unavailable" : "自動コピーできませんでした";
+      manualDescription.textContent = english
+        ? "Select and copy the title and URL below."
+        : "以下のタイトルとURLを選択してコピーしてください。";
+      manualLabel.textContent = english ? "Title and URL" : "タイトルとURL";
+      manualClose.textContent = english ? "Close" : "閉じる";
+    };
+    const openManual = (text: string, opener: HTMLButtonElement) => {
+      manualOpener = opener;
+      manualText.value = text;
+      renderManual();
+      manual.showModal();
+      manualText.focus();
+      manualText.select();
+    };
+    manualClose.addEventListener("click", () => manual.close());
+    manual.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+      const active = document.activeElement;
+      if (event.shiftKey && (active === manualText || !manual.contains(active))) {
+        event.preventDefault();
+        manualClose.focus();
+      } else if (!event.shiftKey && (active === manualClose || !manual.contains(active))) {
+        event.preventDefault();
+        manualText.focus();
+      }
+    });
+    manual.addEventListener("close", () => {
+      manualText.value = "";
+      if (manualOpener?.isConnected) manualOpener.focus();
+      manualOpener = null;
+    });
+    const renderNotice = () => {
+      const text = currentNotice?.[activeLang()] ?? "";
+      live.textContent = text;
+      toast.textContent = text;
+    };
+    const clearNotice = () => {
+      if (dismissTimer) clearTimeout(dismissTimer);
+      currentNotice = null;
+      renderNotice();
+      toast.classList.remove("is-visible");
+    };
+    const notify = (ja: string, en: string, error = false) => {
+      if (dismissTimer) clearTimeout(dismissTimer);
+      currentNotice = { ja, en };
+      renderNotice();
+      toast.dataset.tone = error ? "error" : "ok";
+      toast.classList.add("is-visible");
+      dismissTimer = setTimeout(clearNotice, error ? 5000 : 2800);
+    };
+    new MutationObserver(() => {
+      renderNotice();
+      renderManual();
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-lang"],
+    });
+
+    for (const button of buttons) {
+      button.addEventListener("click", async () => {
+        if (button.dataset.sharing === "true") return;
+        clearNotice();
+        let payload: ArticleSharePayload;
+        try {
+          const target = button.dataset.shareTarget;
+          if (target !== "detail" && target !== "source") {
+            throw new Error("Article share target is missing");
+          }
+          const input: ArticleShareInput = {
+            url: button.dataset.shareUrl ?? "",
+            target,
+            titleJa: button.dataset.shareTitleJa ?? "",
+            titleEn: button.dataset.shareTitleEn ?? "",
+          };
+          payload = buildArticleSharePayload(input, activeLang());
+        } catch (error) {
+          console.error("Could not prepare article sharing", error);
+          notify("共有する記事のリンクを準備できませんでした。", "Could not prepare the article link for sharing.", true);
+          return;
+        }
+
+        button.dataset.sharing = "true";
+        button.setAttribute("aria-busy", "true");
+        try {
+          let nativeShareFailed = false;
+          if (typeof navigator.share === "function") {
+            try {
+              if (typeof navigator.canShare !== "function" || navigator.canShare(payload)) {
+                await navigator.share(payload);
+                return;
+              }
+              nativeShareFailed = true;
+            } catch (error) {
+              if (error instanceof DOMException && error.name === "AbortError") return;
+              console.warn("Article share sheet unavailable", error);
+              nativeShareFailed = true;
+            }
+          }
+
+          const copyText = `${payload.title}\n${payload.url}`;
+          try {
+            if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+            await navigator.clipboard.writeText(copyText);
+            notify(
+              nativeShareFailed
+                ? "共有先を開けなかったため、タイトルとURLをコピーしました。"
+                : "タイトルとURLをコピーしました。",
+              nativeShareFailed
+                ? "Sharing was unavailable, so the title and URL were copied."
+                : "Title and URL copied.",
+            );
+          } catch (error) {
+            console.warn("Article share clipboard unavailable", error);
+            openManual(copyText, button);
+          }
+        } finally {
+          button.removeAttribute("aria-busy");
+          delete button.dataset.sharing;
+        }
+      });
+      button.inert = false;
+      button.hidden = false;
+    }
+  }
+</script>

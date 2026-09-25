@@ -31,6 +31,7 @@ import {
 import LanguageFallbackBadge from "./LanguageFallbackBadge.astro";
 import ExternalLinkHint from "./ExternalLinkHint.astro";
 import SourceExcerpt from "./SourceExcerpt.astro";
+import ArticleShare from "./ArticleShare.astro";
 
 export interface Props {
   entry: NormalizedEntry;
@@ -317,6 +318,7 @@ const hiddenTagCount = Math.max(0, entry.tags.length - visibleTags.length);
           {hiddenTagCount > 0 && <span class="tag-chip tag-more">+{hiddenTagCount}</span>}
         </div>
       )}
+      <ArticleShare entry={entry} href={href} external={external} />
       <a
         class="url"
         href={href}

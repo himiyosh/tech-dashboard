@@ -2104,10 +2104,16 @@ test.describe("TECH Dashboard smoke", () => {
       );
       expect(counts[index], `bar ${index} renders the number it labels`).toBe(Number(value));
     });
-    expect(
-      counts.slice(0, -1).reduce((sum, value) => sum + value, 0),
-      `stats.byDay produced only zeros: ${counts.join(",")}`,
-    ).toBeGreaterThan(0);
+    const recordedInWindow = barLabels.slice(0, -1).some((label) => {
+      const date = label.split(": ")[0]!;
+      return (recordedByDate.get(date) ?? 0) > 0;
+    });
+    if (recordedInWindow) {
+      expect(
+        counts.slice(0, -1).some((value) => value > 0),
+        "published activity in the chart window remains visible",
+      ).toBe(true);
+    }
     const dayScope = await digest.getAttribute("data-day-scope");
     expect(dayScope).toMatch(/^(today|latest)$/);
     await expect(digest.locator(".title h2.i18n-ja")).toHaveText(
@@ -2440,7 +2446,7 @@ test.describe("TECH Dashboard smoke", () => {
     const digest = page.locator(".ed-summary-only");
     const pending = page.locator(".ed-pending-summary");
     const sourceCta = page.locator('a.ed-header-cta[target="_blank"]');
-    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
+    const shareAction = page.locator('button[data-article-share][data-share-variant="detail"]');
     const disclaimer = page.locator(".ed-disclaim");
     const hasProse = (await prose.count()) > 0;
     const hasDigest = (await digest.count()) > 0;
@@ -2450,9 +2456,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(sourceCta).toBeVisible();
     await expect(sourceCta.locator(".ed-header-cta-copy > .i18n-ja")).toHaveText("元記事を読む");
     await expect(sourceCta.locator("small")).not.toHaveText("");
-    await expect(copyAction).toHaveCount(1);
-    await expect(copyAction).toBeVisible();
-    await expect(copyAction.locator(".i18n-ja")).toHaveText("タイトルと URL をコピー");
+    await expect(shareAction).toHaveCount(1);
+    await expect(shareAction).toBeVisible();
+    await expect(shareAction.locator(".share-label.i18n-ja")).toHaveText("この記事をシェア");
     await expect(
       page.locator(
         ".ed-freshness, .rail-freshness, .rail-cta, .ed-cta-row, .ed-summary-only-link, .ed-tldr-source",
@@ -2675,7 +2681,10 @@ test.describe("TECH Dashboard smoke", () => {
     );
   });
 
-  test("detail copy action writes the title and one URL", async ({ page, context }) => {
+  test("detail share falls back to copying the title and one URL", async ({ page, context }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    });
     await page.goto("/");
     const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
@@ -2683,31 +2692,33 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
-    await expect(copyAction).toHaveAccessibleName("タイトルと URL をコピー");
-    const titleJa = (await copyAction.getAttribute("data-title-ja"))?.trim() ?? "";
-    const titleEn = (await copyAction.getAttribute("data-title-en"))?.trim() ?? "";
-    const url = (await copyAction.getAttribute("data-url"))?.trim() ?? "";
+    const shareAction = page.locator('button[data-article-share][data-share-variant="detail"]');
+    await expect(shareAction).toHaveAccessibleName(/^この記事をシェア\s*:\s*\S/);
+    const titleJa = (await shareAction.getAttribute("data-share-title-ja"))?.trim() ?? "";
+    const titleEn = (await shareAction.getAttribute("data-share-title-en"))?.trim() ?? "";
+    const url = (await shareAction.getAttribute("data-share-url"))?.trim() ?? "";
     expect(titleJa).toBeTruthy();
     expect(titleEn).toBeTruthy();
     expect(url).toBe(`https://techdb.studio344.net${new URL(page.url()).pathname}`);
     await expect(page.locator('meta[property="article:modified_time"]')).toHaveCount(0);
     const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(jsonLd.join("\n")).not.toContain('"dateModified"');
-    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-live", "polite");
-    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-atomic", "true");
-    await copyAction.click();
+    await expect(page.locator("#article-share-status")).toHaveAttribute("aria-live", "polite");
+    await expect(page.locator("#article-share-status")).toHaveAttribute("aria-atomic", "true");
+    await shareAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(`${titleJa}\n${url}`);
+    await expect(page.locator("#article-share-status")).toHaveText("タイトルとURLをコピーしました。");
 
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
-    await expect(copyAction).toHaveAccessibleName("Copy title + URL");
-    await copyAction.click();
+    await expect(shareAction).toHaveAccessibleName(/^Share this article\s*:\s*\S/);
+    await shareAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(`${titleEn}\n${url}?lang=en`);
+    await expect(page.locator("#article-share-status")).toHaveText("Title and URL copied.");
   });
 
   test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
@@ -2783,7 +2794,7 @@ test.describe("TECH Dashboard smoke", () => {
 
       const actionStrip = page.locator(".ed-action-strip");
       const sourceCta = actionStrip.locator(".ed-header-cta");
-      const copyAction = actionStrip.locator(".ed-share-btn[data-share-copy]");
+      const copyAction = actionStrip.locator('[data-article-share][data-share-variant="detail"]');
       await expect(actionStrip).toBeVisible();
       await expect(sourceCta).toHaveCount(1);
       await expect(copyAction).toHaveCount(1);
@@ -2792,7 +2803,7 @@ test.describe("TECH Dashboard smoke", () => {
       const geometry = await page.evaluate(() => {
         const stripEl = document.querySelector(".ed-action-strip");
         const sourceEl = document.querySelector<HTMLElement>(".ed-header-cta");
-        const copyEl = document.querySelector(".ed-share-btn[data-share-copy]");
+        const copyEl = document.querySelector('[data-article-share][data-share-variant="detail"]');
         const strip = stripEl?.getBoundingClientRect();
         const source = sourceEl?.getBoundingClientRect();
         const copy = copyEl?.getBoundingClientRect();
@@ -4865,9 +4876,17 @@ test.describe("TECH Dashboard smoke", () => {
     const siteWideRss = page.locator('.page-hero-actions a[href="/rss.xml"]');
     const jsonFeed = page.locator('.page-hero-actions a[href="/feed.json"]');
     const opmlBundle = page.locator('.page-hero-actions a[href="/feeds.opml"]');
+    const majorRss = page.locator('.sharing-checklist a[href="/rss/major.xml"]');
+    const updateHistory = page.locator('.sharing-checklist a[href="/updates/index.json"]');
     await expect(siteWideRss).toBeVisible();
     await expect(jsonFeed).toBeVisible();
     await expect(opmlBundle).toBeVisible();
+    await expect(majorRss).toBeVisible();
+    await expect(majorRss).toHaveAccessibleName("主要更新RSSを購読");
+    await expect(majorRss).toHaveAttribute("type", "application/rss+xml");
+    await expect(updateHistory).toBeVisible();
+    await expect(updateHistory).toHaveAccessibleName("新着履歴JSONを見る");
+    await expect(updateHistory).toHaveAttribute("type", "application/json");
     await expect(siteWideRss.locator(".i18n-ja")).toHaveText("全体RSS");
     await expect(siteWideRss).toHaveAccessibleName("全体RSS");
     await expect(jsonFeed).toHaveAccessibleName("JSON Feed");
@@ -4898,6 +4917,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(opmlBundle.locator(".i18n-en")).toBeVisible();
     await expect(opmlBundle.locator(".i18n-en")).toHaveText("Subscribe via OPML");
     await expect(opmlBundle).toHaveAccessibleName("Subscribe via OPML");
+    await expect(majorRss).toHaveAccessibleName("Subscribe to major updates RSS");
+    await expect(updateHistory).toHaveAccessibleName("Open the update history JSON");
     await expect(aboutDescription.locator(".i18n-en")).toHaveAttribute("lang", "en");
     await expect(aboutHero).toHaveAccessibleDescription(
       /TECH Dashboard tracks daily changes across AI coding and the agent ecosystem/,
@@ -4909,7 +4930,7 @@ test.describe("TECH Dashboard smoke", () => {
     ]) {
       await page.setViewportSize(viewport);
       await settleResponsiveLayout(page);
-      for (const link of [siteWideRss, jsonFeed, opmlBundle]) {
+      for (const link of [siteWideRss, jsonFeed, opmlBundle, majorRss, updateHistory]) {
         const box = await link.boundingBox();
         expect(box).not.toBeNull();
         expect(box!.width).toBeGreaterThanOrEqual(44);

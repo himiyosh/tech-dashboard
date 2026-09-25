@@ -30,6 +30,7 @@
 - `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、CI、R-027 rollout gateは従来どおり必須。
 - GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
 - Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
+- developとPRのCIでは36時間の鮮度gateを緩めず、同一のimmutableなremote main SHAの生成dataをunit/Web/E2Eへ配布する。PRが生成dataを明示変更した場合は上書きを拒否し、trackerの新規`data/updates` seedは保持する。main pushは当該commit自身のdataを検証する。
 - fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
 
 ### R-002: Cloudflare Pages project 設定の固定値
@@ -265,6 +266,13 @@
 - PRの必須条件はbranch-flow、unit/typecheck、Web build、E2E、secret/security checks、Publisher CAS、明示承認が必要なdeploy・production変更境界で構成する。
 - 通常のGitHub reviewと任意のcode review / security reviewはリスクに応じて利用できるが、session固有の承認コメント、identity用repository variable、専用CI job、再実行手順をmerge条件へ追加しない。
 - 必須clearanceを廃止する変更では、CI、CLI、tests、instructions、docs、GitHub settingsを同じ変更単位で除去し、通常の品質jobが残る回帰testを追加する。
+
+### R-032: 主要更新の追跡は公開履歴を正本とし、SEO保留と混同しない
+- `/rss.xml` は全体feedとして維持する。`web/src/lib/major-updates.ts` の単一selectorは、実効重要度 High (3/3)、実要約あり、一覧で読める詳細routeあり、hot/warm、snapshot時刻以前の元記事公開を必須とし、既存のoff-topic判定とcanonical URL / 同一発表のtopic dedupeも適用する。通常のpatch/prereleaseを保存時のimportanceだけで再採用しない。`publicationHold`はSEO向けnoindexであり、一覧から読める新着を対外配信禁止と解釈しない。
+- Node Publisher は同一のimmutable main SHAにある前回indexを最初の基準点として既存候補をseedし、そのrunのfinal snapshotで初めて条件を満たした候補だけを`data/updates/_index.json`と`YYYY-MM.json`へ同じdata-only commitで記録する。次回以降もcanonical URL/topicと単調増加sequenceで再収集・再要約の二重eventを防ぐ。月別履歴は期間で削除せず、byte上限超過や不正cursorはfail-closedにする。
+- JSON `/updates/index.json`はlatestCursorと月別sequence範囲を、`/updates/YYYY-MM.json`は全eventを配信する。利用者は保存したcursorより新しい月を取得してsequence順に処理でき、100件上限のRSSや静的endpointの`?since=`を漏れのない履歴APIとみなさない。`/rss/major.xml`は同じ履歴の最新100eventのみの購読用投影で、GUIDはevent ID、pubDateは初めて候補になったPublisher snapshot時刻（元記事公開日と区別）とする。
+- RSSを購読できることを外部サービスへの自動投稿完了と扱わない。将来の自動投稿は恒久リンク、送信先別の権限・明示承認、topic/channel単位の冪等キー、投稿結果read-back、失敗・rate limit時の停止を先に設計する。既存のPublisher/bridgeのPages deploy禁止とfingerprint/CASを緩和しない。
+- 手動シェアは各記事詳細、Timeline/Knowledgeの主要カード、Spotlightで共有シートを優先し、非対応時のみタイトルとURLをコピーする。clipboard拒否時は読み上げだけに頼らず、選択できるタイトルとURLを可視ダイアログで提示し、閉じたら元の共有buttonへfocusを戻す。Top 3、Ticker、compact rowは高密度の判断面なので記事詳細から共有し、表示言語をサイトURLへ保持する。外部元記事URLへ`lang`を付けない。
 
 ---
 
@@ -3097,3 +3105,75 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 変更前 2 週間の起動時刻は 0〜59 分に均等に分散しており、特定の枠の混雑ではなく GitHub の予約実行そのものが遅延・欠落していた。6 時間ごとの別ワークフローも同日に 41 分〜約 5 時間遅れていた。判断の前にこの分布を見ていなかった。
 - **対策**: 起動を Cloudflare Cron Trigger から `workflow_dispatch` する方式に移した(`worker/src/publisher-dispatch.ts`)。直近の run が 50 分以内なら dispatch しないため、GitHub 側の遅れた run と重複しない。
 - **教訓**: 定期実行の欠落を直す前に、実際の開始時刻の分布と他ワークフローの遅延を確認する。起動方式に依存する設定(上限値など)は、起動回数の改善を実測で確認してから変える。監視の失敗原因は 1 件の標本で決めず、期間内の全件を分類する。
+
+### LL-468: 要約済みと公開許可を同じ配信gateへ潰さない
+- **事象**: 初期の主要更新RSSでは`PUBLISHABLE_ENTRIES`に加えて`publicationHold === false`を条件にした。しかし最新checkoutでは承認manifestのbaseline以降に404件の新着があり、そのうちHigh 27件は全件`publicationHold=true`だった。一覧では記事を閲覧できても、主要更新追跡は新着を1件も出せない構成だった。
+- **根本原因**: `publicationHold`は検索index/sitemapを段階公開するSEO上のgateで、記事カードと詳細の閲覧禁止ではない。検索エンジンへのindex許可と読者へ公開済みの情報発信を同じbooleanで制御した。
+- **対策**: ユーザー判断により、`selectMajorUpdates()`は要約品質、実効High、詳細route、hot/warm、時刻、topic/source重複を維持し、SEO専用holdで除外しない。イベントには発見時のholdをsnapshotとして記録しても、投稿の可否には流用しない。
+- **教訓**: `noindex`とprivate/未公開は別契約である。読者に一覧・詳細が公開されているなら、検索向け段階indexの未承認を新着配信の禁止条件にしない。異なる公開境界を再利用すると新着が永続的に0件になるため、母集団とholdの意味を実データで確かめる。
+
+### LL-469: 高密度の判断枠へ共有buttonを足すとmetadataと要約幅が失われる
+- **事象**: Home Top 3の各cardへ45pxの共有buttonを追加すると、1440pxのmetadata行が28px以内から45pxへ拡大した。別配置で左grid列を広げると、1280pxの要約幅が180pxの最低基準に対して167pxまで縮んだ。
+- **根本原因**: 3列gridの小さなdecision cardに別の操作面を常時追加し、first-viewの比較密度、source disclosure、時刻、要約の利用可能幅を同時に維持できるか先に測っていなかった。
+- **対策**: Top 3のbuttonとgrid変更を取り消し、Spotlight、通常記事カード、Knowledgeカード、記事詳細だけに直接共有操作を置いた。Top 3/Ticker/compact rowは内部detail linkを保ち、記事を開いてから共有する。既存のTop 3境界幅とmobile card検証を再実行した。
+- **教訓**: 「各記事の共有可能性」と「全てのコンパクト面へ共有buttonを並べること」は別である。操作を加える前に同一行のmetadata高、要約幅、44px target、first-view下端を実ブラウザで測り、内容を削ってまでactionを常設しない。
+
+### LL-470: Astro componentのclient script追加はincremental detailのasset shell契約も変える
+- **事象**: 共有componentへclient scriptを追加すると通常のWeb buildは成功したが、`tests/incremental-renderer.test.ts`の実detail renderはscript moduleを4件、synthetic production shellは3件と数え、body-only incremental shadowをfail-closedで拒否した。
+- **根本原因**: detail HTMLに出るAstro module script数がcomponent importで変わるのに、asset shell fixtureは旧script構成を固定していた。UI変更と増分rendererのproduction shellを別の変更面として扱っていた。
+- **対策**: synthetic fixtureへinline bootstrapと共有component moduleを含む4 module構成を反映し、shadow rendererの対象testを再実行した。production artifactのshell captureと実detail render parityも確認対象とする。
+- **教訓**: UIへclient scriptを増減したら、通常のAstro buildだけでなく、built detailのmodule script inventory、incremental asset shellのfixture、実renderのmodule parityを同じ変更で確認する。件数不一致を静かに無視してshellを継ぎ足さない。
+
+### LL-471: visually-hiddenな共有buttonの言語spanも表示言語と同じ階層で隠す
+- **事象**: full E2Eのcold Archive mobileでdocument自体の横scrollは0でも、記事ごとの共有button内で隠したENタイトルの`span`が最大700px以上まで張り出し、全DOMRectの非交差検証に失敗した。さらにその修正後も、body直下の共有結果live regionが幅1px・左端-1pxとなった。
+- **根本原因**: JA/ENを包含する親`span.visually-hidden`の子を言語別表示にしたが、親だけのclipは子自身の矩形を縮めない。また`visually-hidden` utilityの`margin:-1px`をbody直下で使うと、左端0の要素が-1pxに配置される。
+- **対策**: JA/ENの各spanへ`visually-hidden`を付けて実矩形を拘束し、body直下の常設live regionは`left:1px`を明示して負のmarginを相殺する。`left:0`では位置に負marginが加わり-1pxのままなので補正にならない。Archiveの実cold targetでmobile非交差を再検証する。
+- **教訓**: 多言語のvisually-hiddenはclipする親だけでなく各言語variant自身の矩形を測る。body直下へ置くaccessible-only nodeはutilityの負marginで境界外へ出ない位置に固定する。page-level`scrollWidth=innerWidth`だけでは子要素のclient rectがviewport内とは限らない。
+
+### LL-472: 古いsnapshotの7日chartが全0件でも、表示とstatsの一致が正しければ成功である
+- **事象**: 現行checkoutの`data/index.json`が約8日前のgeneratedAtで、新たな収集が無いまま時刻が進んだためHomeの7日chartが全0件となり、full browser testの固定`sum>0`が失敗した。`data-schema.test.ts`の36時間鮮度gateも同じ理由で失敗した。
+- **根本原因**: chartの目的は実際の`stats.byDay`をその日付で表示することなのに、E2Eが「直近7日の収集は常に1件以上」を必須化していた。固定のローカル生成snapshotは時間経過で正当に当日窓から外れる。
+- **対策**: E2Eは全barの表示値と`stats.byDay`の同一日付を厳密比較したまま、記録側の窓に非0がある場合だけ「画面にも非0がある」を検証する。最新dataを仮装せず、ローカルの一時的な鮮度gateに限り`ALLOW_STALE_DATA=1`で全unitを検証し、本番へはそのままcommitしない。
+- **教訓**: generated artifactを使用するUIのE2Eは時間が過ぎるだけで壊れる活動量下限を固定しない。表示値と保存された同日bucketの一致を主契約とし、productionの鮮度監視とローカルsnapshotの時間経過を別のgateにする。
+
+### LL-473: incremental shadowのsemantic hashへAstro dev属性とasset間改行を含めない
+- **事象**: 現行Web buildからasset shellを取得し、同じindexのdetailを増分rendererで再生成すると、リンク・metadata・script moduleは一致しているのに`incremental detail HTML does not match the static semantic snapshot`でparityが失敗した。
+- **根本原因**: `AstroContainer`のserver renderは全DOM elementへ`data-astro-source-file`/`data-astro-source-loc`を付けるが、static production buildには無い。さらにstatic writerがheadのasset間へ追加する改行を、semantic snapshotがparse後のdocument SHAへそのまま含めていた。reader-facing contentとは無関係な開発用属性と書式差が一致条件を厳しくしていた。
+- **対策**: document digestに限りdev-only source属性を除去し、head/bodyの直接の空白専用text nodeだけを正規化する。metadata、本文、script/styleの内容は引き続きparity検証し、実Web buildのcapture→render→verify-parityと改変metadata拒否testを通す。
+- **教訓**: semantic parityで無視する差分は何でもではなく、toolchainが挿入する非意味的な属性とcontainer直下のformatting whitespaceへ厳密に限定する。synthetic fixtureだけで合格とせず、実production buildと実rendererを同じsnapshotで比較する。
+
+### LL-474: clipboard失敗時のnative promptは視覚的な回復導線の代わりにならない
+- **事象**: desktopとmobileのpersona監査で共有buttonを押すと、クリップボードの`NotAllowedError`を検出していても、案内は`1x1px`の視覚非表示live regionにしか現れなかった。browser promptに手動コピー文を渡したが、ブラウザ/自動化環境ではprompt自体が表示されず、利用者は何をコピーすべきか分からなかった。
+- **根本原因**: 非同期の失敗通知を読み上げsurfaceへ置き、browser promptが必ず可視になると仮定した。正常時の共有シートとクリップボード成功しかE2Eで可視性を検証していなかった。共有componentのscoped CSSは数千の記事HTMLへ反復inliningされ、コストも増えていた。
+- **対策**: clipboard失敗は`showModal()`でタイトルとURLを読み取り専用textareaへ表示し、textを選択済みにしてkeyboard/mobileで手動コピー可能にした。Chromiumの初回実測ではdialog末尾の閉じるbuttonからTabを押すと`<body>`へfocusが落ちたため、textareaと閉じるbutton間をTab/Shift+Tabで明示wrapする。閉じる/Escapeは元のbuttonへfocusを戻し、JA/ENのname/description、viewport安全域、スクリーンリーダーと可視contentをE2Eで検証する。共有controlとdialogのCSSは共通`portal.css`へ移し、数千ページへstyleを複製しない。
+- **教訓**: ネイティブ共有、clipboard、手動コピーの3段階は実browserで**視覚面とaccessible面の両方**を検証する。`role=status`が存在しても視覚利用者へ回復方法が伝わるとは限らず、native modalでもブラウザ実装によって末尾Tabでfocusがbodyに落ちることがある。大量SSGで共通componentのstyleを増やすとroute数分複製されるため、全ページ共通の操作styleはbundle共通CSSへ置く。
+
+### LL-475: 最新N件のRSSと再収集時刻は取りこぼしのない新着履歴ではない
+- **事象**: 主要更新RSSは`publishedAt`順の現在のHigh記事を最大100件表示していた。外部利用者が長期間取得しないと101件目以降を再生できず、既存記事が後から要約完了した場合も元記事の古い公開日だけでは「サイトで新たに読めるようになった時刻」を示せなかった。
+- **根本原因**: `normalize()`は収集runごとに`collectedAt`を更新し、`publishedAt`は元記事の公開日、`generatedAt`はsnapshotの生成時刻である。いずれも「初めてHigh・要約済み・reader-facingに到達した」というimmutableなevent時刻ではなく、最新100件RSSはそもそも履歴の保持機構ではなかった。
+- **対策**: Node Publisherがcaptured main SHAの直前indexを基準点にして、final snapshotで初めて適格となった記事を月別`data/updates`へ同一data-only commitでappendする。再収集・タイトル修正はcanonical source/topicで重複排除し、単調増加cursor、`observedAt`、元記事`sourcePublishedAt`を分離する。RSSは履歴の最新100件投影、無期限再生の正本は月別JSONとmanifestにする。
+- **教訓**: 汎用新着追跡は外部サービスの投稿先でなく、イベント同一性、初出時刻、初回基準点、無期限の順序再生を先に定義する。静的siteではquery付きRSS/JSON URLだけで動的なsinceフィルタを実現できないため、月別range indexと保存済みcursorを公開契約にする。
+
+### LL-476: Webの型だけを共有するときもdata loaderへのimportはWorker型チェックを巻き込む
+- **事象**: Node Publisherから主要更新台帳をimportすると、Workerの`tsc --noEmit`が`relative-time.ts`の`HTMLElement`などDOM型を解決できず停止した。rootとWebの型チェックは成功していた。
+- **根本原因**: 台帳とrankingが`data.ts`から`NormalizedEntry`をtype-only importしても、TypeScriptは参照先のWeb data loaderとその再exportであるbrowser専用moduleもprogramへ含めた。Workerの`lib`は意図どおり`ES2022`だけなのでDOMは存在しない。
+- **対策**: `NormalizedEntry`と`RawIndexEntry`をJSON/DOM非依存の`entry-types.ts`へ分離し、Web loaderは既存の型名を再exportする。台帳、選定、rankingはpure type moduleだけを参照し、WorkerのDOM設定を拡張しない。
+- **教訓**: Node/WorkerとWebが型を共有する場合、`import type`でも参照先moduleの依存を型チェックに取り込む。runtime data loaderで型を定義せず、Web内のpure moduleに置いて同じ型を全consumerへ提供する。
+
+### LL-477: developの古い生成dataは鮮度例外で隠さずmainの単一snapshotを検証する
+- **事象**: High記事トラッカーのfeature→develop PRを準備した時、developの`data/index.json`は約204時間前、remote mainは約1時間前のsnapshotだった。36時間gateを維持した`data-schema.test.ts`は鮮度だけで失敗した。
+- **根本原因**: Publisherはdata-only commitをmainへ直接追加し、developへ毎時複製しない。従来CIは各jobでPR checkoutの古いdataをそのまま読み、unit、Web build、E2Eの検証母集団をproductionの最新dataへ揃える手段が無かった。
+- **対策**: `scripts/ci-current-data.mjs`がPR/pushで変更された生成dataを先に拒否し、remote mainのexact SHAからindex、bodies、全archive、stats、承認manifestを一度だけ取得してhash付きartifactにする。unit、Web build、E2Eは同じSHAとheadを照合して適用し、trackerの新規update seedは触らない。main自体が36時間超のときはfail-closedとし、main pushのCIはそのcommit自身のdataを使う。
+- **教訓**: integration branchへ定期生成dataを複製しない構成で鮮度を検証するなら、例外フラグではなくimmutableなproduction snapshotを全jobで共有する。生成dataを変更するPRをsilent overwriteせず停止し、品質gate、対象commit、ブラウザ成果物の母集団を同じ単位に固定する。
+
+### LL-478: Timelineのfilter済みcardはDOMに残るため共有E2Eで先頭nodeを操作しない
+- **事象**: mainの最新生成dataで`main article.card`の最初の1件がカテゴリfilterにより`display:none`となり、共有button自体はhydration済みでも7件の共有E2Eの複数操作がhidden要素を選んで失敗した。直後の可視cardでは同じbuttonが45pxで操作可能だった。
+- **根本原因**: category filterはcardをDOMから削除しない。`locator("main article.card").first()`を「最初に見えている記事」と誤認し、buttonの実表示や状態を区別せずclick対象にした。
+- **対策**: markupの配線件数は全cardで検証したまま、操作・寸法・詳細遷移の対象は`article.card:visible`へ限定した。実main snapshotで7件の共有E2Eをretryなしで再実行した。
+- **教訓**: filterやtabで非表示のfeed itemはDOMに残る。data駆動E2Eの操作対象はDOM先頭でなく利用者から到達可能な可視itemを選び、SSR配線の件数検査とは別に保持する。
+
+### LL-479: 新規cursor APIは初期値を含むJSON wire型まで明示する
+- **事象**: previewの`/updates/index.json`は初期cursorを`"0"`として返したが、利用者側が数値`0`を期待する余地があった。APIは発番後もcursorを文字列にしており、要件の「単調増加」だけではJSONの型が決まらない。
+- **根本原因**: Publisherの内部sequenceはsafe integer、公開manifest・月別range・eventのcursorは`String(sequence)`なのに、READMEは保持・再生の順序だけを説明し、文字列型と辞書順比較の危険を明示していなかった。
+- **対策**: READMEへ全cursor fieldの10進JSON文字列、初期値`"0"`、`count`だけ数値、文字列保存と`BigInt`等による数値順比較を記載した。空の初回状態、発番後のrangeとevent、built previewのwire型をunit/E2Eで固定する。
+- **教訓**: cursor/IDのAPI契約は「単調」だけでなくwire型、初期値、比較方法まで公開し、`"10" < "2"`のような辞書順誤用を防ぐ。未初期化と発番後の両方のfixtureでJSONとしての型を検証する。

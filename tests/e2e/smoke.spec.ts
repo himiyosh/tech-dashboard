@@ -2635,6 +2635,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".reading-card .rail-title > .i18n-en")).toContainText(
       "Before reading",
     );
+    await page.locator(".ed-meta-details > summary").click();
     await expect(
       page.locator(".ed-meta-strip .k > .i18n-en").filter({ hasText: "Source" }).first(),
     ).toBeVisible();
@@ -3657,6 +3658,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".cat-jump-link")).toHaveAttribute("href", "/arxiv/");
     await expect(page.locator(".cat-jump-link .cat-jump-name")).toHaveText("arXiv");
     await expect(page.locator('.cat-jump-link[href="/c/research"]')).toHaveCount(0);
+    await page.locator(".ed-meta-details > summary").click();
     const importanceStanding = page.locator('[data-importance-standing="arxiv"] .muted-sm');
     await expect(importanceStanding.locator(".i18n-ja")).toContainText(
       /^\(arXiv \d+件中、同等以上 \d+件\)$/,
@@ -10593,7 +10595,10 @@ test.describe("TECH Dashboard smoke", () => {
     await summarizedEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
+    const metadataDetails = page.locator(".ed-meta-details");
     const strip = page.locator(".ed-meta-strip");
+    await expect(strip).toBeHidden();
+    await metadataDetails.locator("summary").click();
     await expect(strip).toBeVisible();
 
     const bylineAuthority = page.locator(".ed-byline [data-source-authority]");
@@ -10626,21 +10631,19 @@ test.describe("TECH Dashboard smoke", () => {
       /^(blog|release|changelog|paper|community)$/,
     );
     await expect(authorityPill).toHaveAttribute(
-      "aria-label",
-      /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
-    );
-    await expect(authorityPill).toHaveAttribute(
       "title",
       /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
     );
     await expect(authorityPill.locator(".pill-authority-label")).toHaveCount(1);
 
-    // Source average shows the last-30 denominator and explicit 1-3 scale.
-    const srcAvg = strip.locator('li .v[aria-label*="last 30 listed entries"]');
+    // Source average shows the actual listed sample and explicit 1-3 scale.
+    const srcAvg = strip.locator("[data-source-sample-count]");
     await expect(srcAvg).toHaveCount(1);
-    await expect(srcAvg).toHaveAttribute("aria-label", /1=Info, 2=Medium, 3=High/);
-    await expect(srcAvg).toContainText("/ 3");
-    await expect(srcAvg).toContainText("1=Info · 2=Medium · 3=High");
+    const sampleCount = Number(await srcAvg.getAttribute("data-source-sample-count"));
+    expect(sampleCount).toBeGreaterThan(0);
+    await expect(srcAvg.locator(".k .i18n-ja")).toContainText(`掲載直近 ${sampleCount} 件・最大 30 件`);
+    await expect(srcAvg.locator(".v")).toContainText("/ 3");
+    await expect(srcAvg.locator(".v")).toContainText("1=Info · 2=Medium · 3=High");
     await expect(strip).toContainText(/件中、同等以上 \d+件/);
     const sourceCta = page.locator(".ed-header-cta");
     await expect(sourceCta).toHaveCount(1);

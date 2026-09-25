@@ -13051,16 +13051,24 @@ test.describe("TECH Dashboard smoke", () => {
         const badgeRect = badge.getBoundingClientRect();
         const originText = node.querySelector<HTMLElement>(".ed-chat-origin .i18n-ja")!;
         const originRect = originText.getBoundingClientRect();
-        const phraseNode = originText.firstChild;
-        const phraseIndex = phraseNode?.textContent?.indexOf("読みどころ") ?? -1;
-        if (!phraseNode || phraseIndex < 0) throw new Error("Poko purpose phrase is missing");
-        const phraseRows = new Set<number>();
-        for (let index = phraseIndex; index < phraseIndex + "読みどころ".length; index++) {
-          const range = document.createRange();
-          range.setStart(phraseNode, index);
-          range.setEnd(phraseNode, index + 1);
-          phraseRows.add(Math.round(range.getBoundingClientRect().top));
-        }
+        const phrases = [...originText.querySelectorAll<HTMLElement>(".ed-chat-term")].map((phrase) => {
+          const value = phrase.textContent ?? "";
+          const word = phrase.firstChild;
+          if (!word || word.nodeType !== Node.TEXT_NODE) throw new Error("Poko disclosure phrase is missing");
+          const rows = new Set<number>();
+          for (let index = 0; index < value.length; index++) {
+            const range = document.createRange();
+            range.setStart(word, index);
+            range.setEnd(word, index + 1);
+            rows.add(Math.round(range.getBoundingClientRect().top));
+          }
+          return {
+            value,
+            rows: rows.size,
+            fragments: phrase.getClientRects().length,
+            width: phrase.getBoundingClientRect().width,
+          };
+        });
         const figures = [...node.querySelectorAll<SVGUseElement>(".ed-chat-duo use, .ed-chat-face-inline use")]
           .filter((use) => use.getClientRects().length > 0)
           .map((use) => ({
@@ -13100,7 +13108,8 @@ test.describe("TECH Dashboard smoke", () => {
             badgeClipped: badge.scrollWidth > badge.clientWidth + 1,
             textTop: originRect.top,
             textOverflow: originText.scrollWidth > originText.clientWidth + 1,
-            phraseRows: phraseRows.size,
+            phrases,
+            textWidth: originRect.width,
           },
           overflow: document.documentElement.scrollWidth > window.innerWidth,
         };
@@ -13111,7 +13120,13 @@ test.describe("TECH Dashboard smoke", () => {
       expect(layout.originLayout.badgeClipped, `${width}px AI badge stays readable`).toBe(false);
       expect(layout.originLayout.badgeGap, `${width}px badge does not crowd the text`).toBeGreaterThanOrEqual(7);
       expect(Math.abs(layout.originLayout.badgeTop - layout.originLayout.textTop)).toBeLessThanOrEqual(1);
-      expect(layout.originLayout.phraseRows, `${width}px 読みどころ does not split inside the word`).toBe(1);
+      expect(layout.originLayout.phrases.map((phrase) => phrase.value))
+        .toEqual(["記事の要約", "収集した情報", "読みどころ", "AI生成"]);
+      for (const phrase of layout.originLayout.phrases) {
+        expect(phrase.rows, `${width}px ${phrase.value} stays on one line`).toBe(1);
+        expect(phrase.fragments, `${width}px ${phrase.value} has one painted fragment`).toBe(1);
+        expect(phrase.width, `${width}px ${phrase.value} fits inside the disclosure text`).toBeLessThan(layout.originLayout.textWidth);
+      }
       if (width < 1280) {
         expect(Math.abs(layout.originLayout.notesLeft - layout.originLayout.headLeft)).toBeLessThanOrEqual(1);
         expect(Math.abs(layout.originLayout.notesWidth - layout.originLayout.headWidth)).toBeLessThanOrEqual(1);

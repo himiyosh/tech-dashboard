@@ -1,8 +1,62 @@
 {
-  "generatedAt": "2026-09-25T09:00:52.402Z",
+  "generatedAt": "2026-09-25T10:00:47.673Z",
   "month": "2026-09",
-  "count": 292,
+  "count": 294,
   "entries": [
+    {
+      "id": "707b0d968fd6d713",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/JKUROKI/items/d3fb88ef2351cbaef11a",
+      "title": "VS Code Remote Tunnels + Herdr + Chrome Remote Desktop + Tailscaleで「どこでも自宅PC開発環境」を構築する",
+      "titleJa": "VS Code Remote Tunnels + Herdr + Chrome Remote Desktop + Tailscaleで「どこでも自宅PC開発環境」を構築する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-25T08:35:25.000Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "VS Code Remote Tunnels + Herdr + Chrome Remote Desktop + Tailscaleで「どこでも自宅PC開発環境」を構築する DockerやNode.jsなどをノートPC側に構築しなくていい VS Codeから別のPCへ、SSHポートを直接公開することなく接続できるRemote Development機能です。 Remote TunnelsではRemote側にVS Code Serverが動作し、Remote PC上にあるコードや開発環境をVS Codeから操作できます。 Herdrは、ターミナル・Pane・AIコーディングエージェントなどを管理できるツールです。 Remote接続が切れても、Herdr Serverが動作している限り、その中で実行しているプロセスを維持できます。 Google公式ではWindows・macOS・Linuxでリモートアクセスを設定できます。 Tailscaleは複数の端末をプライベートネットワークのように接続できるサービスです。 Tailscale経由で自宅PC上のWebページを確認するため、 ノートPC側にもTailscaleをインストールします。 続いてRemote - Tunnelsをインストールします。 GitHubまたはMicrosoftアカウントで認証します。 これで自宅PCがRemote Tunnelとして利用できるようになります。 ノートPCにもVS CodeとRemote - Tunnelsをインストールします。 自宅PCを常時利用できる開発マシンにしたい場合、CLIからTunnelを起動できます。 curl -fsSL https://herdr.dev/install.sh | sh powershell -ExecutionPolicy Bypass -c \"irm https://herdr.dev/install.ps1 | iex\" Windows・macOS・Linux向けのバイナリが提供されています。",
+      "feedSnippet": "はじめに 自宅に高性能なデスクトップPCがあるなら、外出用のノートPCにも同じ開発環境を一から構築するのではなく、 自宅PCそのものをリモート開発マシンとして利用する という方法があります。 今回紹介するのは、 VS Code Remote - Tunnels Herd...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNTY5MDk5JTJGMjliMTViNjk0ODgzMjM4NzU3YzRiYTBlZTc4MTg5YjYwOGZmYjU5NyUyRnhfbGFyZ2UucG5nJTNGMTcyNTQ0ODYzND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NzY4NTA1N2FiNzVkMmU0YTQ4YWU1MjJiYzNmY2E2NzY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dac51527fb39e12cceeb30fa3a3522f45?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwUmVtb3RlJTIwVHVubmVscyUyMCUyQiUyMEhlcmRyJTIwJTJCJTIwQ2hyb21lJTIwUmVtb3RlJTIwRGVza3RvcCUyMCUyQiUyMFRhaWxzY2FsZSVFMyU4MSVBNyVFMyU4MCU4QyVFMyU4MSVBOSVFMyU4MSU5MyVFMyU4MSVBNyVFMyU4MiU4MiVFOCU4NyVBQSVFNSVBRSU4NVBDJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NjdkY2ZjMDA2ODU0NTg1ODc5YTYxOTYxMDA3MWQwY2U&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBKS1VST0tJJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NTA2MzM2ZTY4ZjgzZTc3NGI5ZGMwYzhjZDM5NjNlYzM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b3dd123c92d5ecf53cc934c5213cbcb1",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkYzNTY5MDk5JTJGMjliMTViNjk0ODgzMjM4NzU3YzRiYTBlZTc4MTg5YjYwOGZmYjU5NyUyRnhfbGFyZ2UucG5nJTNGMTcyNTQ0ODYzND9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9NzY4NTA1N2FiNzVkMmU0YTQ4YWU1MjJiYzNmY2E2NzY%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dac51527fb39e12cceeb30fa3a3522f45?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwUmVtb3RlJTIwVHVubmVscyUyMCUyQiUyMEhlcmRyJTIwJTJCJTIwQ2hyb21lJTIwUmVtb3RlJTIwRGVza3RvcCUyMCUyQiUyMFRhaWxzY2FsZSVFMyU4MSVBNyVFMyU4MCU4QyVFMyU4MSVBOSVFMyU4MSU5MyVFMyU4MSVBNyVFMyU4MiU4MiVFOCU4NyVBQSVFNSVBRSU4NVBDJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NjdkY2ZjMDA2ODU0NTg1ODc5YTYxOTYxMDA3MWQwY2U&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBKS1VST0tJJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NTA2MzM2ZTY4ZjgzZTc3NGI5ZGMwYzhjZDM5NjNlYzM&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b3dd123c92d5ecf53cc934c5213cbcb1",
+        "alt": "VS Code Remote Tunnels + Herdr + Chrome Remote Desktop + Tailscaleで「どこでも自宅PC開発環境」を構築する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
+    {
+      "id": "fbdb0791a4803c53",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/locolisu/items/9664a4c6f1d341900b3b",
+      "title": "ESP32でCodexの状態をLEDへ表示する――作業位置を名前で推測しなかった理由",
+      "titleJa": "ESP32でCodexの状態をLEDへ表示する――作業位置を名前で推測しなかった理由",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-25T04:15:11.000Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "複数のVS CodeでCodexを動かしていると、ある処理が「実行中」なのか「人間の確認待ち」なのかを、離れた場所からでも知りたくなります。ESP32でLEDを光らせること自体より難しかったのは、 どのCodexの状態を、どのLEDに表示してよいか の判定でした。 ロコリス研究所では、Codexの状態を集めるTask Monitorと、Wi-Fiでその状態を読むESP32の表示機を接続しました。七つの作業位置A～GをLED 1～7に対応させ、8個目はTask Monitorとの接続・監視状態に使っています。この記事では、状態の割当をサーバー側で確定し、曖昧な場合は表示しないようにした実装と、ブレッドボード上の実機で確認した結果をまとめます。 A～Gは、Task Monitorで既に使っている、WorkとVS Codeを対応付けるための位置ラベルです。ラベルの設定方法と保存方法は Task Monitorの技術構成 で説明しました。ここでは、その位置へCodexの状態をどう結び付け、LEDに渡したかを扱います。 Task Monitorは、Codexのローカル記録から実行状態と人間の承認状態を読み取ります。VS Codeの拡張機能は、人間が位置を設定した各ウィンドウのworkspaceをTask Monitorへ定期的に知らせます。 表示機に必要なのは「承認待ちのCodexがある」という情報だけではありません。そのCodexが、作業位置Bとして設定したVS Codeと 同じRepositoryの仕事か まで分からなければ、BのLEDを黄色にはできません。 当初はSessionカードにもA～Gを手動で設定する方式を試しました。しかし、VS CodeとSessionの両方に位置を持たせると、同じ関係を二度設定することになります。位置の設定はVS Codeだけに残し、Sessionとの関連付けをTask Monitor側で行う形に変えました。 workspaceの末尾のフォルダー名やカードに表示した名前が同じでも、同一Repositoryとは限りません。",
+      "feedSnippet": "複数のVS CodeでCodexを動かしていると、ある処理が「実行中」なのか「人間の確認待ち」なのかを、離れた場所からでも知りたくなります。ESP32でLEDを光らせること自体より難しかったのは、どのCodexの状態を、どのLEDに表示してよいかの判定でした。 ロコリス研究...",
+      "excerptOrigin": "article"
+    },
     {
       "id": "6a1250de370f85f0",
       "source": "arxiv-cs-se",
@@ -378,8 +432,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered"
+      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered",
+      "evergreen": true
     },
     {
       "id": "2720d05187170c6b",
@@ -425,7 +479,7 @@
       "titleEn": "A Complete Beginner's Guide to Setting Up VS Code and Python from Scratch at a JTC",
       "lang": "ja",
       "publishedAt": "2026-09-24T10:42:44.000Z",
-      "collectedAt": "2026-09-25T04:00:32.518Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
       "tags": [
         "beginner",
         "environment-setup",
@@ -592,7 +646,7 @@
       "titleEn": "I Built Laravel Routes Explorer, a VSCode Extension for One-Click Navigation from Routes to Controllers",
       "lang": "ja",
       "publishedAt": "2026-09-24T03:04:50.000Z",
-      "collectedAt": "2026-09-25T04:00:32.518Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
       "tags": [
         "developer-tools",
         "laravel",
@@ -5120,7 +5174,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-25T04:00:32.518Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -8995,7 +9049,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-25T04:00:32.518Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -9789,7 +9843,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-25T04:00:32.518Z",
+      "collectedAt": "2026-09-25T10:00:31.299Z",
       "tags": [
         "agent",
         "deepmind",

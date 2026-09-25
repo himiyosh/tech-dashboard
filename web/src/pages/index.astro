@@ -11,6 +11,7 @@ import Pager from "../components/Pager.astro";
 import SourceDisclosure from "../components/SourceDisclosure.astro";
 import LanguageFallbackBadge from "../components/LanguageFallbackBadge.astro";
 import ExternalLinkHint from "../components/ExternalLinkHint.astro";
+import ArticleShare from "../components/ArticleShare.astro";
 import ArxivIcon from "../components/icons/ArxivIcon.astro";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
 import { sourceFaviconUrl } from "../lib/favicon.ts";
@@ -51,6 +52,7 @@ import { serializeJsonLd } from "../lib/json-ld.ts";
 import { SITE_ORGANIZATION } from "../lib/structured-data.ts";
 import { deriveWorkerRunStatus, runCadenceLead } from "../lib/run-health.ts";
 import { SITE_URL } from "../lib/site.ts";
+import { MAJOR_RSS_FEED } from "../lib/feed-catalog.ts";
 import {
   HOME_DESCRIPTION_EN,
   HOME_DESCRIPTION_JA,
@@ -147,6 +149,7 @@ const homeJsonLd = {
 
 <Portal pageKey="timeline" metadata={HOME_PAGE_METADATA}>
   <Fragment slot="head">
+    <link rel="alternate" type="application/rss+xml" title={MAJOR_RSS_FEED.title} href={MAJOR_RSS_FEED.href} />
     <script type="application/ld+json" set:html={serializeJsonLd(homeJsonLd)} />
   </Fragment>
   <section class="banner">
@@ -387,6 +390,12 @@ const homeJsonLd = {
             <div class="featured-thumb-fallback" aria-hidden="true">
               <CategoryThumb category={feat.category} seed={feat.id} height="100%" />
             </div>
+            <ArticleShare
+              entry={feat}
+              href={featuredDestination?.href}
+              external={featuredDestination?.external}
+              variant="featured"
+            />
           </div>
           <div class="featured-body">
             <div class="featured-label">

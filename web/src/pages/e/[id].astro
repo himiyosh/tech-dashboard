@@ -67,6 +67,7 @@ import {
   type ArticleMetadataTitles,
 } from "../../lib/article-metadata.ts";
 import SourceExcerpt from "../../components/SourceExcerpt.astro";
+import ArticleShare from "../../components/ArticleShare.astro";
 
 export function getStaticPaths() {
   const addressableEntries = collectAddressableDetailEntries(
@@ -589,19 +590,7 @@ const jsonLd = buildArticleJsonLd({
               <ExternalLinkHint lang="ja" />
               <ExternalLinkHint lang="en" />
             </a>
-            <button
-              class="ed-share-btn"
-              type="button"
-              data-share-copy
-              data-title={titleDisplay}
-              data-title-ja={titleJaResult.text}
-              data-title-en={titleEnResult.text}
-              data-url={canonicalUrl}
-            >
-              <span aria-hidden="true">⧉</span>
-              <span class="i18n-ja">タイトルと URL をコピー</span>
-              <span class="i18n-en" lang="en">Copy title + URL</span>
-            </button>
+            <ArticleShare entry={entry} href={canonicalUrl} external={false} variant="detail" />
           </div>
           <section
             class="ed-reaction-panel"
@@ -1281,8 +1270,6 @@ const jsonLd = buildArticleJsonLd({
     </span>
   </button>
 
-  {/* Share toast */}
-  <div class="ed-toast" id="ed-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 </Portal>
 
 <script is:inline>
@@ -1307,43 +1294,6 @@ const jsonLd = buildArticleJsonLd({
     var fab = document.getElementById("ed-fab");
     if (fab) fab.addEventListener("click", function () {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    // Pending summaries use the upstream URL; summarized entries use the canonical detail URL.
-    var shareButtons = document.querySelectorAll(".ed-share-btn[data-share-copy]");
-    var toast = document.getElementById("ed-toast");
-    function showToast(message) {
-      if (!toast) return;
-      toast.textContent = message || "Copied";
-      toast.classList.add("show");
-      setTimeout(function () { toast.classList.remove("show"); }, 1800);
-    }
-    shareButtons.forEach(function (button) {
-      button.addEventListener("click", async function () {
-        var isEnglish = document.documentElement.dataset.lang === "en";
-        var localizedTitle = isEnglish ? button.dataset.titleEn : button.dataset.titleJa;
-        var t = localizedTitle || button.dataset.title || document.title;
-        var u = button.dataset.url || location.href;
-        // Truthful shareable URL: append lang=en when the reader is viewing
-        // English, so a fresh browser reproduces English for whoever
-        // receives the copied link (mirrors web/src/lib/lang-url.ts
-        // shareUrlWithLang; duplicated here since this script is is:inline
-        // and cannot import a module).
-        if (isEnglish) {
-          try {
-            var withLang = new URL(u);
-            withLang.searchParams.set("lang", "en");
-            u = withLang.toString();
-          } catch (_) {}
-        }
-        var text = t + "\n" + u;
-        try {
-          await navigator.clipboard.writeText(text);
-          showToast(isEnglish ? "Title and URL copied" : "タイトルと URL をコピーしました");
-        } catch (_) {
-          prompt(isEnglish ? "Copy title and URL" : "タイトルと URL をコピー", text);
-        }
-      });
     });
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
@@ -1566,14 +1516,6 @@ const jsonLd = buildArticleJsonLd({
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .ed-action-strip .ed-share-btn {
-    min-height: 44px;
-    box-sizing: border-box;
-    margin-left: 0;
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
-
   .ed-pending-summary {
     margin: 24px 32px 0;
     padding: 16px 18px;
@@ -1610,25 +1552,6 @@ const jsonLd = buildArticleJsonLd({
     font-weight: 800; font-size: 10.5px; letter-spacing: 0.08em;
   }
   .ed-tldr-title { font-size: 13px; color: var(--text); font-weight: 700; }
-  .ed-share-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    color: var(--text-2);
-    font-size: 11.5px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.12s;
-  }
-  .ed-share-btn:hover {
-    border-color: color-mix(in srgb, var(--cat-color) 50%, var(--border));
-    color: var(--cat-color);
-  }
   .ed-tldr-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .ed-tldr-list li {
     position: relative; padding-left: 22px;
@@ -2111,20 +2034,6 @@ const jsonLd = buildArticleJsonLd({
   }
   .ed-fab.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
 
-  /* Toast */
-  .ed-toast {
-    position: fixed; left: 50%; bottom: 32px;
-    transform: translateX(-50%) translateY(16px);
-    padding: 10px 18px; border-radius: 8px;
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); font-size: 13px;
-    box-shadow: 0 8px 24px -6px rgba(0,0,0,0.5);
-    opacity: 0; pointer-events: none;
-    transition: all 0.25s ease;
-    z-index: 60;
-  }
-  .ed-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
   /* RESPONSIVE */
   @media (max-width: 1100px) {
     .ed-rel-grid { grid-template-columns: 1fr 1fr; }
@@ -2162,9 +2071,7 @@ const jsonLd = buildArticleJsonLd({
       bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
-    /* Keep both actions inset and rounded like the rest of the mobile
-     * column — the previous full-bleed primary CTA read as a broken band
-     * against the inset copy button and card corners. */
+    /* Both actions stay inset and rounded like the rest of the reading column. */
     .ed-action-strip {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -2176,11 +2083,6 @@ const jsonLd = buildArticleJsonLd({
       padding-inline: 16px;
       border-radius: 8px;
     }
-    .ed-action-strip .ed-share-btn {
-      width: 100%;
-      min-height: 48px;
-      margin-inline: 0;
-    }
     .ed-header-cta-copy small {
       max-width: min(56ch, calc(100vw - 100px));
     }
@@ -2188,11 +2090,6 @@ const jsonLd = buildArticleJsonLd({
       flex-direction: column;
       align-items: flex-start;
       gap: 10px;
-    }
-    .ed-toast {
-      bottom: calc(82px + env(safe-area-inset-bottom));
-      width: min(320px, calc(100vw - 24px));
-      text-align: center;
     }
   }
 </style>

@@ -1,4 +1,4 @@
-import type { NormalizedEntry } from "./data.ts";
+import type { NormalizedEntry } from "./entry-types.ts";
 import { isRoutineReleaseEntry } from "./release-signal.ts";
 import { sourceAuthority } from "./source-meta.ts";
 

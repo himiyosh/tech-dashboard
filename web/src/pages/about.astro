@@ -15,7 +15,7 @@ import { REACTION_CONTRACT_EN, REACTION_CONTRACT_JA } from "../lib/reaction-copy
 import { WORKER_HEALTH } from "../lib/data.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 import { NEW_ISSUE_URL, PRIVACY_JURISDICTION, PUBLIC_OPERATOR_NAME } from "../lib/site.ts";
-import { OPML_HREF, OPML_MEDIA_TYPE } from "../lib/feed-catalog.ts";
+import { MAJOR_RSS_HREF, OPML_HREF, OPML_MEDIA_TYPE } from "../lib/feed-catalog.ts";
 
 const now = new Date();
 const lastUpdated = relativeTime(DASHBOARD_METRICS.generatedAt, now);
@@ -285,6 +285,22 @@ const pipelineSteps = [
             Check pending or translated labels, and confirm the original source before sharing.
           </span>
         </p>
+        <p>
+          <span class="i18n-ja">
+            主要更新RSSは一覧で読める、要約済みの実効重要度 High (3/3) の新着だけを配信します。全履歴は月別JSONから再生できます。外部サービスへの自動投稿はまだ行っていません。
+          </span>
+          <span class="i18n-en" lang="en">
+            Major updates RSS includes only listed, summary-ready High (3/3) events. Monthly JSON retains the full cursor history. Automatic posting to external services is not enabled.
+          </span>
+        </p>
+        <a class="major-feed-action" href={MAJOR_RSS_HREF} type="application/rss+xml">
+          <span class="i18n-ja">主要更新RSSを購読</span>
+          <span class="i18n-en" lang="en">Subscribe to major updates RSS</span>
+        </a>
+        <a class="major-feed-action" href="/updates/index.json" type="application/json">
+          <span class="i18n-ja">新着履歴JSONを見る</span>
+          <span class="i18n-en" lang="en">Open the update history JSON</span>
+        </a>
         <p>
           <span class="i18n-ja">広告スクリプトは本番のカスタムドメインでのみ読み込みます。ローカルプレビューと pages.dev では読み込みません。広告の扱いと利用者が使える選択肢は <a href="/privacy">Privacy</a> に記載しています。</span>
           <span class="i18n-en" lang="en">The ad script loads only on the production custom domain; it stays disabled on local previews and pages.dev. How advertising works and the choices available to you are documented on <a href="/privacy">Privacy</a>.</span>
@@ -619,6 +635,27 @@ const pipelineSteps = [
     color: var(--text);
     font-size: 14.5px;
     line-height: 1.4;
+  }
+  .major-feed-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 45px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    padding: 8px 13px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .major-feed-action:hover { background: var(--accent-bg-2); }
+  .major-feed-action:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
   .about-panel p,

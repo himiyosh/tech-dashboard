@@ -272,6 +272,12 @@ function headMetadata(document) {
 function normalizedDocumentDigest(html) {
   const document = parse(html);
   walk(document, (node) => {
+    if (Array.isArray(node?.attrs)) {
+      node.attrs = node.attrs.filter(
+        (item) => item.name !== "data-astro-source-file"
+          && item.name !== "data-astro-source-loc",
+      );
+    }
     if (attribute(node, "data-relative-time") === null) return;
     const value =
       attribute(node, "datetime")
@@ -282,6 +288,15 @@ function normalizedDocumentDigest(html) {
       value: `RELATIVE:${value}`,
       parentNode: node,
     }];
+  });
+  walk(document, (node) => {
+    if (node?.nodeName !== "#text" || typeof node.value !== "string") return;
+    // Astro's static writer inserts inter-asset whitespace that container
+    // renders omit; neither variant changes the reader-facing DOM.
+    if (!/^\s*$/.test(node.value)) return;
+    const parent = node.parentNode;
+    if (!parent || (parent.nodeName !== "head" && parent.nodeName !== "body")) return;
+    node.value = "";
   });
   return sha256(serialize(document));
 }

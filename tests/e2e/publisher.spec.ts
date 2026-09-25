@@ -24,6 +24,7 @@ import {
 } from "../../web/src/lib/entry-publication.ts";
 import { buildFeedDecisionDigest } from "../../web/src/lib/feed-decision-digest.ts";
 import {
+  MAJOR_RSS_HREF,
   OPML_HREF,
   OPML_MEDIA_TYPE,
   OPML_TITLE,
@@ -136,7 +137,9 @@ function decodeHeadValue(value: string): string {
 interface ParsedRssItem {
   category?: string | string[];
   description?: string;
+  guid?: string;
   link?: string;
+  pubDate?: string;
 }
 
 interface FeedArtifactEntry extends PublicationEntry {
@@ -859,10 +862,10 @@ test.describe("Publisher generated artifact", () => {
     await expect(sourceCta.locator('[data-external-link-hint]:visible')).toHaveCount(1);
     await expect(sourceCta.locator(':scope > [aria-hidden="true"]')).toHaveCount(0);
 
-    const copyAction = page.locator(".ed-share-btn[data-share-copy]");
-    await expect(copyAction).not.toHaveAttribute("target");
-    await expect(copyAction).not.toHaveAttribute("rel");
-    await expect(copyAction).not.toHaveAccessibleName(
+    const shareAction = page.locator('[data-article-share][data-share-variant="detail"]');
+    await expect(shareAction).not.toHaveAttribute("target");
+    await expect(shareAction).not.toHaveAttribute("rel");
+    await expect(shareAction).not.toHaveAccessibleName(
       /新しいタブで開きます|opens in a new tab/,
     );
 
@@ -872,7 +875,7 @@ test.describe("Publisher generated artifact", () => {
     );
     await expect(sourceCta.locator('[data-hint-lang="en"]')).toBeVisible();
     await expect(sourceCta.locator('[data-hint-lang="ja"]')).toBeHidden();
-    await expect(copyAction).not.toHaveAccessibleName(
+    await expect(shareAction).not.toHaveAccessibleName(
       /新しいタブで開きます|opens in a new tab/,
     );
   });
@@ -1475,6 +1478,94 @@ test.describe("Publisher generated artifact", () => {
 
     const unknownResponse = await request.get("/rss/not-a-category.xml");
     expect(unknownResponse.status()).toBe(404);
+  });
+
+  test("monthly cursor history and major RSS expose the same new High events", async ({ request }) => {
+    interface PublicUpdate {
+      id: string;
+      cursor: string;
+      observedAt: string;
+      entryId: string;
+      sourceUrl: string;
+      siteUrl: string;
+      importance: number;
+    }
+    const [response, indexResponse, homeResponse, aboutResponse] = await Promise.all([
+      request.get(MAJOR_RSS_HREF),
+      request.get("/updates/index.json"),
+      request.get("/"),
+      request.get("/about/"),
+    ]);
+    const xml = await response.text();
+    const items = rssItemDocuments(xml);
+    expect(indexResponse.status()).toBe(200);
+    expect(indexResponse.headers()["content-type"]).toMatch(/^application\/json\b/);
+    const index = await indexResponse.json() as {
+      schemaVersion: number;
+      baselineSnapshotAt: string | null;
+      latestCursor: string;
+      months: Array<{
+        month: string;
+        href: string;
+        firstCursor: string;
+        lastCursor: string;
+        count: number;
+      }>;
+    };
+    expect(index.schemaVersion).toBe(1);
+    expect(index.latestCursor).toMatch(/^(?:0|[1-9]\d*)$/);
+    const allEvents: PublicUpdate[] = [];
+    for (const range of index.months) {
+      expect(range.href).toBe(`/updates/${range.month}.json`);
+      const monthResponse = await request.get(range.href);
+      expect(monthResponse.status(), range.href).toBe(200);
+      expect(monthResponse.headers()["content-type"], range.href).toMatch(/^application\/json\b/);
+      const month = await monthResponse.json() as {
+        schemaVersion: number;
+        month: string;
+        firstCursor: string;
+        lastCursor: string;
+        count: number;
+        events: PublicUpdate[];
+      };
+      expect(month.schemaVersion).toBe(1);
+      expect(month.month).toBe(range.month);
+      expect(month.events.length).toBe(range.count);
+      expect(month.firstCursor).toBe(range.firstCursor);
+      expect(month.lastCursor).toBe(range.lastCursor);
+      allEvents.push(...month.events);
+    }
+    expect(allEvents.length).toBe(Number(index.latestCursor));
+    allEvents.forEach((event, position) => {
+      expect(event.cursor, `event at sequence ${position + 1}`).toBe(String(position + 1));
+    });
+    for (const event of allEvents) {
+      expect(event.id).toBe(`urn:techdb:major:${event.cursor}`);
+      expect(event.importance).toBe(3);
+      expect(event.observedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(event.siteUrl).toBe(`${SITE_URL}/e/${event.entryId}/`);
+      expect(new URL(event.sourceUrl).protocol).toMatch(/^https?:$/);
+    }
+    if (index.baselineSnapshotAt === null) {
+      expect(index.months).toEqual([]);
+      expect(index.latestCursor).toBe("0");
+    }
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toMatch(/^text\/xml(?:;|$)/);
+    expect(items.length).toBe(Math.min(allEvents.length, 100));
+    expect(xml).toContain("<title>TECH Dashboard | Major updates</title>");
+    for (const [position, item] of items.entries()) {
+      const event = allEvents.at(-1 - position);
+      if (!event) throw new Error("major RSS returned an event outside the cursor history");
+      expect(item.guid).toBe(event.id);
+      expect(item.link).toBe(event.siteUrl);
+      expect(item.pubDate).toBe(new Date(event.observedAt).toUTCString());
+    }
+    const home = await homeResponse.text();
+    const about = await aboutResponse.text();
+    expect(home).toContain(`href="${MAJOR_RSS_HREF}"`);
+    expect(about).toContain(`href="${MAJOR_RSS_HREF}"`);
+    expect((await request.get("/updates/not-a-month.json")).status()).toBe(404);
   });
 
   test("Research RSS matches the publishable HTML lane and excludes arXiv", async ({

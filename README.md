@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **13 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、全体 RSS (`/rss.xml`)・カテゴリ別 RSS (`/rss/<category>.xml`)・JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
+**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、全体 RSS (`/rss.xml`)・主要更新 RSS (`/rss/major.xml`)・月別カーソルJSON (`/updates/index.json`)・カテゴリ別 RSS (`/rss/<category>.xml`)・JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -77,6 +77,14 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 
 > **デプロイは GitHub Actions から行いません。** Publisher workflow は data の収集、検証、commit と OIDC bridge 経由の Queue / KV effects だけを担当し、Pages deploy は Cloudflare Pages Git Integration が行います ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
 > `.github/workflows/ci.yml` は **テスト目的のみ** で、Publisher workflow も Pages / Worker の deploy は行いません。
+
+### 主要更新の新着履歴、RSS、記事シェア
+
+- **履歴の正本はJSON**: `/updates/index.json`に`baselineSnapshotAt`、`latestCursor`、各月の`firstCursor`/`lastCursor`/`href`を公開します。利用側は最終処理済みcursorを保持し、それより新しい月の`/updates/YYYY-MM.json`を取得して、各eventの`cursor`が大きいものからsequence順に処理します。月別履歴は期限で削除しません。静的配信なので`?since=`などのqueryは月別取得の代用になりません。前回cursorが0なら全月を順に再生できます。
+- Publisherの最初の実行では、**実行前のmain snapshot**に既にある適格記事を基準点へ登録し、その実行の新着からsequence 1で記録します。2回目以降、実効重要度 High (3/3)、実要約あり、詳細へ到達可能、hot/warm、元記事の公開日がsnapshot時刻以前、という条件を満たす記事だけをappendします。同一元記事・同一モデル発表、通常のpatch/prerelease、要約待ち、off-topic記事は出しません。`observedAt`は初めて適格になったPublisher snapshot時刻、`sourcePublishedAt`は元記事の公開日です。検索向け`publicationHold/noindex`は記事の閲覧可否ではないため、新着配信の禁止条件にはしません。
+- `/rss/major.xml`は**上記履歴の最新100件だけ**をRSSへ投影します。GUIDはstableなevent ID、`pubDate`は`observedAt`、`link`は当サイトの詳細です。RSSだけでは長期間未取得時に取りこぼすため、完全な再生にはJSONの月別cursorを使います。既存の全体RSS`/rss.xml`は変更せず、OPML`/feeds.opml`に両方を掲載します。
+- 記事詳細と主要カードのシェアは端末の共有シートを使い、非対応時はタイトルとURLをコピーします。クリップボードも使えない場合は手動コピー用ダイアログを開きます。元記事へ直接遷移するカードは元記事を共有し、当サイトの詳細は表示言語 (`?lang=en`) をURLへ保持します。
+- **外部サービスへの自動投稿は未接続です。** RSSをそのまま転送せず、汎用eventのconsumer側で最終cursor、送信済みID、レート制限、失敗時の再試行・停止を管理します。通常記事の詳細URLは保持期間後に消える可能性があるため、外部への自動送信を有効化する前に恒久リンクを整備してください。
 >
 > 第2段階の増分配信は、専用R2へcontent-addressedなdetail HTMLを生成し、専用D1 pointerでshadow generationを切り替える**無効既定の検証経路**だけを追加しています。productionは引き続きPagesです。Workers Static Assetsの差分uploadをsource-level増分生成とは扱わず、全route family、search、traffic、CPU、rollbackのcutover gateが揃うまでPages buildを止めません。
 
@@ -174,6 +182,8 @@ protected branch への直接 commit / push は通常禁止です。当該セッ
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
+
+develop は毎時の生成dataを受け取らないため、develop pushとPRのCIは `scripts/ci-current-data.mjs` でremote mainの**同一immutable SHA**から `index`、`bodies`、全archive月とindex、`stats`、公開承認manifestをpinします。unit・Web build・E2Eは同じartifactを検証し、PR自身の`data/updates/_index.json`は保持します。mainのindexが36時間を超えて古い場合やPRが生成dataを意図的に変更した場合は上書きせず失敗します。main pushのCIはそのcommit自身のdataを検証します。`ALLOW_STALE_DATA=1`はCIで使いません。
 
 通常の GitHub review と任意の code review / security review は、変更リスクに応じて引き続き利用できます。ただし session 固有の承認コメントや repository variable を使う専用 clearance は CI / merge の必須条件にしません。
 

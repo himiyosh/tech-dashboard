@@ -38,18 +38,18 @@ const metadata = [
 ].join("");
 
 function productionHtml() {
-  return `<!doctype html><html lang="ja"><head>${metadata}<link rel="canonical" href="https://example.com/e/entry/"><link rel="stylesheet" href="/_astro/page.css"><style>.inline{color:red}</style></head><body><main><h1>Article</h1><p>Summary</p></main><script type="module" src="/_astro/sidebar.js"></script><script type="module" src="/_astro/article.js"></script><script type="module" src="/_astro/portal.js"></script></body></html>`;
+  return `<!doctype html><html lang="ja"><head>${metadata}<link rel="canonical" href="https://example.com/e/entry/"><link rel="stylesheet" href="/_astro/page.css"><style>.inline{color:red}</style></head><body><main><h1>Article</h1><p>Summary</p></main><script type="module">const bootstrap = 1;</script><script type="module" src="/_astro/share.js"></script><script type="module" src="/_astro/article.js"></script><script type="module" src="/_astro/portal.js"></script></body></html>`;
 }
 
 function incrementalHtml() {
-  return `<!doctype html><html lang="ja"><head>${metadata}<link rel="canonical" href="https://example.com/e/entry/"></head><body><main><h1>Article</h1><p>Summary</p></main><script type="module" src="/repo/src/sidebar.astro?astro&type=script"></script><script type="module" src="/repo/src/article.astro?astro&type=script"></script><script type="module" src="/repo/src/portal.astro?astro&type=script"></script></body></html>`;
+  return `<!doctype html><html lang="ja"><head>${metadata}<link rel="canonical" href="https://example.com/e/entry/"></head><body><main><h1>Article</h1><p>Summary</p></main><script type="module">const bootstrap = 0;</script><script type="module" src="/repo/src/share.astro?astro&type=script"></script><script type="module" src="/repo/src/article.astro?astro&type=script"></script><script type="module" src="/repo/src/portal.astro?astro&type=script"></script></body></html>`;
 }
 
 function shellFixture() {
   const root = mkdtempSync(join(tmpdir(), "incremental-shell-"));
   mkdirSync(join(root, "_astro"), { recursive: true });
   writeFileSync(join(root, "_astro/page.css"), ".page{}\n", "utf8");
-  writeFileSync(join(root, "_astro/sidebar.js"), "export const sidebar = 1;\n", "utf8");
+  writeFileSync(join(root, "_astro/share.js"), "export const share = 1;\n", "utf8");
   writeFileSync(join(root, "_astro/article.js"), "export const article = 1;\n", "utf8");
   writeFileSync(join(root, "_astro/portal.js"), "export const portal = 1;\n", "utf8");
   return {
@@ -95,6 +95,21 @@ describe("incremental detail renderer", () => {
     const { shell } = shellFixture();
     const rendered = applyDetailAssetShell(incrementalHtml(), shell);
     expect(() => assertDetailHtmlParity(productionHtml(), rendered)).not.toThrow();
+    expect(() => assertDetailHtmlParity(
+      productionHtml(),
+      productionHtml().replace("<h1>Article</h1>", '<h1 data-astro-source-file="/repo/article.astro" data-astro-source-loc="1:1">Article</h1>'),
+    )).not.toThrow();
+    expect(() => assertDetailHtmlParity(
+      productionHtml(),
+      productionHtml().replace(
+        "<style>.inline{color:red}</style>",
+        "\n<style>.inline{color:red}</style>\n",
+      ),
+    )).not.toThrow();
+    expect(() => assertDetailHtmlParity(
+      productionHtml(),
+      productionHtml().replace("<h1>Article</h1>", "<h1>Different Article</h1>"),
+    )).toThrow(/semantic snapshot/);
     expect(() =>
       assertDetailHtmlParity(
         productionHtml(),

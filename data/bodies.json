@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-25T19:30:52.143Z",
-  "count": 1142,
+  "generatedAt": "2026-09-25T19:42:23.847Z",
+  "count": 1143,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -42853,6 +42853,44 @@
       ],
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:46:10.596Z"
+    },
+    "11814c13f8eb0837": {
+      "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望むワークフローを起点に、作業方法に合ったインターフェースを構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、独自の手順に沿った画面を用意できる点が重要となる。\n\nキャンバスは「canvas extension」とも呼ばれ、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして説明されている。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面上の内容を更新でき、利用者もボタン、カード、フィルターなどの操作要素を使って変更を加えられる。\n\n一方だけが結果を表示する画面ではなく、利用者とエージェントの双方が同じ画面に働きかける形だ。感覚としては、ライブで共有するホワイトボードを使うようなものとされている。\n\n## 用途別の構成\n\n画面の形は用途に合わせて変えられる。例として、カンバンボード、課題を整理するボード、リリース用チェックリスト、ダッシュボード、フォーム、スプレッドシートが挙げられている。\n\n決まった一種類の画面を使うのではなく、扱う作業に応じて必要なUIを構成できる。独自の作業手順を効率化したいチームにも役立つ仕組みと説明されている。\n\n## 作成方法\n\nキャンバスの作成では、コードを書いたり、デザインを手作業で行ったりする必要はない。エージェントのセッションを開き、「/create-canvas」スキルを入力したうえで、作りたいものを平易な英語で説明する。\n\nこの手順により、利用者は実現したいワークフローを言葉で示し、それに沿ったカスタム画面を作成できる。",
+      "bodyEn": "## Canvases in GitHub Copilot app\n\nCanvases in the GitHub Copilot app let users begin with the workflow they want and create an interface shaped around it. Instead of fitting work into a fixed set of screens, teams can tailor a custom interface to their needs and share it with the agent.\n\nA canvas, also called a canvas extension, is a customizable interface that both the user and the agent can operate. This shared approach allows the interface to reflect a particular way of working rather than requiring the workflow to follow a predetermined screen structure.\n\n## A UI shaped to work\n\nA canvas can take several forms depending on the task. It can be configured as a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow teams to represent different workflows through interfaces suited to their work. A team could use a board for organizing issues, a checklist for release-related work, or a spreadsheet-style canvas where that format fits the task.\n\n## Buttons, cards, and filters\n\nThe canvas is bidirectional, meaning that the agent can update the interface while it works and the user can make changes through the interface as well. Users can interact with buttons, cards, filters, and other controls.\n\nThis creates a shared workspace in which both sides can modify the same custom interface. The article compares the experience to using a live shared whiteboard: the agent’s work can appear in the canvas, while users can directly operate its controls to make their own changes.\n\n## Create a canvas\n\nCreating a canvas does not require coding or manual interface design. To begin, open an agent session and enter the /create-canvas skill.\n\nFrom there, describe the desired interface in plain English. The requested canvas can then be shaped around the intended workflow, whether that means a board, checklist, dashboard, form, spreadsheet, or another supported arrangement of interface controls.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "キャンバスって、人とエージェントが同じ画面を一緒に動かせるの？それって何？",
+          "en": "Can a person and an agent really work on the same canvas together? What exactly does that mean?"
+        },
+        {
+          "s": "b",
+          "ja": "カンバンや表計算などを、作業に合わせて作れる共有画面じゃ。本文では、双方が内容を変更できる仕組みと説明されておる。",
+          "en": "It’s a shared interface tailored to your work, such as a kanban board or spreadsheet. The post says both you and the agent can make changes."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、決まった道具に仕事を合わせず、チーム専用の共有ホワイトボードを作る感じ？",
+          "en": "So instead of forcing work into a fixed tool, a team could shape something like its own shared whiteboard?"
+        },
+        {
+          "s": "b",
+          "ja": "そういうイメージじゃ。紹介されている範囲では、エージェントが更新し、人もボタンやカード、フィルターで操作できるぞ。",
+          "en": "That’s the idea. As described, the agent can update it while people use buttons, cards, filters, and other controls."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、チームの作業手順に合う画面を、コードなしで作って一緒に使えるんだね。へえ、すごい！",
+          "en": "So a team can create an interface around its workflow without coding, then use it together. Wow, that’s neat!"
+        },
+        {
+          "s": "b",
+          "ja": "手順として示されているのは、エージェントのセッションで「/create-canvas」を入力し、欲しいものを平易な英語で伝える方法じゃよ。",
+          "en": "The method shown is to open an agent session, enter “/create-canvas,” and describe what you want in plain English—no hand-coding or manual design required."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-25T19:36:58.392Z"
     }
   }
 }

@@ -3177,3 +3177,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: Publisherの内部sequenceはsafe integer、公開manifest・月別range・eventのcursorは`String(sequence)`なのに、READMEは保持・再生の順序だけを説明し、文字列型と辞書順比較の危険を明示していなかった。
 - **対策**: READMEへ全cursor fieldの10進JSON文字列、初期値`"0"`、`count`だけ数値、文字列保存と`BigInt`等による数値順比較を記載した。空の初回状態、発番後のrangeとevent、built previewのwire型をunit/E2Eで固定する。
 - **教訓**: cursor/IDのAPI契約は「単調」だけでなくwire型、初期値、比較方法まで公開し、`"10" < "2"`のような辞書順誤用を防ぐ。未初期化と発番後の両方のfixtureでJSONとしての型を検証する。
+
+### LL-480: 共有E2Eは可視先頭カードでなく共有先の種類を指定する
+- **事象**: developのCIで手動コピーのEN検証だけが失敗した。先頭の可視Timelineカードは元記事URLを共有する外部記事で、実際のコピー内容は正しく外部URLのままだったが、テストはサイト内部記事向けの`?lang=en`を期待していた。新しいmainデータでは先頭が内部記事に変わり、同じテストが偶然通った。
+- **根本原因**: `article.card:visible`は表示状態だけを保証し、`data-share-target`の`detail`/`source`を保証しない。`buildArticleSharePayload()`は内部detailだけに言語queryを付け、外部sourceのURLは変更しない契約である。
+- **対策**: 失敗したCIのimmutable main snapshotで旧テストを再現し、手動コピーのJA→ENテストは可視の`data-detail-destination="internal"`かつ`data-share-target="detail"`を選ぶ。共有URLがcanonical siteのdetail routeでquery/hashを持たないことを先に検証し、ENでは`?lang=en`が付くことを固定する。外部sourceを変更しない既存unit gateは維持する。
+- **教訓**: データ駆動のE2Eで「先頭の可視記事」を内部routeや共有payloadの代用にしない。操作対象は表示状態とdestination kindの両方で選び、URLの言語付与は内部detailと外部sourceで異なる契約として検証する。

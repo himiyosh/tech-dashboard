@@ -226,9 +226,18 @@ test("clipboard failure offers manual copy without reporting a successful share"
     window.prompt = () => { throw new Error("Browser prompt must not be used"); };
   });
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  const share = page.locator("main article.card:visible [data-article-share]").first();
+  const share = page.locator(
+    'main article.card:visible[data-detail-destination="internal"] [data-article-share][data-share-target="detail"]',
+  ).first();
+  await expect(share).toBeVisible();
   const title = await share.getAttribute("data-share-title-ja");
   const url = await share.getAttribute("data-share-url");
+  if (!url) throw new Error("Internal article share URL is missing");
+  const detailUrl = new URL(url);
+  expect(detailUrl.origin).toBe(SITE_URL);
+  expect(detailUrl.pathname).toMatch(/^\/e\/[^/]+\/$/);
+  expect(detailUrl.search).toBe("");
+  expect(detailUrl.hash).toBe("");
   await share.click();
   const manual = page.locator("#article-share-manual");
   await expect(manual).toBeVisible();

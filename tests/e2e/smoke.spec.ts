@@ -13121,7 +13121,7 @@ test.describe("TECH Dashboard smoke", () => {
       expect(layout.originLayout.badgeGap, `${width}px badge does not crowd the text`).toBeGreaterThanOrEqual(7);
       expect(Math.abs(layout.originLayout.badgeTop - layout.originLayout.textTop)).toBeLessThanOrEqual(1);
       expect(layout.originLayout.phrases.map((phrase) => phrase.value))
-        .toEqual(["記事の要約", "収集した情報", "読みどころ", "AI生成"]);
+        .toEqual(["記事の要約", "収集した情報", "読みどころを", "AI生成"]);
       for (const phrase of layout.originLayout.phrases) {
         expect(phrase.rows, `${width}px ${phrase.value} stays on one line`).toBe(1);
         expect(phrase.fragments, `${width}px ${phrase.value} has one painted fragment`).toBe(1);

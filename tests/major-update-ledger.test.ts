@@ -166,6 +166,30 @@ describe("append-only major-update tracking", () => {
     ).months).toEqual(appended.state.months);
   });
 
+  it("retains all monthly events while the RSS projection takes exactly the latest 100", () => {
+    const batch = Array.from({ length: 105 }, (_, index) =>
+      entry((index + 1).toString(16).padStart(16, "0")));
+    const { state, added } = advanceMajorUpdateLedger(
+      parseMajorUpdateState(emptyIndex(), []),
+      snapshot(start, []),
+      snapshot(first, batch),
+      gate(),
+      gate(),
+    );
+    expect(added).toHaveLength(105);
+    expect(state.index.lastSequence).toBe(105);
+    expect(state.index.months).toEqual([{
+      month: "2026-10",
+      firstSequence: 1,
+      lastSequence: 105,
+      count: 105,
+    }]);
+    expect(publicMajorUpdateMonth(state, "2026-10").events).toHaveLength(105);
+    expect(publicMajorUpdateIndex(state).latestCursor).toBe("105");
+    expect(recentMajorUpdateEvents(state, 100).map((event) => event.sequence))
+      .toEqual(Array.from({ length: 100 }, (_, index) => 105 - index));
+  });
+
   it("waits for summaries, but tracks listed articles even when SEO indexing is held", () => {
     const pending = entry(b.id, { summaryJa: "", summaryEn: "" });
     const held = entry(c.id);

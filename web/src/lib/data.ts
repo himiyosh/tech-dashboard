@@ -39,7 +39,7 @@ import {
   isPublishableEntry,
 } from "./entry-publication.ts";
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
-import { isRoutineReleaseEntry } from "./release-signal.ts";
+import { effectiveImportance, isRoutineReleaseEntry } from "./release-signal.ts";
 import { isOffTopicForHero } from "./hero-relevance.ts";
 import { isDefaultMutedCategory } from "./category-visibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
@@ -911,22 +911,29 @@ export function categoryImportanceStanding(
   const categoryEntries = isArxivEntry(e)
     ? ARXIV_ENTRIES
     : CATEGORY_ENTRIES_BY_SLUG.get(e.category) ?? [];
+  const importance = effectiveImportance(e);
   return {
     total: categoryEntries.length,
-    sameOrHigher: categoryEntries.filter((entry) => entry.importance >= e.importance).length,
+    sameOrHigher: categoryEntries.filter(
+      (entry) => effectiveImportance(entry) >= importance,
+    ).length,
   };
 }
 
-/** Average importance over the last N entries from this source. */
-export function sourceAvgImportance(
+/** Average over the last N listed entries; archive-only sources have no sample. */
+export function sourceImportanceStats(
   e: NormalizedEntry,
   n = 30,
-): number {
+): { average: number | null; listedCount: number } {
   const recent = (SOURCE_ENTRIES_BY_ID.get(e.source) ?? []).slice(0, n);
-  if (recent.length === 0) return e.importance;
-  return Math.round(
-    (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
-  ) / 10;
+  return {
+    average: recent.length
+      ? Math.round(
+          (recent.reduce((sum, entry) => sum + entry.importance, 0) / recent.length) * 10,
+        ) / 10
+      : null,
+    listedCount: recent.length,
+  };
 }
 
 /** Aggregate fallback metrics for a set of entries. */

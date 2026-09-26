@@ -22,7 +22,7 @@ import {
   isArxivEntry,
   relatedEntries,
   relativeTime,
-  sourceAvgImportance,
+  sourceImportanceStats,
   summaryForLang,
   summaryForLangWithFallback,
   tagHref,
@@ -55,6 +55,7 @@ import {
   sourceLabel,
 } from "../../lib/source-meta.ts";
 import { normalizeTagKey } from "../../lib/tag-normalize.ts";
+import { tagLabel } from "../../lib/tag-label.ts";
 import { sourceExcerptForEntry } from "../../lib/source-excerpt.ts";
 import {
   articleSocialImage,
@@ -150,8 +151,9 @@ const srcTier = srcMeta?.tier;
 const srcAuthority = sourceAuthority(entry.source, entry.sourceType);
 const srcAuthorityBadgeClass = ["badge", "authority", srcAuthority.kind].join(" ");
 const srcAuthorityTitle = `${srcAuthority.en} source (${srcAuthority.ja})${srcTier ? ` · registry tier ${srcTier}` : ""}`;
-const srcAvgImp = sourceAvgImportance(entry, 30);
-const srcAvgTitle = `Average importance of this source's last 30 listed entries: ${srcAvgImp.toFixed(1)} out of 3 (1=Info, 2=Medium, 3=High)`;
+const sourceImportance = sourceImportanceStats(entry, 30);
+const visibleTags = entry.tags.slice(0, 5);
+const additionalTags = entry.tags.slice(5);
 
 const entryFavicon = sourceFaviconUrl(sourceUrl);
 const collectionFavicon = sourceFaviconUrl(entry.url);
@@ -174,12 +176,13 @@ const sourceTypeLabel: Record<NormalizedEntry["sourceType"], { ja: string; en: s
   blog: { ja: "ブログ", en: "Blog" },
   community: { ja: "コミュニティ", en: "Community" },
 };
-const importanceMeta = importanceLabel(effectiveImportance(entry));
-const halfLifeLabel: Record<string, { ja: string; en: string; emoji: string; color: string }> = {
-  news: { ja: "短命 (ニュース)", en: "Short-lived (news)", emoji: "⏱️", color: "#f87171" },
-  tutorial: { ja: "中期 (チュートリアル)", en: "Medium-term (tutorial)", emoji: "📘", color: "#fbbf24" },
-  architecture: { ja: "長期 (アーキテクチャ)", en: "Long-term (architecture)", emoji: "🏛️", color: "#60a5fa" },
-  fundamental: { ja: "永続 (基礎知識)", en: "Evergreen (fundamentals)", emoji: "🌱", color: "#4ade80" },
+const entryImportance = effectiveImportance(entry);
+const importanceMeta = importanceLabel(entryImportance);
+const halfLifeLabel: Record<string, { ja: string; en: string }> = {
+  news: { ja: "短命 (ニュース)", en: "Short-lived (news)" },
+  tutorial: { ja: "中期 (チュートリアル)", en: "Medium-term (tutorial)" },
+  architecture: { ja: "長期 (アーキテクチャ)", en: "Long-term (architecture)" },
+  fundamental: { ja: "永続 (基礎知識)", en: "Evergreen (fundamentals)" },
 };
 
 const now = new Date();
@@ -349,10 +352,12 @@ const articleMetadata = createLocalizedPageMetadata({
   descriptionEn: pageDescriptionEn,
   image: articleSocialImage(entry.image, metadataTitleJa, metadataTitleEn),
 });
-const importanceStandingJa =
-  `${laneName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`;
-const importanceStandingEn =
-  `${categoryStanding.sameOrHigher} of ${categoryStanding.total} ${laneName} entries are equal or higher`;
+const importanceStandingJa = categoryStanding.total
+  ? `${laneName} ${categoryStanding.total}件中、同等以上 ${categoryStanding.sameOrHigher}件`
+  : `${laneName} の比較対象は記録なし`;
+const importanceStandingEn = categoryStanding.total
+  ? `${categoryStanding.sameOrHigher} of ${categoryStanding.total} ${laneName} entries are equal or higher`
+  : `No listed ${laneName} entries for comparison`;
 const tldrTitleJa = pointsJa.length > 1
     ? `${Math.min(pointsJa.length, 4)} 点サマリ`
     : "要点サマリ";
@@ -554,31 +559,37 @@ const jsonLd = buildArticleJsonLd({
             </span>
           </h1>
           <div class="ed-byline">
-            {entryFavicon && (
-              <img class="ed-favicon" src={entryFavicon} alt="" width="16" height="16" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
-            )}
-            <span class="ed-src-name">{srcDisplay}</span>
-            <span
-              class={srcAuthorityBadgeClass}
-              data-source-authority={srcAuthority.kind}
-              data-source-type={entry.sourceType}
-              title={srcAuthorityTitle}
-            >
-              <span class="i18n-ja">{srcAuthority.ja}</span>
-              <span class="i18n-en" lang="en">{srcAuthority.en}</span>
+            <span class="ed-credit">
+              {entryFavicon && (
+                <img class="ed-favicon" src={entryFavicon} alt="" width="16" height="16" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'" />
+              )}
+              <span class="ed-src-name">{srcDisplay}</span>
+              <span
+                class={srcAuthorityBadgeClass}
+                data-source-authority={srcAuthority.kind}
+                data-source-type={entry.sourceType}
+                title={srcAuthorityTitle}
+              >
+                <span class="i18n-ja">{srcAuthority.ja}</span>
+                <span class="i18n-en" lang="en">{srcAuthority.en}</span>
+              </span>
+              <span class="ed-host">{sourceHost(sourceUrl)}</span>
             </span>
-            <span class="sep">·</span>
-            <span class="ed-host">{sourceHost(sourceUrl)}</span>
-            <span class="sep">·</span>
-            <time class="ed-published" datetime={entry.publishedAt}>
-              <span class="mono">{fmtDate(entry.publishedAt)}</span>
-              <span class="sep">·</span>
-              <span class="ed-rel" data-relative-time data-datetime={entry.publishedAt}>{rel}</span>
-            </time>
-            {readMinutes > 0 && (<>
-              <span class="sep">·</span>
-              <span class="ed-read">📖 {readMinutes} min</span>
-            </>)}
+            <span class="ed-byline-date">
+              <span class="ed-byline-key">
+                <span class="i18n-ja">公開</span>
+                <span class="i18n-en" lang="en">Published</span>
+              </span>
+              <time class="ed-published" datetime={entry.publishedAt}>
+                <span class="mono">{fmtDate(entry.publishedAt)} JST</span>
+                <span class="ed-rel" data-relative-time data-datetime={entry.publishedAt}>{rel}</span>
+              </time>
+            </span>
+            <span class={`ed-priority imp-${entryImportance}`} data-importance-level={entryImportance}>
+              <span class="i18n-ja">重要度 {importanceMeta.ja.replace(/^重要度\s*/, "")}</span>
+              <span class="i18n-en" lang="en">Importance {importanceMeta.en}</span>
+            </span>
+            {readMinutes > 0 && <span class="ed-read">📖 {readMinutes} min</span>}
           </div>
           <div class="ed-action-strip">
             <a class="ed-header-cta" href={sourceUrl} target="_blank" rel={EXTERNAL_ENTRY_REL}>
@@ -690,13 +701,20 @@ const jsonLd = buildArticleJsonLd({
           </section>
         )}
 
+        {!summaryAbsent && (
+          <p class="ed-disclaim" data-generation-scope={summaryLanguageScope}>
+            <span class="i18n-ja">{generationDisclosureJa}</span>
+            <span class="i18n-en" lang="en">{generationDisclosureEn}</span>
+          </p>
+        )}
+
         {/* BODY */}
         {hasRealBody && (renderedJa.length > 0 || renderedEn.length > 0) ? (
           <section class="ed-body">
             <p class="ed-body-origin" data-body-source="summary-and-collection-metadata">
               <span class="ai-badge" aria-hidden="true">AI</span>
-              <span class="i18n-ja">要約と収集メタデータをもとに生成した AI 解説本文です。元記事全文の転載・翻訳ではありません。</span>
-              <span class="i18n-en" lang="en">This AI explainer is generated from the summaries and collected metadata, not from a reproduction or translation of the full source article.</span>
+              <span class="i18n-ja">要約と収集メタデータに基づく AI 解説。元記事全文の転載・翻訳ではありません。</span>
+              <span class="i18n-en" lang="en">AI explainer based on the summaries and collected metadata, not a copy or translation of the full source article.</span>
             </p>
             {renderedJa.length > 0 && (
               <div class="ed-body-prose i18n-ja" lang="ja">
@@ -714,12 +732,7 @@ const jsonLd = buildArticleJsonLd({
                   return (
                     <Fragment>
                       {p.secStart && sec?.heading && (
-                        <h2 class="ed-sec-h" id={sec.anchorId}>
-                          <span class="ed-sec-num" aria-hidden="true">
-                            {String(sec.num ?? 0).padStart(2, "0")}
-                          </span>
-                          <span class="ed-sec-title">{sec.heading}</span>
-                        </h2>
+                        <h2 class="ed-sec-h" id={sec.anchorId}>{sec.heading}</h2>
                       )}
                       <p id={p.id} data-toc-key={p.tocKey} set:html={p.html} />
                       {showQuote && quote && (
@@ -753,12 +766,7 @@ const jsonLd = buildArticleJsonLd({
                   return (
                     <Fragment>
                       {p.secStart && sec?.heading && (
-                        <h2 class="ed-sec-h" id={sec.anchorId}>
-                          <span class="ed-sec-num" aria-hidden="true">
-                            {String(sec.num ?? 0).padStart(2, "0")}
-                          </span>
-                          <span class="ed-sec-title">{sec.heading}</span>
-                        </h2>
+                        <h2 class="ed-sec-h" id={sec.anchorId}>{sec.heading}</h2>
                       )}
                       <p id={p.id} data-toc-key={p.tocKey} set:html={p.html} />
                       {showQuote && quote && (
@@ -814,106 +822,146 @@ const jsonLd = buildArticleJsonLd({
         {/* A grounded article dialogue is optional; the original body remains independent. */}
         {articleChat && <ArticleChat chat={articleChat} />}
 
-        {/* TAGS */}
         {entry.tags.length > 0 && (
-          <nav class="ed-topics" aria-label="Related topics">
-            <span class="ed-topics-label">
+          <nav class="ed-topics" aria-labelledby="ed-topics-heading">
+            <h2 class="ed-topics-label" id="ed-topics-heading">
               <span class="i18n-ja">関連トピック</span>
               <span class="i18n-en" lang="en">Related topics</span>
-            </span>
-            <span class="ed-topic-links">
-              {entry.tags.map((t) => (
-                <a href={tagHref(t, entry.id)}>{t}</a>
+            </h2>
+            <ul class="ed-topic-links" role="list">
+              {visibleTags.map((tag) => (
+                <li><a href={tagHref(tag, entry.id)} data-tag-key={tag}>{tagLabel(tag)}</a></li>
               ))}
-            </span>
+            </ul>
+            {additionalTags.length > 0 && (
+              <details class="ed-topic-more">
+                <summary>
+                  <span class="i18n-ja">他 {additionalTags.length} 件のトピック</span>
+                  <span class="i18n-en" lang="en">{additionalTags.length} more topics</span>
+                </summary>
+                <ul class="ed-topic-links" role="list">
+                  {additionalTags.map((tag) => (
+                    <li><a href={tagHref(tag, entry.id)} data-tag-key={tag}>{tagLabel(tag)}</a></li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </nav>
         )}
 
-        {/* META STRIP */}
-        <ul class="ed-meta-strip">
-          <li><span class="k"><span class="i18n-ja">出典</span><span class="i18n-en" lang="en">Source</span></span><span class="v">{srcDisplay}
-            <span
-              class="pill"
-              data-source-authority={srcAuthority.kind}
-              data-source-type={entry.sourceType}
-              title={srcAuthorityTitle}
-              aria-label={srcAuthorityTitle}
-            >
-              <span class="pill-authority-label">
-                <span class="i18n-ja">{srcAuthority.ja}</span>
-                <span class="i18n-en" lang="en">{srcAuthority.en}</span>
-              </span>
-            </span>
-          </span></li>
-          {sourceRedirected && (
-            <li data-collection-source>
-              <span class="k">
-                <span class="i18n-ja">収集元feed</span>
-                <span class="i18n-en" lang="en">Collected via</span>
-              </span>
-              <span class="v">{collectionSourceDisplay}</span>
-            </li>
-          )}
-          <li>
-            <span class="k">
-              <span class="i18n-ja">直近30件の平均重要度</span>
-              <span class="i18n-en" lang="en">Avg importance, last 30</span>
-            </span>
-            <span class="v" title={srcAvgTitle} aria-label={srcAvgTitle}>
-              <span class="mini-bar" style={`--w:${(srcAvgImp / 3) * 100}%`}></span>
-              <span aria-hidden="true">{srcAvgImp.toFixed(1)} / 3</span>
-              <span class="muted-sm"><span class="i18n-ja">1=情報 · 2=中 · 3=高</span><span class="i18n-en" lang="en">1=Info · 2=Medium · 3=High</span></span>
-            </span>
-          </li>
-          <li data-entry-format={entry.sourceType}>
-            <span class="k">
-              <span class="i18n-ja">配信形式</span>
-              <span class="i18n-en" lang="en">Format</span>
-            </span>
-            <span class="v">
-              <span class="i18n-ja">{sourceTypeLabel[entry.sourceType].ja}</span>
-              <span class="i18n-en" lang="en">{sourceTypeLabel[entry.sourceType].en}</span>
-            </span>
-          </li>
-          <li data-importance-standing={entryIsArxiv ? "arxiv" : entry.category}>
-            <span class="k"><span class="i18n-ja">重要度</span><span class="i18n-en" lang="en">Importance</span></span>
-            <span class="v">
-              <span class={`pill imp-${entry.importance}`}>
-                <span class="i18n-ja">{importanceMeta.ja.replace(/^重要度\s*/, "")}</span>
-                <span class="i18n-en" lang="en">{importanceMeta.en}</span>
-              </span>
-              <span class="muted-sm">
-                <span class="i18n-ja">({importanceStandingJa})</span>
-                <span class="i18n-en" lang="en">({importanceStandingEn})</span>
-              </span>
-            </span>
-          </li>
-          {halfLifeMeta && (
-            <li>
-              <span class="k"><span class="i18n-ja">情報の寿命</span><span class="i18n-en" lang="en">Half-life</span></span>
-              <span class="v" style={`color:${halfLifeMeta.color}`}>
-                {halfLifeMeta.emoji}{" "}
-                <span class="i18n-ja">{halfLifeMeta.ja}</span>
-                <span class="i18n-en" lang="en">{halfLifeMeta.en}</span>
-              </span>
-            </li>
-          )}
-          <li data-entry-language={effectiveTitleLang}>
-            <span class="k"><span class="i18n-ja">原文言語</span><span class="i18n-en" lang="en">Source language</span></span>
-            <span class="v">{effectiveTitleLang.toUpperCase()}</span>
-          </li>
-          <li>
-            <span class="k"><span class="i18n-ja">収集日時</span><span class="i18n-en" lang="en">Collected</span></span>
-            <span class="v mono">{fmtDate(entry.collectedAt)}</span>
-          </li>
-        </ul>
-
-        {!summaryAbsent && (
-          <p class="ed-disclaim" data-generation-scope={summaryLanguageScope}>
-            <span class="i18n-ja">{generationDisclosureJa}</span>
-            <span class="i18n-en" lang="en">{generationDisclosureEn}</span>
-          </p>
-        )}
+        <details class="ed-meta-details">
+          <summary>
+            <span class="i18n-ja">記事情報・収集記録</span>
+            <span class="i18n-en" lang="en">Article details &amp; collection record</span>
+            <span class="ed-meta-expand" aria-hidden="true">＋</span>
+          </summary>
+          <dl class="ed-meta-strip">
+            <div class="ed-meta-field">
+              <dt class="k"><span class="i18n-ja">出典</span><span class="i18n-en" lang="en">Source</span></dt>
+              <dd class="v">{srcDisplay}
+                <span
+                  class="pill"
+                  data-source-authority={srcAuthority.kind}
+                  data-source-type={entry.sourceType}
+                  title={srcAuthorityTitle}
+                >
+                  <span class="pill-authority-label">
+                    <span class="i18n-ja">{srcAuthority.ja}</span>
+                    <span class="i18n-en" lang="en">{srcAuthority.en}</span>
+                  </span>
+                </span>
+              </dd>
+            </div>
+            {sourceRedirected && (
+              <div class="ed-meta-field" data-collection-source>
+                <dt class="k">
+                  <span class="i18n-ja">収集元feed</span>
+                  <span class="i18n-en" lang="en">Collected via</span>
+                </dt>
+                <dd class="v">{collectionSourceDisplay}</dd>
+              </div>
+            )}
+            <div class="ed-meta-field" data-meta-field="published">
+              <dt class="k">
+                <span class="i18n-ja">公開日時 (JST)</span>
+                <span class="i18n-en" lang="en">Published (JST)</span>
+              </dt>
+              <dd class="v"><time datetime={entry.publishedAt}>{fmtDate(entry.publishedAt)}</time></dd>
+            </div>
+            <div class="ed-meta-field" data-meta-field="collected">
+              <dt class="k">
+                <span class="i18n-ja">収集日時 (JST)</span>
+                <span class="i18n-en" lang="en">Collected (JST)</span>
+              </dt>
+              <dd class="v"><time datetime={entry.collectedAt}>{fmtDate(entry.collectedAt)}</time></dd>
+            </div>
+            <div class="ed-meta-field" data-entry-format={entry.sourceType}>
+              <dt class="k">
+                <span class="i18n-ja">配信形式</span>
+                <span class="i18n-en" lang="en">Format</span>
+              </dt>
+              <dd class="v">
+                <span class="i18n-ja">{sourceTypeLabel[entry.sourceType].ja}</span>
+                <span class="i18n-en" lang="en">{sourceTypeLabel[entry.sourceType].en}</span>
+              </dd>
+            </div>
+            <div class="ed-meta-field" data-entry-language={effectiveTitleLang}>
+              <dt class="k">
+                <span class="i18n-ja">原文言語</span>
+                <span class="i18n-en" lang="en">Source language</span>
+              </dt>
+              <dd class="v">{effectiveTitleLang.toUpperCase()}</dd>
+            </div>
+            <div class="ed-meta-field" data-importance-standing={entryIsArxiv ? "arxiv" : entry.category}>
+              <dt class="k">
+                <span class="i18n-ja">重要度の位置づけ</span>
+                <span class="i18n-en" lang="en">Importance in this lane</span>
+              </dt>
+              <dd class="v">
+                <span class={`pill imp-${entryImportance}`}>
+                  <span class="i18n-ja">{importanceMeta.ja.replace(/^重要度\s*/, "")}</span>
+                  <span class="i18n-en" lang="en">{importanceMeta.en}</span>
+                </span>
+                <span class="muted-sm">
+                  <span class="i18n-ja">({importanceStandingJa})</span>
+                  <span class="i18n-en" lang="en">({importanceStandingEn})</span>
+                </span>
+              </dd>
+            </div>
+            <div class="ed-meta-field" data-source-sample-count={sourceImportance.listedCount}>
+              <dt class="k">
+                <span class="i18n-ja">出典の平均重要度（掲載直近 {sourceImportance.listedCount} 件・最大 30 件）</span>
+                <span class="i18n-en" lang="en">Source average (last {sourceImportance.listedCount} listed, up to 30)</span>
+              </dt>
+              <dd class="v">
+                {sourceImportance.average === null ? (
+                  <>
+                    <span class="i18n-ja">記録なし</span>
+                    <span class="i18n-en" lang="en">Not recorded</span>
+                  </>
+                ) : (
+                  <>
+                    <span class="mono">{sourceImportance.average.toFixed(1)} / 3</span>
+                    <span class="muted-sm">
+                      <span class="i18n-ja">1=情報 · 2=中 · 3=高</span>
+                      <span class="i18n-en" lang="en">1=Info · 2=Medium · 3=High</span>
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+            <div class="ed-meta-field">
+              <dt class="k">
+                <span class="i18n-ja">情報の寿命</span>
+                <span class="i18n-en" lang="en">Half-life</span>
+              </dt>
+              <dd class="v">
+                <span class="i18n-ja">{halfLifeMeta?.ja ?? "記録なし"}</span>
+                <span class="i18n-en" lang="en">{halfLifeMeta?.en ?? "Not recorded"}</span>
+              </dd>
+            </div>
+          </dl>
+        </details>
       </article>
 
       {/*
@@ -1438,17 +1486,43 @@ const jsonLd = buildArticleJsonLd({
     color: var(--text); font-weight: 800;
     letter-spacing: -0.005em; margin: 0 0 12px;
     font-feature-settings: "palt" 1;
+    overflow-wrap: anywhere;
     /* 複数行タイトルの行長を均し、最終行だけ極端に短い折返しを避ける */
     text-wrap: balance;
   }
   .ed-byline {
     display: flex; flex-wrap: wrap; align-items: center;
-    gap: 6px 8px; font-size: 12.5px; color: var(--muted);
+    gap: 8px 16px; font-size: 12.5px; color: var(--muted);
+  }
+  .ed-credit,
+  .ed-byline-date,
+  .ed-published {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 7px;
+    min-width: 0;
   }
   .ed-favicon { border-radius: 3px; }
   .ed-src-name { color: var(--text-2); font-weight: 600; }
-  .ed-host, .sep { color: var(--muted-2); }
-  .ed-rel { color: var(--accent); font-weight: 500; }
+  .ed-host { color: var(--muted-2); font-size: 11.5px; overflow-wrap: anywhere; }
+  .ed-byline-key { color: var(--muted-2); font-size: 11.5px; }
+  .ed-rel { color: var(--muted-2); font-size: 11.5px; }
+  .ed-priority {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 3px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .ed-priority.imp-3 {
+    border-color: color-mix(in srgb, var(--important) 45%, var(--border));
+    color: var(--important);
+  }
   .ed-read { color: var(--muted); }
   .ed-action-strip {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -1572,46 +1646,36 @@ const jsonLd = buildArticleJsonLd({
 
   /* BODY */
   .ed-body { padding: 28px 32px 8px; }
-  /* 読みやすさ: 長文テキストの行長を約 45 全角字 (706px ≈ 15.5px × 45.5) に
-     制限する。実測では制限なしだと 1440px で約 52 字、1920px で約 66 字に
-     達し、日本語の快適域 (35〜45 字) を大きく超えていた。行間 2.05 は維持。
-     箱物 (TLDR・要約カード) は据え置き、流し込みテキストだけを揃える。 */
-  .ed-body-prose p,
+  .ed-body-prose {
+    max-width: 40em;
+    margin-inline: auto;
+    font-size: 16px;
+    line-height: 1.85;
+  }
+  .ed-body-prose.i18n-en {
+    max-width: 68ch;
+    line-height: 1.75;
+  }
   .ed-body-note,
   .ed-body-origin,
   .ed-pullquote,
-  .ed-divider,
-  .ed-sec-h {
-    max-width: 706px;
+  .ed-divider {
+    max-width: 640px;
   }
-  /* セクション見出し: カテゴリ色の番号チップ + 見出しで本文に項目構造を
-     与える。段落と同じ計測幅・中央寄せの読書カラムに乗る。 */
   .ed-sec-h {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 36px auto 18px;
-    font-size: 17px;
-    line-height: 1.5;
+    margin: 38px 0 16px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border-strong);
+    font-size: 19px;
+    line-height: 1.45;
     font-weight: 700;
     color: var(--text);
-    letter-spacing: 0.01em;
+    letter-spacing: normal;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
     scroll-margin-top: 84px;
   }
-  .ed-body-prose .ed-sec-h:first-child { margin-top: 6px; }
-  .ed-sec-num {
-    flex: 0 0 auto;
-    font-size: 11.5px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.1em;
-    color: var(--cat-color);
-    padding: 2px 8px;
-    border: 1px solid color-mix(in srgb, var(--cat-color) 45%, transparent);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--cat-color) 8%, transparent);
-  }
-  .ed-sec-title { min-width: 0; }
+  .ed-body-prose .ed-sec-h:first-child { margin-top: 4px; }
   .ed-body-origin {
     display: flex;
     align-items: flex-start;
@@ -1625,33 +1689,30 @@ const jsonLd = buildArticleJsonLd({
   }
   .ed-body-origin .ai-badge { flex: 0 0 auto; margin-top: 1px; }
   .ed-body-prose p {
-    font-size: 14.5px; line-height: 2.05; color: var(--text);
-    margin: 0 0 22px;
-    text-align: justify; text-justify: inter-character;
+    color: var(--text);
+    margin: 0 0 1.25em;
+    text-align: start;
+    word-break: normal;
+    overflow-wrap: break-word;
+    line-break: strict;
     scroll-margin-top: 84px;
-    /* 段落末尾の孤立語 (orphan) を避ける。JA は justify で影響が薄く、
-       主に英語 prose の折返し品質に効く */
     text-wrap: pretty;
   }
-  /* リード段落: 記事の導入を一段強調して読み始めの摩擦を下げる */
   .ed-body-prose > p:first-of-type {
-    font-size: 15.5px;
-    line-height: 2;
-    padding-left: 14px;
-    border-left: 3px solid color-mix(in srgb, var(--cat-color) 65%, transparent);
+    font-size: 1.05em;
+    font-weight: 500;
+    margin-bottom: 1.5em;
   }
-  .ed-body-prose .kw {
+  /* set:html anchors do not receive Astro's scoped attribute. */
+  .ed-body-prose :global(a.kw) {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--cat-color) 55%, transparent);
+    text-underline-offset: 3px;
+  }
+  .ed-body-prose :global(a.kw:hover) {
     color: var(--cat-color);
-    text-decoration: none;
-    background: color-mix(in srgb, var(--cat-color) 10%, transparent);
-    padding: 0 3px;
-    border-radius: 3px;
-    border-bottom: 1px dotted color-mix(in srgb, var(--cat-color) 50%, transparent);
-    transition: all 0.1s;
-  }
-  .ed-body-prose .kw:hover {
-    background: color-mix(in srgb, var(--cat-color) 22%, transparent);
-    border-bottom-style: solid;
+    text-decoration-color: currentColor;
   }
   .ed-divider {
     display: flex; justify-content: center; gap: 8px;
@@ -1689,7 +1750,9 @@ const jsonLd = buildArticleJsonLd({
     line-height: 1.75;
     color: var(--text);
     font-weight: 600;
-    font-feature-settings: "palt" 1;
+    text-align: start;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
   }
   .ed-pullquote figcaption {
     margin-top: 10px;
@@ -1702,17 +1765,11 @@ const jsonLd = buildArticleJsonLd({
     border-radius: 10px; background: var(--bg-2);
     color: var(--muted); font-size: 13px;
   }
-  /* 中央寄せ: 行長キャップされた読書カラムをカード内で中央に置く。
-     これが無いと広い画面 (>=1360px で余剰幅が中央カラムに集まる) で
-     本文だけがカード左端に張り付き、右レールとの間に大きな空白が
-     できて「本文が左に寄って見える」。個別ルールの margin shorthand
-     より後に置いて inline 軸だけ auto で上書きする。 */
-  .ed-body-prose p,
+  /* The prose and its supporting text share the same centered measure. */
   .ed-body-note,
   .ed-body-origin,
   .ed-pullquote,
-  .ed-divider,
-  .ed-sec-h {
+  .ed-divider {
     margin-inline: auto;
   }
 
@@ -1734,75 +1791,133 @@ const jsonLd = buildArticleJsonLd({
 
   /* RELATED TOPICS */
   .ed-topics {
-    margin: 12px 32px 0; padding: 14px 0 0;
-    border-top: 1px dashed var(--border);
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    color: var(--muted-2);
-    font-size: 11.5px;
+    margin: 24px 32px 0;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--border);
+    color: var(--text-2);
   }
   .ed-topics-label {
-    flex: 0 0 auto;
+    font-size: 13.5px;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    line-height: 1.5;
+    margin: 0 0 12px;
   }
   .ed-topic-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 0;
+    gap: 8px;
+    list-style: none;
     min-width: 0;
   }
   .ed-topic-links a {
-    color: var(--muted);
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
-    text-underline-offset: 3px;
-    /* WCAG 2.5.8: 行送りを変えずにヒット領域を ≥24px へ (17.8px + 4px×2)。
-       flex item のため負 margin で box 拡張を相殺する。折返し行間の
-       gap 8px は拡張後の rect が隣行と重ならないための下限。 */
-    padding-block: 4px;
-    margin-block: -4px;
-  }
-  .ed-topic-links a:hover { color: var(--cat-color); }
-  .ed-topic-links a:not(:last-child)::after {
-    content: "·";
-    margin: 0 7px;
-    color: var(--muted-2);
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    max-width: 100%;
+    padding: 5px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    color: var(--text-2);
+    background: var(--bg-2);
+    font-size: 12.5px;
+    line-height: 1.4;
     text-decoration: none;
+    overflow-wrap: anywhere;
   }
+  .ed-topic-links a:hover {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+  }
+  .ed-topic-more { margin-top: 8px; }
+  .ed-topic-more summary {
+    width: fit-content;
+    min-height: 40px;
+    padding: 8px 4px;
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .ed-topic-more .ed-topic-links { padding-block: 4px 8px; }
 
-  /* META STRIP */
-  .ed-meta-strip {
+  /* Secondary signals are available on demand; the byline remains scannable. */
+  .ed-meta-details {
+    margin: 22px 32px 24px;
+    border-top: 1px solid var(--border);
+  }
+  .ed-meta-details summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 10px 0;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
     list-style: none;
-    margin: 18px 32px 0; padding: 12px 14px;
-    border-radius: 10px; background: var(--bg-2); border: 1px solid var(--border);
-    display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 12px;
   }
-  .ed-meta-strip li { display: inline-flex; align-items: center; gap: 6px; }
+  .ed-meta-details summary::-webkit-details-marker { display: none; }
+  .ed-meta-expand {
+    margin-inline-start: auto;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .ed-meta-details[open] .ed-meta-expand { transform: rotate(45deg); }
+  .ed-meta-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+    margin: 0;
+    padding: 4px 0 12px;
+  }
+  .ed-meta-details:not([open]) .ed-meta-strip { display: none; }
+  .ed-meta-field {
+    min-width: 0;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
   .ed-meta-strip .k {
-    text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--muted-2); font-size: 10.5px; font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
   }
-  .ed-meta-strip .v { color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
-  .muted-sm { color: var(--muted-2); font-size: 11px; }
-  .pill {
-    margin-left: 4px; padding: 1px 6px; border-radius: 4px;
-    border: 1px solid var(--border); background: var(--surface);
-    font-size: 10.5px; color: var(--muted);
+  .ed-meta-strip .v {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    min-width: 0;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
-  .pill.imp-3 { background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.45); color: #fbbf24; }
-  .pill-authority-label { margin-left: 4px; color: var(--muted-2); font-weight: 500; }
-  .mini-bar {
-    display: inline-block; width: 36px; height: 4px;
-    background: var(--border); border-radius: 2px; position: relative;
+  .ed-meta-strip time { font-variant-numeric: tabular-nums; }
+  .muted-sm { color: var(--muted); font-size: 12px; }
+  .ed-meta-strip .pill {
+    padding: 1px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-2);
   }
-  .mini-bar::after {
-    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-    width: var(--w, 0%); background: var(--cat-color); border-radius: 2px;
+  .ed-meta-strip .pill.imp-3 {
+    border-color: color-mix(in srgb, var(--important) 45%, var(--border));
+    color: var(--important);
   }
-
-  .ed-disclaim { margin: 14px 32px 24px; color: var(--muted-2); font-size: 11px; line-height: 1.6; }
+  .ed-disclaim {
+    max-width: 640px;
+    margin: 14px auto 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
 
   /* PREV/NEXT */
   .ed-pn {
@@ -2040,7 +2155,7 @@ const jsonLd = buildArticleJsonLd({
   }
   @media (max-width: 820px) {
     .ed-hero { height: 190px; min-height: 190px; }
-    .ed-head, .ed-pending-summary, .ed-tldr, .ed-body, .ed-topics, .ed-meta-strip, .ed-disclaim {
+    .ed-head, .ed-pending-summary, .ed-tldr, .ed-body, .ed-topics, .ed-meta-details {
       margin-left: 18px; margin-right: 18px;
     }
     .ed-head { padding: 18px 0 14px; }
@@ -2049,16 +2164,17 @@ const jsonLd = buildArticleJsonLd({
     .ed-summary-only { margin-left: 0; margin-right: 0; }
     .ed-title { font-size: 20px; }
     .ed-tldr-list li { font-size: 14px; line-height: 1.8; }
-    .ed-body-prose p { font-size: 14px; line-height: 2; margin-bottom: 18px; }
-    .ed-body-prose > p:first-of-type { font-size: 16.5px; padding-left: 12px; }
-    .ed-sec-h { font-size: 17.5px; margin-top: 30px; margin-bottom: 14px; }
+    .ed-sec-h { font-size: 18px; margin-top: 32px; margin-bottom: 12px; }
+    .ed-disclaim { margin-inline: 18px; }
     .ed-pullquote { padding: 18px 18px 14px; }
-    .ed-pullquote blockquote { font-size: 14.5px; line-height: 1.7; }
     .ed-rel-grid { grid-template-columns: 1fr; }
     .ed-pn { grid-template-columns: 1fr; }
     .ed-fab { right: 14px; bottom: 14px; }
   }
   @media (max-width: 720px) {
+    .ed-meta-strip { grid-template-columns: minmax(0, 1fr); }
+    .ed-topic-links a { min-height: 36px; }
+    .ed-topic-more summary { min-height: 44px; }
     /* 狭幅では日本語タイトルが 3 行以上必要になり、2 行 clamp では
        関連記事・前後記事のタイトルが途中で切れる (375px 実測)。
        clamp は上限なので短いタイトルの高さは変わらない。 */

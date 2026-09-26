@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-26T21:00:52.396Z",
+  "generatedAt": "2026-09-26T21:43:27.372Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -8789,7 +8789,15 @@
       "archiveTier": "warm",
       "contentSnippet": "ステートレス化したMCPサーバーで、どこに残っていた状態が消えるのか。ロードバランサーの設定だけを直して終えると、ここで事故る。 7月28日に正式化予定のMCP 2026-07-28 は、プロトコル層の initialize / initialized と Mcp-Session-Id を外す。RCの段階では、能力確認は server/discover へ移り、各リクエストが自分のプロトコル情報を持つ形になっている。普通のラウンドロビン配下へ置きやすくなるのは確か。ただし、買い物かごや編集中の文書まで消えるわけではない。 状態を必要とするなら、ツールの戻り値で basket_id のようなハンドルを返し、次の呼び出しで引数として渡す。移行の本体は「セッションを捨てる」作業より、この契約を表に出す作業だと思う。 旧構成では、クライアントがどのサーバーへ来たかと、どの作業の続きかが Mcp-Session-Id の裏に隠れやすい。ステートレス化後もアプリケーションの状態は持てるが、ツール呼び出しだけを見て追える形にする必要がある。 自分はこの手の移行で、まずIngressのsticky設定を探しがちだった。でも先に調べるべきなのは、後続ツールが何のIDも受け取らずに動いていないかだった。 add_item や checkout に作業対象の引数がなければ、接続先をどれだけきれいにしても状態は引き継げない。 以下は、JSON化したツール実行traceに対して、ハンドルの生成と受け渡しを検査する最小のPythonだ。 contracts を自分のツール名とID名に置き換えて使う。 def audit_state_handles ( calls : list [ dict ], contracts : dict [ str , dict ]) -> list [ str ]: rule = contracts . get ( call [ \" tool \" ], {}) produced = rule .",
       "feedSnippet": "MCP移行前にSession依存を検出するPython ステートレス化したMCPサーバーで、どこに残っていた状態が消えるのか。ロードバランサーの設定だけを直して終えると、ここで事故る。 7月28日に正式化予定のMCP 2026-07-28 は、プロトコル層の initia...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDQ0NzcyJTJGNzA5NTAxOWUyOWVhMzY3ZWI2NzZiYmEyMzdlMjAyYjczZmM0Y2FiOCUyRnhfbGFyZ2UucG5nJTNGMTc4MDg3NzY4NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDRkN2ViYjlhY2U5MzE3MWUxYTdiNTA4ZmU4NDI1N2Y%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7fd777bd4a540d788ced16e3c534f20f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJUU3JUE3JUJCJUU4JUExJThDJUU1JTg5JThEJUUzJTgxJUFCU2Vzc2lvbiVFNCVCRSU5RCVFNSVBRCU5OCVFMyU4MiU5MiVFNiVBNCU5QyVFNSU4NyVCQSVFMyU4MSU5OSVFMyU4MiU4QlB5dGhvbiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTlkMmI0NGQ5NTdkODA0ZThiMDJmMGYwYTkyNmY1NmM1&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoaXJvbmFrYW11cmFfYWkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1lMmFlNTIxYjY4MGYyYzYzYzA1MmRmMDY3NjBkMjhkOQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9397f8fd2f5575343454a7360f8d72bb",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NDQ0NzcyJTJGNzA5NTAxOWUyOWVhMzY3ZWI2NzZiYmEyMzdlMjAyYjczZmM0Y2FiOCUyRnhfbGFyZ2UucG5nJTNGMTc4MDg3NzY4NT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9MDRkN2ViYjlhY2U5MzE3MWUxYTdiNTA4ZmU4NDI1N2Y%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7fd777bd4a540d788ced16e3c534f20f?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TUNQJUU3JUE3JUJCJUU4JUExJThDJUU1JTg5JThEJUUzJTgxJUFCU2Vzc2lvbiVFNCVCRSU5RCVFNSVBRCU5OCVFMyU4MiU5MiVFNiVBNCU5QyVFNSU4NyVCQSVFMyU4MSU5OSVFMyU4MiU4QlB5dGhvbiZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPTlkMmI0NGQ5NTdkODA0ZThiMDJmMGYwYTkyNmY1NmM1&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoaXJvbmFrYW11cmFfYWkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1lMmFlNTIxYjY4MGYyYzYzYzA1MmRmMDY3NjBkMjhkOQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9397f8fd2f5575343454a7360f8d72bb",
+        "alt": "MCP移行前にSession依存を検出するPython",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "8362dcb05b5eab14",
@@ -14775,7 +14783,7 @@
       "summaryEn": "OpenAI launched a dedicated ChatGPT program for small businesses, offering resources and support to help smaller organizations adopt AI tools and improve operational efficiency.",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -20442,7 +20450,7 @@
       "summaryEn": "OpenAI introduced a scorecard framework to measure and track AI's progress across social, economic, and safety dimensions, aiming to improve accountability and transparency in how AI development affects the world.",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -23133,7 +23141,7 @@
       "summaryEn": "OpenAI highlights growing momentum in US AI safety policy, with state and federal initiatives shaping a regulatory framework to ensure responsible AI development.",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -23279,7 +23287,7 @@
       "summaryEn": "OpenAI introduced GPT-Red, a model that leverages self-improvement techniques to enhance robustness, marking a significant step toward building more reliable and resilient AI systems.",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -25146,7 +25154,7 @@
       "summaryEn": "OpenAI published a strategic guide for managing AI investments as agentic systems become mainstream, offering practical frameworks to help organizations maximize ROI and govern autonomous AI deployments responsibly.",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -32648,7 +32656,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -34648,7 +34656,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -34726,7 +34734,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -34753,7 +34761,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -34779,7 +34787,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -36184,7 +36192,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -36633,7 +36641,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -37169,7 +37177,7 @@
       "summaryEn": "Semantic Kernel .NET v1.78.0 is out, delivering agent framework improvements and bug fixes that enhance the stability of AI-integrated .NET application development.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "agent",
         "dotnet",
@@ -37203,7 +37211,7 @@
       "summaryEn": "Semantic Kernel Python 1.44.0 delivers incremental bug fixes and improvements to the agent framework and connectors, enhancing stability for developers building AI-powered applications with the SDK.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "agent",
         "llm-orchestration",
@@ -38037,7 +38045,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -38064,7 +38072,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "case-study",
         "codex",
@@ -38309,7 +38317,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-09-26T21:00:36.352Z",
+      "collectedAt": "2026-09-26T21:43:09.797Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

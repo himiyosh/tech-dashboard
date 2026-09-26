@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-26T15:00:49.273Z",
+  "generatedAt": "2026-09-26T15:35:50.391Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -8563,7 +8563,15 @@
       "archiveTier": "warm",
       "contentSnippet": "前回、ローカルLLMに save_thought / search_thoughts の tool calling を持たせて、ThoughtsStore（NDJSON＋SHA256ハッシュ連鎖の外部脳）を読み書きさせてみた、という話を書いた。あのときは「そもそも搭載できるのか」を確かめる段階で、書き込みロジックの再利用と dispatch の配線までを確認して終わっていた。 今回は、その先の**「どう実現したか」 を、配布向けに切り出した最小構成 llllm_memory_device を題材にまとめる。ローカルの非力なモデルに、追記型の台帳を安全に読み書きさせるために、実際に何を組んだか。扱うのはこのリポジトリの 読み書きコア**（ bridge.py / tools.py / save_thought.py / スキーマ）に限る。この先にある「想起」の話は最後に予告だけして、詳細は別記事に譲る。 最初に一番大事な設計判断から書く。 ローカルLLMが書き込む先は、人間側の ThoughtsStore とは別物にした。 同じ「NDJSON＋ハッシュ連鎖」の器を使っているので構造は同一だが、中身の主体が違う。人間の思考ログとローカルLLMの作業メモが同じ台帳に混ざると、 どちらの記録なのか（誰のSSOTなのか）が後から分からなくなる 。追記型でappend-onlyな以上、一度混ざったら綺麗には剥がせない。だから フォルダも、リポジトリも別 にしてある。 このリポジトリ（ llllm_memory_device ）では、書き込み先はデフォルトで自分の直下の ai_ssot/ になる。 --mirror で別パスも渡せるが、そこも「人間本人のSSOTではなくAI専用の別ストアを指すこと」と釘を刺してある。 help = \"AI専用ストアのベースパス。人間本人のSSOTを指定しないこと。\" , なお ai_ssot/ の中身（生成された思考データ・索引・メディア）は .gitignore で除外し、フォルダ構造（ .gitkeep ）だけを配布物に含めている。",
       "feedSnippet": "前回、ローカルLLMに save_thought / search_thoughts の tool calling を持たせて、ThoughtsStore（NDJSON＋SHA256ハッシュ連鎖の外部脳）を読み書きさせてみた、という話を書いた。あのときは「そもそも搭載できるのか」を確かめる段階で、書き込みロジックの再利用と dispatch の配線までを確認して終わっていた。 今回は、その先の**「どう実現したか」を、配布向けに切り出した最小構成 llllm_memory_device を題材にまとめる。ローカルの非力なモデルに、追記型の台帳を安全に読み",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--f8G6tK8c--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E3%2581%25AB%25E8%25A8%2598%25E6%2586%25B6%25E8%25A3%2585%25E7%25BD%25AE%25E3%2582%2592%25E6%2590%25AD%25E8%25BC%2589%25E3%2581%2595%25E3%2581%259B%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%25EF%25BC%2588%25E5%25AE%259F%25E8%25A3%2585%25E5%25BF%259C%25E7%2594%25A8%25E7%25B7%25A8%25EF%25BC%2589%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Ryosuke-Tanabe%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzAxNTkyYjY3NTEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--f8G6tK8c--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25ABLLM%25E3%2581%25AB%25E8%25A8%2598%25E6%2586%25B6%25E8%25A3%2585%25E7%25BD%25AE%25E3%2582%2592%25E6%2590%25AD%25E8%25BC%2589%25E3%2581%2595%25E3%2581%259B%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%25EF%25BC%2588%25E5%25AE%259F%25E8%25A3%2585%25E5%25BF%259C%25E7%2594%25A8%25E7%25B7%25A8%25EF%25BC%2589%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Ryosuke-Tanabe%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzAxNTkyYjY3NTEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "ローカルLLMにThoughtsStoreを搭載させてみた（実装応用編）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "7c5e4c504c85d0ea",
@@ -14735,7 +14743,7 @@
       "summaryEn": "OpenAI launched a dedicated ChatGPT program for small businesses, offering resources and support to help smaller organizations adopt AI tools and improve operational efficiency.",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -20402,7 +20410,7 @@
       "summaryEn": "OpenAI introduced a scorecard framework to measure and track AI's progress across social, economic, and safety dimensions, aiming to improve accountability and transparency in how AI development affects the world.",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -23093,7 +23101,7 @@
       "summaryEn": "OpenAI highlights growing momentum in US AI safety policy, with state and federal initiatives shaping a regulatory framework to ensure responsible AI development.",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -23239,7 +23247,7 @@
       "summaryEn": "OpenAI introduced GPT-Red, a model that leverages self-improvement techniques to enhance robustness, marking a significant step toward building more reliable and resilient AI systems.",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -25106,7 +25114,7 @@
       "summaryEn": "OpenAI published a strategic guide for managing AI investments as agentic systems become mainstream, offering practical frameworks to help organizations maximize ROI and govern autonomous AI deployments responsibly.",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -32608,7 +32616,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -34608,7 +34616,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -34686,7 +34694,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -34713,7 +34721,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -34739,7 +34747,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -36144,7 +36152,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -36593,7 +36601,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -37129,7 +37137,7 @@
       "summaryEn": "Semantic Kernel .NET v1.78.0 is out, delivering agent framework improvements and bug fixes that enhance the stability of AI-integrated .NET application development.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "agent",
         "dotnet",
@@ -37163,7 +37171,7 @@
       "summaryEn": "Semantic Kernel Python 1.44.0 delivers incremental bug fixes and improvements to the agent framework and connectors, enhancing stability for developers building AI-powered applications with the SDK.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "agent",
         "llm-orchestration",
@@ -37997,7 +38005,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -38024,7 +38032,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "case-study",
         "codex",
@@ -38269,7 +38277,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-09-26T15:00:34.657Z",
+      "collectedAt": "2026-09-26T15:35:35.595Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

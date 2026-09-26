@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-26T21:43:27.372Z",
+  "generatedAt": "2026-09-26T23:00:41.097Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -8828,7 +8828,15 @@
       "archiveTier": "warm",
       "contentSnippet": "ローカルLLMやオンプレ推論基盤を組む際、量子化フォーマットの選択はほぼ必ず通る道です。しかし「4bit量子化」という括りだけで選んでしまうと、サービング基盤（vLLM・Ollama・llama.cppなど）との相性次第で速度がまったく出ない、という事態に陥ります。 本記事では、GGUF・AWQ・GPTQという3つの主要フォーマットの違いを、vLLM上での実測ベンチマークとともに整理し、Marlinカーネルによる高速化の仕組み、そして自社モデルを量子化する際の実装まで扱います。 まず前提を揃えます。量子化とは、モデルの重み（多くはFP16やBF16）をより少ないビット数（4bitなど）で表現し直すことで、メモリ使用量と推論速度を改善する技術です。GGUF・AWQ・GPTQはいずれも量子化「後」の重みを保存するファイル形式・手法ですが、設計思想が異なります。 GPTQ ：レイヤーごとに二次誤差最小化を解いて量子化パラメータを決める手法。キャリブレーションデータ（少量の代表的なテキスト）を使って量子化誤差を最小化します。 AWQ（Activation-aware Weight Quantization） ：「どの重みが出力に重要かはアクティベーション（活性化値）の大きさで分かる」という着眼点で、重要な重みほど精度を保つようにスケーリングしてから量子化します。 GGUF ：llama.cppエコシステム発祥のファイル形式で、CPU・Mac（Metal）・consumer GPUなど幅広いハードウェアで動かすことを主目的に設計されています。量子化スキーム自体（Q4_K_M等）は独自です。 この設計思想の違いが、後述するベンチマークの結果に直結します。 3つのフォーマットは、vLLMではいずれも --quantization 引数で指定して起動します。",
       "feedSnippet": "「量子化すればGPUメモリが減ると聞いたのでGGUFを選んだが、vLLMで動かしたら思ったより速くならない」 「AWQとGPTQ、どちらも4bitと書いてあるが何が違うのか分からないまま本番投入してしまった」 ローカルLLMやオンプレ推論基盤を組む際、量子化フォーマットの選択はほぼ必ず通る道です。しかし「4bit量子化」という括りだけで選んでしまうと、サービング基盤（vLLM・Ollama・llama.cppなど）との相性次第で速度がまったく出ない、という事態に陥ります。 本記事では、GGUF・AWQ・GPTQという3つの主要フォーマットの違いを、vLL",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--nVjKX9cp--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E9%2587%258F%25E5%25AD%2590%25E5%258C%2596%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25BC%25E3%2583%259E%25E3%2583%2583%25E3%2583%2588%25E3%2582%2592%25E6%25AF%2594%25E8%25BC%2583%25E3%2581%2599%25E3%2582%258B%25EF%25BC%259AGGUF%25E3%2583%25BBAWQ%25E3%2583%25BBGPTQ%25E3%2582%2592vLLM%25E3%2581%25A7%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25AA%25E3%2583%2599%25E3%2583%25AB%25E3%2582%25AF%25E3%2583%25A9%25E3%2583%2595%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzk4MjlhOGY5MzYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--nVjKX9cp--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E9%2587%258F%25E5%25AD%2590%25E5%258C%2596%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25BC%25E3%2583%259E%25E3%2583%2583%25E3%2583%2588%25E3%2582%2592%25E6%25AF%2594%25E8%25BC%2583%25E3%2581%2599%25E3%2582%258B%25EF%25BC%259AGGUF%25E3%2583%25BBAWQ%25E3%2583%25BBGPTQ%25E3%2582%2592vLLM%25E3%2581%25A7%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25AA%25E3%2583%2599%25E3%2583%25AB%25E3%2582%25AF%25E3%2583%25A9%25E3%2583%2595%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzk4MjlhOGY5MzYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "量子化フォーマットを比較する：GGUF・AWQ・GPTQをvLLMで実測する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "217cdf373f6959e8",
@@ -33415,7 +33423,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-26T17:30:39.863Z",
+      "collectedAt": "2026-09-26T23:00:25.500Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39746,7 +39754,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-26T17:30:39.863Z",
+      "collectedAt": "2026-09-26T23:00:25.500Z",
       "tags": [
         "mcp",
         "mcp-server",

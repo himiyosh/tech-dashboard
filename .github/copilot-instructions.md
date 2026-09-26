@@ -239,7 +239,7 @@
 - `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`tests/publisher-impact.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
-- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、`web/src/**` 全体、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - incremental shadowのrenderer、publisher client、専用Worker、D1 migration、Wrangler configもpublisher fingerprintのcritical pathへ含める。generationはrenderer shell digestと分離した固有revision、exact source commit、coverage route family、object byte、quota projectionを保持し、D1 active pointerはexpected revisionとのcompare-and-swapでだけ更新する。coverage incomplete、traffic未観測、budget超過、fingerprint不一致では`serve`へ進まずPagesへ戻す。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
@@ -3187,9 +3187,27 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-481: 保存済み対話の配役変更は新台本と旧台本のprovenanceを分ける
 - **事象**: 記事末尾のソラ/博士の対話をポコとTECHガイドへ改める際、`data/bodies.json`には`a/b`の6発言だけを持つ旧配役の台本が1,030件あり、1件は英語で聞き手へ直接`Sora`と呼びかけていた。AI製品名のSoraに言及する別記事もあるため、名前の一括置換では記事の事実まで壊れる。
 - **根本原因**: 保存schemaはspeaker keyだけで生成当時の配役versionを持たない。Webの名前・絵だけを置き換えても、旧台本の呼びかけや博士口調が残り、反対に「旧台本は文面を変えない」と表示しながらrender時に呼称を直すと説明と実装が矛盾する。
-- **対策**: 保存JSONと記事本文は不変のまま、Web表示に限りspeaker keyと文頭/文末の明白な旧配役への呼びかけだけを整え、製品名Sora、引用、複合語は保持する。新規生成のWorker/Web personaはポコを疑問役、TECHガイドをサイト独自の回答役へ対称更新し、旧台本の表示上の再演と試作イラストであることをJA/ENで明示する。小さなオリジナルSVG spriteをページ内で1回定義し、両話者で参照してmobileでも人物像を見せ、CSSは全detailで共有する。
-- **教訓**: 生成済みcontentに配役versionが無いとき、絵とlabelの変更を「そのキャラクターが元から発言した」と扱わない。新台本のpromptと旧台本の表示provenanceを分け、台本・記事事実を上書きせず、旧名の修正は文脈が明白なvocativeだけに限定する。画像が未承認の別プロジェクトなら既存素材を流用せず文章設定から描いた試作と明示し、繰り返し表示する絵とCSSのstatic build負荷を計測する。
+- **対策**: 保存JSONと記事本文は不変のまま、Web表示に限りspeaker keyと文頭/文末の明白な旧配役への呼びかけだけを整え、製品名Sora、引用、複合語は保持する。新規生成のWorker/Web personaはポコを疑問役、TECHガイドをサイト独自の回答役へ対称更新する。旧台本と試作イラストの状態は開発文書とdraft PRで管理し、読者向けにはAI対話の用途と根拠だけをJA/ENで簡潔に示す (LL-483)。小さなオリジナルSVG spriteをページ内で1回定義し、両話者で参照してmobileでも人物像を見せ、CSSは全detailで共有する。
+- **教訓**: 生成済みcontentに配役versionが無いとき、絵とlabelの変更を「そのキャラクターが元から発言した」と扱わない。新台本のpromptと旧台本の表示provenanceを分け、台本・記事事実を上書きせず、旧名の修正は文脈が明白なvocativeだけに限定する。非公開画像を直接流用せず選ばれたデザインの特徴から独自に描き、試作状態は開発文書へ保持する。繰り返し表示する絵とCSSのstatic build負荷も計測する。
 
+### LL-482: 選ばれた非公開デザイン参照と元画像の公開許可を分ける
+- **事象**: 記事末尾のポコは、以前の変更が統合済みでも丸い金色の独自絵のままで、利用者が選んだ外見と一致しなかった。別リポジトリの正面・三面・表情の参照画像は`canonical`というファイル名を含む一方、manifestでは候補と明記されており、元PNGを公開リポジトリへ複製する許可も確認できていなかった。
+- **根本原因**: main/developへの統合やファイル名を利用者による造形の採用・画像バイナリの再配布許可と同一視すると、視覚的に違う絵を完成扱いするか、確認前に非公開の画像を公開してしまう。文章設定だけの抽象的な描画は、具体的な顔・耳・体型・ポーチの比率を保証しない。
+- **対策**: 非公開の参照は特定commitとSHA-256で読み取り、正面・三面・表情を局所比較する。Webには葉脈のある2枚の耳、横長クリーム色の顔、青緑のフェルト風体、斜めの肩紐とポーチを持つ独自のSVGだけを追加し、元PNGはリポジトリ、PR、Pagesへ移さない。試作状態は文書とdraft PRで保持し、読者向け画面には制作経緯を出さず、実際のPR Previewを参照画像と並べた利用者の明示的な視覚承認があるまでPRをdraftのままにする。
+- **教訓**: キャラクターデザインの選択は元画像バイナリの公開許可でも、後で描く別のイラストの事前承認でもない。非公開素材はmainにあると推測せずimmutableな参照で個別に確認し、公開側はオリジナルの造形をviewportと小さなアバターで比較したうえで別途承認を待つ。
+- **追補**: 初回SVGは右目のクリーム色の内縁だけを欠き、目のgroupが存在するという構造testだけでは検出できなかった。左右の実描画を拡大して比較し、内縁が2件あることをE2Eへ固定した。対称な造形要素は親groupの存在だけでなく、左右それぞれの構造と描画を検証する。
+
+### LL-483: 対話を読む人へ制作過程や素材管理の内情を説明しない
+- **事象**: 実PR Previewのポコ対話欄に「選ばれたデザインから描き起こした試作絵」「元画像は非掲載」「旧配役の台本」といった制作・保管の説明を表示し、利用者から「そんな説明はいらない。もっと適切な説明にして」と指摘された。
+- **根本原因**: 非公開参照画像の公開権限と旧台本の保全を明記する開発・レビュー上の必要性を、記事の読みどころを知りたい読者への説明と混同した。AI対話の根拠を示す既存文の下へ制作経緯を重ねたため、情報が重複し読む目的から逸れた。
+- **対策**: 制作・権利・旧台本の扱いはREADME、LL、draft PRへ保持し、読者向けにはポコと当サイトのTECHガイドが記事の要約と収集情報をもとに読みどころを語るAI生成の対話であることだけをJA/ENの一段で示す。不要になった段落とCSSを削除し、E2Eで両言語の説明と制作過程文言の不在を固定する。
+- **教訓**: 透明性は内部の制作履歴を読者へ全部見せることではない。画面の説明は「これは何か、何を根拠に読めるか」へ絞り、素材の権利確認、試作状態、保存済み台本の移行契約は開発文書・PR reviewで管理する。
+
+### LL-484: 対話の説明を画像横のGrid列に固定すると語中で折り返す
+- **事象**: 実PR Previewの対話ヘッダーで、利用者が「文字の配置に問題」と指摘した。約948px幅の画像ではAI説明がキャラクター2人の右側だけに押し込まれ、日本語の「読みどころ」が「読みど / ころ」に分断され、AIバッジも本文へ窮屈に接していた。
+- **根本原因**: `.ed-chat-duo`をGridの2行にまたがらせ、`.ed-chat-notes`を常に右列へ固定したため、説明文が長いほど画像幅を差し引いた細い列で折り返された。日本語はその列内で語中改行でき、段落内のinlineバッジも後続行の開始位置を揃えなかった。
+- **対策**: 対話パネルをinline-size containerとして扱い、内容幅が930px以下では画像と見出しの次の行へ説明を2列分の全幅で置く。十分な幅のdesktopでは既存の右列配置を保つ。AIバッジと文を小さな2列Gridで揃える。なおmobileで「収集し / た情報」が残ったため、「記事の要約」「収集した情報」「読みどころを」「AI生成」だけをinlineの非分割spanにし、接続詞「をもとに」を「から」へ短縮して390pxでも2行に収めた。320pxで「読みどころ / を語る」と助詞だけが次行へ孤立する経路もあり、助詞を同じ短い単位に含めた。320〜1280pxのJA/ENで説明幅、バッジとの間隔、語句の行位置、横overflowをDOM寸法で検証する。
+- **教訓**: 語中分断を`nowrap`で全段落へ強制したり短縮文だけで隠したりする前に、その文へ配分されたGrid trackの幅と隣接画像の占有を実測する。情報の階層は保ったまま、利用可能なコンポーネント幅に応じて説明の所有行を変え、バッジと本文は折返し後の開始位置まで揃える。広さの是正後も残る語中改行は、その意味単位だけを保護し、段落全体を切り詰めない。
 ### LL-485: 記事の字間とメタデータはsource CSSでなく実表示・実母集団を測る
 - **事象**: 日本語本文の字間が行ごとに伸び、記事末尾には英語slugのトピックと、平均・重要度・寿命・収集時刻が同じ重みで並んだ。Meta Oneの保存本文には不自然な空白が無い一方、実ブラウザの段落は320/390/948/1280pxで`text-align:justify`かつ`text-justify:inter-character`だった。
 - **根本原因**: 両端揃えが日本語の文字間を引き伸ばした。さらに本文の`set:html`から生成された`a.kw`にはAstroのscoped属性が無く、source上の左右padding付き装飾はcomputed padding 0・下線なしで**実際には適用されていなかった**。出典の直近30件平均は比較対象0件でも閲覧記事自身の重要度を平均として返し、archive-onlyで事実と違う値を表示できた。保存済み重要度が旧データで過大なreleaseは表示側で補正されるが、カテゴリ内の同等以上件数は保存値のまま比較し、同じ行のラベルと分母が別の尺度になっていた。

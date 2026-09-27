@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T16:00:46.649Z",
+  "generatedAt": "2026-09-27T17:00:43.742Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -4364,7 +4364,7 @@
       "category": "agent-fw",
       "importance": 2,
       "halfLife": "architecture",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "This post explains how Private Key JWT client authentication works in AgentCore Identity and reviews the supported grant flows. We then walk through creating an AWS KMS signing key, registering its public key with your identity provider, configuring a credential provider on the AWS Management Console, and reviewing example AWS CloudTrail events that record your agent’s access.",
       "image": {
         "src": "https://d2908q01vomqb2.cloudfront.net/f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59/2026/07/29/ml-21480.png",
@@ -10458,7 +10458,15 @@
       "archiveTier": "warm",
       "contentSnippet": "残ったボトルネックは演算量ではありません。1 tokenごとに48個のdecoderモデルを loadする時間でした。そこで今回は、前回「次に実装する」と書いたGemma 4公式MTP （Multi-Token Prediction）drafterによる投機デコードを実装しました。 iPhone 14の高受理プロンプトでは、4.93秒/tokenから2.06秒/tokenへ 2.40倍 別の低受理プロンプトでは4.20秒/tokenから4.12秒/tokenで、改善は 1.9% 52.61秒（0.456 token/s）から43.16秒（0.556 token/s）へ短縮 さらに先頭6層だけを融合し、同じ24 tokenを総時間37.56秒、 「投機デコードで常に2倍」ではありません。受理率、出力長、初回コンパイル、モデルの load cacheによって大きく変わります。むしろ今回の収穫は、どこで効き、どこから先は 従来のKV decodeは、1 tokenごとに48層を一巡します。 iPhone 14での内訳は、48層のpredictが約0.6秒なのに対し、モデルloadが 約3.5〜3.8秒でした。重みをすべてアプリのメモリへ常駐させるとメモリ圧や実行計画の verifyグラフで一度に検証します。今回のverify widthは4です。 できます。1回の48層loadで複数token進めば、今回の支配項だったload時間を受理token数で google/gemma-4-12B-it-assistant の4層drafterを、固定shapeのCore MLグラフへ変換しました。 position、maskです。出力は262,144語彙のlogitsと、次のdraft stepへ渡すhiddenです。 連結順でした。逆でも変換・実行は成功しますが、受理率が壊れます。Hugging Face実装と 従来のseq=1 decodeとは別に、48層それぞれへseq=4 verifyグラフを追加しました。",
       "feedSnippet": "! 本記事はAI（Codex）の補助を受けて執筆しています。実装、モデル変換、実機計測は 実際に行い、本文の整理とレビューにAIを利用しました。 はじめに 前回の Gemma 4 12BをiPhone実機でマルチモーダルチャットにする では、pal4量子化、ANE、KV cacheを組み合わせ、iPhone 14でテキスト・画像・音声を 完全オフライン処理できるところまで進めました。 残ったボトルネックは演算量ではありません。1 tokenごとに48個のdecoderモデルを loadする時間でした。そこで今回は、前回「次に実装する」と書いたGemma ",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--IpVQOGNy--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Gemma%25204%252012B%25E3%2582%2592iPhone%25E3%2581%25A7%25E6%258A%2595%25E6%25A9%259F%25E3%2583%2587%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2581%2599%25E3%2582%258B%25EF%25BC%259A2.4%25E5%2580%258D%25E9%25AB%2598%25E9%2580%259F%25E5%258C%2596%25E3%2581%25A8A19%25E6%259C%2580%25E9%2581%25A9%25E5%258C%2596%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25A2%25E3%2582%25B8%25E3%2582%25B5%25E3%2582%25B7%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSmM5Q3ZnTk85a3o1VFRyUnFSY0pNU2FKVXpDbmN0cVBCUjBSME1SLUtMdk5uZl9jUEY9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--IpVQOGNy--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Gemma%25204%252012B%25E3%2582%2592iPhone%25E3%2581%25A7%25E6%258A%2595%25E6%25A9%259F%25E3%2583%2587%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2581%2599%25E3%2582%258B%25EF%25BC%259A2.4%25E5%2580%258D%25E9%25AB%2598%25E9%2580%259F%25E5%258C%2596%25E3%2581%25A8A19%25E6%259C%2580%25E9%2581%25A9%25E5%258C%2596%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2582%25A2%25E3%2582%25B8%25E3%2582%25B5%25E3%2582%25B7%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSmM5Q3ZnTk85a3o1VFRyUnFSY0pNU2FKVXpDbmN0cVBCUjBSME1SLUtMdk5uZl9jUEY9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "Gemma 4 12BをiPhoneで投機デコードする：2.4倍高速化とA19最適化",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "0745070f8cd6398b",
@@ -33567,7 +33575,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-27T11:31:32.258Z",
+      "collectedAt": "2026-09-27T17:00:26.496Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39898,7 +39906,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-27T11:31:32.258Z",
+      "collectedAt": "2026-09-27T17:00:26.496Z",
       "tags": [
         "mcp",
         "mcp-server",

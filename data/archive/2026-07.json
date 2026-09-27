@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T11:01:10.913Z",
+  "generatedAt": "2026-09-27T11:31:49.065Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -9907,7 +9907,15 @@
       "archiveTier": "warm",
       "contentSnippet": "主モデルの出力を監督モデルが検査し、指摘があれば主モデルが再生成する二段構成を、日本語の議事録要約40問×監督3種で実測しました。効果は監督の選び方で正反対になります。 今回は、照合能力が主モデルに及ばない9B監督が誤検知を重ね、強い主モデルの出力を劣化させました（−0.10） 弱い主モデルには35B-A3B監督が最も効きました（+0.45、期日誤り率は0.33から0.10）。強い主モデルでは自己検査が最も安定しました まず決定論的チェックで機械判定できる誤りを除き、次に自己検査、必要なら別モデル監督を試す。この順番が、今回の条件では最も無駄がありませんでした この記事は、日本語の実務タスクでオープンLLMを実測している四半期評価（ 公開ランキング ）の運用から出た実験記録です。 エージェントを本番運用する米国企業では、主モデルの推論を別の監督モデルが検査し、問題があれば差し戻す多段構成が使われています。AIエージェント企業Sierraは、エンジニアリングブログで「90%の精度の推論モデルに90%の精度の監督モデルを重ねれば、約99%に近づく」という考え方を説明しています（ Meet the AI agent engineer ）。 この99%という計算には、監督が主モデルの誤りを正しく検出し、修正時に新しい誤りを持ち込まないという強い前提があります。では、監督側をどこまで小さくできるのか。デスクトップ1台の秘匿環境（推論をローカルで完結させる構成）を想定し、「小さくて安い監督」が成立する条件を実測で確かめました。 環境 Apple Silicon（M4 Max・ユニファイドメモリ36GB）、mlx-lm 0.31.3。監督と主モデルは同居させず、検査フェーズと再生成フェーズで順番にロード タスク 会議文字起こしから議事録をJSON化する40問。",
       "feedSnippet": "実測結果 主モデルの出力を監督モデルが検査し、指摘があれば主モデルが再生成する二段構成を、日本語の議事録要約40問×監督3種で実測しました。効果は監督の選び方で正反対になります。 主モデル 監督 事実忠実度（0〜2） 期日誤り率 形式適合 検査速度 gemma-4-26b-a4b（強・基準1.83） Qwen3.5-9B 1.73（−0.10） 0.05 0.88 22秒/問 Qwen3.6-35B-A3B 1.85（+0.03） 0.11 0.98 4.1秒/問 自己検査（gemma自身） 1.90（+0.08） 0.08 1.00 3.3秒/問 ll",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--5NIxdinC--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:LLM%25E3%2581%25AE%25E7%259B%25A3%25E7%259D%25A3%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2581%25AF%25E3%2581%25A9%25E3%2581%2593%25E3%2581%25BE%25E3%2581%25A7%25E5%25B0%258F%25E3%2581%2595%25E3%2581%258F%25E3%2581%25A7%25E3%2581%258D%25E3%2582%258B%25E3%2581%258B%25E3%2580%25829B%25E3%2583%25BB35B%25E3%2583%25BB%25E8%2587%25AA%25E5%25B7%25B1%25E6%25A4%259C%25E6%259F%25BB%25E3%2581%25A7%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2597%25E3%2581%259F%25E3%2582%2589%25E4%25B8%2589%25E6%25A7%2598%25E3%2581%25AE%25E7%25B5%2590%25E6%259E%259C%25E3%2581%25AB%25E3%2581%25AA%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:tokimoa%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzRjMzllMDQ4NGYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--5NIxdinC--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:LLM%25E3%2581%25AE%25E7%259B%25A3%25E7%259D%25A3%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2581%25AF%25E3%2581%25A9%25E3%2581%2593%25E3%2581%25BE%25E3%2581%25A7%25E5%25B0%258F%25E3%2581%2595%25E3%2581%258F%25E3%2581%25A7%25E3%2581%258D%25E3%2582%258B%25E3%2581%258B%25E3%2580%25829B%25E3%2583%25BB35B%25E3%2583%25BB%25E8%2587%25AA%25E5%25B7%25B1%25E6%25A4%259C%25E6%259F%25BB%25E3%2581%25A7%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2597%25E3%2581%259F%25E3%2582%2589%25E4%25B8%2589%25E6%25A7%2598%25E3%2581%25AE%25E7%25B5%2590%25E6%259E%259C%25E3%2581%25AB%25E3%2581%25AA%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:tokimoa%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzRjMzllMDQ4NGYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "LLMの監督モデルはどこまで小さくできるか。9B・35B・自己検査で実測したら三様の結果になった",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "4aadf06f4d5893d5",
@@ -33527,7 +33535,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-27T11:00:44.964Z",
+      "collectedAt": "2026-09-27T11:31:32.258Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39858,7 +39866,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-27T11:00:44.964Z",
+      "collectedAt": "2026-09-27T11:31:32.258Z",
       "tags": [
         "mcp",
         "mcp-server",

@@ -2623,7 +2623,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#toc-list-en")).toBeHidden();
     await expect(page.locator(".reading-card .rail-title > .i18n-ja")).toBeVisible();
     await expect(page.locator(".ed-pn")).toHaveAccessibleName("同カテゴリの前後の記事");
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("トップに戻る");
+    await expect(page.locator("#ed-back-to-top")).toHaveAccessibleName("トップに戻る");
 
     await page.getByRole("button", { name: "英語表示に切り替え" }).click();
     await expect(bodyOrigin.locator(":scope > .i18n-en")).toBeVisible();
@@ -2642,7 +2642,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".ed-pn")).toHaveAccessibleName(
       "Adjacent articles in this category",
     );
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("Back to top");
+    await expect(page.locator("#ed-back-to-top")).toHaveAccessibleName("Back to top");
 
     // Scroll-spy: the TOC entry for the second section (or second paragraph
     // in the excerpt fallback) activates when its content is in view.
@@ -2849,49 +2849,46 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
 
       if (width === 390) {
-        await page.evaluate(() => window.scrollTo({ top: 900, behavior: "auto" }));
-        const fab = page.locator("#ed-fab");
-        await expect(fab).toHaveClass(/show/);
-        await expect
-          .poll(() =>
-            page.evaluate(() => {
-              const fab = document.querySelector<HTMLElement>("#ed-fab");
-              const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-              if (!fab || !tabbar) return Number.NEGATIVE_INFINITY;
-              return tabbar.getBoundingClientRect().top - fab.getBoundingClientRect().bottom;
-            }),
-          )
-          .toBeGreaterThanOrEqual(8);
-        const fixedGeometry = await page.evaluate(() => {
-          const fab = document.querySelector<HTMLElement>("#ed-fab");
+        await page.evaluate(() => window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: "instant",
+        }));
+        const backToTop = page.locator("#ed-back-to-top");
+        await expect(backToTop).toHaveAttribute("href", "#");
+        const flowGeometry = await page.evaluate(() => {
+          const action = document.querySelector<HTMLElement>("#ed-back-to-top");
           const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-          if (!fab || !tabbar) return null;
-          const fabRect = fab.getBoundingClientRect();
+          if (!action || !tabbar) return null;
+          const actionRect = action.getBoundingClientRect();
           const tabbarRect = tabbar.getBoundingClientRect();
           const hit = document.elementFromPoint(
-            fabRect.left + fabRect.width / 2,
-            fabRect.top + fabRect.height / 2,
+            actionRect.left + actionRect.width / 2,
+            actionRect.top + actionRect.height / 2,
           );
           return {
-            fab: {
-              top: fabRect.top,
-              right: fabRect.right,
-              bottom: fabRect.bottom,
-              left: fabRect.left,
-              width: fabRect.width,
-              height: fabRect.height,
+            position: getComputedStyle(action).position,
+            inMain: document.querySelector(".entry-main")?.contains(action),
+            action: {
+              top: actionRect.top,
+              right: actionRect.right,
+              bottom: actionRect.bottom,
+              left: actionRect.left,
+              width: actionRect.width,
+              height: actionRect.height,
             },
             tabbarTop: tabbarRect.top,
-            hitIsFab: hit === fab || fab.contains(hit),
+            hitIsAction: hit === action || action.contains(hit),
           };
         });
-        expect(fixedGeometry).not.toBeNull();
-        expect(fixedGeometry!.fab.width).toBeGreaterThanOrEqual(44);
-        expect(fixedGeometry!.fab.height).toBeGreaterThanOrEqual(44);
-        expect(fixedGeometry!.fab.bottom).toBeLessThanOrEqual(
-          fixedGeometry!.tabbarTop - 8,
+        expect(flowGeometry).not.toBeNull();
+        expect(flowGeometry!.position).toBe("static");
+        expect(flowGeometry!.inMain).toBe(true);
+        expect(flowGeometry!.action.width).toBeGreaterThanOrEqual(44);
+        expect(flowGeometry!.action.height).toBeGreaterThanOrEqual(44);
+        expect(flowGeometry!.action.bottom).toBeLessThanOrEqual(
+          flowGeometry!.tabbarTop - 8,
         );
-        expect(fixedGeometry!.hitIsFab).toBe(true);
+        expect(flowGeometry!.hitIsAction).toBe(true);
       }
     }
   });
@@ -13080,6 +13077,12 @@ test.describe("TECH Dashboard smoke", () => {
             height: use.getBBox().height,
           }));
         const chatRect = node.getBoundingClientRect();
+        const chatStyle = getComputedStyle(node);
+        const chatContentWidth = chatRect.width
+          - Number.parseFloat(chatStyle.paddingLeft)
+          - Number.parseFloat(chatStyle.paddingRight)
+          - Number.parseFloat(chatStyle.borderLeftWidth)
+          - Number.parseFloat(chatStyle.borderRightWidth);
         const pokoRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='poko']")!.getBoundingClientRect();
         const guideRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='tech-guide']")!.getBoundingClientRect();
         return {
@@ -13099,6 +13102,7 @@ test.describe("TECH Dashboard smoke", () => {
             chatRight: chatRect.right,
           },
           originLayout: {
+            containerWidth: chatContentWidth,
             headLeft: headRect.left,
             headWidth: headRect.width,
             notesLeft: notesRect.left,
@@ -13130,7 +13134,7 @@ test.describe("TECH Dashboard smoke", () => {
         expect(phrase.fragments, `${width}px ${phrase.value} has one painted fragment`).toBe(1);
         expect(phrase.width, `${width}px ${phrase.value} fits inside the disclosure text`).toBeLessThan(layout.originLayout.textWidth);
       }
-      if (width < 1280) {
+      if (layout.originLayout.containerWidth <= 930) {
         expect(Math.abs(layout.originLayout.notesLeft - layout.originLayout.headLeft)).toBeLessThanOrEqual(1);
         expect(Math.abs(layout.originLayout.notesWidth - layout.originLayout.headWidth)).toBeLessThanOrEqual(1);
         expect(layout.originLayout.notesTop - layout.originLayout.duoBottom).toBeGreaterThanOrEqual(7);
@@ -13156,7 +13160,7 @@ test.describe("TECH Dashboard smoke", () => {
       }
     }
 
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 2000, height: 900 });
     await chat.evaluate((node) => { (node as HTMLElement).style.maxWidth = "948px"; });
     const screenshotWidth = await chat.evaluate((node) => {
       const header = node.querySelector(".ed-chat-head")!.getBoundingClientRect();
@@ -13178,7 +13182,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("AI-generated conversation");
     await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("summary and collected source details");
     expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);
-    for (const width of [390, 375, 320, 948, 980, 981, 1280]) {
+    for (const width of [390, 375, 320, 948, 980, 981, 1280, 2000]) {
       await page.setViewportSize({ width, height: width <= 390 ? 844 : 900 });
       const englishNote = await chat.evaluate((node) => {
         const head = node.querySelector(".ed-chat-head")!.getBoundingClientRect();
@@ -13186,7 +13190,14 @@ test.describe("TECH Dashboard smoke", () => {
         const duo = node.querySelector(".ed-chat-duo")!.getBoundingClientRect();
         const badge = node.querySelector<HTMLElement>(".ed-chat-origin .ai-badge")!;
         const en = node.querySelector<HTMLElement>(".ed-chat-origin .i18n-en")!;
+        const chatRect = node.getBoundingClientRect();
+        const chatStyle = getComputedStyle(node);
         return {
+          containerWidth: chatRect.width
+            - Number.parseFloat(chatStyle.paddingLeft)
+            - Number.parseFloat(chatStyle.paddingRight)
+            - Number.parseFloat(chatStyle.borderLeftWidth)
+            - Number.parseFloat(chatStyle.borderRightWidth),
           leftGap: notes.left - head.left,
           widthGap: notes.width - head.width,
           notesLeft: notes.left,
@@ -13197,7 +13208,7 @@ test.describe("TECH Dashboard smoke", () => {
           pageOverflow: document.documentElement.scrollWidth > innerWidth,
         };
       });
-      if (width < 1280) {
+      if (englishNote.containerWidth <= 930) {
         expect(Math.abs(englishNote.leftGap), `${width}px EN note starts below art`).toBeLessThanOrEqual(1);
         expect(Math.abs(englishNote.widthGap), `${width}px EN note uses the full header`).toBeLessThanOrEqual(1);
       } else {

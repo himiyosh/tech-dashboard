@@ -4718,6 +4718,83 @@ body {
     padding: 0;
   }
 }
+
+/* Article prose retains its reading measure; give long-form source context
+   the spare column instead of leaving it inside an oversized article panel. */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .layout.entry-layout:has(> aside.right:not(:empty)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .layout.entry-layout:has(> aside.right:not(:empty)) > aside.left {
+    display: none;
+  }
+
+  .layout.entry-layout > .entry-main {
+    width: 100%;
+    max-width: 960px;
+    justify-self: center;
+  }
+}
+
+@media (min-width: 1181px) and (max-width: 1359px) {
+  .layout.entry-layout:has(> aside.right:not(:empty)) {
+    grid-template-columns: clamp(236px, 18vw, 244px) minmax(0, 1fr) 220px;
+  }
+
+  .layout.entry-layout:has(> aside.right:not(:empty))
+    > aside.right:not(.home-right):not(.status-insights) {
+    display: block;
+  }
+}
+
+@media (min-width: 1360px) {
+  .layout.entry-layout {
+    grid-template-columns:
+      clamp(236px, 17vw, 252px)
+      minmax(0, 1fr)
+      clamp(232px, 20vw, 360px);
+  }
+}
+
+.layout.entry-layout {
+  --entry-rail-top: 120px;
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .layout.entry-layout {
+    --entry-rail-top: 128px;
+  }
+}
+
+.layout.entry-layout:has(> aside.right:not(:empty)) > aside.left,
+.layout.entry-layout:has(> aside.right:not(:empty)) > aside.right,
+.layout.entry-layout .toc-card {
+  top: var(--entry-rail-top);
+}
+
+.layout.entry-layout .toc-list a {
+  align-items: center;
+  min-height: 45px;
+}
+
+@media (max-width: 900px) {
+  body.entry-detail-page .crumb-inner {
+    min-height: 45px;
+    padding-block: 0;
+  }
+
+  body.entry-detail-page .crumb-inner a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 45px;
+    min-height: 45px;
+    margin-block: 0;
+    padding-block: 0;
+  }
+}
+
 /* ============ Phase 1: visual polish ============ */
 
 /* Vivid background gradient (replaces flat dark) */
@@ -6077,11 +6154,16 @@ html:not([data-advertising-consent="allowed"]) .ad-slot {
 }
 
 .ed-chat-head {
+  position: static;
+  z-index: auto;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 4px 14px;
   margin-bottom: 16px;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .ed-chat-duo {

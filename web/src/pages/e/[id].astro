@@ -469,7 +469,7 @@ const jsonLd = buildArticleJsonLd({
     <div class="ed-progress-bar"></div>
   </div>
 
-  <div class="layout">
+  <div class="layout entry-layout">
     <Sidebar active={entryIsArxiv ? undefined : entry.category} />
 
     <main class="entry-main" id="entry-main">
@@ -1117,6 +1117,12 @@ const jsonLd = buildArticleJsonLd({
           </div>
         </section>
       )}
+
+      <a class="ed-back-to-top" id="ed-back-to-top" href="#" style={`--cat-color:${catColor}`}>
+        <span aria-hidden="true">↑</span>
+        <span class="i18n-ja">トップに戻る</span>
+        <span class="i18n-en" lang="en">Back to top</span>
+      </a>
     </main>
 
     {/* RIGHT RAIL */}
@@ -1309,15 +1315,6 @@ const jsonLd = buildArticleJsonLd({
     </aside>
   </div>
 
-  {/* Floating back-to-top */}
-  <button class="ed-fab" id="ed-fab" type="button" aria-labelledby="ed-fab-label" style={`--cat-color:${catColor}`}>
-    <span aria-hidden="true">↑</span>
-    <span id="ed-fab-label" class="visually-hidden">
-      <span class="i18n-ja">トップに戻る</span>
-      <span class="i18n-en" lang="en">Back to top</span>
-    </span>
-  </button>
-
 </Portal>
 
 <script is:inline>
@@ -1332,16 +1329,16 @@ const jsonLd = buildArticleJsonLd({
       var scrolled = -rect.top;
       var pct = Math.max(0, Math.min(1, scrolled / Math.max(1, total)));
       bar.style.transform = "scaleX(" + pct.toFixed(4) + ")";
-      var fab = document.getElementById("ed-fab");
-      if (fab) fab.classList.toggle("show", scrolled > window.innerHeight * 0.5);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    // FAB back-to-top
-    var fab = document.getElementById("ed-fab");
-    if (fab) fab.addEventListener("click", function () {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    var backToTop = document.getElementById("ed-back-to-top");
+    if (backToTop) backToTop.addEventListener("click", function () {
+      requestAnimationFrame(function () {
+        var logo = document.querySelector("body > header .logo");
+        if (logo instanceof HTMLElement) logo.focus({ preventScroll: true });
+      });
     });
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
@@ -2133,21 +2130,32 @@ const jsonLd = buildArticleJsonLd({
   .cat-jump-name { flex: 1; font-weight: 600; color: var(--cat-color); }
   .cat-jump-arrow { color: var(--muted); }
 
-  /* FAB */
-  .ed-fab {
-    position: fixed; right: 24px; bottom: 24px;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--cat-color); color: #0c0c0a;
-    border: none; cursor: pointer;
-    font-size: 18px; font-weight: 700;
-    box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--cat-color) 60%, transparent);
-    opacity: 0; pointer-events: none;
-    transform: translateY(8px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 50;
+  .ed-back-to-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 45px;
+    margin: 24px auto 0;
+    padding: 9px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
   }
-  .ed-fab.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .ed-back-to-top:hover {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+  }
+  .ed-back-to-top span[aria-hidden="true"] {
+    font-size: 16px;
+    line-height: 1;
+  }
 
   /* RESPONSIVE */
   @media (max-width: 1100px) {
@@ -2169,22 +2177,15 @@ const jsonLd = buildArticleJsonLd({
     .ed-pullquote { padding: 18px 18px 14px; }
     .ed-rel-grid { grid-template-columns: 1fr; }
     .ed-pn { grid-template-columns: 1fr; }
-    .ed-fab { right: 14px; bottom: 14px; }
   }
   @media (max-width: 720px) {
     .ed-meta-strip { grid-template-columns: minmax(0, 1fr); }
-    .ed-topic-links a { min-height: 36px; }
-    .ed-topic-more summary { min-height: 44px; }
     /* 狭幅では日本語タイトルが 3 行以上必要になり、2 行 clamp では
        関連記事・前後記事のタイトルが途中で切れる (375px 実測)。
        clamp は上限なので短いタイトルの高さは変わらない。 */
     .ed-rel-title,
     .ed-pn-title {
       -webkit-line-clamp: 4;
-    }
-
-    .ed-fab {
-      bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
     /* Both actions stay inset and rounded like the rest of the reading column. */
@@ -2207,5 +2208,13 @@ const jsonLd = buildArticleJsonLd({
       align-items: flex-start;
       gap: 10px;
     }
+  }
+  @media (max-width: 900px) {
+    .ed-topic-links a { min-height: 45px; }
+    .ed-topic-more summary { min-height: 44px; }
+  }
+  @media (min-width: 721px) {
+    .ed-sec-h,
+    .ed-body-prose p { scroll-margin-top: 136px; }
   }
 </style>

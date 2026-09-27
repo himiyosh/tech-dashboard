@@ -2623,7 +2623,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#toc-list-en")).toBeHidden();
     await expect(page.locator(".reading-card .rail-title > .i18n-ja")).toBeVisible();
     await expect(page.locator(".ed-pn")).toHaveAccessibleName("同カテゴリの前後の記事");
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("ページ上部へ");
+    await expect(page.locator("#ed-fab .ed-fab-label > .i18n-ja")).toHaveText("ページ上部へ");
 
     await page.getByRole("button", { name: "英語表示に切り替え" }).click();
     await expect(bodyOrigin.locator(":scope > .i18n-en")).toBeVisible();
@@ -2642,7 +2642,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".ed-pn")).toHaveAccessibleName(
       "Adjacent articles in this category",
     );
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("Scroll to top");
+    await expect(page.locator("#ed-fab .ed-fab-label > .i18n-en")).toHaveText("Scroll to top");
 
     // Scroll-spy: the TOC entry for the second section (or second paragraph
     // in the excerpt fallback) activates when its content is in view.

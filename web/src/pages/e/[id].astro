@@ -1348,13 +1348,17 @@ const jsonLd = buildArticleJsonLd({
         document.querySelector(".layout.entry-layout > aside.left"),
         document.querySelector(".layout.entry-layout > aside.right"),
         footer,
+        document.querySelector(".privacy-consent-prompt"),
       ].filter(Boolean);
       fab.dataset.floating = "true";
+      fab.dataset.tooltip = "above";
+      fab.dataset.position = "hidden";
       var size = fab.getBoundingClientRect().width;
       fab.hidden = true;
       fab.inert = true;
       fab.tabIndex = -1;
       var tooltipSize = null;
+      var showTimer = 0;
 
       function intersects(a, b, gap) {
         return a.left < b.right + gap && a.right > b.left - gap
@@ -1401,6 +1405,11 @@ const jsonLd = buildArticleJsonLd({
       }
 
       function hideFab() {
+        if (showTimer) {
+          clearTimeout(showTimer);
+          showTimer = 0;
+        }
+        if (fab.hidden) return;
         if (document.activeElement === fab) {
           var logoBox = logo && logo.getBoundingClientRect();
           if (logo instanceof HTMLElement && logoBox
@@ -1421,7 +1430,7 @@ const jsonLd = buildArticleJsonLd({
         fab.dataset.position = "hidden";
       }
 
-      function updateFab() {
+      function updateFab(immediate) {
         var tooltip = measureTooltip();
         if (!tooltip) {
           hideFab();
@@ -1433,16 +1442,27 @@ const jsonLd = buildArticleJsonLd({
           ? tabbar.getBoundingClientRect() : null;
         var footerBox = footer && getComputedStyle(footer).display !== "none"
           ? footer.getBoundingClientRect() : null;
-        var bottom = navBox ? viewportHeight - navBox.top + 12 : 24;
+        var right = viewportWidth <= 720 ? 16 : 24;
+        var bottom = navBox ? navBox.height + 12 : 24;
+        if (fab.style.right !== right + "px") fab.style.right = right + "px";
+        if (fab.style.bottom !== bottom + "px") fab.style.bottom = bottom + "px";
+        var left = viewportWidth - right - size;
         var top = viewportHeight - bottom - size;
+        var buttonRect = { left, right: left + size, top, bottom: top + size };
+        var labelRect = {
+          left: buttonRect.right - tooltip.width,
+          right: buttonRect.right,
+          top: buttonRect.top - tooltip.height - 8,
+          bottom: buttonRect.top - 8,
+        };
         var headerBottom = header ? header.getBoundingClientRect().bottom + 12 : 12;
         var lowerLimit = navBox ? navBox.top - 8 : viewportHeight - 8;
         if (footerBox && footerBox.top < viewportHeight && footerBox.bottom > 0) {
           lowerLimit = Math.min(lowerLimit, footerBox.top - 8);
         }
         var occupied = [];
-        var bandTop = Math.max(headerBottom, top - 3 * (size + 12) - tooltip.height - 10);
-        var bandBottom = top + size + tooltip.height + 10;
+        var bandTop = labelRect.top - 6;
+        var bandBottom = buttonRect.bottom + 6;
 
         for (var root of roots) {
           var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -1459,7 +1479,7 @@ const jsonLd = buildArticleJsonLd({
               if (box.bottom >= bandTop - 6 && box.top <= bandBottom + 6) occupied.push(box);
             }
           }
-          root.querySelectorAll("a, button, summary, input, select, textarea, [role='button'], .ed-hero, .ed-chat-face")
+          root.querySelectorAll("a, button, summary, input, select, textarea, [role='button'], [role='img'], img, picture, video, iframe, canvas, svg, .ed-hero, .ed-chat-face")
             .forEach(function (element) {
               if (element === fab || fab.contains(element) || !element.getClientRects().length
                 || getComputedStyle(element).visibility !== "visible") return;
@@ -1468,64 +1488,30 @@ const jsonLd = buildArticleJsonLd({
             });
         }
 
-        var cornerLeft = viewportWidth - (viewportWidth <= 720 ? 16 : 24) - size;
-        var mainLeft = Math.min(cornerLeft, main.getBoundingClientRect().right - size);
-        var lefts = [cornerLeft];
-        if (cornerLeft - mainLeft >= 8) lefts.push(mainLeft);
-        var chosen = null;
         function safe(rect, gap) {
           return rect.left >= 8 && rect.right <= viewportWidth - 8
             && rect.top >= Math.max(8, headerBottom) && rect.bottom <= lowerLimit
             && !occupied.some(function (box) { return intersects(box, rect, gap); });
         }
-        if (!document.querySelector("dialog[open]")) {
-          for (var row = 0; row < 4 && !chosen; row++) {
-            for (var left of lefts) {
-              var rect = {
-                left, right: left + size,
-                top: top - row * (size + 12),
-                bottom: top - row * (size + 12) + size,
-              };
-              if (!safe(rect, 6)) continue;
-              var labelRects = [
-                {
-                  placement: "above",
-                  left: rect.right - tooltip.width, right: rect.right,
-                  top: rect.top - tooltip.height - 8, bottom: rect.top - 8,
-                },
-                {
-                  placement: "left",
-                  left: rect.left - tooltip.width - 10, right: rect.left - 10,
-                  top: rect.top + (size - tooltip.height) / 2,
-                  bottom: rect.top + (size + tooltip.height) / 2,
-                },
-                {
-                  placement: "below",
-                  left: rect.right - tooltip.width, right: rect.right,
-                  top: rect.bottom + 8, bottom: rect.bottom + 8 + tooltip.height,
-                },
-              ];
-              var safeLabel = labelRects.find(function (box) { return safe(box, 4); });
-              if (!safeLabel) continue;
-              chosen = { rect, tooltip: safeLabel.placement };
-              break;
-            }
-          }
-        }
-
-        if (!chosen) {
+        if (document.querySelector("dialog[open]") || !safe(buttonRect, 6) || !safe(labelRect, 4)) {
           hideFab();
           return;
         }
-        fab.style.right = viewportWidth - chosen.rect.right + "px";
-        fab.style.bottom = viewportHeight - chosen.rect.bottom + "px";
-        fab.dataset.tooltip = chosen.tooltip;
+        if (fab.hidden && !immediate) {
+          if (!showTimer) {
+            showTimer = setTimeout(function () {
+              showTimer = 0;
+              updateFab(true);
+            }, 160);
+          }
+          return;
+        }
         fab.hidden = false;
         fab.inert = false;
         fab.removeAttribute("tabindex");
-        fab.dataset.position = chosen.rect.left === cornerLeft ? "corner" : "reading-gutter";
+        fab.dataset.position = "corner";
         var hit = document.elementFromPoint(
-          chosen.rect.left + size / 2, chosen.rect.top + size / 2,
+          buttonRect.left + size / 2, buttonRect.top + size / 2,
         );
         if (!hit || !fab.contains(hit)) hideFab();
       }
@@ -1539,7 +1525,13 @@ const jsonLd = buildArticleJsonLd({
           updateFab();
         });
       }
-      window.addEventListener("scroll", scheduleFab, { passive: true });
+      window.addEventListener("scroll", function () {
+        if (showTimer) {
+          clearTimeout(showTimer);
+          showTimer = 0;
+        }
+        scheduleFab();
+      }, { passive: true });
       window.addEventListener("resize", function () {
         tooltipSize = null;
         scheduleFab();
@@ -1548,7 +1540,10 @@ const jsonLd = buildArticleJsonLd({
         window.visualViewport.addEventListener("resize", scheduleFab);
         window.visualViewport.addEventListener("scroll", scheduleFab, { passive: true });
       }
-      new ResizeObserver(scheduleFab).observe(main);
+      var resizeObserver = new ResizeObserver(scheduleFab);
+      resizeObserver.observe(main);
+      if (footer instanceof HTMLElement) resizeObserver.observe(footer);
+      if (tabbar instanceof HTMLElement) resizeObserver.observe(tabbar);
       new MutationObserver(scheduleFab).observe(main.parentElement, {
         childList: true, characterData: true, subtree: true,
       });
@@ -1565,7 +1560,7 @@ const jsonLd = buildArticleJsonLd({
           if (logo instanceof HTMLElement) focusReturn(logo);
         });
       });
-      updateFab();
+      updateFab(true);
     }
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
@@ -2400,16 +2395,6 @@ const jsonLd = buildArticleJsonLd({
     overflow: hidden;
     clip-path: inset(50%);
     pointer-events: none;
-  }
-  .ed-fab[data-floating][data-tooltip="left"] .ed-fab-label {
-    top: 50%;
-    right: calc(100% + 10px);
-    bottom: auto;
-    transform: translateY(-50%);
-  }
-  .ed-fab[data-floating][data-tooltip="below"] .ed-fab-label {
-    top: calc(100% + 8px);
-    bottom: auto;
   }
   .ed-fab[data-floating]:is(:hover, :focus) .ed-fab-label {
     width: max-content;

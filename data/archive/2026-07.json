@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T05:00:45.995Z",
+  "generatedAt": "2026-09-27T05:59:21.046Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -9335,7 +9335,15 @@
       "archiveTier": "warm",
       "contentSnippet": "Git のチェックアウトを OverlayFS で速くする、という話を論文で知りました。大阪大学の OverlayGit （情報処理学会論文誌, 2025）です。 読んでいて刺さったのは実装の細部より、 「blob 展開が高いなら、空間を使って先に展開しておけば切替を軽くできる」 という整理でした。MSR（リポジトリマイニング）向けの話ですが、個人開発の「保存のたびに履歴を残したい」にも使えそうだと思い、VS Code / Cursor 拡張の MicroGit （本稿時点 v4.0.0 ）を作りました。 本ツール・本記事は、論文の著者や所属機関とは 無関係の個人プロジェクト です。公開されている研究を読んで着想した実装であり、公式の再実装や共同研究ではありません。 参考にした論文: 三原公平, 柗本真佑, 楠本真二, OverlayGit：OverlayFSを用いた高速なGitファイルシステム , 情報処理学会論文誌, 2025 論文の主張を、自分の理解の範囲で短くまとめます（誤りがあれば論文側を正としてください）。 Git のチェックアウトが遅い主因は blob の展開と作業ツリーの書き換え で、MSR のように多数リビジョンを行き来すると特に効く、という問題設定です。既存の対抗策として論文でも触れられているものは、だいたい次のような対比になります。 OverlayGit のキーアイデアは、論文の表現を借りると 「空間的資源を活用した時間計算量の削減」 （いわゆる空間で時間を買う）です。 書き込みレイヤや .git レイヤも載せて、読み書き可能な Git ファイルシステムとして MSR 用途に寄せている、とのことです。評価では Git 比で最大 13 倍程度のチェックアウト高速化が報告されています。 論文の主戦場は 大規模リポジトリの MSR です。自分が欲しかったのは別物でした。 なので「論文どおりに OverlayFS をマウントする」ではなく、 アイデアだけ借りて、エディタ拡張の制約に合わせて作り直す 方針にしました。",
       "feedSnippet": "はじめに Git のチェックアウトを OverlayFS で速くする、という話を論文で知りました。大阪大学の OverlayGit（情報処理学会論文誌, 2025）です。 読んでいて刺さったのは実装の細部より、「blob 展開が高いなら、空間を使って先に展開しておけば切替を軽くできる」 という整理でした。MSR（リポジトリマイニング）向けの話ですが、個人開発の「保存のたびに履歴を残したい」にも使えそうだと思い、VS Code / Cursor 拡張の MicroGit（本稿時点 v4.0.0）を作りました。 本ツール・本記事は、論文の著者や所属機関とは無",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--gTnyajRX--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:OverlayGit%2520%25E3%2581%25AE%25E8%25AB%2596%25E6%2596%2587%25E3%2582%2592%25E8%25AA%25AD%25E3%2582%2593%25E3%2581%25A7%25E3%2580%2581%25E4%25BF%259D%25E5%25AD%2598%25E3%2581%2594%25E3%2581%25A8%25E3%2581%25AE%25E3%2583%259E%25E3%2582%25A4%25E3%2582%25AF%25E3%2583%25AD%25E5%25B1%25A5%25E6%25AD%25B4%25E3%2583%2584%25E3%2583%25BC%25E3%2583%25AB%25E3%2582%2592%25E4%25BD%259C%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:usudon%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVNXaElRTTROb05ETHlyOGdodmo5T0paeUZsWG9ONlNFcXd3TjlhNm1RR05lREhvT0o9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--gTnyajRX--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:OverlayGit%2520%25E3%2581%25AE%25E8%25AB%2596%25E6%2596%2587%25E3%2582%2592%25E8%25AA%25AD%25E3%2582%2593%25E3%2581%25A7%25E3%2580%2581%25E4%25BF%259D%25E5%25AD%2598%25E3%2581%2594%25E3%2581%25A8%25E3%2581%25AE%25E3%2583%259E%25E3%2582%25A4%25E3%2582%25AF%25E3%2583%25AD%25E5%25B1%25A5%25E6%25AD%25B4%25E3%2583%2584%25E3%2583%25BC%25E3%2583%25AB%25E3%2582%2592%25E4%25BD%259C%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:usudon%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVNXaElRTTROb05ETHlyOGdodmo5T0paeUZsWG9ONlNFcXd3TjlhNm1RR05lREhvT0o9czI1MC1j%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "OverlayGit の論文を読んで、保存ごとのマイクロ履歴ツールを作ってみた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "04bde16699b5b9a5",
@@ -33471,7 +33479,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-27T05:00:29.011Z",
+      "collectedAt": "2026-09-27T05:59:01.909Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39802,7 +39810,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-27T05:00:29.011Z",
+      "collectedAt": "2026-09-27T05:59:01.909Z",
       "tags": [
         "mcp",
         "mcp-server",

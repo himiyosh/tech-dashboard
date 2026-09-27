@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T19:55:27.295Z",
+  "generatedAt": "2026-09-27T21:01:00.473Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -10716,7 +10716,15 @@
       "archiveTier": "warm",
       "contentSnippet": "「Copilot CLI を -p で叩くだけでしょ?」と思って始めたら、 Linux の argv サイズ上限 、 \"周辺の難所\" を一通り踏みました。本記事はその実装と、ハマりどころの解決策です。 Webhook は HMAC 署名検証 して偽造ペイロードを弾く。 GitHub トークンは 用途別に 2 枚 使い分ける（Copilot 認証用と書き込み用）。 PR の diff / タイトルは 外部入力（攻撃面） として扱い、プロンプト境界をランダム化する。 copilot -p は argv 1 引数のサイズ上限 に当たるので、サイズ計測と再切り詰めをする。 Copilot CLI のレビュー自体は GitHub Actions でも組めます。それでも Jenkins に載せたのは、 既存の Jenkins 資産（K8s エージェント・Credentials・通知基盤）をそのまま使える。 1 つの Webhook エンドポイントで複数リポジトリを捌ける 。 ペイロードの $.repository.full_name でリポジトリを動的に判定するので、リポが増えても ジョブは増やさず Webhook を 1 本足すだけで済みます。 [ key: 'PR_NUMBER' , value: '$.pull_request.number' ], [ key: 'REPO_FULL_NAME' , value: '$.repository.full_name' ], [ key: 'PR_HEAD_REF' , value: '$.pull_request.head.ref' ], [ key: 'PR_TITLE' , value: '$.pull_request.title' ], [ key: 'WEBHOOK_ACTION' , value: '$.action' ], ?token=... 付きの URL だけでは、URL を知っている第三者が偽の pull_request ペイロードを送れてしまいます。",
       "feedSnippet": "PR が来るたびに @github/copilot で差分を自動レビューし、結果を PR コメントに 貼る Jenkins パイプラインを作りました。 「Copilot CLI を -p で叩くだけでしょ?」と思って始めたら、Linux の argv サイズ上限、 プロンプ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MzUxMTUzJTJGMGM4NzNmM2IyYjI1MWRkZGYwZmRkMGEzMTFiNThlMjlmMmNjNzNjMiUyRnhfbGFyZ2UucG5nJTNGMTc3MjAxODg0OT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OWFiMjc3ZGJlNjJiY2Q1OWFlMGRlNTY5N2U3NGQyOTk%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkYyMDc3NzA2NTMzODkzMmUyMWVjMjk3MjI5ZDVkZmI5NDk5MWI5YzFhJTJGb3JpZ2luYWwuanBnJTNGMTc2OTAwMDk3MD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1lYjc1ZTQzMzAzYTdlNTkzNDQ4Yjc4NDZiMjljYTgxZA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D43961613a658222a14a7cee2ffc719c1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9SmVua2lucyVFMyU4MSVBN0dpdEh1YiUyMENvcGlsb3QlMjBDTEklRTMlODElQUJQUiVFMyU4MiU5MiVFOCU4NyVBQSVFNSU4QiU5NSVFMyU4MyVBQyVFMyU4MyU5MyVFMyU4MyVBNSVFMyU4MyVCQyVFMyU4MSU5NSVFMyU4MSU5QiVFMyU4MiU4QiUyMCVFMiU4MCU5NSUyMEUyQklHJUUzJTgzJUJCJUUzJTgzJTk3JUUzJTgzJUFEJUUzJTgzJUIzJUUzJTgzJTk3JUUzJTgzJTg4JUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgyJUE3JUUzJTgyJUFGJUUzJTgyJUI3JUUzJTgzJUE3JUUzJTgzJUIzJUUzJTgzJUJCJUUzJTgzJTg4JUUzJTgzJUJDJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NGJlZjE1Njg2OTVkYTUzOTgxYTUyNTJkYTI0ODhmMDg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBqcWl0LXl1a2lvbm8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz00ODVkNTIyOTBiOGE5MTgzNTQ1YWY5NTQ4YWJkZGU2OQ&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-SlFJVA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f471372ac06f2e56d166c94579846b7e",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0MzUxMTUzJTJGMGM4NzNmM2IyYjI1MWRkZGYwZmRkMGEzMTFiNThlMjlmMmNjNzNjMiUyRnhfbGFyZ2UucG5nJTNGMTc3MjAxODg0OT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OWFiMjc3ZGJlNjJiY2Q1OWFlMGRlNTY5N2U3NGQyOTk%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkYyMDc3NzA2NTMzODkzMmUyMWVjMjk3MjI5ZDVkZmI5NDk5MWI5YzFhJTJGb3JpZ2luYWwuanBnJTNGMTc2OTAwMDk3MD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz1lYjc1ZTQzMzAzYTdlNTkzNDQ4Yjc4NDZiMjljYTgxZA%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D43961613a658222a14a7cee2ffc719c1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9SmVua2lucyVFMyU4MSVBN0dpdEh1YiUyMENvcGlsb3QlMjBDTEklRTMlODElQUJQUiVFMyU4MiU5MiVFOCU4NyVBQSVFNSU4QiU5NSVFMyU4MyVBQyVFMyU4MyU5MyVFMyU4MyVBNSVFMyU4MyVCQyVFMyU4MSU5NSVFMyU4MSU5QiVFMyU4MiU4QiUyMCVFMiU4MCU5NSUyMEUyQklHJUUzJTgzJUJCJUUzJTgzJTk3JUUzJTgzJUFEJUUzJTgzJUIzJUUzJTgzJTk3JUUzJTgzJTg4JUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI4JUUzJTgyJUE3JUUzJTgyJUFGJUUzJTgyJUI3JUUzJTgzJUE3JUUzJTgzJUIzJUUzJTgzJUJCJUUzJTgzJTg4JUUzJTgzJUJDJUUyJTgwJUE2JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NGJlZjE1Njg2OTVkYTUzOTgxYTUyNTJkYTI0ODhmMDg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBqcWl0LXl1a2lvbm8mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz00ODVkNTIyOTBiOGE5MTgzNTQ1YWY5NTQ4YWJkZGU2OQ&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-SlFJVA&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=f471372ac06f2e56d166c94579846b7e",
+        "alt": "JenkinsでGitHub Copilot CLIにPRを自動レビューさせる ― E2BIG・プロンプトインジェクション・トークン地獄との戦い",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "b46596c0b69fb7d2",
@@ -14967,7 +14975,7 @@
       "summaryEn": "OpenAI launched a dedicated ChatGPT program for small businesses, offering resources and support to help smaller organizations adopt AI tools and improve operational efficiency.",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -20634,7 +20642,7 @@
       "summaryEn": "OpenAI introduced a scorecard framework to measure and track AI's progress across social, economic, and safety dimensions, aiming to improve accountability and transparency in how AI development affects the world.",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -23325,7 +23333,7 @@
       "summaryEn": "OpenAI highlights growing momentum in US AI safety policy, with state and federal initiatives shaping a regulatory framework to ensure responsible AI development.",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -23471,7 +23479,7 @@
       "summaryEn": "OpenAI introduced GPT-Red, a model that leverages self-improvement techniques to enhance robustness, marking a significant step toward building more reliable and resilient AI systems.",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -25338,7 +25346,7 @@
       "summaryEn": "OpenAI published a strategic guide for managing AI investments as agentic systems become mainstream, offering practical frameworks to help organizations maximize ROI and govern autonomous AI deployments responsibly.",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -32840,7 +32848,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -34840,7 +34848,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -34918,7 +34926,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -34945,7 +34953,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -34971,7 +34979,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -36376,7 +36384,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -36825,7 +36833,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -37361,7 +37369,7 @@
       "summaryEn": "Semantic Kernel .NET v1.78.0 is out, delivering agent framework improvements and bug fixes that enhance the stability of AI-integrated .NET application development.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "agent",
         "dotnet",
@@ -37395,7 +37403,7 @@
       "summaryEn": "Semantic Kernel Python 1.44.0 delivers incremental bug fixes and improvements to the agent framework and connectors, enhancing stability for developers building AI-powered applications with the SDK.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "agent",
         "llm-orchestration",
@@ -38229,7 +38237,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -38256,7 +38264,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "case-study",
         "codex",
@@ -38501,7 +38509,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-09-27T15:30:35.320Z",
+      "collectedAt": "2026-09-27T21:00:44.393Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",

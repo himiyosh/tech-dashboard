@@ -469,7 +469,7 @@ const jsonLd = buildArticleJsonLd({
     <div class="ed-progress-bar"></div>
   </div>
 
-  <div class="layout">
+  <div class="layout entry-layout">
     <Sidebar active={entryIsArxiv ? undefined : entry.category} />
 
     <main class="entry-main" id="entry-main">
@@ -1117,6 +1117,14 @@ const jsonLd = buildArticleJsonLd({
           </div>
         </section>
       )}
+
+      <a class="ed-fab" id="ed-fab" href="#" aria-labelledby="ed-fab-label" style={`--cat-color:${catColor}`}>
+        <span class="ed-fab-arrow" aria-hidden="true">↑</span>
+        <span class="ed-fab-label" id="ed-fab-label">
+          <span class="i18n-ja">ページ上部へ</span>
+          <span class="i18n-en" lang="en">Scroll to top</span>
+        </span>
+      </a>
     </main>
 
     {/* RIGHT RAIL */}
@@ -1309,15 +1317,6 @@ const jsonLd = buildArticleJsonLd({
     </aside>
   </div>
 
-  {/* Floating back-to-top */}
-  <button class="ed-fab" id="ed-fab" type="button" aria-labelledby="ed-fab-label" style={`--cat-color:${catColor}`}>
-    <span aria-hidden="true">↑</span>
-    <span id="ed-fab-label" class="visually-hidden">
-      <span class="i18n-ja">トップに戻る</span>
-      <span class="i18n-en" lang="en">Back to top</span>
-    </span>
-  </button>
-
 </Portal>
 
 <script is:inline>
@@ -1332,17 +1331,89 @@ const jsonLd = buildArticleJsonLd({
       var scrolled = -rect.top;
       var pct = Math.max(0, Math.min(1, scrolled / Math.max(1, total)));
       bar.style.transform = "scaleX(" + pct.toFixed(4) + ")";
-      var fab = document.getElementById("ed-fab");
-      if (fab) fab.classList.toggle("show", scrolled > window.innerHeight * 0.5);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    // FAB back-to-top
     var fab = document.getElementById("ed-fab");
-    if (fab) fab.addEventListener("click", function () {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    if (fab instanceof HTMLAnchorElement && main) {
+      var logo = document.querySelector("body > header .logo");
+      var tabbar = document.querySelector(".mobile-tabbar");
+      var footer = document.querySelector(".footer-bar");
+      fab.dataset.floating = "true";
+      fab.dataset.tooltip = "above";
+
+      function focusReturn(target) {
+        target.classList.add("ed-fab-focus-return");
+        target.addEventListener("blur", function () {
+          target.classList.remove("ed-fab-focus-return");
+        }, { once: true });
+        target.focus({ preventScroll: true });
+      }
+
+      function updateFab() {
+        var viewportWidth = document.documentElement.clientWidth;
+        var navBox = tabbar && getComputedStyle(tabbar).display !== "none"
+          ? tabbar.getBoundingClientRect() : null;
+        var footerBox = footer && getComputedStyle(footer).display !== "none"
+          ? footer.getBoundingClientRect() : null;
+        var right = viewportWidth <= 720 ? 16 : 24;
+        var bottom = navBox ? navBox.height + 12 : Math.max(24, (footerBox?.height ?? 0) + 12);
+        if (fab.style.right !== right + "px") fab.style.right = right + "px";
+        if (fab.style.bottom !== bottom + "px") fab.style.bottom = bottom + "px";
+        var dialog = document.querySelector("dialog[open]");
+        if (dialog) {
+          if (document.activeElement === fab) {
+            var next = dialog.querySelector("a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])");
+            if (next instanceof HTMLElement) next.focus({ preventScroll: true });
+            else {
+              console.error("[article] Open dialog has no focusable control");
+              fab.blur();
+            }
+          }
+          fab.hidden = true;
+          fab.inert = true;
+          fab.tabIndex = -1;
+          fab.dataset.position = "hidden";
+          return;
+        }
+        fab.hidden = false;
+        fab.inert = false;
+        fab.removeAttribute("tabindex");
+        fab.dataset.position = "corner";
+      }
+
+      var scheduled = false;
+      function scheduleFab() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+          scheduled = false;
+          updateFab();
+        });
+      }
+      window.addEventListener("resize", scheduleFab);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", scheduleFab);
+      }
+      var resizeObserver = new ResizeObserver(scheduleFab);
+      if (footer instanceof HTMLElement) resizeObserver.observe(footer);
+      if (tabbar instanceof HTMLElement) resizeObserver.observe(tabbar);
+      new MutationObserver(scheduleFab).observe(document.documentElement, {
+        attributes: true, attributeFilter: ["data-lang"],
+      });
+      document.querySelectorAll("dialog").forEach(function (dialog) {
+        new MutationObserver(scheduleFab).observe(dialog, {
+          attributes: true, attributeFilter: ["open"],
+        });
+      });
+      fab.addEventListener("click", function () {
+        requestAnimationFrame(function () {
+          if (logo instanceof HTMLElement) focusReturn(logo);
+        });
+      });
+      updateFab();
+    }
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
     document.addEventListener("keydown", function (e) {
@@ -1386,6 +1457,7 @@ const jsonLd = buildArticleJsonLd({
 
 <style>
   .entry-main { min-width: 0; }
+  .entry-main:has(> .ed-fab[data-floating]) { padding-bottom: 96px; }
 
   /* PROGRESS BAR */
   .ed-progress {
@@ -2133,21 +2205,67 @@ const jsonLd = buildArticleJsonLd({
   .cat-jump-name { flex: 1; font-weight: 600; color: var(--cat-color); }
   .cat-jump-arrow { color: var(--muted); }
 
-  /* FAB */
   .ed-fab {
-    position: fixed; right: 24px; bottom: 24px;
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--cat-color); color: #0c0c0a;
-    border: none; cursor: pointer;
-    font-size: 18px; font-weight: 700;
-    box-shadow: 0 8px 20px -6px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--cat-color) 60%, transparent);
-    opacity: 0; pointer-events: none;
-    transform: translateY(8px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    min-width: 52px;
+    height: 52px;
+    margin: 24px auto 0;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--cat-color);
+    color: #0c0c0a;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
   }
-  .ed-fab.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .ed-fab[data-floating] {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 50;
+    width: 52px;
+    margin: 0;
+    padding: 0;
+  }
+  .ed-fab[hidden] { display: none; }
+  .ed-fab-arrow {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .ed-fab-label { white-space: nowrap; }
+  .ed-fab[data-floating] .ed-fab-label {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    pointer-events: none;
+  }
+  .ed-fab[data-floating]:is(:hover, :focus) .ed-fab-label {
+    width: max-content;
+    height: auto;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    overflow: visible;
+    clip-path: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  }
+  :global(body.entry-detail-page .logo.ed-fab-focus-return) {
+    outline: 3px solid var(--focus-ring) !important;
+    outline-offset: 3px !important;
+  }
 
   /* RESPONSIVE */
   @media (max-width: 1100px) {
@@ -2169,22 +2287,15 @@ const jsonLd = buildArticleJsonLd({
     .ed-pullquote { padding: 18px 18px 14px; }
     .ed-rel-grid { grid-template-columns: 1fr; }
     .ed-pn { grid-template-columns: 1fr; }
-    .ed-fab { right: 14px; bottom: 14px; }
   }
   @media (max-width: 720px) {
     .ed-meta-strip { grid-template-columns: minmax(0, 1fr); }
-    .ed-topic-links a { min-height: 36px; }
-    .ed-topic-more summary { min-height: 44px; }
     /* 狭幅では日本語タイトルが 3 行以上必要になり、2 行 clamp では
        関連記事・前後記事のタイトルが途中で切れる (375px 実測)。
        clamp は上限なので短いタイトルの高さは変わらない。 */
     .ed-rel-title,
     .ed-pn-title {
       -webkit-line-clamp: 4;
-    }
-
-    .ed-fab {
-      bottom: calc(68px + env(safe-area-inset-bottom));
     }
 
     /* Both actions stay inset and rounded like the rest of the reading column. */
@@ -2207,5 +2318,13 @@ const jsonLd = buildArticleJsonLd({
       align-items: flex-start;
       gap: 10px;
     }
+  }
+  @media (max-width: 900px) {
+    .ed-topic-links a { min-height: 45px; }
+    .ed-topic-more summary { min-height: 44px; }
+  }
+  @media (min-width: 721px) {
+    .ed-sec-h,
+    .ed-body-prose p { scroll-margin-top: 136px; }
   }
 </style>

@@ -1337,64 +1337,11 @@ const jsonLd = buildArticleJsonLd({
 
     var fab = document.getElementById("ed-fab");
     if (fab instanceof HTMLAnchorElement && main) {
-      var header = document.querySelector("body > header");
-      var logo = header && header.querySelector(".logo");
-      var skipLink = document.querySelector(".skip-link");
+      var logo = document.querySelector("body > header .logo");
       var tabbar = document.querySelector(".mobile-tabbar");
       var footer = document.querySelector(".footer-bar");
-      var label = fab.querySelector(".ed-fab-label");
-      var roots = [
-        main,
-        document.querySelector(".layout.entry-layout > aside.left"),
-        document.querySelector(".layout.entry-layout > aside.right"),
-        footer,
-        document.querySelector(".privacy-consent-prompt"),
-      ].filter(Boolean);
       fab.dataset.floating = "true";
       fab.dataset.tooltip = "above";
-      fab.dataset.position = "hidden";
-      var size = fab.getBoundingClientRect().width;
-      fab.hidden = true;
-      fab.inert = true;
-      fab.tabIndex = -1;
-      var tooltipSize = null;
-      var showTimer = 0;
-
-      function intersects(a, b, gap) {
-        return a.left < b.right + gap && a.right > b.left - gap
-          && a.top < b.bottom + gap && a.bottom > b.top - gap;
-      }
-
-      function measureTooltip() {
-        var lang = document.documentElement.dataset.lang === "en" ? "en" : "ja";
-        if (tooltipSize && tooltipSize.lang === lang) return tooltipSize;
-        var text = label && label.querySelector(".i18n-" + lang);
-        if (!text || !text.textContent.trim()) {
-          console.error("[article] Missing localized label for the return control");
-          return null;
-        }
-        var probe = document.createElement("span");
-        var font = getComputedStyle(fab);
-        probe.textContent = text.textContent.trim();
-        probe.setAttribute("aria-hidden", "true");
-        Object.assign(probe.style, {
-          position: "fixed", left: "-10000px", top: "0",
-          width: "max-content", padding: "8px 10px",
-          border: "1px solid transparent", whiteSpace: "nowrap",
-          visibility: "hidden", pointerEvents: "none",
-          fontFamily: font.fontFamily, fontWeight: font.fontWeight,
-          fontSize: "12px", lineHeight: "1.4", letterSpacing: font.letterSpacing,
-        });
-        document.body.append(probe);
-        var rect = probe.getBoundingClientRect();
-        probe.remove();
-        if (!rect.width || !rect.height) {
-          console.error("[article] Cannot measure the return control label");
-          return null;
-        }
-        tooltipSize = { lang, width: rect.width + 2, height: rect.height + 2 };
-        return tooltipSize;
-      }
 
       function focusReturn(target) {
         target.classList.add("ed-fab-focus-return");
@@ -1404,116 +1351,36 @@ const jsonLd = buildArticleJsonLd({
         target.focus({ preventScroll: true });
       }
 
-      function hideFab() {
-        if (showTimer) {
-          clearTimeout(showTimer);
-          showTimer = 0;
-        }
-        if (fab.hidden) return;
-        if (document.activeElement === fab) {
-          var logoBox = logo && logo.getBoundingClientRect();
-          if (logo instanceof HTMLElement && logoBox
-            && logoBox.top >= 0 && logoBox.bottom <= innerHeight
-            && logoBox.width > 0 && logoBox.height > 0
-            && getComputedStyle(logo).visibility === "visible") {
-            focusReturn(logo);
-          } else if (skipLink instanceof HTMLAnchorElement) {
-            focusReturn(skipLink);
-          } else {
-            console.error("[article] No visible focus target for the return control");
-            fab.blur();
-          }
-        }
-        fab.hidden = true;
-        fab.inert = true;
-        fab.tabIndex = -1;
-        fab.dataset.position = "hidden";
-      }
-
-      function updateFab(immediate) {
-        var tooltip = measureTooltip();
-        if (!tooltip) {
-          hideFab();
-          return;
-        }
+      function updateFab() {
         var viewportWidth = document.documentElement.clientWidth;
-        var viewportHeight = innerHeight;
         var navBox = tabbar && getComputedStyle(tabbar).display !== "none"
           ? tabbar.getBoundingClientRect() : null;
         var footerBox = footer && getComputedStyle(footer).display !== "none"
           ? footer.getBoundingClientRect() : null;
         var right = viewportWidth <= 720 ? 16 : 24;
-        var bottom = navBox ? navBox.height + 12 : 24;
+        var bottom = navBox ? navBox.height + 12 : Math.max(24, (footerBox?.height ?? 0) + 12);
         if (fab.style.right !== right + "px") fab.style.right = right + "px";
         if (fab.style.bottom !== bottom + "px") fab.style.bottom = bottom + "px";
-        var left = viewportWidth - right - size;
-        var top = viewportHeight - bottom - size;
-        var buttonRect = { left, right: left + size, top, bottom: top + size };
-        var labelRect = {
-          left: buttonRect.right - tooltip.width,
-          right: buttonRect.right,
-          top: buttonRect.top - tooltip.height - 8,
-          bottom: buttonRect.top - 8,
-        };
-        var headerBottom = header ? header.getBoundingClientRect().bottom + 12 : 12;
-        var lowerLimit = navBox ? navBox.top - 8 : viewportHeight - 8;
-        if (footerBox && footerBox.top < viewportHeight && footerBox.bottom > 0) {
-          lowerLimit = Math.min(lowerLimit, footerBox.top - 8);
-        }
-        var occupied = [];
-        var bandTop = labelRect.top - 6;
-        var bandBottom = buttonRect.bottom + 6;
-
-        for (var root of roots) {
-          var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-          var text;
-          while ((text = walker.nextNode())) {
-            if (!text.textContent.trim() || fab.contains(text)) continue;
-            var parent = text.parentElement;
-            if (!parent || !parent.getClientRects().length) continue;
-            var parentBox = parent.getBoundingClientRect();
-            if (parentBox.bottom < bandTop - 6 || parentBox.top > bandBottom + 6) continue;
-            var range = document.createRange();
-            range.selectNodeContents(text);
-            for (var box of range.getClientRects()) {
-              if (box.bottom >= bandTop - 6 && box.top <= bandBottom + 6) occupied.push(box);
+        var dialog = document.querySelector("dialog[open]");
+        if (dialog) {
+          if (document.activeElement === fab) {
+            var next = dialog.querySelector("a, button, input, select, textarea, [tabindex]:not([tabindex='-1'])");
+            if (next instanceof HTMLElement) next.focus({ preventScroll: true });
+            else {
+              console.error("[article] Open dialog has no focusable control");
+              fab.blur();
             }
           }
-          root.querySelectorAll("a, button, summary, input, select, textarea, [role='button'], [role='img'], img, picture, video, iframe, canvas, svg, .ed-hero, .ed-chat-face")
-            .forEach(function (element) {
-              if (element === fab || fab.contains(element) || !element.getClientRects().length
-                || getComputedStyle(element).visibility !== "visible") return;
-              var box = element.getBoundingClientRect();
-              if (box.bottom >= bandTop - 6 && box.top <= bandBottom + 6) occupied.push(box);
-            });
-        }
-
-        function safe(rect, gap) {
-          return rect.left >= 8 && rect.right <= viewportWidth - 8
-            && rect.top >= Math.max(8, headerBottom) && rect.bottom <= lowerLimit
-            && !occupied.some(function (box) { return intersects(box, rect, gap); });
-        }
-        if (document.querySelector("dialog[open]") || !safe(buttonRect, 6) || !safe(labelRect, 4)) {
-          hideFab();
-          return;
-        }
-        if (fab.hidden && !immediate) {
-          if (!showTimer) {
-            showTimer = setTimeout(function () {
-              showTimer = 0;
-              updateFab(true);
-            }, 160);
-          }
+          fab.hidden = true;
+          fab.inert = true;
+          fab.tabIndex = -1;
+          fab.dataset.position = "hidden";
           return;
         }
         fab.hidden = false;
         fab.inert = false;
         fab.removeAttribute("tabindex");
         fab.dataset.position = "corner";
-        var hit = document.elementFromPoint(
-          buttonRect.left + size / 2, buttonRect.top + size / 2,
-        );
-        if (!hit || !fab.contains(hit)) hideFab();
       }
 
       var scheduled = false;
@@ -1525,28 +1392,13 @@ const jsonLd = buildArticleJsonLd({
           updateFab();
         });
       }
-      window.addEventListener("scroll", function () {
-        if (showTimer) {
-          clearTimeout(showTimer);
-          showTimer = 0;
-        }
-        scheduleFab();
-      }, { passive: true });
-      window.addEventListener("resize", function () {
-        tooltipSize = null;
-        scheduleFab();
-      });
+      window.addEventListener("resize", scheduleFab);
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", scheduleFab);
-        window.visualViewport.addEventListener("scroll", scheduleFab, { passive: true });
       }
       var resizeObserver = new ResizeObserver(scheduleFab);
-      resizeObserver.observe(main);
       if (footer instanceof HTMLElement) resizeObserver.observe(footer);
       if (tabbar instanceof HTMLElement) resizeObserver.observe(tabbar);
-      new MutationObserver(scheduleFab).observe(main.parentElement, {
-        childList: true, characterData: true, subtree: true,
-      });
       new MutationObserver(scheduleFab).observe(document.documentElement, {
         attributes: true, attributeFilter: ["data-lang"],
       });
@@ -1560,7 +1412,7 @@ const jsonLd = buildArticleJsonLd({
           if (logo instanceof HTMLElement) focusReturn(logo);
         });
       });
-      updateFab(true);
+      updateFab();
     }
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
@@ -2410,9 +2262,7 @@ const jsonLd = buildArticleJsonLd({
     line-height: 1.4;
     box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
   }
-  :global(body.entry-detail-page .skip-link.ed-fab-focus-return) { top: 12px; }
-  :global(body.entry-detail-page .logo.ed-fab-focus-return),
-  :global(body.entry-detail-page .skip-link.ed-fab-focus-return) {
+  :global(body.entry-detail-page .logo.ed-fab-focus-return) {
     outline: 3px solid var(--focus-ring) !important;
     outline-offset: 3px !important;
   }

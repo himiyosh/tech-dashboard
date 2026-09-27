@@ -357,7 +357,7 @@ test("article rails adapt to the CSS viewport without stretching the prose or di
   }
 });
 
-test("article return control keeps a single viewport anchor and never covers real content", async ({ page }) => {
+test("article return control stays visible at one viewport anchor throughout reading", async ({ page }) => {
   expect(layoutEntry, "an addressable article with bilingual dialogue").toBeTruthy();
   await page.goto(`/e/${layoutEntry!.id}/`);
   const fab = page.locator("#ed-fab");
@@ -371,54 +371,25 @@ test("article return control keeps a single viewport anchor and never covers rea
     for (const lang of ["ja", "en"] as const) {
       await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
       const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
-      let visibleStates = 0;
       for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
         await page.evaluate((top) => scrollTo({ top, behavior: "instant" }),
           Math.round(maxScroll * fraction));
         await page.evaluate(() => new Promise<void>((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
         }));
-        if (width === 2000 && fraction === 0.25) await expect(fab).toBeVisible();
         const state = await page.evaluate(() => {
           const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
           const rect = action.getBoundingClientRect();
           const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
           const nav = tabbar && getComputedStyle(tabbar).display !== "none"
             ? tabbar.getBoundingClientRect() : null;
-          const overlaps = (a: DOMRect, b: DOMRect) =>
-            a.left < b.right + 4 && a.right > b.left - 4
-            && a.top < b.bottom + 4 && a.bottom > b.top - 4;
-          const collisions: string[] = [];
-          if (!action.hidden) {
-            const roots = document.querySelectorAll<HTMLElement>(
-              ".layout.entry-layout, .footer-bar",
-            );
-            for (const root of roots) {
-              const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-              let text: Node | null;
-              while ((text = walker.nextNode())) {
-                if (!text.textContent?.trim() || action.contains(text)
-                  || !text.parentElement?.getClientRects().length) continue;
-                const range = document.createRange();
-                range.selectNodeContents(text);
-                if ([...range.getClientRects()].some((box) => overlaps(box, rect))) {
-                  collisions.push("text");
-                  break;
-                }
-              }
-              for (const target of root.querySelectorAll<HTMLElement>(
-                "a, button, summary, input, select, textarea, [role='button'], [role='img'], img, picture, video, iframe, canvas, svg, .ed-hero, .ed-chat-face",
-              )) {
-                if (target === action || action.contains(target)
-                  || !target.getClientRects().length
-                  || getComputedStyle(target).visibility !== "visible") continue;
-                if (overlaps(target.getBoundingClientRect(), rect)) collisions.push("control/media");
-              }
-            }
-          }
+          const footer = document.querySelector<HTMLElement>(".footer-bar");
+          const foot = footer && getComputedStyle(footer).display !== "none"
+            ? footer.getBoundingClientRect() : null;
           const center = document.elementFromPoint(
             rect.left + rect.width / 2, rect.top + rect.height / 2,
           );
+          const outsideCircle = document.elementFromPoint(rect.left + 1, rect.top + 1);
           return {
             hidden: action.hidden,
             inert: action.inert,
@@ -435,8 +406,8 @@ test("article return control keeps a single viewport anchor and never covers rea
               height: innerHeight,
             },
             rect: {
-              right: rect.right,
-              bottom: rect.bottom,
+              left: rect.left, top: rect.top,
+              right: rect.right, bottom: rect.bottom,
             },
             width: rect.width,
             height: rect.height,
@@ -444,8 +415,11 @@ test("article return control keeps a single viewport anchor and never covers rea
               && rect.top >= 0 && rect.bottom <= innerHeight,
             tabbarGap: nav ? nav.top - rect.bottom : null,
             tabbarHeight: nav?.height ?? null,
+            footerHeight: foot?.height ?? 0,
+            footerGap: foot && foot.top < innerHeight && foot.bottom > 0
+              ? foot.top - rect.bottom : null,
             centerOwned: action === center || action.contains(center),
-            collisions,
+            outsideCircleOwned: action === outsideCircle || action.contains(outsideCircle),
             overflow: document.documentElement.scrollWidth - innerWidth,
           };
         });
@@ -454,54 +428,50 @@ test("article return control keeps a single viewport anchor and never covers rea
         expect(state.anchor.right, `${scope}: right offset belongs to viewport alone`)
           .toBe(width <= 720 ? 16 : 24);
         expect(state.anchor.bottom, `${scope}: fixed bottom offset`)
-          .toBeCloseTo(state.tabbarHeight === null ? 24 : state.tabbarHeight + 12, 1);
+          .toBeCloseTo(state.tabbarHeight === null
+            ? Math.max(24, state.footerHeight + 12)
+            : state.tabbarHeight + 12, 1);
         if (widthAnchor === null) widthAnchor = state.anchor;
         expect(state.anchor, `${scope}: no position change across scroll or language`)
           .toEqual(widthAnchor);
         expect(state.tooltipPlacement, `${scope}: tooltip never relocates`).toBe("above");
         expect(state.overflow, `${scope}: no horizontal scroll`).toBeLessThanOrEqual(0);
-        if (state.hidden) {
-          expect(state.inert, `${scope}: hidden action is inert`).toBe(true);
-          expect(state.tabIndex, `${scope}: hidden action is outside keyboard order`).toBe(-1);
-          expect(state.placement, `${scope}: no unsafe floating position`).toBe("hidden");
-        } else {
-          visibleStates++;
-          await expect(fab).toHaveAccessibleName(
-            lang === "ja" ? "ページ上部へ" : "Scroll to top",
-          );
-          expect(state.placement, `${scope}: no reading-gutter fallback`).toBe("corner");
-          expect(state.rect.right, `${scope}: fixed right edge`)
-            .toBeCloseTo(state.viewport.width - widthAnchor.right, 1);
-          expect(state.rect.bottom, `${scope}: fixed bottom edge`)
-            .toBeCloseTo(state.viewport.height - widthAnchor.bottom, 1);
-          expect(state.width, `${scope}: touch target width`).toBeGreaterThanOrEqual(44);
-          expect(state.height, `${scope}: touch target height`).toBeGreaterThanOrEqual(44);
-          expect(state.insideViewport, `${scope}: within viewport`).toBe(true);
-          expect(state.centerOwned, `${scope}: center receives pointer`).toBe(true);
-          expect(state.collisions, `${scope}: no text, media or control intersection`).toEqual([]);
-          if (state.tabbarGap !== null) {
-            expect(state.tabbarGap, `${scope}: clears mobile navigation`)
-              .toBeGreaterThanOrEqual(8);
-          }
+        expect(state.hidden, `${scope}: article text cannot hide the action`).toBe(false);
+        expect(state.inert, `${scope}: action remains keyboard-operable`).toBe(false);
+        expect(state.tabIndex, `${scope}: action stays in keyboard order`).toBeGreaterThanOrEqual(0);
+        await expect(fab).toHaveAccessibleName(
+          lang === "ja" ? "ページ上部へ" : "Scroll to top",
+        );
+        expect(state.placement, `${scope}: no reading-gutter fallback`).toBe("corner");
+        expect(state.rect.right, `${scope}: fixed right edge`)
+          .toBeCloseTo(state.viewport.width - widthAnchor.right, 1);
+        expect(state.rect.bottom, `${scope}: fixed bottom edge`)
+          .toBeCloseTo(state.viewport.height - widthAnchor.bottom, 1);
+        expect(state.width, `${scope}: touch target width`).toBeGreaterThanOrEqual(52);
+        expect(state.height, `${scope}: touch target height`).toBeGreaterThanOrEqual(52);
+        expect(state.insideViewport, `${scope}: within viewport`).toBe(true);
+        expect(state.centerOwned, `${scope}: center receives pointer`).toBe(true);
+        expect(state.outsideCircleOwned, `${scope}: outside the round control is not a click target`)
+          .toBe(false);
+        if (state.tabbarGap !== null) {
+          expect(state.tabbarGap, `${scope}: clears mobile navigation`)
+            .toBeGreaterThanOrEqual(8);
         }
-      }
-      if (width === 2000) {
-        expect(visibleStates, `${width}px ${lang}: unobstructed screen edge offers the action`)
-          .toBeGreaterThan(0);
+        if (state.footerGap !== null) {
+          expect(state.footerGap, `${scope}: footer remains usable at page end`)
+            .toBeGreaterThanOrEqual(8);
+        }
       }
     }
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate(() => {
-    const spacer = document.createElement("div");
-    spacer.id = "fab-test-clear-zone";
-    spacer.style.height = "180px";
-    document.querySelector(".entry-main")!.append(spacer);
-  });
   for (const [lang, name] of [["ja", "ページ上部へ"], ["en", "Scroll to top"]] as const) {
     await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
-    await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+    await page.evaluate(() => scrollTo({
+      top: (document.documentElement.scrollHeight - innerHeight) / 2,
+      behavior: "instant",
+    }));
     await page.evaluate(() => new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     }));
@@ -527,7 +497,6 @@ test("article return control keeps a single viewport anchor and never covers rea
     await expect(page.locator("body > header .logo")).toBeFocused();
     expect(new URL(page.url()).pathname).toBe(`/e/${layoutEntry!.id}/`);
   }
-  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
 });
 
 test("article floating action preserves a readable in-flow fallback without JavaScript", async ({
@@ -556,309 +525,271 @@ test("article floating action preserves a readable in-flow fallback without Java
   }
 });
 
-test("article floating action hides at its fixed anchor and restores focus without flicker", async ({
+test("article floating action stays focused and visible over moving text and media", async ({
   page,
 }) => {
   expect(layoutEntry, "an addressable article with bilingual dialogue").toBeTruthy();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/e/${layoutEntry!.id}/`);
   const fab = page.locator("#ed-fab");
-  await page.evaluate(() => {
-    const spacer = document.createElement("div");
-    spacer.id = "fab-test-clear-zone";
-    spacer.style.height = "180px";
-    document.querySelector(".entry-main")!.append(spacer);
-    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-  });
-  await expect(fab).toBeVisible();
-  await page.keyboard.press("A");
-  await fab.focus();
-  await expect(fab).toBeFocused();
-  const oldButtonBox = await fab.boundingBox();
-  expect(oldButtonBox).not.toBeNull();
-  const before = await page.evaluate(() => scrollY);
-  await page.evaluate(() => {
-    const blocker = document.createElement("button");
-    blocker.id = "fab-test-obstruction";
-    blocker.type = "button";
-    blocker.textContent = "Visible test control";
-    const header = document.querySelector("body > header")!.getBoundingClientRect();
-    const nav = document.querySelector(".mobile-tabbar")!.getBoundingClientRect();
-    Object.assign(blocker.style, {
-      position: "fixed", left: "0px", top: `${header.bottom + 8}px`,
-      width: `${innerWidth}px`, height: `${nav.top - header.bottom - 12}px`,
-      background: "#252321", zIndex: "1",
-    });
-    document.querySelector(".entry-main")!.append(blocker);
-  });
-  const hiddenByNextPaint = await page.evaluate(() => new Promise<boolean>((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() =>
-      resolve(document.querySelector<HTMLAnchorElement>("#ed-fab")!.hidden)));
-  }));
-  expect(hiddenByNextPaint, "obstruction hides the action within the next painted frame")
-    .toBe(true);
-  await expect(fab).toBeHidden();
-  await expect(page.getByRole("link", { name: "ページ上部へ" })).toHaveCount(0);
-  const hiddenHit = await page.evaluate(({ x, y }) => {
-    const action = document.querySelector("#ed-fab")!;
-    const hit = document.elementFromPoint(x, y);
-    return hit === action || action.contains(hit);
-  }, {
-    x: oldButtonBox!.x + oldButtonBox!.width / 2,
-    y: oldButtonBox!.y + oldButtonBox!.height / 2,
-  });
-  expect(hiddenHit, "an unsafe button cannot intercept pointer input").toBe(false);
-  const hidden = await page.evaluate(() => {
-    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
-    const target = document.querySelector<HTMLElement>(".skip-link")!;
-    const rect = target.getBoundingClientRect();
-    return {
-      inert: action.inert, tabIndex: action.tabIndex,
-      targetFocused: document.activeElement === target,
-      targetVisible: rect.top >= 0 && rect.bottom <= innerHeight && rect.width > 0,
-      targetFocusRing: getComputedStyle(target).outlineStyle,
-      targetFocusWidth: parseFloat(getComputedStyle(target).outlineWidth),
-      scroll: scrollY,
-    };
-  });
-  expect(hidden.inert).toBe(true);
-  expect(hidden.tabIndex).toBe(-1);
-  expect(hidden.targetFocused).toBe(true);
-  expect(hidden.targetVisible).toBe(true);
-  expect(hidden.targetFocusRing).not.toBe("none");
-  expect(hidden.targetFocusWidth).toBeGreaterThanOrEqual(2);
-  expect(Math.abs(hidden.scroll - before), "focus handoff must not jump the reading position")
-    .toBeLessThanOrEqual(1);
-  await page.evaluate(() => {
-    const blocker = document.querySelector("#fab-test-obstruction")!;
-    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
-    action.dataset.testReveals = "0";
-    new MutationObserver(() => {
-      if (!action.hidden) {
-        action.dataset.testReveals = String(Number(action.dataset.testReveals) + 1);
-      }
-    }).observe(action, { attributes: true, attributeFilter: ["hidden"] });
-    blocker.remove();
-    setTimeout(() => document.querySelector(".entry-main")!.append(blocker), 40);
-  });
-  await page.waitForTimeout(220);
-  await expect(fab).toBeHidden();
-  await expect(fab).toHaveAttribute("data-test-reveals", "0");
-  await page.locator("#fab-test-obstruction").evaluate((node) => node.remove());
-  await expect(fab).toBeVisible();
-  await expect(page.getByRole("link", { name: "ページ上部へ" })).toHaveCount(1);
-  await expect(page.locator(".skip-link")).toBeFocused();
-  const restoredBox = await fab.boundingBox();
-  expect(restoredBox).not.toBeNull();
-  expect(restoredBox!.x, "safe recovery uses the original screen-right x").toBeCloseTo(oldButtonBox!.x, 1);
-  expect(restoredBox!.y, "safe recovery uses the original screen-bottom y").toBeCloseTo(oldButtonBox!.y, 1);
-  await page.evaluate(() => {
-    const image = document.createElement("img");
-    image.id = "fab-test-media";
-    image.alt = "Visible test image";
-    image.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52'></svg>";
-    const action = document.querySelector("#ed-fab")!.getBoundingClientRect();
-    Object.assign(image.style, {
-      position: "fixed", left: `${action.left}px`, top: `${action.top}px`,
-      width: "52px", height: "52px", zIndex: "1",
-    });
-    document.querySelector(".entry-main")!.append(image);
-  });
-  await expect(fab, "actual media also blocks the fixed anchor").toBeHidden();
-  await page.locator("#fab-test-media").evaluate((node) => node.remove());
-  await expect(fab).toBeVisible();
-  const afterMedia = await fab.boundingBox();
-  expect(afterMedia).not.toBeNull();
-  expect(afterMedia!.x).toBeCloseTo(oldButtonBox!.x, 1);
-  expect(afterMedia!.y).toBeCloseTo(oldButtonBox!.y, 1);
-  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
-
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.locator('.lang-btn[data-lang="en"]').click();
-  await page.evaluate(() => {
-    scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) / 2, behavior: "instant" });
-    const blocker = document.createElement("button");
-    blocker.id = "fab-test-rail-obstruction";
-    blocker.type = "button";
-    blocker.textContent = "Visible rail control";
-    Object.assign(blocker.style, {
-      position: "fixed", right: "24px", bottom: "24px",
-      width: "52px", height: "52px",
-      background: "#252321", zIndex: "1",
-    });
-    document.querySelector(".layout.entry-layout > aside.right")!.append(blocker);
-  });
-  await expect(fab).toBeHidden();
-  await expect(fab).toHaveAttribute("data-position", "hidden");
-  expect(await fab.evaluate((node) => ({
-    right: node.style.right, bottom: node.style.bottom,
-  }))).toEqual({ right: "24px", bottom: "24px" });
-  await page.locator("#fab-test-rail-obstruction").evaluate((node) => node.remove());
-
-  await page.setViewportSize({ width: 2000, height: 900 });
   await page.evaluate(() => scrollTo({
     top: (document.documentElement.scrollHeight - innerHeight) / 2,
     behavior: "instant",
   }));
   await expect(fab).toBeVisible();
-  const wideBox = await fab.boundingBox();
-  expect(wideBox).not.toBeNull();
-
-  await page.keyboard.press("A");
   await fab.focus();
-  const desktopScroll = await page.evaluate(() => scrollY);
+  await expect(fab).toBeFocused();
+  const original = await fab.boundingBox();
+  expect(original).not.toBeNull();
+
   await page.evaluate(() => {
-    const blocker = document.createElement("button");
-    blocker.id = "fab-test-obstruction";
-    blocker.type = "button";
-    blocker.textContent = "Visible desktop control";
-    Object.assign(blocker.style, {
-      position: "fixed", right: "24px", bottom: "24px",
-      width: "52px", height: "52px",
-      background: "#252321", zIndex: "1",
+    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+    const rect = action.getBoundingClientRect();
+    action.dataset.hideTransitions = "0";
+    new MutationObserver(() => {
+      action.dataset.hideTransitions = String(Number(action.dataset.hideTransitions) + 1);
+    }).observe(action, { attributes: true, attributeFilter: ["hidden"] });
+    const text = document.createElement("span");
+    text.id = "fab-test-text";
+    text.textContent = "記事本文の文字列";
+    Object.assign(text.style, {
+      position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`,
+      width: `${rect.width}px`, height: `${rect.height}px`,
+      fontSize: "16px", zIndex: "1",
     });
-    document.querySelector(".entry-main")!.append(blocker);
+    const image = document.createElement("img");
+    image.id = "fab-test-media";
+    image.alt = "Visible test image";
+    image.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='52'></svg>";
+    Object.assign(image.style, {
+      position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`,
+      width: `${rect.width}px`, height: `${rect.height}px`, zIndex: "1",
+    });
+    document.querySelector(".entry-main")!.append(text, image);
   });
-  await expect(fab).toBeHidden();
-  const desktopFocus = await page.evaluate(() => {
-    const logo = document.querySelector<HTMLElement>("body > header .logo")!;
-    const rect = logo.getBoundingClientRect();
+  const overlay = await page.evaluate(() => {
+    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+    const text = document.querySelector("#fab-test-text")!.firstChild!;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const button = action.getBoundingClientRect();
+    const word = range.getBoundingClientRect();
+    const media = document.querySelector("#fab-test-media")!.getBoundingClientRect();
+    const hit = document.elementFromPoint(button.left + button.width / 2, button.top + button.height / 2);
+    const intersects = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     return {
-      focused: document.activeElement === logo,
-      visible: rect.top >= 0 && rect.bottom <= innerHeight,
-      outlineWidth: parseFloat(getComputedStyle(logo).outlineWidth),
-      scroll: scrollY,
+      textOverlaps: intersects(button, word),
+      imageOverlaps: intersects(button, media),
+      centerOwned: action === hit || action.contains(hit),
     };
   });
-  expect(desktopFocus.focused).toBe(true);
-  expect(desktopFocus.visible).toBe(true);
-  expect(desktopFocus.outlineWidth).toBeGreaterThanOrEqual(2);
-  expect(Math.abs(desktopFocus.scroll - desktopScroll)).toBeLessThanOrEqual(1);
-  await page.locator("#fab-test-obstruction").evaluate((node) => node.remove());
-  await expect(fab).toBeVisible();
-  const restoredWide = await fab.boundingBox();
-  expect(restoredWide).not.toBeNull();
-  expect(restoredWide!.x).toBeCloseTo(wideBox!.x, 1);
-  expect(restoredWide!.y).toBeCloseTo(wideBox!.y, 1);
+  expect(overlay, "content overlap is intentional, but the control remains operable").toEqual({
+    textOverlaps: true, imageOverlaps: true, centerOwned: true,
+  });
+
+  for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+    await page.evaluate((value) => scrollTo({
+      top: (document.documentElement.scrollHeight - innerHeight) * value,
+      behavior: "instant",
+    }), fraction);
+    await page.evaluate(() => new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    await expect(fab, `${fraction}: scrolling text never hides the action`).toBeVisible();
+    await expect(fab).toBeFocused();
+    const rect = await fab.boundingBox();
+    expect(rect).not.toBeNull();
+    expect(rect!.x).toBeCloseTo(original!.x, 1);
+    expect(rect!.y).toBeCloseTo(original!.y, 1);
+  }
+  await expect(fab).toHaveAttribute("data-hide-transitions", "0");
+  await page.locator("#fab-test-text, #fab-test-media").evaluateAll((nodes) =>
+    nodes.forEach((node) => node.remove()));
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('.lang-btn[data-lang="en"]').click();
+  await page.evaluate(() => scrollTo({
+    top: (document.documentElement.scrollHeight - innerHeight) / 2,
+    behavior: "instant",
+  }));
+  await expect(fab, "rail content cannot hide the fixed action").toBeVisible();
+  const rail = await page.evaluate(() => {
+    const button = document.querySelector("#ed-fab")!.getBoundingClientRect();
+    const right = document.querySelector(".layout.entry-layout > aside.right")!.getBoundingClientRect();
+    return {
+      overlapsRailColumn: button.left < right.right && button.right > right.left,
+      rightOffset: innerWidth - button.right,
+      centerOwned: document.querySelector("#ed-fab")!.contains(
+        document.elementFromPoint(button.left + button.width / 2, button.top + button.height / 2),
+      ),
+    };
+  });
+  expect(rail.overlapsRailColumn).toBe(true);
+  expect(rail.rightOffset).toBe(24);
+  expect(rail.centerOwned).toBe(true);
 });
 
-test("article floating action tooltip avoids text and interactive targets", async ({ page }) => {
+test("fixed article action leaves a usable right-rail link target outside its circle", async ({
+  page,
+}) => {
+  expect(layoutEntry, "an addressable article with a right rail").toBeTruthy();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`/e/${layoutEntry!.id}/`);
+  const fab = page.locator("#ed-fab");
+  await page.evaluate(() => scrollTo({
+    top: (document.documentElement.scrollHeight - innerHeight) / 2,
+    behavior: "instant",
+  }));
+  const hit = await page.evaluate(() => {
+    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+    const rect = action.getBoundingClientRect();
+    const rail = document.querySelector<HTMLElement>(".layout.entry-layout > aside.right")!;
+    const link = document.createElement("a");
+    link.id = "fab-rail-link-fixture";
+    link.href = "#rail-link-activated";
+    link.textContent = "Reading rail link";
+    Object.assign(link.style, {
+      position: "fixed", left: `${rect.left - 149}px`, top: `${rect.top - 40}px`,
+      width: "198px", height: "110px", zIndex: "1",
+    });
+    rail.append(link);
+    const linkBox = link.getBoundingClientRect();
+    const clearHit = document.elementFromPoint(linkBox.left + 24, linkBox.top + 24);
+    const roundHit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    const cornerHit = document.elementFromPoint(rect.left + 1, rect.top + 1);
+    return {
+      actionVisible: !action.hidden,
+      clearLinkWidth: rect.left - linkBox.left,
+      linkReachable: link === clearHit || link.contains(clearHit),
+      roundOwned: action === roundHit || action.contains(roundHit),
+      outsideCircleReachable: link === cornerHit || link.contains(cornerHit),
+    };
+  });
+  expect(hit.actionVisible).toBe(true);
+  expect(hit.clearLinkWidth, "matches the measured clear width beside a 1280px rail link")
+    .toBe(149);
+  expect(hit.clearLinkWidth, "rail action keeps a full-size target beside the circle")
+    .toBeGreaterThanOrEqual(44);
+  expect(hit.linkReachable).toBe(true);
+  expect(hit.roundOwned).toBe(true);
+  expect(hit.outsideCircleReachable, "the round corner does not steal rail link clicks")
+    .toBe(true);
+
+  await fab.hover();
+  await fab.focus();
+  const whileFocused = await page.evaluate(() => {
+    const fab = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+    const round = fab.getBoundingClientRect();
+    const tooltip = fab.querySelector<HTMLElement>(".ed-fab-label")!;
+    const label = tooltip.getBoundingClientRect();
+    const link = document.querySelector<HTMLAnchorElement>("#fab-rail-link-fixture")!;
+    const rail = link.getBoundingClientRect();
+    const text = document.createRange();
+    text.selectNodeContents(link);
+    const textBox = text.getBoundingClientRect();
+    const leftHit = document.elementFromPoint(rail.left + 24, round.top + round.height / 2);
+    const underTooltip = document.elementFromPoint(rail.left + 24, label.top + label.height / 2);
+    return {
+      focused: document.activeElement === fab,
+      tooltipVisible: getComputedStyle(tooltip).clipPath === "none",
+      tooltipPointerEvents: getComputedStyle(tooltip).pointerEvents,
+      labelOverlapsLink: label.left < rail.right && label.right > rail.left
+        && label.top < rail.bottom && label.bottom > rail.top,
+      clearTextVisible: textBox.right < round.left && textBox.width > 0,
+      clearButtonSide: leftHit === link || link.contains(leftHit),
+      clearTooltipSide: underTooltip === link || link.contains(underTooltip),
+    };
+  });
+  expect(whileFocused).toEqual({
+    focused: true,
+    tooltipVisible: true,
+    tooltipPointerEvents: "none",
+    labelOverlapsLink: true,
+    clearTextVisible: true,
+    clearButtonSide: true,
+    clearTooltipSide: true,
+  });
+  const priorRailAction = page.locator(
+    ".layout.entry-layout > aside.right a:visible, .layout.entry-layout > aside.right button:visible, .layout.entry-layout > aside.right summary:visible",
+  ).nth(-2);
+  await priorRailAction.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#fab-rail-link-fixture")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#rail-link-activated$/);
+});
+
+test("article return tooltip stays localized, visible and pointer-transparent", async ({ page }) => {
   expect(layoutEntry, "an article with bilingual body and dialogue").toBeTruthy();
   await page.goto(`/e/${layoutEntry!.id}/`);
   const fab = page.locator("#ed-fab");
-  let tooltipShown = 0;
   for (const width of [320, 390, 948, 1181, 1280, 1440, 2000]) {
     await page.setViewportSize({ width, height: width <= 720 ? 844 : 900 });
     for (const lang of ["ja", "en"] as const) {
       await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
-      const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
-      for (const fraction of [0.25, 0.5, 0.75, 1]) {
-        await page.evaluate((top) => scrollTo({ top, behavior: "instant" }),
-          Math.round(maxScroll * fraction));
-        await page.evaluate(() => new Promise<void>((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        }));
-        if (width === 2000 && fraction === 0.25) await expect(fab).toBeVisible();
-        if (!await fab.isVisible()) continue;
-        await fab.hover();
-        await page.evaluate(() => new Promise<void>((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        }));
-        const tooltip = await fab.evaluate((action) => {
-          const label = action.querySelector<HTMLElement>(".ed-fab-label")!;
-          const rect = label.getBoundingClientRect();
-          const overlap = (a: DOMRect, b: DOMRect) =>
-            a.left < b.right + 2 && a.right > b.left - 2
-            && a.top < b.bottom + 2 && a.bottom > b.top - 2;
-          const conflicts: string[] = [];
-          for (const root of document.querySelectorAll<HTMLElement>(
-            ".layout.entry-layout, .footer-bar, .privacy-consent-prompt",
-          )) {
-            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-            let text: Node | null;
-            while ((text = walker.nextNode())) {
-              if (!text.textContent?.trim() || action.contains(text)
-                || !text.parentElement?.getClientRects().length) continue;
-              const range = document.createRange();
-              range.selectNodeContents(text);
-              if ([...range.getClientRects()].some((box) => overlap(box, rect))) {
-                conflicts.push("text");
-                break;
-              }
-            }
-            for (const target of root.querySelectorAll<HTMLElement>(
-              "a, button, summary, input, select, textarea, [role='button'], [role='img'], img, picture, video, iframe, canvas, svg, .ed-hero, .ed-chat-face",
-            )) {
-              if (target === action || action.contains(target)
-                || !target.getClientRects().length
-                || getComputedStyle(target).visibility !== "visible") continue;
-              if (overlap(target.getBoundingClientRect(), rect)) conflicts.push("control/media");
-            }
-          }
-          return {
-            placement: action.dataset.tooltip,
-            clip: getComputedStyle(label).clipPath,
-            text: label.innerText,
-            width: rect.width,
-            withinViewport: rect.left >= 0 && rect.right <= innerWidth
-              && rect.top >= 0 && rect.bottom <= innerHeight,
-            conflicts,
-          };
-        });
-        tooltipShown++;
-        expect(tooltip.placement, `${width}px ${lang}: tooltip stays above`).toBe("above");
-        expect(tooltip.clip, `${width}px ${lang}: tooltip is visually available`).toBe("none");
-        expect(tooltip.text).toContain(lang === "ja" ? "ページ上部へ" : "Scroll to top");
-        expect(tooltip.width, `${width}px ${lang}: readable label`).toBeGreaterThan(60);
-        expect(tooltip.withinViewport, `${width}px ${lang}: label stays on screen`).toBe(true);
-        expect(tooltip.conflicts, `${width}px ${lang}: label leaves real content clear`).toEqual([]);
-        await page.mouse.move(1, 1);
-      }
+      await page.evaluate(() => scrollTo({
+        top: (document.documentElement.scrollHeight - innerHeight) / 2,
+        behavior: "instant",
+      }));
+      await expect(fab).toBeVisible();
+      await fab.hover();
+      const tooltip = await fab.evaluate((action) => {
+        const label = action.querySelector<HTMLElement>(".ed-fab-label")!;
+        const rect = label.getBoundingClientRect();
+        return {
+          placement: action.dataset.tooltip,
+          clip: getComputedStyle(label).clipPath,
+          pointerEvents: getComputedStyle(label).pointerEvents,
+          text: label.innerText,
+          width: rect.width,
+          withinViewport: rect.left >= 0 && rect.right <= innerWidth
+            && rect.top >= 0 && rect.bottom <= innerHeight,
+        };
+      });
+      expect(tooltip.placement, `${width}px ${lang}: tooltip stays above`).toBe("above");
+      expect(tooltip.clip, `${width}px ${lang}: tooltip is visually available`).toBe("none");
+      expect(tooltip.pointerEvents, `${width}px ${lang}: label never steals clicks`).toBe("none");
+      expect(tooltip.text).toContain(lang === "ja" ? "ページ上部へ" : "Scroll to top");
+      expect(tooltip.width, `${width}px ${lang}: readable label`).toBeGreaterThan(60);
+      expect(tooltip.withinViewport, `${width}px ${lang}: label stays on screen`).toBe(true);
+      await page.mouse.move(1, 1);
     }
   }
-  expect(tooltipShown, "hover shows a real tooltip at an unobstructed viewport width")
-    .toBeGreaterThan(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.lang-btn[data-lang="ja"]').click();
-  await page.evaluate(() => {
-    const spacer = document.createElement("div");
-    spacer.id = "fab-test-clear-zone";
-    spacer.style.height = "180px";
-    document.querySelector(".entry-main")!.append(spacer);
-    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-  });
+  await page.evaluate(() => scrollTo({
+    top: (document.documentElement.scrollHeight - innerHeight) / 2,
+    behavior: "instant",
+  }));
   await expect(fab).toBeVisible();
-  await fab.hover();
+  await fab.focus();
   await expect(fab).toHaveAttribute("data-tooltip", "above");
-  const buttonBefore = await fab.boundingBox();
-  expect(buttonBefore).not.toBeNull();
   await page.evaluate(() => {
     const label = document.querySelector("#ed-fab .ed-fab-label")!.getBoundingClientRect();
-    const blocker = document.createElement("button");
-    blocker.id = "fab-tooltip-obstruction";
-    blocker.textContent = "Visible tooltip blocker";
-    Object.assign(blocker.style, {
+    const underlay = document.createElement("a");
+    underlay.id = "fab-tooltip-underlay";
+    underlay.href = "#underlay";
+    underlay.textContent = "読書リンク";
+    Object.assign(underlay.style, {
       position: "fixed", left: `${label.left}px`, top: `${label.top}px`,
       width: `${label.width}px`, height: `${label.height}px`,
-      background: "#252321", zIndex: "1",
+      background: "#252321", zIndex: "1", textAlign: "center",
     });
-    document.querySelector(".entry-main")!.append(blocker);
+    document.querySelector(".entry-main")!.append(underlay);
   });
-  await expect(fab).toBeHidden();
-  await expect(fab).toHaveAttribute("inert", "");
-  await expect(fab).toHaveAttribute("tabindex", "-1");
-  await page.locator("#fab-tooltip-obstruction").evaluate((node) => node.remove());
   await expect(fab).toBeVisible();
-  await expect(fab).toHaveAttribute("data-tooltip", "above");
-  const buttonAfter = await fab.boundingBox();
-  expect(buttonAfter).not.toBeNull();
-  expect(buttonAfter!.x).toBeCloseTo(buttonBefore!.x, 1);
-  expect(buttonAfter!.y).toBeCloseTo(buttonBefore!.y, 1);
-  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
+  const underlayHit = await page.evaluate(() => {
+    const label = document.querySelector("#ed-fab .ed-fab-label")!.getBoundingClientRect();
+    const hit = document.elementFromPoint(label.left + label.width / 2, label.top + label.height / 2);
+    return hit?.id;
+  });
+  expect(underlayHit, "the tooltip leaves the adjacent link clickable").toBe("fab-tooltip-underlay");
+  await expect(fab.locator(".ed-fab-label")).toBeVisible();
+  await page.locator("#fab-tooltip-underlay").evaluate((node) => node.remove());
 });
 
-test("narrow and desktop first views never expose an icon without its tooltip", async ({
+test("narrow and desktop first views keep a labeled return action visible", async ({
   page,
 }) => {
   expect(layoutEntry, "an addressable article").toBeTruthy();
@@ -880,31 +811,24 @@ test("narrow and desktop first views never expose an icon without its tooltip", 
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       }));
       const scope = `${width}x${height} ${lang} ${atEnd ? "end" : "start"}`;
-      if (await fab.isVisible()) {
-        await fab.hover();
-        const label = await fab.evaluate((node) => {
-          const text = node.querySelector<HTMLElement>(".ed-fab-label")!;
-          const rect = text.getBoundingClientRect();
-          return {
-            placement: node.dataset.tooltip,
-            clip: getComputedStyle(text).clipPath,
-            width: rect.width,
-            withinViewport: rect.left >= 0 && rect.right <= innerWidth
-              && rect.top >= 0 && rect.bottom <= innerHeight,
-          };
-        });
-        expect(label.placement, `${scope}: tooltip stays at its fixed offset`).toBe("above");
-        expect(label.clip, `${scope}: label is visible on hover`).toBe("none");
-        expect(label.width, `${scope}: label has real text width`).toBeGreaterThan(60);
-        expect(label.withinViewport, `${scope}: label remains on-screen`).toBe(true);
-        await page.mouse.move(1, 1);
-      } else {
-        const hidden = await fab.evaluate((node) => ({
-          hidden: node.hidden, inert: node.inert, tabIndex: node.tabIndex,
-        }));
-        expect(hidden, `${scope}: no icon-only visible fallback`)
-          .toEqual({ hidden: true, inert: true, tabIndex: -1 });
-      }
+      await expect(fab, `${scope}: first-view or page-end action is always visible`).toBeVisible();
+      await fab.hover();
+      const label = await fab.evaluate((node) => {
+        const text = node.querySelector<HTMLElement>(".ed-fab-label")!;
+        const rect = text.getBoundingClientRect();
+        return {
+          placement: node.dataset.tooltip,
+          clip: getComputedStyle(text).clipPath,
+          width: rect.width,
+          withinViewport: rect.left >= 0 && rect.right <= innerWidth
+            && rect.top >= 0 && rect.bottom <= innerHeight,
+        };
+      });
+      expect(label.placement, `${scope}: tooltip stays at its fixed offset`).toBe("above");
+      expect(label.clip, `${scope}: label is visible on hover`).toBe("none");
+      expect(label.width, `${scope}: label has real text width`).toBeGreaterThan(60);
+      expect(label.withinViewport, `${scope}: label remains on-screen`).toBe(true);
+      await page.mouse.move(1, 1);
     }
   }
 });
@@ -950,36 +874,31 @@ test("short viewport and modal navigation never trap or cover the article return
       };
     });
     expect(state.overflow, `${width}x${height}: no horizontal overflow`).toBeLessThanOrEqual(0);
-    if (state.hidden) {
-      expect(state.inert, `${width}x${height}: blocked action is inert`).toBe(true);
-      expect(state.tabIndex, `${width}x${height}: blocked action is not tabbable`).toBe(-1);
-    } else {
-      expect(state.rect.width, `${width}x${height}: hit width`).toBeGreaterThanOrEqual(44);
-      expect(state.rect.height, `${width}x${height}: hit height`).toBeGreaterThanOrEqual(44);
-      expect(state.rect.left, `${width}x${height}: no left clipping`).toBeGreaterThanOrEqual(8);
-      expect(state.rect.right, `${width}x${height}: no right clipping`).toBeLessThanOrEqual(width - 8);
-      expect(state.rect.top, `${width}x${height}: no top clipping`).toBeGreaterThanOrEqual(8);
-      expect(state.rect.bottom, `${width}x${height}: no bottom clipping`).toBeLessThanOrEqual(height - 8);
-      expect(state.ownsHit, `${width}x${height}: actual pointer reaches action`).toBe(true);
-      if (state.navTop !== null) {
-        expect(state.navTop - state.rect.bottom, `${width}x${height}: tabbar clearance`)
-          .toBeGreaterThanOrEqual(8);
-      }
-      if (state.footerTop !== null) {
-        expect(state.footerTop - state.rect.bottom, `${width}x${height}: footer clearance`)
-          .toBeGreaterThanOrEqual(8);
-      }
+    expect(state.hidden, `${width}x${height}: action remains visible while reading`).toBe(false);
+    expect(state.inert, `${width}x${height}: action remains operable`).toBe(false);
+    expect(state.tabIndex, `${width}x${height}: action remains tabbable`).toBeGreaterThanOrEqual(0);
+    expect(state.rect.width, `${width}x${height}: hit width`).toBeGreaterThanOrEqual(52);
+    expect(state.rect.height, `${width}x${height}: hit height`).toBeGreaterThanOrEqual(52);
+    expect(state.rect.left, `${width}x${height}: no left clipping`).toBeGreaterThanOrEqual(8);
+    expect(state.rect.right, `${width}x${height}: no right clipping`).toBeLessThanOrEqual(width - 8);
+    expect(state.rect.top, `${width}x${height}: no top clipping`).toBeGreaterThanOrEqual(8);
+    expect(state.rect.bottom, `${width}x${height}: no bottom clipping`).toBeLessThanOrEqual(height - 8);
+    expect(state.ownsHit, `${width}x${height}: actual pointer reaches action`).toBe(true);
+    if (state.navTop !== null) {
+      expect(state.navTop - state.rect.bottom, `${width}x${height}: tabbar clearance`)
+        .toBeGreaterThanOrEqual(8);
+    }
+    if (state.footerTop !== null) {
+      expect(state.footerTop - state.rect.bottom, `${width}x${height}: footer clearance`)
+        .toBeGreaterThanOrEqual(8);
     }
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.evaluate(() => {
-    const spacer = document.createElement("div");
-    spacer.id = "fab-test-clear-zone";
-    spacer.style.height = "180px";
-    document.querySelector(".entry-main")!.append(spacer);
-    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
-  });
+  await page.evaluate(() => scrollTo({
+    top: (document.documentElement.scrollHeight - innerHeight) / 2,
+    behavior: "instant",
+  }));
   await expect(fab).toBeVisible();
   await page.locator(".mobile-tabbar button[data-menu-trigger]").click();
   await expect(page.locator("#site-menu")).toBeVisible();
@@ -988,7 +907,6 @@ test("short viewport and modal navigation never trap or cover the article return
   await page.keyboard.press("Escape");
   await expect(page.locator("#site-menu")).toBeHidden();
   await expect(fab).toBeVisible();
-  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
 });
 
 test("article sticky rails, contents links, and mobile controls remain reachable", async ({

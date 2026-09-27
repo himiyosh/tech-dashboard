@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T03:00:42.527Z",
+  "generatedAt": "2026-09-27T04:00:53.563Z",
   "month": "2026-08",
   "count": 724,
   "entries": [
@@ -1019,6 +1019,8 @@
       "title": "GitHub CopilotにUI検証を任せたら、組織設定の落とし穴にハマった",
       "titleJa": "GitHub CopilotにUI検証を任せたら、組織設定の落とし穴にハマった",
       "titleEn": "GitHub Copilot's Browser Tools reached GA in July 2026, enabling UI…",
+      "summaryJa": "2026年7月に GA となった GitHub Copilot の Browser Tools を使って UI 検証を自動化しようとしたところ、組織レベルのポリシー設定が原因で機能が利用できないという落とし穴が判明。同機能の導入を検討する開発チームが事前に確認すべき設定ポイントを整理している。",
+      "summaryEn": "GitHub Copilot's Browser Tools reached GA in July 2026, enabling UI verification from within VS Code's integrated browser, but organization-level policy settings can silently block the feature. The article helps teams avoid that configuration pitfall before rolling out the capability.",
       "lang": "ja",
       "publishedAt": "2026-08-28T03:07:29.000Z",
       "collectedAt": "2026-08-28T22:52:59.166Z",
@@ -1034,7 +1036,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "tutorial",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "2026年7月1日、GitHub Copilot の Browser Tools （VS Code 統合ブラウザでの操作機能）が一般提供（GA）になり、デフォルトで有効化された 1 。これまで Copilot Chat はコードを書くところまでは得意でも、「実際に画面を開いて動かして確認する」のは人間の役目だった。Browser Tools はこの最後の一手を埋める機能で、エージェント自身がページを開き、クリックし、入力し、コンソールログやスクリーンショットを読み取って結果をチャットに返せる。 筆者は実際に手を動かせる部分（Playwright での再現・設定ファイルの検証）を通してこの機能の中身を確認した。その過程で、公式アナウンスの「デフォルトでオン」という説明と食い違う organization 設定がらみの落とし穴 （VS Code リポジトリに Issue が立っている既知の問題）に行き着いたので、そこまで含めて共有する。 検証用: Node.js 22.x + Playwright（Browser Tools の内部実装と同じ Chromium ベースの操作を手元で再現するために使用） Browser Tools は GA 化により デフォルトで有効 。設定 workbench.browser.enableChatTools が true になっているかはチャットのツール一覧から確認できる 2 。 意図的にバグを仕込んだ電卓 HTML を用意し、実際に4演算をブラウザ操作で検証したところ、 10 / 2 が 12 を返す壊れた挙動を実測できた。修正後は 5 に戻ることも確認済み。 Copilot の MCP サーバーを organization レベルで無効化していると、無関係なはずの Browser Tools 設定まで「organization によって管理されています」と表示されグレーアウトする既知の不具合が VS Code リポジトリに報告されている（2026年7月時点で \"Closed as not planned\"） 3 。",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGNDg1NDklMkZwcm9maWxlLWltYWdlcyUyRjE1MjQxMzIyMDk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWY4Y2RhNWUwYjAyYzZhMDEwMTRiOTEwZjliYTRkZjY3%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da8e3712665b37e28e8194f64fe1c50c4?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCVFMyU4MSVBQlVJJUU2JUE0JTlDJUU4JUE4JUJDJUUzJTgyJTkyJUU0JUJCJUJCJUUzJTgxJTlCJUUzJTgxJTlGJUUzJTgyJTg5JUUzJTgwJTgxJUU3JUI1JTg0JUU3JUI5JTk0JUU4JUE4JUFEJUU1JUFFJTlBJUUzJTgxJUFFJUU4JTkwJUJEJUUzJTgxJUE4JUUzJTgxJTk3JUU3JUE5JUI0JUUzJTgxJUFCJUUzJTgzJThGJUUzJTgzJTlFJUUzJTgxJUEzJUUzJTgxJTlGJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NTRiMmUyYTI0MWEzMTQ4OGM1ZjIwYzUwNzNjNWFhNWY&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYWlfa291JnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9MzYmdHh0LXBhZD0wJnM9NWY2ZTkxOGU3MmQxNWJiYWRkODAzMjQ5NGVhMzVmNzI&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=7486a26a26ca9e70ef24ce4376828528",
@@ -1716,7 +1718,7 @@
       "summaryEn": "Google released Gemini Omni 1.1 Flash with enhanced developer controls over model behavior and output, giving builders finer-grained tools for production AI applications.",
       "lang": "en",
       "publishedAt": "2026-08-27T16:11:32.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "deepmind",
         "developer-tools",
@@ -1828,7 +1830,7 @@
       "summaryEn": "Google DeepMind has piloted a double-blind AI evaluation framework where neither evaluators nor model providers know each other's identity, aiming to reduce bias and improve the credibility of AI capability assessments.",
       "lang": "en",
       "publishedAt": "2026-08-27T12:59:16.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "ai-evaluation",
         "benchmark",
@@ -2485,7 +2487,7 @@
       "summaryEn": "Google launched Gemini 3.5 Transcribe, a new model delivering higher-quality speech-to-text conversion, benefiting developers and enterprises building transcription pipelines.",
       "lang": "en",
       "publishedAt": "2026-08-26T17:01:00.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "deepmind",
         "gemini-3-5",
@@ -3594,7 +3596,7 @@
       "summaryEn": "Apple launched the M6 chip in the new Mac mini and M5 Ultra in the new Mac Studio, delivering a significant generational leap in both general performance and on-device AI compute capabilities.",
       "lang": "en",
       "publishedAt": "2026-08-25T12:58:13.056Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "apple",
         "apple-silicon",
@@ -5485,7 +5487,7 @@
       "titleEn": "The New MCP Roadmap",
       "lang": "en",
       "publishedAt": "2026-08-22T09:00:00.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -6018,7 +6020,7 @@
       "summaryEn": "Google DeepMind is partnering with game studios to prototype breakthrough AI gameplay experiences, drawing on 15 years of games-based AI research spanning from Atari to EVE Online.",
       "lang": "en",
       "publishedAt": "2026-08-21T11:59:48.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "atari",
         "deepmind",
@@ -12950,7 +12952,7 @@
       "summaryEn": "Google DeepMind announced Gemini 3.7 Flash, a new efficient model in the Gemini lineup designed to deliver fast, capable AI performance across a broad range of tasks.",
       "lang": "en",
       "publishedAt": "2026-08-13T17:04:18.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "deepmind",
         "gemini-flash",
@@ -14835,7 +14837,7 @@
       "summaryEn": "Google DeepMind introduced SL2T (sign-language-to-text), a breakthrough model that powers new sign language recognition features aimed at making technology more accessible for Deaf and hard of hearing users.",
       "lang": "en",
       "publishedAt": "2026-08-12T14:01:59.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "accessibility",
         "deaf",
@@ -20744,7 +20746,7 @@
       "summaryEn": "Google DeepMind's WeatherNext AI model has achieved a breakthrough in tropical cyclone forecasting, surpassing traditional numerical models in track and intensity prediction accuracy.",
       "lang": "en",
       "publishedAt": "2026-08-06T15:06:15.000Z",
-      "collectedAt": "2026-09-26T16:30:40.369Z",
+      "collectedAt": "2026-09-27T04:00:40.254Z",
       "tags": [
         "climate-ai",
         "cyclone",

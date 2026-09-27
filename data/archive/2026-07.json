@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T04:00:53.563Z",
+  "generatedAt": "2026-09-27T05:00:45.995Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -9298,7 +9298,15 @@
       "archiveTier": "warm",
       "contentSnippet": "2026年6月からGitHub Copilotの課金方式が AI Creditによる従量課金制 に移行しました。以前と同じ使い方を続けていても料金がだいぶ上がった実感があり、X（旧Twitter）でも「実質値上げでは？」という声をよく目にします。 そこで「GitHub Copilotから使用するLLMの部分を、ローカルLLMに切り替えれば、AI Creditを消費せずに利用料金も抑えられるのでは？」と思いました。ローカルLLMなら推論コストはゼロなので、使い放題のはず——と思って、まず手元にあるノートPC（CPUのみ）で試してみることにしました。（実際に試してみるとローカルLLMの動作が極端に遅いことが分かり、GPU搭載ノートPCでも検証しました。） 今回の記事では、GitHub CopilotにローカルLLMを接続するためのセットアップ手順と実際に動かした結果を共有します。 Copilot Chat（Ask/Agentモード）に対して、ローカルLLMを接続して検証しました。 インライン補完機能 （コードを書くと隣に表示されるグレーの候補）については、Continue拡張機能を使えばローカルLLMに接続できるようです。（今回は扱いません） ノートPC（CPUのみ）でローカルLLMを動かした場合、実用に耐える速度は出ませんでした。「こんにちは」の挨拶だけで応答に8分31秒かかります。 GPUがあるだけで速度は激変します。「こんにちは」の挨拶への応答に約3秒（CPU比で約170倍）。 ただし今回試したどのモデルも、Agentモードの動作は不安定でした。 コスト節約の完全代替にはまだ遠いですが、「GitHub CopilotにローカルLLMを繋ぐ手順はどういうものか」は把握できました。 4. ローカルLLMの起動手順（Docker + Ollama） 5. GitHub CopilotへのローカルLLM接続手順 GitHub Copilotは2026年6月から、利用料金の計算方法が変わりました。",
       "feedSnippet": "こんにちは、ダックスフントです。 2026年6月からGitHub Copilotの課金方式がAI Creditによる従量課金制に移行しました。以前と同じ使い方を続けていても料金がだいぶ上がった実感があり、X（旧Twitter）でも「実質値上げでは？」という声をよく目にします...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY1NTM3MDclMkY1YTBhOWFmODczMGYyOGFjNTI2YmRhNDVjMGY0OGIyMDEzNjFiMmNlJTJGbGFyZ2UucG5nJTNGMTc4MTg2Mjg5Mz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTI3OWQzMWMzZDVlZGI1OWEwNjkzNWViYTIwYTQ0MmU%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dec293fcf915c669bc24f4ea6b6ea2fdb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBRSUyMEFJJTIwQ3JlZGl0JTIwJUUzJTgyJTkyJUU3JUFGJTgwJUU3JUI0JTg0JUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgxJThGJUUzJTgxJUE2JUUzJTgwJTgxJUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCJTIwTExNJTIwJUUzJTgxJUE3JUU2JUE0JTlDJUU4JUE4JUJDJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MGMzZTYyNGNiMzAzMjdiMmUxYjZjMTdkYWM2ZThmNmY&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBkYWNoc2h1bmQxMjkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz00MjEwZTBhODc2NzJmYTFkOTg0NmQxNzYxZTkyYjZjZg&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=4c93fcbda1f1d2423dde84dbd096cfa7",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY1NTM3MDclMkY1YTBhOWFmODczMGYyOGFjNTI2YmRhNDVjMGY0OGIyMDEzNjFiMmNlJTJGbGFyZ2UucG5nJTNGMTc4MTg2Mjg5Mz9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTI3OWQzMWMzZDVlZGI1OWEwNjkzNWViYTIwYTQ0MmU%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Dec293fcf915c669bc24f4ea6b6ea2fdb?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBRSUyMEFJJTIwQ3JlZGl0JTIwJUUzJTgyJTkyJUU3JUFGJTgwJUU3JUI0JTg0JUUzJTgxJTk3JUUzJTgxJTlGJUUzJTgxJThGJUUzJTgxJUE2JUUzJTgwJTgxJUUzJTgzJUFEJUUzJTgzJUJDJUUzJTgyJUFCJUUzJTgzJUFCJTIwTExNJTIwJUUzJTgxJUE3JUU2JUE0JTlDJUU4JUE4JUJDJUUzJTgxJTk3JUUzJTgxJUE2JUUzJTgxJUJGJUUzJTgxJTlGJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MGMzZTYyNGNiMzAzMjdiMmUxYjZjMTdkYWM2ZThmNmY&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBkYWNoc2h1bmQxMjkmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz00MjEwZTBhODc2NzJmYTFkOTg0NmQxNzYxZTkyYjZjZg&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=4c93fcbda1f1d2423dde84dbd096cfa7",
+        "alt": "GitHub Copilot の AI Credit を節約したくて、ローカル LLM で検証してみた",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "5c3200f04a9d82fd",
@@ -33463,7 +33471,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-26T23:00:25.500Z",
+      "collectedAt": "2026-09-27T05:00:29.011Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39794,7 +39802,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-26T23:00:25.500Z",
+      "collectedAt": "2026-09-27T05:00:29.011Z",
       "tags": [
         "mcp",
         "mcp-server",

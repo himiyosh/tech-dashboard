@@ -2623,7 +2623,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#toc-list-en")).toBeHidden();
     await expect(page.locator(".reading-card .rail-title > .i18n-ja")).toBeVisible();
     await expect(page.locator(".ed-pn")).toHaveAccessibleName("同カテゴリの前後の記事");
-    await expect(page.locator("#ed-back-to-top")).toHaveAccessibleName("トップに戻る");
+    await expect(page.locator("#ed-fab")).toHaveAccessibleName("ページ上部へ");
 
     await page.getByRole("button", { name: "英語表示に切り替え" }).click();
     await expect(bodyOrigin.locator(":scope > .i18n-en")).toBeVisible();
@@ -2642,7 +2642,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".ed-pn")).toHaveAccessibleName(
       "Adjacent articles in this category",
     );
-    await expect(page.locator("#ed-back-to-top")).toHaveAccessibleName("Back to top");
+    await expect(page.locator("#ed-fab")).toHaveAccessibleName("Scroll to top");
 
     // Scroll-spy: the TOC entry for the second section (or second paragraph
     // in the excerpt fallback) activates when its content is in view.
@@ -2853,10 +2853,11 @@ test.describe("TECH Dashboard smoke", () => {
           top: document.documentElement.scrollHeight,
           behavior: "instant",
         }));
-        const backToTop = page.locator("#ed-back-to-top");
+        const backToTop = page.locator("#ed-fab");
         await expect(backToTop).toHaveAttribute("href", "#");
-        const flowGeometry = await page.evaluate(() => {
-          const action = document.querySelector<HTMLElement>("#ed-back-to-top");
+        await expect(backToTop).toBeVisible();
+        const fabGeometry = await page.evaluate(() => {
+          const action = document.querySelector<HTMLElement>("#ed-fab");
           const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
           if (!action || !tabbar) return null;
           const actionRect = action.getBoundingClientRect();
@@ -2880,15 +2881,15 @@ test.describe("TECH Dashboard smoke", () => {
             hitIsAction: hit === action || action.contains(hit),
           };
         });
-        expect(flowGeometry).not.toBeNull();
-        expect(flowGeometry!.position).toBe("static");
-        expect(flowGeometry!.inMain).toBe(true);
-        expect(flowGeometry!.action.width).toBeGreaterThanOrEqual(44);
-        expect(flowGeometry!.action.height).toBeGreaterThanOrEqual(44);
-        expect(flowGeometry!.action.bottom).toBeLessThanOrEqual(
-          flowGeometry!.tabbarTop - 8,
+        expect(fabGeometry).not.toBeNull();
+        expect(fabGeometry!.position).toBe("fixed");
+        expect(fabGeometry!.inMain).toBe(true);
+        expect(fabGeometry!.action.width).toBeGreaterThanOrEqual(44);
+        expect(fabGeometry!.action.height).toBeGreaterThanOrEqual(44);
+        expect(fabGeometry!.action.bottom).toBeLessThanOrEqual(
+          fabGeometry!.tabbarTop - 8,
         );
-        expect(flowGeometry!.hitIsAction).toBe(true);
+        expect(fabGeometry!.hitIsAction).toBe(true);
       }
     }
   });

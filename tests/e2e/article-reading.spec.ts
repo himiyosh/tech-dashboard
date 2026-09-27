@@ -357,105 +357,144 @@ test("article rails adapt to the CSS viewport without stretching the prose or di
   }
 });
 
-test("article Back to top is in flow and never obscures readable text", async ({ page }) => {
+test("article circular return control floats only where real content remains readable", async ({ page }) => {
   expect(layoutEntry, "an addressable article with bilingual dialogue").toBeTruthy();
   await page.goto(`/e/${layoutEntry!.id}/`);
-  const back = page.locator("#ed-back-to-top");
-  await expect(back).toHaveAttribute("href", "#");
-  await expect(page.locator("#ed-fab")).toHaveCount(0);
+  const fab = page.locator("#ed-fab");
+  await expect(fab).toHaveCount(1);
+  await expect(fab).toHaveAttribute("href", "#");
+  await expect(page.locator("#ed-back-to-top")).toHaveCount(0);
 
   for (const width of [320, 390, 768, 948, 1000, 1180, 1181, 1280, 1440, 1680, 2000]) {
     await page.setViewportSize({ width, height: width <= 720 ? 844 : 900 });
     for (const lang of ["ja", "en"] as const) {
       await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
-      await expect(back).toHaveAccessibleName(lang === "ja" ? "トップに戻る" : "Back to top");
-      const position = await back.evaluate((node) => ({
-        value: getComputedStyle(node).position,
-        inMain: document.querySelector(".entry-main")?.contains(node),
-      }));
-      expect(position.value, `${width}px ${lang}: never fixed over article content`).toBe("static");
-      expect(position.inMain, `${width}px ${lang}: action belongs to the article flow`).toBe(true);
-
       const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      let visibleStates = 0;
       for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
         await page.evaluate((top) => scrollTo({ top, behavior: "instant" }),
           Math.round(maxScroll * fraction));
-        const collisions = await page.evaluate(() => {
-          const action = document.querySelector<HTMLElement>("#ed-back-to-top")!;
-          const actionRect = action.getBoundingClientRect();
-          const selectors = [
-            ".ed-body-prose p", ".ed-chat-text", ".ed-tldr-body",
-            ".ed-pn-title", ".ed-rel-title", ".layout > aside.right .rail-list a",
-            ".layout > aside.right .toc-list a", ".layout > aside.right .tag-cloud a",
-          ];
-          const overlapped: string[] = [];
-          for (const selector of selectors) {
-            for (const node of document.querySelectorAll<HTMLElement>(selector)) {
-              if (!node.getClientRects().length) continue;
-              const range = document.createRange();
-              range.selectNodeContents(node);
-              for (const rect of range.getClientRects()) {
-                const area = Math.max(0, Math.min(rect.right, actionRect.right) -
-                  Math.max(rect.left, actionRect.left)) *
-                  Math.max(0, Math.min(rect.bottom, actionRect.bottom) -
-                    Math.max(rect.top, actionRect.top));
-                if (area > 1) {
-                  overlapped.push(selector);
+        await page.evaluate(() => new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }));
+        const state = await page.evaluate(() => {
+          const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+          const rect = action.getBoundingClientRect();
+          const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
+          const nav = tabbar && getComputedStyle(tabbar).display !== "none"
+            ? tabbar.getBoundingClientRect() : null;
+          const overlaps = (a: DOMRect, b: DOMRect) =>
+            a.left < b.right + 4 && a.right > b.left - 4
+            && a.top < b.bottom + 4 && a.bottom > b.top - 4;
+          const collisions: string[] = [];
+          if (!action.hidden) {
+            const roots = document.querySelectorAll<HTMLElement>(
+              ".layout.entry-layout, .footer-bar",
+            );
+            for (const root of roots) {
+              const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+              let text: Node | null;
+              while ((text = walker.nextNode())) {
+                if (!text.textContent?.trim() || action.contains(text)
+                  || !text.parentElement?.getClientRects().length) continue;
+                const range = document.createRange();
+                range.selectNodeContents(text);
+                if ([...range.getClientRects()].some((box) => overlaps(box, rect))) {
+                  collisions.push("text");
                   break;
                 }
               }
+              for (const target of root.querySelectorAll<HTMLElement>(
+                "a, button, summary, input, select, textarea, [role='button'], .ed-hero, .ed-chat-face",
+              )) {
+                if (target === action || action.contains(target)
+                  || !target.getClientRects().length
+                  || getComputedStyle(target).visibility !== "visible") continue;
+                if (overlaps(target.getBoundingClientRect(), rect)) collisions.push("control/media");
+              }
             }
           }
-          return overlapped;
-        });
-        expect(collisions, `${width}px ${lang} scroll ${fraction}: no text under return link`)
-          .toEqual([]);
-      }
-      const atEnd = await page.evaluate(() => {
-        const action = document.querySelector<HTMLElement>("#ed-back-to-top")!;
-        const rect = action.getBoundingClientRect();
-        const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-        const nav = tabbar && getComputedStyle(tabbar).display !== "none"
-          ? tabbar.getBoundingClientRect() : null;
-        return {
-          width: rect.width,
-          height: rect.height,
-          insideViewport: rect.top >= 0 && rect.bottom <= innerHeight,
-          tabbarGap: nav ? nav.top - rect.bottom : null,
-          ownsCenter: action.contains(document.elementFromPoint(
+          const center = document.elementFromPoint(
             rect.left + rect.width / 2, rect.top + rect.height / 2,
-          )),
-          overflow: document.documentElement.scrollWidth - innerWidth,
-        };
-      });
-      expect(atEnd.width, `${width}px ${lang}: keyboard and touch target width`)
-        .toBeGreaterThanOrEqual(44);
-      expect(atEnd.height, `${width}px ${lang}: keyboard and touch target height`)
-        .toBeGreaterThanOrEqual(44);
-      expect(atEnd.insideViewport, `${width}px ${lang}: end action is reachable`).toBe(true);
-      expect(atEnd.ownsCenter, `${width}px ${lang}: actual pointer target`).toBe(true);
-      if (atEnd.tabbarGap !== null) {
-        expect(atEnd.tabbarGap, `${width}px ${lang}: article action clears mobile navigation`)
-          .toBeGreaterThanOrEqual(8);
+          );
+          return {
+            hidden: action.hidden,
+            inert: action.inert,
+            tabIndex: action.tabIndex,
+            position: getComputedStyle(action).position,
+            placement: action.dataset.position,
+            width: rect.width,
+            height: rect.height,
+            insideViewport: rect.left >= 0 && rect.right <= innerWidth
+              && rect.top >= 0 && rect.bottom <= innerHeight,
+            tabbarGap: nav ? nav.top - rect.bottom : null,
+            centerOwned: action === center || action.contains(center),
+            collisions,
+            overflow: document.documentElement.scrollWidth - innerWidth,
+          };
+        });
+        const scope = `${width}px ${lang} scroll ${fraction}`;
+        expect(state.position, `${scope}: fixed when JavaScript is active`).toBe("fixed");
+        expect(state.overflow, `${scope}: no horizontal scroll`).toBeLessThanOrEqual(0);
+        if (state.hidden) {
+          expect(state.inert, `${scope}: hidden action is inert`).toBe(true);
+          expect(state.tabIndex, `${scope}: hidden action is outside keyboard order`).toBe(-1);
+          expect(state.placement, `${scope}: no unsafe floating position`).toBe("hidden");
+        } else {
+          visibleStates++;
+          await expect(fab).toHaveAccessibleName(
+            lang === "ja" ? "ページ上部へ" : "Scroll to top",
+          );
+          expect(["corner", "reading-gutter"], `${scope}: known safe position`)
+            .toContain(state.placement);
+          expect(state.width, `${scope}: touch target width`).toBeGreaterThanOrEqual(44);
+          expect(state.height, `${scope}: touch target height`).toBeGreaterThanOrEqual(44);
+          expect(state.insideViewport, `${scope}: within viewport`).toBe(true);
+          expect(state.centerOwned, `${scope}: center receives pointer`).toBe(true);
+          expect(state.collisions, `${scope}: no text, media or control intersection`).toEqual([]);
+          if (state.tabbarGap !== null) {
+            expect(state.tabbarGap, `${scope}: clears mobile navigation`)
+              .toBeGreaterThanOrEqual(8);
+          }
+        }
       }
-      expect(atEnd.overflow, `${width}px ${lang}: no horizontal scroll`).toBeLessThanOrEqual(0);
+      expect(visibleStates, `${width}px ${lang}: safe places still offer the action`)
+        .toBeGreaterThan(0);
     }
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const [lang, name] of [["ja", "トップに戻る"], ["en", "Back to top"]] as const) {
+  for (const [lang, name] of [["ja", "ページ上部へ"], ["en", "Scroll to top"]] as const) {
     await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
     await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-    const action = page.getByRole("link", { name });
-    await action.focus();
-    await expect(action).toBeFocused();
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    }));
+    await expect(fab).toBeVisible();
+    await expect(fab).toHaveAccessibleName(name);
+    await fab.hover();
+    const tooltip = await fab.locator(".ed-fab-label").evaluate((label) => {
+      const rect = label.getBoundingClientRect();
+      return { text: label.textContent?.trim(), clip: getComputedStyle(label).clipPath,
+        width: rect.width, insideViewport: rect.left >= 0 && rect.right <= innerWidth };
+    });
+    expect(tooltip.clip, `${lang}: hover shows the native-language label`).toBe("none");
+    expect(tooltip.width, `${lang}: readable hover label`).toBeGreaterThan(60);
+    expect(tooltip.insideViewport, `${lang}: tooltip stays on screen`).toBe(true);
+    await page.keyboard.press("A");
+    await fab.focus();
+    await expect(fab).toBeFocused();
+    await expect.poll(() => fab.locator(".ed-fab-label").evaluate((label) =>
+      getComputedStyle(label).clipPath)).toBe("none");
     await page.keyboard.press("Enter");
+    await page.waitForURL((url) => url.href.endsWith("#"));
     await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
     await expect(page.locator("body > header .logo")).toBeFocused();
+    expect(new URL(page.url()).pathname).toBe(`/e/${layoutEntry!.id}/`);
   }
 });
 
-test("article return link reaches the top without client JavaScript", async ({
+test("article floating action preserves a readable in-flow fallback without JavaScript", async ({
   browser, page,
 }) => {
   expect(layoutEntry, "an addressable detail route for no-script navigation").toBeTruthy();
@@ -467,15 +506,389 @@ test("article return link reaches the top without client JavaScript", async ({
   try {
     const noScript = await context.newPage();
     await noScript.goto(page.url());
-    const back = noScript.getByRole("link", { name: "トップに戻る" });
+    const back = noScript.getByRole("link", { name: "ページ上部へ" });
     await expect(back).toHaveAttribute("href", "#");
+    expect(await back.evaluate((node) => getComputedStyle(node).position)).toBe("static");
+    await expect(back.locator(".ed-fab-label")).toBeVisible();
     await back.scrollIntoViewIfNeeded();
     expect(await noScript.evaluate(() => scrollY)).toBeGreaterThan(0);
     await back.click();
     await expect.poll(() => noScript.evaluate(() => scrollY)).toBe(0);
+    expect(new URL(noScript.url()).pathname).toBe(`/e/${layoutEntry!.id}/`);
   } finally {
     await context.close();
   }
+});
+
+test("article floating action relocates or hides on obstruction and preserves focus", async ({
+  page,
+}) => {
+  expect(layoutEntry, "an addressable article with bilingual dialogue").toBeTruthy();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/e/${layoutEntry!.id}/`);
+  const fab = page.locator("#ed-fab");
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await expect(fab).toBeVisible();
+  await page.keyboard.press("A");
+  await fab.focus();
+  await expect(fab).toBeFocused();
+  const oldButtonBox = await fab.boundingBox();
+  expect(oldButtonBox).not.toBeNull();
+  const before = await page.evaluate(() => scrollY);
+  await page.evaluate(() => {
+    const blocker = document.createElement("button");
+    blocker.id = "fab-test-obstruction";
+    blocker.type = "button";
+    blocker.textContent = "Visible test control";
+    const header = document.querySelector("body > header")!.getBoundingClientRect();
+    const nav = document.querySelector(".mobile-tabbar")!.getBoundingClientRect();
+    Object.assign(blocker.style, {
+      position: "fixed", left: "0px", top: `${header.bottom + 8}px`,
+      width: `${innerWidth}px`, height: `${nav.top - header.bottom - 12}px`,
+      background: "#252321", zIndex: "1",
+    });
+    document.querySelector(".entry-main")!.append(blocker);
+  });
+  await expect(fab).toBeHidden();
+  await expect(page.getByRole("link", { name: "ページ上部へ" })).toHaveCount(0);
+  const hiddenHit = await page.evaluate(({ x, y }) => {
+    const action = document.querySelector("#ed-fab")!;
+    const hit = document.elementFromPoint(x, y);
+    return hit === action || action.contains(hit);
+  }, {
+    x: oldButtonBox!.x + oldButtonBox!.width / 2,
+    y: oldButtonBox!.y + oldButtonBox!.height / 2,
+  });
+  expect(hiddenHit, "an unsafe button cannot intercept pointer input").toBe(false);
+  const hidden = await page.evaluate(() => {
+    const action = document.querySelector<HTMLAnchorElement>("#ed-fab")!;
+    const target = document.querySelector<HTMLElement>(".skip-link")!;
+    const rect = target.getBoundingClientRect();
+    return {
+      inert: action.inert, tabIndex: action.tabIndex,
+      targetFocused: document.activeElement === target,
+      targetVisible: rect.top >= 0 && rect.bottom <= innerHeight && rect.width > 0,
+      targetFocusRing: getComputedStyle(target).outlineStyle,
+      targetFocusWidth: parseFloat(getComputedStyle(target).outlineWidth),
+      scroll: scrollY,
+    };
+  });
+  expect(hidden.inert).toBe(true);
+  expect(hidden.tabIndex).toBe(-1);
+  expect(hidden.targetFocused).toBe(true);
+  expect(hidden.targetVisible).toBe(true);
+  expect(hidden.targetFocusRing).not.toBe("none");
+  expect(hidden.targetFocusWidth).toBeGreaterThanOrEqual(2);
+  expect(Math.abs(hidden.scroll - before), "focus handoff must not jump the reading position")
+    .toBeLessThanOrEqual(1);
+  await page.locator("#fab-test-obstruction").evaluate((node) => node.remove());
+  await expect(fab).toBeVisible();
+  await expect(page.getByRole("link", { name: "ページ上部へ" })).toHaveCount(1);
+  await expect(page.locator(".skip-link")).toBeFocused();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('.lang-btn[data-lang="en"]').click();
+  await page.evaluate(() => {
+    const spacer = document.createElement("div");
+    spacer.id = "fab-test-clear-zone";
+    spacer.style.height = "180px";
+    document.querySelector(".entry-main")!.append(spacer);
+    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+    const blocker = document.createElement("button");
+    blocker.id = "fab-test-rail-obstruction";
+    blocker.type = "button";
+    blocker.textContent = "Visible rail control";
+    const main = document.querySelector(".entry-main")!.getBoundingClientRect();
+    const header = document.querySelector("body > header")!.getBoundingClientRect();
+    Object.assign(blocker.style, {
+      position: "fixed", left: `${main.right + 12}px`, top: `${header.bottom + 8}px`,
+      width: `${innerWidth - main.right - 12}px`,
+      height: `${innerHeight - header.bottom - 16}px`,
+      background: "#252321", zIndex: "1",
+    });
+    document.querySelector(".layout.entry-layout > aside.right")!.append(blocker);
+  });
+  await expect(fab).toBeVisible();
+  await expect(fab).toHaveAttribute("data-position", "reading-gutter");
+  const shifted = await fab.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    const main = document.querySelector(".entry-main")!.getBoundingClientRect();
+    return { right: rect.right, mainRight: main.right, viewportRight: innerWidth - rect.right };
+  });
+  expect(shifted.right).toBeLessThanOrEqual(shifted.mainRight + 1);
+  expect(shifted.viewportRight).toBeGreaterThan(100);
+
+  await page.keyboard.press("A");
+  await fab.focus();
+  const desktopScroll = await page.evaluate(() => scrollY);
+  await page.evaluate(() => {
+    const blocker = document.createElement("button");
+    blocker.id = "fab-test-obstruction";
+    blocker.type = "button";
+    blocker.textContent = "Visible desktop control";
+    const header = document.querySelector("body > header")!.getBoundingClientRect();
+    Object.assign(blocker.style, {
+      position: "fixed", left: "0px", top: `${header.bottom + 8}px`,
+      width: `${innerWidth}px`, height: `${innerHeight - header.bottom - 16}px`,
+      background: "#252321", zIndex: "1",
+    });
+    document.querySelector(".entry-main")!.append(blocker);
+  });
+  await expect(fab).toBeHidden();
+  const desktopFocus = await page.evaluate(() => {
+    const logo = document.querySelector<HTMLElement>("body > header .logo")!;
+    const rect = logo.getBoundingClientRect();
+    return {
+      focused: document.activeElement === logo,
+      visible: rect.top >= 0 && rect.bottom <= innerHeight,
+      outlineWidth: parseFloat(getComputedStyle(logo).outlineWidth),
+      scroll: scrollY,
+    };
+  });
+  expect(desktopFocus.focused).toBe(true);
+  expect(desktopFocus.visible).toBe(true);
+  expect(desktopFocus.outlineWidth).toBeGreaterThanOrEqual(2);
+  expect(Math.abs(desktopFocus.scroll - desktopScroll)).toBeLessThanOrEqual(1);
+  await page.locator("#fab-test-obstruction").evaluate((node) => node.remove());
+  await expect(fab).toBeVisible();
+  await page.locator("#fab-test-rail-obstruction").evaluate((node) => node.remove());
+  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
+});
+
+test("article floating action tooltip avoids text and interactive targets", async ({ page }) => {
+  expect(layoutEntry, "an article with bilingual body and dialogue").toBeTruthy();
+  await page.goto(`/e/${layoutEntry!.id}/`);
+  const fab = page.locator("#ed-fab");
+  let tooltipShown = 0;
+  for (const width of [320, 390, 948, 1181, 1280, 1440]) {
+    await page.setViewportSize({ width, height: width <= 720 ? 844 : 900 });
+    for (const lang of ["ja", "en"] as const) {
+      await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
+      const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      for (const fraction of [0.25, 0.5, 0.75, 1]) {
+        await page.evaluate((top) => scrollTo({ top, behavior: "instant" }),
+          Math.round(maxScroll * fraction));
+        await page.evaluate(() => new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }));
+        if (!await fab.isVisible()) continue;
+        await fab.hover();
+        await page.evaluate(() => new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }));
+        const tooltip = await fab.evaluate((action) => {
+          const label = action.querySelector<HTMLElement>(".ed-fab-label")!;
+          const rect = label.getBoundingClientRect();
+          const overlap = (a: DOMRect, b: DOMRect) =>
+            a.left < b.right + 2 && a.right > b.left - 2
+            && a.top < b.bottom + 2 && a.bottom > b.top - 2;
+          const conflicts: string[] = [];
+          for (const root of document.querySelectorAll<HTMLElement>(
+            ".layout.entry-layout, .footer-bar",
+          )) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            let text: Node | null;
+            while ((text = walker.nextNode())) {
+              if (!text.textContent?.trim() || action.contains(text)
+                || !text.parentElement?.getClientRects().length) continue;
+              const range = document.createRange();
+              range.selectNodeContents(text);
+              if ([...range.getClientRects()].some((box) => overlap(box, rect))) {
+                conflicts.push("text");
+                break;
+              }
+            }
+            for (const target of root.querySelectorAll<HTMLElement>(
+              "a, button, summary, input, select, textarea, [role='button'], .ed-hero, .ed-chat-face",
+            )) {
+              if (target === action || action.contains(target)
+                || !target.getClientRects().length
+                || getComputedStyle(target).visibility !== "visible") continue;
+              if (overlap(target.getBoundingClientRect(), rect)) conflicts.push("control/media");
+            }
+          }
+          return {
+            placement: action.dataset.tooltip,
+            clip: getComputedStyle(label).clipPath,
+            text: label.innerText,
+            width: rect.width,
+            withinViewport: rect.left >= 0 && rect.right <= innerWidth
+              && rect.top >= 0 && rect.bottom <= innerHeight,
+            conflicts,
+          };
+        });
+        tooltipShown++;
+        expect(["above", "left", "below"], `${width}px ${lang}: visible control owns its tooltip`)
+          .toContain(tooltip.placement);
+        expect(tooltip.clip, `${width}px ${lang}: tooltip is visually available`).toBe("none");
+        expect(tooltip.text).toContain(lang === "ja" ? "ページ上部へ" : "Scroll to top");
+        expect(tooltip.width, `${width}px ${lang}: readable label`).toBeGreaterThan(60);
+        expect(tooltip.withinViewport, `${width}px ${lang}: label stays on screen`).toBe(true);
+        expect(tooltip.conflicts, `${width}px ${lang}: label leaves real content clear`).toEqual([]);
+        await page.mouse.move(1, 1);
+      }
+    }
+  }
+  expect(tooltipShown, "hover shows a real tooltip when a safe location exists")
+    .toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.lang-btn[data-lang="ja"]').click();
+  await page.evaluate(() => {
+    const spacer = document.createElement("div");
+    spacer.id = "fab-test-clear-zone";
+    spacer.style.height = "180px";
+    document.querySelector(".entry-main")!.append(spacer);
+    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+  });
+  await expect(fab).toBeVisible();
+  await fab.hover();
+  await expect(fab).toHaveAttribute("data-tooltip", "above");
+  await page.evaluate(() => {
+    const label = document.querySelector("#ed-fab .ed-fab-label")!.getBoundingClientRect();
+    const blocker = document.createElement("button");
+    blocker.id = "fab-tooltip-obstruction";
+    blocker.textContent = "Visible tooltip blocker";
+    Object.assign(blocker.style, {
+      position: "fixed", left: `${label.left}px`, top: `${label.top}px`,
+      width: `${label.width}px`, height: `${label.height}px`,
+      background: "#252321", zIndex: "1",
+    });
+    document.querySelector(".entry-main")!.append(blocker);
+  });
+  await expect(fab).toHaveAttribute("data-tooltip", "left");
+  await expect(fab).toBeVisible();
+  await page.locator("#fab-tooltip-obstruction").evaluate((node) => node.remove());
+  await expect(fab).toHaveAttribute("data-tooltip", "above");
+  await page.locator("#fab-test-clear-zone").evaluate((node) => node.remove());
+});
+
+test("narrow and desktop first views never expose an icon without its tooltip", async ({
+  page,
+}) => {
+  expect(layoutEntry, "an addressable article").toBeTruthy();
+  await page.goto(`/e/${layoutEntry!.id}/`);
+  const fab = page.locator("#ed-fab");
+  for (const { width, height, lang } of [
+    { width: 320, height: 568, lang: "ja" },
+    { width: 375, height: 667, lang: "ja" },
+    { width: 375, height: 667, lang: "en" },
+    { width: 1280, height: 900, lang: "en" },
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.locator(`.lang-btn[data-lang="${lang}"]`).click();
+    for (const atEnd of [false, true]) {
+      await page.evaluate((end) => scrollTo({
+        top: end ? document.documentElement.scrollHeight : 0, behavior: "instant",
+      }), atEnd);
+      await page.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }));
+      const scope = `${width}x${height} ${lang} ${atEnd ? "end" : "start"}`;
+      if (await fab.isVisible()) {
+        await fab.hover();
+        const label = await fab.evaluate((node) => {
+          const text = node.querySelector<HTMLElement>(".ed-fab-label")!;
+          const rect = text.getBoundingClientRect();
+          return {
+            placement: node.dataset.tooltip,
+            clip: getComputedStyle(text).clipPath,
+            width: rect.width,
+            withinViewport: rect.left >= 0 && rect.right <= innerWidth
+              && rect.top >= 0 && rect.bottom <= innerHeight,
+          };
+        });
+        expect(["above", "left", "below"], `${scope}: has a safe tooltip slot`)
+          .toContain(label.placement);
+        expect(label.clip, `${scope}: label is visible on hover`).toBe("none");
+        expect(label.width, `${scope}: label has real text width`).toBeGreaterThan(60);
+        expect(label.withinViewport, `${scope}: label remains on-screen`).toBe(true);
+        await page.mouse.move(1, 1);
+      } else {
+        const hidden = await fab.evaluate((node) => ({
+          hidden: node.hidden, inert: node.inert, tabIndex: node.tabIndex,
+        }));
+        expect(hidden, `${scope}: no icon-only visible fallback`)
+          .toEqual({ hidden: true, inert: true, tabIndex: -1 });
+      }
+      if (atEnd) await expect(fab, `${scope}: a clear reading end offers the action`).toBeVisible();
+    }
+  }
+});
+
+test("short viewport and modal navigation never trap or cover the article return action", async ({
+  page,
+}) => {
+  expect(layoutEntry, "an addressable article").toBeTruthy();
+  await page.goto(`/e/${layoutEntry!.id}/`);
+  const fab = page.locator("#ed-fab");
+  for (const { width, height } of [
+    { width: 320, height: 568 },
+    { width: 375, height: 667 },
+    { width: 390, height: 667 },
+    { width: 721, height: 600 },
+    { width: 948, height: 600 },
+    { width: 1280, height: 720 },
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+    await page.evaluate(() => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    }));
+    const state = await fab.evaluate((action) => {
+      const rect = action.getBoundingClientRect();
+      const nav = document.querySelector<HTMLElement>(".mobile-tabbar");
+      const navRect = nav && getComputedStyle(nav).display !== "none"
+        ? nav.getBoundingClientRect() : null;
+      const footer = document.querySelector<HTMLElement>(".footer-bar");
+      const footerRect = footer && getComputedStyle(footer).display !== "none"
+        ? footer.getBoundingClientRect() : null;
+      const hit = document.elementFromPoint(
+        rect.left + rect.width / 2, rect.top + rect.height / 2,
+      );
+      return {
+        hidden: action.hidden, inert: action.inert, tabIndex: action.tabIndex,
+        rect: { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+          width: rect.width, height: rect.height },
+        navTop: navRect?.top ?? null,
+        footerTop: footerRect?.top ?? null,
+        ownsHit: hit === action || action.contains(hit),
+        overflow: document.documentElement.scrollWidth - innerWidth,
+      };
+    });
+    expect(state.overflow, `${width}x${height}: no horizontal overflow`).toBeLessThanOrEqual(0);
+    if (state.hidden) {
+      expect(state.inert, `${width}x${height}: blocked action is inert`).toBe(true);
+      expect(state.tabIndex, `${width}x${height}: blocked action is not tabbable`).toBe(-1);
+    } else {
+      expect(state.rect.width, `${width}x${height}: hit width`).toBeGreaterThanOrEqual(44);
+      expect(state.rect.height, `${width}x${height}: hit height`).toBeGreaterThanOrEqual(44);
+      expect(state.rect.left, `${width}x${height}: no left clipping`).toBeGreaterThanOrEqual(8);
+      expect(state.rect.right, `${width}x${height}: no right clipping`).toBeLessThanOrEqual(width - 8);
+      expect(state.rect.top, `${width}x${height}: no top clipping`).toBeGreaterThanOrEqual(8);
+      expect(state.rect.bottom, `${width}x${height}: no bottom clipping`).toBeLessThanOrEqual(height - 8);
+      expect(state.ownsHit, `${width}x${height}: actual pointer reaches action`).toBe(true);
+      if (state.navTop !== null) {
+        expect(state.navTop - state.rect.bottom, `${width}x${height}: tabbar clearance`)
+          .toBeGreaterThanOrEqual(8);
+      }
+      if (state.footerTop !== null) {
+        expect(state.footerTop - state.rect.bottom, `${width}x${height}: footer clearance`)
+          .toBeGreaterThanOrEqual(8);
+      }
+    }
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await expect(fab).toBeVisible();
+  await page.locator(".mobile-tabbar button[data-menu-trigger]").click();
+  await expect(page.locator("#site-menu")).toBeVisible();
+  await expect(fab).toBeHidden();
+  await expect(fab).toHaveAttribute("inert", "");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#site-menu")).toBeHidden();
+  await expect(fab).toBeVisible();
 });
 
 test("article sticky rails, contents links, and mobile controls remain reachable", async ({

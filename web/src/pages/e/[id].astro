@@ -1118,10 +1118,12 @@ const jsonLd = buildArticleJsonLd({
         </section>
       )}
 
-      <a class="ed-back-to-top" id="ed-back-to-top" href="#" style={`--cat-color:${catColor}`}>
-        <span aria-hidden="true">↑</span>
-        <span class="i18n-ja">トップに戻る</span>
-        <span class="i18n-en" lang="en">Back to top</span>
+      <a class="ed-fab" id="ed-fab" href="#" aria-labelledby="ed-fab-label" style={`--cat-color:${catColor}`}>
+        <span class="ed-fab-arrow" aria-hidden="true">↑</span>
+        <span class="ed-fab-label" id="ed-fab-label">
+          <span class="i18n-ja">ページ上部へ</span>
+          <span class="i18n-en" lang="en">Scroll to top</span>
+        </span>
       </a>
     </main>
 
@@ -1333,13 +1335,238 @@ const jsonLd = buildArticleJsonLd({
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    var backToTop = document.getElementById("ed-back-to-top");
-    if (backToTop) backToTop.addEventListener("click", function () {
-      requestAnimationFrame(function () {
-        var logo = document.querySelector("body > header .logo");
-        if (logo instanceof HTMLElement) logo.focus({ preventScroll: true });
+    var fab = document.getElementById("ed-fab");
+    if (fab instanceof HTMLAnchorElement && main) {
+      var header = document.querySelector("body > header");
+      var logo = header && header.querySelector(".logo");
+      var skipLink = document.querySelector(".skip-link");
+      var tabbar = document.querySelector(".mobile-tabbar");
+      var footer = document.querySelector(".footer-bar");
+      var label = fab.querySelector(".ed-fab-label");
+      var roots = [
+        main,
+        document.querySelector(".layout.entry-layout > aside.left"),
+        document.querySelector(".layout.entry-layout > aside.right"),
+        footer,
+      ].filter(Boolean);
+      fab.dataset.floating = "true";
+      var size = fab.getBoundingClientRect().width;
+      fab.hidden = true;
+      fab.inert = true;
+      fab.tabIndex = -1;
+      var tooltipSize = null;
+
+      function intersects(a, b, gap) {
+        return a.left < b.right + gap && a.right > b.left - gap
+          && a.top < b.bottom + gap && a.bottom > b.top - gap;
+      }
+
+      function measureTooltip() {
+        var lang = document.documentElement.dataset.lang === "en" ? "en" : "ja";
+        if (tooltipSize && tooltipSize.lang === lang) return tooltipSize;
+        var text = label && label.querySelector(".i18n-" + lang);
+        if (!text || !text.textContent.trim()) {
+          console.error("[article] Missing localized label for the return control");
+          return null;
+        }
+        var probe = document.createElement("span");
+        var font = getComputedStyle(fab);
+        probe.textContent = text.textContent.trim();
+        probe.setAttribute("aria-hidden", "true");
+        Object.assign(probe.style, {
+          position: "fixed", left: "-10000px", top: "0",
+          width: "max-content", padding: "8px 10px",
+          border: "1px solid transparent", whiteSpace: "nowrap",
+          visibility: "hidden", pointerEvents: "none",
+          fontFamily: font.fontFamily, fontWeight: font.fontWeight,
+          fontSize: "12px", lineHeight: "1.4", letterSpacing: font.letterSpacing,
+        });
+        document.body.append(probe);
+        var rect = probe.getBoundingClientRect();
+        probe.remove();
+        if (!rect.width || !rect.height) {
+          console.error("[article] Cannot measure the return control label");
+          return null;
+        }
+        tooltipSize = { lang, width: rect.width + 2, height: rect.height + 2 };
+        return tooltipSize;
+      }
+
+      function focusReturn(target) {
+        target.classList.add("ed-fab-focus-return");
+        target.addEventListener("blur", function () {
+          target.classList.remove("ed-fab-focus-return");
+        }, { once: true });
+        target.focus({ preventScroll: true });
+      }
+
+      function hideFab() {
+        if (document.activeElement === fab) {
+          var logoBox = logo && logo.getBoundingClientRect();
+          if (logo instanceof HTMLElement && logoBox
+            && logoBox.top >= 0 && logoBox.bottom <= innerHeight
+            && logoBox.width > 0 && logoBox.height > 0
+            && getComputedStyle(logo).visibility === "visible") {
+            focusReturn(logo);
+          } else if (skipLink instanceof HTMLAnchorElement) {
+            focusReturn(skipLink);
+          } else {
+            console.error("[article] No visible focus target for the return control");
+            fab.blur();
+          }
+        }
+        fab.hidden = true;
+        fab.inert = true;
+        fab.tabIndex = -1;
+        fab.dataset.position = "hidden";
+      }
+
+      function updateFab() {
+        var tooltip = measureTooltip();
+        if (!tooltip) {
+          hideFab();
+          return;
+        }
+        var viewportWidth = document.documentElement.clientWidth;
+        var viewportHeight = innerHeight;
+        var navBox = tabbar && getComputedStyle(tabbar).display !== "none"
+          ? tabbar.getBoundingClientRect() : null;
+        var footerBox = footer && getComputedStyle(footer).display !== "none"
+          ? footer.getBoundingClientRect() : null;
+        var bottom = navBox ? viewportHeight - navBox.top + 12 : 24;
+        var top = viewportHeight - bottom - size;
+        var headerBottom = header ? header.getBoundingClientRect().bottom + 12 : 12;
+        var lowerLimit = navBox ? navBox.top - 8 : viewportHeight - 8;
+        if (footerBox && footerBox.top < viewportHeight && footerBox.bottom > 0) {
+          lowerLimit = Math.min(lowerLimit, footerBox.top - 8);
+        }
+        var occupied = [];
+        var bandTop = Math.max(headerBottom, top - 3 * (size + 12) - tooltip.height - 10);
+        var bandBottom = top + size + tooltip.height + 10;
+
+        for (var root of roots) {
+          var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+          var text;
+          while ((text = walker.nextNode())) {
+            if (!text.textContent.trim() || fab.contains(text)) continue;
+            var parent = text.parentElement;
+            if (!parent || !parent.getClientRects().length) continue;
+            var parentBox = parent.getBoundingClientRect();
+            if (parentBox.bottom < bandTop - 6 || parentBox.top > bandBottom + 6) continue;
+            var range = document.createRange();
+            range.selectNodeContents(text);
+            for (var box of range.getClientRects()) {
+              if (box.bottom >= bandTop - 6 && box.top <= bandBottom + 6) occupied.push(box);
+            }
+          }
+          root.querySelectorAll("a, button, summary, input, select, textarea, [role='button'], .ed-hero, .ed-chat-face")
+            .forEach(function (element) {
+              if (element === fab || fab.contains(element) || !element.getClientRects().length
+                || getComputedStyle(element).visibility !== "visible") return;
+              var box = element.getBoundingClientRect();
+              if (box.bottom >= bandTop - 6 && box.top <= bandBottom + 6) occupied.push(box);
+            });
+        }
+
+        var cornerLeft = viewportWidth - (viewportWidth <= 720 ? 16 : 24) - size;
+        var mainLeft = Math.min(cornerLeft, main.getBoundingClientRect().right - size);
+        var lefts = [cornerLeft];
+        if (cornerLeft - mainLeft >= 8) lefts.push(mainLeft);
+        var chosen = null;
+        function safe(rect, gap) {
+          return rect.left >= 8 && rect.right <= viewportWidth - 8
+            && rect.top >= Math.max(8, headerBottom) && rect.bottom <= lowerLimit
+            && !occupied.some(function (box) { return intersects(box, rect, gap); });
+        }
+        if (!document.querySelector("dialog[open]")) {
+          for (var row = 0; row < 4 && !chosen; row++) {
+            for (var left of lefts) {
+              var rect = {
+                left, right: left + size,
+                top: top - row * (size + 12),
+                bottom: top - row * (size + 12) + size,
+              };
+              if (!safe(rect, 6)) continue;
+              var labelRects = [
+                {
+                  placement: "above",
+                  left: rect.right - tooltip.width, right: rect.right,
+                  top: rect.top - tooltip.height - 8, bottom: rect.top - 8,
+                },
+                {
+                  placement: "left",
+                  left: rect.left - tooltip.width - 10, right: rect.left - 10,
+                  top: rect.top + (size - tooltip.height) / 2,
+                  bottom: rect.top + (size + tooltip.height) / 2,
+                },
+                {
+                  placement: "below",
+                  left: rect.right - tooltip.width, right: rect.right,
+                  top: rect.bottom + 8, bottom: rect.bottom + 8 + tooltip.height,
+                },
+              ];
+              var safeLabel = labelRects.find(function (box) { return safe(box, 4); });
+              if (!safeLabel) continue;
+              chosen = { rect, tooltip: safeLabel.placement };
+              break;
+            }
+          }
+        }
+
+        if (!chosen) {
+          hideFab();
+          return;
+        }
+        fab.style.right = viewportWidth - chosen.rect.right + "px";
+        fab.style.bottom = viewportHeight - chosen.rect.bottom + "px";
+        fab.dataset.tooltip = chosen.tooltip;
+        fab.hidden = false;
+        fab.inert = false;
+        fab.removeAttribute("tabindex");
+        fab.dataset.position = chosen.rect.left === cornerLeft ? "corner" : "reading-gutter";
+        var hit = document.elementFromPoint(
+          chosen.rect.left + size / 2, chosen.rect.top + size / 2,
+        );
+        if (!hit || !fab.contains(hit)) hideFab();
+      }
+
+      var scheduled = false;
+      function scheduleFab() {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(function () {
+          scheduled = false;
+          updateFab();
+        });
+      }
+      window.addEventListener("scroll", scheduleFab, { passive: true });
+      window.addEventListener("resize", function () {
+        tooltipSize = null;
+        scheduleFab();
       });
-    });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", scheduleFab);
+        window.visualViewport.addEventListener("scroll", scheduleFab, { passive: true });
+      }
+      new ResizeObserver(scheduleFab).observe(main);
+      new MutationObserver(scheduleFab).observe(main.parentElement, {
+        childList: true, characterData: true, subtree: true,
+      });
+      new MutationObserver(scheduleFab).observe(document.documentElement, {
+        attributes: true, attributeFilter: ["data-lang"],
+      });
+      document.querySelectorAll("dialog").forEach(function (dialog) {
+        new MutationObserver(scheduleFab).observe(dialog, {
+          attributes: true, attributeFilter: ["open"],
+        });
+      });
+      fab.addEventListener("click", function () {
+        requestAnimationFrame(function () {
+          if (logo instanceof HTMLElement) focusReturn(logo);
+        });
+      });
+      updateFab();
+    }
 
     // Keyboard nav: ArrowLeft (prev = newer), ArrowRight (next = older)
     document.addEventListener("keydown", function (e) {
@@ -1383,6 +1610,7 @@ const jsonLd = buildArticleJsonLd({
 
 <style>
   .entry-main { min-width: 0; }
+  .entry-main:has(> .ed-fab[data-floating]) { padding-bottom: 96px; }
 
   /* PROGRESS BAR */
   .ed-progress {
@@ -2130,31 +2358,78 @@ const jsonLd = buildArticleJsonLd({
   .cat-jump-name { flex: 1; font-weight: 600; color: var(--cat-color); }
   .cat-jump-arrow { color: var(--muted); }
 
-  .ed-back-to-top {
+  .ed-fab {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     width: fit-content;
-    max-width: 100%;
-    min-height: 45px;
+    min-width: 52px;
+    height: 52px;
     margin: 24px auto 0;
-    padding: 9px 16px;
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text-2);
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--cat-color);
+    color: #0c0c0a;
     font-size: 13px;
     font-weight: 700;
     text-decoration: none;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
   }
-  .ed-back-to-top:hover {
-    border-color: var(--cat-color);
-    color: var(--cat-color);
+  .ed-fab[data-floating] {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 50;
+    width: 52px;
+    margin: 0;
+    padding: 0;
   }
-  .ed-back-to-top span[aria-hidden="true"] {
-    font-size: 16px;
+  .ed-fab[hidden] { display: none; }
+  .ed-fab-arrow {
+    font-size: 22px;
     line-height: 1;
+  }
+  .ed-fab-label { white-space: nowrap; }
+  .ed-fab[data-floating] .ed-fab-label {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    pointer-events: none;
+  }
+  .ed-fab[data-floating][data-tooltip="left"] .ed-fab-label {
+    top: 50%;
+    right: calc(100% + 10px);
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+  .ed-fab[data-floating][data-tooltip="below"] .ed-fab-label {
+    top: calc(100% + 8px);
+    bottom: auto;
+  }
+  .ed-fab[data-floating]:is(:hover, :focus) .ed-fab-label {
+    width: max-content;
+    height: auto;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    overflow: visible;
+    clip-path: none;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+  }
+  :global(body.entry-detail-page .skip-link.ed-fab-focus-return) { top: 12px; }
+  :global(body.entry-detail-page .logo.ed-fab-focus-return),
+  :global(body.entry-detail-page .skip-link.ed-fab-focus-return) {
+    outline: 3px solid var(--focus-ring) !important;
+    outline-offset: 3px !important;
   }
 
   /* RESPONSIVE */

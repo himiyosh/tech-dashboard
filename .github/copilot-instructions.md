@@ -3217,12 +3217,24 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-486: 記事幅は実 CSS viewport と各レールの矩形から判断し、共通 header の子要素への誤適用を防ぐ
 - **事象**: 記事詳細の2000px画像では左右と本文周辺の余白が大きく見えた。実PreviewのCSS viewportで900→901pxになると、単列の本文左右余白130/130pxから左レール228px＋右非表示による293/49pxへ急変し、1180pxでも396/144pxの非対称が残った。1280px時は左レール236px・主列996px・右レール非表示の一方で本文最大640px、対話994pxまで広がった。1360pxで右レールが突然復帰し、スクロール時には対話見出しと左右レールの先頭がサイトヘッダーへ重なった。
 - **根本原因**: 共通layoutが901–1359pxで右レールを一律非表示にしつつ、901pxで左レールだけを復帰させ、記事に特有の読書幅と右側の目次・出典情報を考慮していなかった。`<header class="ed-chat-head">`は全`header`へ適用するsticky/暗色背景/blur/z-indexを継承し、aside/TOCのtop 72–80pxも実ヘッダー下端109–117pxより上だった。画像の物理ピクセル幅はbrowser zoomやDPRを含むため、CSS viewportと同一視できない。
-- **対策**: 記事だけの`.layout.entry-layout`を設け、901–1180pxでは片側だけのTimelineカテゴリレールを隠し、主列を最大960pxで中央へ寄せた。Header Categoriesと記事Heroのカテゴリリンクは残す。1181–1359pxは左/本文/右の3列、広幅では右レールを最大360pxへ伸ばし、本文640px/68chと共通1680pxキャンバスは保つ。対話ヘッダーの誤継承をscopeして打ち消し、stickyレール・TOCとanchorの位置をヘッダー下へ移した。狭幅のbreadcrumb/topicと新たに表示するTOCの操作面も45pxへ広げた。固定の「トップに戻る」に残った本文遮蔽はLL-487の独立した操作配置契約で解消した。
+- **対策**: 記事だけの`.layout.entry-layout`を設け、901–1180pxでは片側だけのTimelineカテゴリレールを隠し、主列を最大960pxで中央へ寄せた。Header Categoriesと記事Heroのカテゴリリンクは残す。1181–1359pxは左/本文/右の3列、広幅では右レールを最大360pxへ伸ばし、本文640px/68chと共通1680pxキャンバスは保つ。対話ヘッダーの誤継承をscopeして打ち消し、stickyレール・TOCとanchorの位置をヘッダー下へ移した。狭幅のbreadcrumb/topicと新たに表示するTOCの操作面も45pxへ広げた。固定ボタンの本文遮蔽はLL-487の実文字・操作面の非交差契約で防ぐ。
 - **教訓**: screenshotのラスタ幅からCSS viewportを推測せず、`innerWidth`、`documentElement.clientWidth`、`visualViewport.width/scale`、DPR、`outerWidth`を分けて測る。片側railだけを残すと、横overflowが0でも本文の左右余白が250px以上偏る。読書本文のmax-widthを外して無理に広げず、狭い画面は主列を中央に戻し、両railが入る幅では余剰幅を記事特有の補助レールへ配分する。globalなelement selectorはcomponent内の同じHTML tagにも作用するため、DOMRectに加えてcomputed position/background/layerを確認する。
 - **追補**: Pokoの既存E2Eは「viewportが1280pxなら対話の説明は絵の右」という近似を固定していたが、右レールを表示した後の対話は758pxで、930px以下のcontainer queryにより説明が全幅の次行に置かれる正当な状態になった。テストはviewport幅ではなく対話のcontent-box幅を測り、948pxの境界fixtureは十分広い親を持つviewportで試す。component queryの検証にpage幅のproxyを使わない。
 
-### LL-487: 固定の「トップへ戻る」は最終位置が安全でもスクロール中の本文と右レールを隠す
+### LL-487: 固定の「ページ上部へ」は最終位置だけでなくスクロール中の実文字・操作面を避ける
 - **事象**: 記事の固定FABはmobile tabbarとの最終距離を8px以上にしても、スクロール時に実テキストのRangeへ重なった。元のPreviewと幅変更後の双方で390pxの本文が最大391 CSS px²、948pxの関連記事が最大454px²、1181/1280pxの右レールが最大1064px²、1440/1680pxの右レールが最大834px²遮蔽された。1784px以上の余白に出る幅だけは重なりが無かった。
 - **根本原因**: `position:fixed`でviewport右端へ置いた44pxボタンの下を本文やstickyレールが流れるため、画面全体の横overflow0、ボタン自身の44px、tabbarとの安全距離、中心hit-testのいずれも文字の可視性を保証しなかった。mobileで入口の8px transformだけを止めても、本文との遮蔽は残った。1180px以下だけをin-flowへ移しても、1181–1680pxの右レールで同じ問題が続く。
-- **対策**: HOMEの全幅指定に従い、記事末尾の`main`内にJA/EN可視labelと45px以上の操作面を持つin-flowの「トップに戻る」linkを配置した。`href="#"`はJavaScriptなしでもページ先頭へ戻り、clientが使えるときはヘッダーlogoへfocusを移す。固定位置、scroll連動のopacity/transform、旧FABのDOM/CSSを除去した。JA/ENのviewport行列で本文、Pokoの6発言、右レールの実Rangeとの非交差、keyboard、mobile tabbarとの距離、JavaScript無効時の到達を検証する。
-- **教訓**: fixedな補助操作は周囲の固定navigationから離れていても、ページ本文がその位置を通過する間は安全とは言えない。可変長の記事を読む画面では実文字のRangeと操作面の交差をscroll位置・locale・中間幅で測り、固定位置のまま横paddingや透明度で隠そうとせず、記事末尾の通常flowへ移す。native anchorを使えば失敗したclient bundle下でも戻り先が機能する。
+- **対策**: HOMEの再判断に従い、↑の丸い52pxボタンを安全なら画面右下へ固定し、実文字Range・既存link/button・対話アバター・footerと交差する場合は記事右側の余白または右下より少し上へ移す。候補が全て塞がる状態だけ非表示・inert・Tab対象外にする。focus中に隠す場合は、実際に画面内にあるheader logoへ読書位置を保ってfocusを移し、mobileでheaderがスクロールアウトしているときは既存のskip linkを可視のfocus復帰先にする。記事末尾にはボタンの安全な位置を確保する小さな余白を置き、JavaScriptが無い時は同じanchorが記事末尾に残り、2個目のボタンは出さない。JA/EN、狭幅から広幅のスクロール行列と意図的に塞ぐfixtureで復帰を固定する。
+- **教訓**: fixedな補助操作はnavigationから離れていても本文が通過する間は安全とは言えない。一方、操作の到達性のため固定配置を望む利用者には、全幅でin-flowへ戻すだけでなく、実文字と操作面の矩形を毎回照合し右下→記事余白→上側の候補を選び、両立できない時だけ隠す選択肢がある。見た目のopacityやviewport横overflowを非交差の証拠にせず、focus・Tab・pointerも表示状態と同期させる。
+
+### LL-488: 「トップに戻る」はトップページへの遷移に見える
+- **事象**: 記事内の戻るlinkに「トップに戻る」と表示したところ、読者は現在の記事の先頭でなくサイトのトップページへ遷移すると解釈した。
+- **根本原因**: 「トップ」がページ内の上端とサイトのHomeの両方を指し得るのに、操作label・tooltip・accessible nameで到達先を区別しなかった。
+- **対策**: 記事だけの↑操作をJA「ページ上部へ」、EN「Scroll to top」に統一し、focus/hoverで見えるtooltipとaccessible nameに同じ文を使う。URLは記事のまま上へ移動し、Homeへ遷移しないことをkeyboard/クリックの回帰で確認する。
+- **教訓**: ページ内scrollとサイト内navigationを同じ「トップ」という語にしない。iconだけで意味を補わせず、可視の補足と操作名が効果を正確に表すようにする。
+
+### LL-489: 安全なFAB位置でもhover tooltipは別矩形として本文を覆い得る
+- **事象**: ↑ボタン自体は実文字と非交差なのに、当初左へ固定表示したhover labelは948/1181/1280/1440pxの読書中に本文文字へ重なった。
+- **根本原因**: ボタンの52px円だけを安全判定に使い、focus/hover時に別の幅で広がるlabelを同じ遮蔽判定に含めていなかった。
+- **対策**: tooltipはボタン上方を優先し、実文字・link/button・footer・tabbarを調べてから左または下へ変更する。候補選定時にボタンと現在言語の実寸labelを両方検証し、どの組合せも塞がるときはボタンごと非表示・inert・Tab対象外にする。JA/ENの実DOMと意図的なtooltip遮蔽fixtureで表示・再配置・復帰を固定する。
+- **教訓**: fixed controlの可視状態には本体と追加説明の別々のhit/遮蔽矩形がある。操作面がsafeでもtooltipがsafeとは限らない。「focus/hoverで説明が見える」が要件なら、ボタン表示時に説明の安全な位置も確保し、iconだけを残してlabelをclipする成功形fallbackを作らない。

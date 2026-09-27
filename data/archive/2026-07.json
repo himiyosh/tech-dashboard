@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T10:00:51.338Z",
+  "generatedAt": "2026-09-27T11:01:10.913Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -9870,7 +9870,15 @@
       "archiveTier": "warm",
       "contentSnippet": "SB Intuitionsの日本語OCRモデル sbintuitions/sarashina2.2-ocr （3B・MIT）を、mlx-vlmに未収録のアーキテクチャだったため自前でモデルクラスを実装してMLX（Apple Silicon）へ移植しました。要点は3つです。 モデルカードは学習元を説明していますが、移植に必要な実行時構造までは分かりません。実装は Qwen2-VL系ViT + Qwen3-VL系のdeepstack merger + Llama-3B + interleaved M-RoPE の「spatial_resetバリアント」という混成で、 config.json と modeling_*.py の確認が必要でした 等価性は「テキスト完全一致」でなく「決定論的な業務指標の同値」で判定しました。量子化やフレームワークの数値差は出力を揺らしうるため、完全一致だけを合格条件にすると、用途上は問題のない差まで不合格になります 変換した2つ（bf16 7.3GB / 4bit 2.8GB）を huggingface.co/tokimoa で公開しました。4bitはM4 Maxで画像1枚あたり平均2.8秒です 移植先のコードはtokimoaの実務スキル基盤の一部ですが、この記事では移植と検証の手順・ハマりどころに絞って書きます。 対象: sbintuitions/sarashina2.2-ocr （revision eafb8d4 , 2026年7月時点） 環境: M4 Max（36GB）/ macOS / Python 3.12 ライブラリ: mlx-vlm==0.6.6 , transformers 5系, torch , torchvision なぜMLXに移植するのか。公式の利用例はtransformersとCUDAの構成です。transformers/MPSでも動かせますが、Apple Silicon 1台でOCRと判定LLMの2段構成を組むなら、OCR側もMLXにそろえるとメモリ管理が単純になります。",
       "feedSnippet": "移植で分かったこと SB Intuitionsの日本語OCRモデル sbintuitions/sarashina2.2-ocr（3B・MIT）を、mlx-vlmに未収録のアーキテクチャだったため自前でモデルクラスを実装してMLX（Apple Silicon）へ移植しました。要点は3つです。 モデルカードは学習元を説明していますが、移植に必要な実行時構造までは分かりません。実装は Qwen2-VL系ViT + Qwen3-VL系のdeepstack merger + Llama-3B + interleaved M-RoPE の「spatial_reset",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--fjnaW6tz--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E6%2597%25A5%25E6%259C%25AC%25E8%25AA%259EOCR%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25ABSarashina2.2-OCR%25E3%2582%2592MLX%25E3%2581%25B8%25E7%25A7%25BB%25E6%25A4%258D%25E3%2581%2599%25E3%2582%258B%25E3%2580%2582%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2582%25AB%25E3%2583%25BC%25E3%2583%2589%25E3%2581%25A0%25E3%2581%2591%25E3%2581%25A7%25E3%2581%25AF%25E5%2588%2586%25E3%2581%258B%25E3%2582%2589%25E3%2581%25AA%25E3%2581%2584%25E5%25AE%259F%25E8%25A3%2585%25E3%2582%2592%25E8%25BF%25BD%25E3%2581%25A3%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:tokimoa%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzRjMzllMDQ4NGYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--fjnaW6tz--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E6%2597%25A5%25E6%259C%25AC%25E8%25AA%259EOCR%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25ABSarashina2.2-OCR%25E3%2582%2592MLX%25E3%2581%25B8%25E7%25A7%25BB%25E6%25A4%258D%25E3%2581%2599%25E3%2582%258B%25E3%2580%2582%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2582%25AB%25E3%2583%25BC%25E3%2583%2589%25E3%2581%25A0%25E3%2581%2591%25E3%2581%25A7%25E3%2581%25AF%25E5%2588%2586%25E3%2581%258B%25E3%2582%2589%25E3%2581%25AA%25E3%2581%2584%25E5%25AE%259F%25E8%25A3%2585%25E3%2582%2592%25E8%25BF%25BD%25E3%2581%25A3%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:tokimoa%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzRjMzllMDQ4NGYuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "日本語OCRモデルSarashina2.2-OCRをMLXへ移植する。モデルカードだけでは分からない実装を追った記録",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "867ffb2c55449bfb",
@@ -33519,7 +33527,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-27T05:59:01.909Z",
+      "collectedAt": "2026-09-27T11:00:44.964Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -39850,7 +39858,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-27T05:59:01.909Z",
+      "collectedAt": "2026-09-27T11:00:44.964Z",
       "tags": [
         "mcp",
         "mcp-server",

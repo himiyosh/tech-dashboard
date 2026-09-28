@@ -5,6 +5,7 @@
  * merge grafting, and the worker/web mirror pin.
  */
 import { describe, expect, it } from "vitest";
+import { spawnSync } from "node:child_process";
 import {
   ARTICLE_CHAT_ARC_VARIANTS,
   ARTICLE_CHAT_STOCK_PHRASES,
@@ -23,6 +24,8 @@ import {
 } from "../worker/src/article-chat.ts";
 import * as webChat from "../web/src/lib/article-chat.ts";
 import { mergeBodies, type BodiesPayload } from "../worker/src/bodies-file.ts";
+import { DEPLOYED_ARTICLE_CHAT_REVISION } from "../worker/src/body-cache.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 
 function goodChat(): ArticleChatTurn[] {
   return Array.from({ length: ARTICLE_CHAT_TURNS }, (_, index) => ({
@@ -204,6 +207,10 @@ describe("chatGroundingText", () => {
 describe("mergeBodies chat handling", () => {
   const generatedAt = "2026-08-29T00:00:00.000Z";
   const liveIds = new Set(["x1"]);
+  const currentChatOrigin = {
+    publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+    articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION,
+  };
   const base = (record?: object): BodiesPayload => ({
     generatedAt,
     count: record ? 1 : 0,
@@ -214,7 +221,7 @@ describe("mergeBodies chat handling", () => {
   it("stores a validated chat with a brand-new body", () => {
     const merge = mergeBodies(
       base(),
-      [{ id: "x1", bodyJa: "新しい本文。", bodyEn: "New body.", chat: goodChat() }],
+      [{ id: "x1", bodyJa: "新しい本文。", bodyEn: "New body.", chat: goodChat(), ...currentChatOrigin }],
       liveIds,
       generatedAt,
     );
@@ -225,7 +232,7 @@ describe("mergeBodies chat handling", () => {
   it("grafts a chat onto an existing real body without touching its prose", () => {
     const merge = mergeBodies(
       base({ ...realBody, model: "m", generatedAt }),
-      [{ id: "x1", bodyJa: "別の本文。", bodyEn: "Different body.", chat: goodChat() }],
+      [{ id: "x1", bodyJa: "別の本文。", bodyEn: "Different body.", chat: goodChat(), ...currentChatOrigin }],
       liveIds,
       generatedAt,
     );
@@ -241,7 +248,7 @@ describe("mergeBodies chat handling", () => {
     existingChat[0] = { ...existingChat[0]!, ja: "既存チャットの一言目。" };
     const noop = mergeBodies(
       base({ ...realBody, chat: existingChat, model: "m", generatedAt }),
-      [{ id: "x1", ...realBody, chat: goodChat() }],
+      [{ id: "x1", ...realBody, chat: goodChat(), ...currentChatOrigin }],
       liveIds,
       generatedAt,
     );
@@ -250,11 +257,30 @@ describe("mergeBodies chat handling", () => {
 
     const invalid = mergeBodies(
       base(),
-      [{ id: "x1", bodyJa: "本文。", bodyEn: "Body.", chat: goodChat().slice(0, 3) as never }],
+      [{ id: "x1", bodyJa: "本文。", bodyEn: "Body.", chat: goodChat().slice(0, 3) as never, ...currentChatOrigin }],
       liveIds,
       generatedAt,
     );
     expect(invalid.payload.bodies.x1?.chat).toBeUndefined();
+  });
+
+  it("never accepts newly merged chat without both current code and publisher provenance", () => {
+    for (const origin of [
+      {},
+      { publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT },
+      { articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION },
+      { publisherContractFingerprint: `sha256:${"f".repeat(64)}`, articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION },
+    ]) {
+      const result = mergeBodies(
+        base({ ...realBody, model: "legacy", generatedAt }),
+        [{ id: "x1", ...realBody, chat: goodChat(), ...origin }],
+        liveIds,
+        generatedAt,
+      );
+      expect(result.added).toBe(0);
+      expect(result.payload.bodies.x1?.chat).toBeUndefined();
+      expect(result.payload.bodies.x1?.bodyJa).toBe(realBody.bodyJa);
+    }
   });
 });
 
@@ -267,6 +293,18 @@ describe("detail page wiring", () => {
     );
     expect(source).toContain("const articleChat = body ? validateArticleChat(body.chat) : null;");
     expect(source).toContain("{articleChat && <ArticleChat chat={articleChat} />}");
+  });
+
+  describe("local chat backfill safety", () => {
+    it("rejects direct KV --apply before reading credentials or writing unproven chats", () => {
+      const result = spawnSync(
+        process.execPath,
+        ["--import", "tsx", "scripts/backfill-article-chats.mts", "--apply", "--limit", "1"],
+        { encoding: "utf8", timeout: 10_000 },
+      );
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("direct KV chat writes cannot prove the deployed consumer revision");
+    }, 15_000);
   });
 });
 

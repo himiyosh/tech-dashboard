@@ -290,6 +290,8 @@ describe("publisher contract updater", () => {
       "web/scripts/incremental-render-core.mjs",
       "web/scripts/render-incremental-shadow.mjs",
       "web/src",
+      "worker-body/src",
+      "worker-summarizer/src",
       "worker/migrations/incremental-serving",
       "worker/src",
       "worker/wrangler.incremental.toml",

@@ -121,6 +121,12 @@ interface WorkerHealth {
   bodyEnqueueCap?: number;
   bodyEnqueued?: number;
   bodyLookupCount?: number;
+  chatLookupCount?: number;
+  chatCompatibilityRejected?: number;
+  chatRepairBlocked?: number;
+  chatRepairCandidates?: number;
+  chatRepairEnqueued?: number;
+  chatRepairPendingIds?: string[];
   bodyPendingLookupCount?: number;
   bodyMerged?: number;
   bodyQueueDrainEstimateHours?: number;
@@ -135,7 +141,7 @@ interface WorkerHealth {
 }
 ```
 
-Queue telemetry の `backlog`、`candidate`、実 `enqueued`、`lookup`、`merged` は別の母集団である。optional field の欠落は 0 件ではなく未観測として扱う。
+Queue telemetry の `backlog`、`candidate`、実 `enqueued`、`lookup`、`merged` は別の母集団である。optional field の欠落は 0 件ではなく未観測として扱う。`bodyEnqueued` は既存本文の会話修復用 body job も含み、`chatRepairEnqueued` はその内数、`bodyBacklog` は本文を欠く記事だけを示す。`chatRepairCandidates` は今回のlookup窓で修復可能と確認した件数であり、共有枠0なら `chatRepairEnqueued=0` でも未処理のまま残る。`chatRepairBlocked > 0` は出典不足などで新版会話へ安全に修復できない状態であり、旧consumer drainの代替を提案する前に解消する。
 
 ステータスラベル (表示ロジックは `web/src/pages/status.astro`):
 - `healthy` — 直近 6h 以内に成功 / Copilot OK / 失敗 source なし

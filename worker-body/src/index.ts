@@ -35,9 +35,15 @@ import {
   hasSufficientBodySourceGrounding,
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
-import { type BodyCacheEntry, putBodyCacheEntry } from "../../worker/src/body-cache.ts";
+import {
+  DEPLOYED_ARTICLE_CHAT_REVISION,
+  isCurrentArticleChatJob,
+  type BodyCacheEntry,
+  putBodyCacheEntry,
+} from "../../worker/src/body-cache.ts";
 import { looksCompleteBodyText } from "../../worker/src/bodies-file.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../../worker/src/kv-cache.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../../worker/src/publisher-contract.ts";
 import {
   buildCopilotRequestBody,
   copilotEndpointForModel,
@@ -49,6 +55,7 @@ import {
   buildArticleChatPrompt,
   chatGroundingText,
   parseArticleChat,
+  validateArticleChat,
   type ArticleChatTurn,
 } from "../../worker/src/article-chat.ts";
 
@@ -203,10 +210,11 @@ export function buildBodyCacheEntry(
   cachedAt = new Date().toISOString(),
   chat?: ArticleChatTurn[],
 ): BodyCacheEntry {
+  const acceptedChat = isCurrentArticleChatJob(job) ? validateArticleChat(chat) : null;
   return {
     bodyJa,
     bodyEn,
-    ...(chat ? { chat } : {}),
+    ...(acceptedChat ? { chat: acceptedChat, articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION } : {}),
     model,
     cachedAt,
     publisherContractFingerprint:
@@ -266,6 +274,10 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
   if (!hasSufficientBodySourceGrounding(job.entry)) {
     throw new Error(`insufficient source grounding for ${job.url}`);
   }
+  const canGenerateChat = isCurrentArticleChatJob(job);
+  if (!canGenerateChat) {
+    console.warn("[body] chat generation skipped: job fingerprint differs from compiled consumer");
+  }
 
   // Two separate single-language calls (LL-115). Sequential so one shared token
   // covers both and Copilot pressure stays moderate (max_concurrency also caps
@@ -292,7 +304,9 @@ async function processJob(env: Env, job: BodyJob): Promise<void> {
       // config. Throwing advances the model chain / Queue retry instead.
       if (!looksCompleteBodyText(bodyJa, "ja")) throw new Error("truncated bodyJa (no terminal punctuation)");
       if (!looksCompleteBodyText(bodyEn, "en")) throw new Error("truncated bodyEn (no terminal punctuation)");
-      const chat = await generateArticleChat(pat, attemptModel, reasoning, job, timeoutMs, maxTokens);
+      const chat = canGenerateChat
+        ? await generateArticleChat(pat, attemptModel, reasoning, job, timeoutMs, maxTokens)
+        : undefined;
       entry = buildBodyCacheEntry(job, bodyJa, bodyEn, attemptModel, new Date().toISOString(), chat);
       break;
     } catch (err) {
@@ -412,6 +426,8 @@ export default {
             env.BODY_MODEL || DEFAULT_MODEL,
             env.BODY_MODEL_FALLBACKS,
           ).slice(1),
+          publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+          articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION,
           reasoningEffort: env.BODY_REASONING_EFFORT || DEFAULT_REASONING,
           timeoutMs: Number(env.BODY_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
           maxTokens: Number(env.BODY_MAX_TOKENS ?? DEFAULT_MAX_TOKENS),

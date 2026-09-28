@@ -13000,6 +13000,8 @@ test.describe("TECH Dashboard smoke", () => {
       .toEqual(stored.map((turn) => presentArticleChatTurn(turn).ja));
     expect(await chat.locator(".ed-chat-text.i18n-en").allTextContents())
       .toEqual(stored.map((turn) => presentArticleChatTurn(turn).en));
+    await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toBeVisible();
+    await expect(chat.locator(".ed-chat-text.i18n-en").first()).toBeHidden();
     if (chatEntry!.id === "60582ab80f6848d9") {
       await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toContainText("AI");
       await expect(chat.locator(".ed-chat-text.i18n-en").first()).toContainText("AI");
@@ -13180,6 +13182,10 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(chat.locator(".ed-chat-turn[data-speaker='b'] .ed-chat-name .i18n-en").first()).toHaveText("TECH Guide");
     await expect(chat.locator(".ed-chat-origin .i18n-ja")).toBeHidden();
     await expect(chat.locator(".ed-chat-origin .i18n-en")).toBeVisible();
+    await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toBeHidden();
+    await expect(chat.locator(".ed-chat-text.i18n-en").first()).toBeVisible();
+    expect(await chat.locator(".ed-chat-text.i18n-en").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).en));
     await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("AI-generated conversation");
     await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("summary and collected source details");
     expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);

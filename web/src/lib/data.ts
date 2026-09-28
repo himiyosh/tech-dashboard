@@ -39,13 +39,17 @@ import {
   isPublishableEntry,
 } from "./entry-publication.ts";
 import { isKnowledgeEligibleEntry } from "./knowledge-eligibility.ts";
-import { isRoutineReleaseEntry } from "./release-signal.ts";
+import { effectiveImportance, isRoutineReleaseEntry } from "./release-signal.ts";
+import { isOffTopicForHero } from "./hero-relevance.ts";
 import { isDefaultMutedCategory } from "./category-visibility.ts";
 import { sourceAuthority } from "./source-meta.ts";
 import { normalizeTagKey } from "./tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
 import { SITE_PUBLICATION_GATE } from "./publication-gate-data.ts";
 import type { PublicationGate } from "./publication-gate.ts";
+import type { NormalizedEntry, RawIndexEntry } from "./entry-types.ts";
+
+export type { NormalizedEntry, RawIndexEntry } from "./entry-types.ts";
 
 export {
   effectiveTitleLanguage,
@@ -59,6 +63,7 @@ export {
   summaryForLangWithFallback,
 };
 export { relativeTime } from "./relative-time.ts";
+export { isOffTopicForHero };
 export { TAG_PAGE_MIN_ENTRIES } from "./route-inventory.ts";
 export {
   CATEGORIES_BY_NAME,
@@ -74,51 +79,6 @@ export {
   isPublishableEntry,
 };
 export type { Category, CategoryGroup, CategoryMeta };
-
-export interface NormalizedEntry {
-  id: string;
-  /**
-   * Build-time publication-gate decision (publication-gate.ts). True while the
-   * entry is queued: it stays in every listing and links out to the source
-   * (entry-destination.ts), and receives no /e/[id]/ route. Required so a
-   * collection built straight from JSON cannot reach a route consumer.
-   */
-  publicationHold: boolean;
-  source: string;
-  sourceType: "blog" | "release" | "changelog" | "paper" | "community";
-  url: string;
-  title: string;
-  titleJa: string;
-  titleEn: string;
-  summaryJa: string;
-  summaryEn: string;
-  /** Raw feed/article excerpt retained as source context, not an AI summary. */
-  contentSnippet?: string;
-  /** Long-form article body in Japanese (optional, populated by worker). */
-  bodyJa?: string;
-  /** Long-form article body in English (optional, populated by worker). */
-  bodyEn?: string;
-  lang: "ja" | "en";
-  publishedAt: string;
-  collectedAt: string;
-  tags: string[];
-  category: Category;
-  importance: 1 | 2 | 3;
-  clusterId?: string;
-  /** Archive classification (added Phase B, optional during rollout). */
-  archiveTier?: "hot" | "warm" | "cold" | "dropped";
-  halfLife?: "news" | "tutorial" | "architecture" | "fundamental";
-  evergreen?: boolean;
-  knowledgeEligible?: boolean;
-  image?: {
-    src: string;
-    origSrc: string;
-    alt: string;
-    width: number;
-    height: number;
-    source: "media" | "og" | "fallback";
-  };
-}
 
 export type ImportanceTone = "high" | "medium" | "normal";
 
@@ -182,9 +142,6 @@ export interface WorkerHealth {
   enrichmentEnqueued?: number;
   enrichmentRemaining?: number;
 }
-
-/** The entry shape data/index.json actually stores: no build-time annotation. */
-export type RawIndexEntry = Omit<NormalizedEntry, "publicationHold">;
 
 interface IndexPayload {
   generatedAt: string;
@@ -322,32 +279,6 @@ export function isLowSignalRelease(
       const restored = restorePrereleaseQualifierFromUrl(t, entry.url ?? "");
       return LOW_SIGNAL_RELEASE_RE.test(restored);
     },
-  );
-}
-
-/**
- * Consumer gaming / entertainment-hardware noise that broad tech-news feeds
- * (the-verge, nvidia GeForce NOW, etc.) emit. These are legitimately "tech
- * news" so they stay in the Timeline, but they must never occupy the single
- * most prominent decision slots (Featured hero + Today's Top 3) on an AI/dev
- * dashboard, even when the collector stamped importance 3 (e.g. "GTA VI is a
- * worrying sign for the future of physical games").
- *
- * Title-scoped only (LL-081: url/summary substring matches cause false
- * positives) and intentionally tight: it targets named consoles/titles and
- * gaming-hardware compounds, never the bare words "game"/"gaming" (which would
- * wrongly catch "Changing the Game", "Game Generation" research, etc.). This
- * is hero/Top-3 editorial curation in the web layer, robust to imperfect
- * stored importance without a collector redeploy (LL-090 style).
- */
-const OFF_TOPIC_HERO_RE =
-  /\b(?:gta|grand theft auto|playstation|ps5|ps6|xbox|nintendo|switch\s*2|fortnite|call of duty|bungie|destiny\s*2|steam\s*(?:machine|deck)|cloud gaming|geforce now|gaming\s*(?:monitor|laptop|handheld|pc|rig|chair|mouse|keyboard|headset)|qd-?oled|handheld console|game console)\b/i;
-
-export function isOffTopicForHero(
-  entry: Pick<NormalizedEntry, "title" | "titleEn" | "titleJa">,
-): boolean {
-  return [entry.title, entry.titleEn, entry.titleJa].some(
-    (t) => !!t && OFF_TOPIC_HERO_RE.test(t),
   );
 }
 
@@ -980,22 +911,29 @@ export function categoryImportanceStanding(
   const categoryEntries = isArxivEntry(e)
     ? ARXIV_ENTRIES
     : CATEGORY_ENTRIES_BY_SLUG.get(e.category) ?? [];
+  const importance = effectiveImportance(e);
   return {
     total: categoryEntries.length,
-    sameOrHigher: categoryEntries.filter((entry) => entry.importance >= e.importance).length,
+    sameOrHigher: categoryEntries.filter(
+      (entry) => effectiveImportance(entry) >= importance,
+    ).length,
   };
 }
 
-/** Average importance over the last N entries from this source. */
-export function sourceAvgImportance(
+/** Average over the last N listed entries; archive-only sources have no sample. */
+export function sourceImportanceStats(
   e: NormalizedEntry,
   n = 30,
-): number {
+): { average: number | null; listedCount: number } {
   const recent = (SOURCE_ENTRIES_BY_ID.get(e.source) ?? []).slice(0, n);
-  if (recent.length === 0) return e.importance;
-  return Math.round(
-    (recent.reduce((s, x) => s + x.importance, 0) / recent.length) * 10,
-  ) / 10;
+  return {
+    average: recent.length
+      ? Math.round(
+          (recent.reduce((sum, entry) => sum + entry.importance, 0) / recent.length) * 10,
+        ) / 10
+      : null,
+    listedCount: recent.length,
+  };
 }
 
 /** Aggregate fallback metrics for a set of entries. */

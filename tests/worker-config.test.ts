@@ -191,8 +191,9 @@ describe("Cloudflare Worker deploy config", () => {
     expect(publisherWorkflow).toContain("scripts/publisher-impact.ts --report");
     expect(publisherWorkflow).toContain("Verify incremental data and invalidation plan");
     expect(publisherWorkflow).toContain(
-      "npm test -- tests/data-schema.test.ts tests/publisher-impact.test.ts tests/publisher-runner.test.ts",
+      "npm test -- tests/data-schema.test.ts tests/publisher-impact.test.ts tests/publisher-runner.test.ts tests/publisher-updates.test.ts tests/major-update-ledger.test.ts",
     );
+    expect(publisherWorkflow).toContain("^data/updates/(_index|[0-9]{4}-[0-9]{2})\\.json$");
     expect(publisherWorkflow).toContain("Run full static reconciliation");
     const fullReconcileStart = publisherWorkflow.indexOf("      - name: Run full static reconciliation");
     const commitStart = publisherWorkflow.indexOf("      - name: Commit and push verified data");
@@ -561,7 +562,7 @@ describe("Cloudflare Worker deploy config", () => {
     expect(e2eIndex).toBeGreaterThan(downloadIndex);
     expect(ciWorkflow).toContain("uses: actions/upload-artifact@v4");
     expect(ciWorkflow).toContain("uses: actions/download-artifact@v4");
-    expect(ciWorkflow).toContain("needs: [unit, web-build]");
+    expect(ciWorkflow).toContain("needs: [unit, web-build, data-snapshot]");
     expect(ciWorkflow).toContain(
       "name: web-dist-${{ github.run_id }}",
     );
@@ -573,6 +574,36 @@ describe("Cloudflare Worker deploy config", () => {
     expect(
       ciWorkflow.slice(e2eIndex, ciWorkflow.indexOf("name: Upload Playwright report")),
     ).toContain('PLAYWRIGHT_REUSE_BUILD: "1"');
+  });
+
+  it("uses one pinned fresh main data snapshot for non-main CI without replacing the tracker seed", () => {
+    const ciWorkflow = readConfig(".github/workflows/ci.yml");
+    const snapshotJob = ciWorkflow.indexOf("\n  data-snapshot:\n");
+    const unitJob = ciWorkflow.indexOf("\n  unit:\n");
+    const webJob = ciWorkflow.indexOf("\n  web-build:\n");
+    const e2eJob = ciWorkflow.indexOf("\n  e2e:\n");
+    expect(snapshotJob).toBeGreaterThan(-1);
+    expect(snapshotJob).toBeLessThan(unitJob);
+    expect(ciWorkflow.slice(snapshotJob, unitJob)).toContain("fetch-depth: 0");
+    expect(ciWorkflow.slice(snapshotJob, unitJob)).toContain(
+      "scripts/ci-current-data.mjs prepare",
+    );
+    expect(ciWorkflow).toContain(
+      "if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'",
+    );
+    expect(ciWorkflow).toContain("name: ci-main-data-${{ github.run_id }}");
+    expect(ciWorkflow.slice(unitJob, webJob)).toContain("needs: data-snapshot");
+    expect(ciWorkflow.slice(webJob, e2eJob)).toContain("needs: data-snapshot");
+    for (const section of [
+      ciWorkflow.slice(unitJob, webJob),
+      ciWorkflow.slice(webJob, e2eJob),
+      ciWorkflow.slice(e2eJob),
+    ]) {
+      expect(section).toContain("uses: actions/download-artifact@v4");
+      expect(section).toContain("scripts/ci-current-data.mjs apply");
+      expect(section).toContain("CI_MAIN_SHA: ${{ needs.data-snapshot.outputs.main_sha }}");
+    }
+    expect(ciWorkflow).not.toContain("ALLOW_STALE_DATA");
   });
 
   it("spreads source collection across six hourly batches", () => {

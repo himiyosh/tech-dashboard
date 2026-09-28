@@ -25,13 +25,17 @@ import {
   hasUsableGroundedBilingualSummary,
   hasForeignScriptContamination,
 } from "../../harness/pipeline/summary-quality.ts";
-import { hasSufficientSourceGrounding } from "../../harness/pipeline/source-grounding.ts";
+import {
+  hasSufficientBodySourceGrounding,
+  hasSufficientSourceGrounding,
+} from "../../harness/pipeline/source-grounding.ts";
 import { canonicalUrlKey, normalizeMediaUrl } from "../../harness/pipeline/url.ts";
 import { applyDeterministicContentFallback } from "./content-fallback.ts";
 import {
   buildSummaryQueueTelemetry,
   needsGeneratedContent,
   isUsableSummaryCacheEntry,
+  roundRobinStart,
   selectSummaryJobBatch,
   selectSummaryLookupEntries,
   type SummaryJob,
@@ -40,6 +44,7 @@ import {
 import { type BodyJob } from "./body-generate.ts";
 import {
   bodyEnqueueAllowance,
+  bodyJobForEntry,
   DEFAULT_BODY_RETENTION_DAYS,
   isBodyRetentionEligible,
   needsBody,
@@ -56,6 +61,7 @@ import {
 } from "./bodies-budget.ts";
 import { validateArticleChat } from "./article-chat.ts";
 import {
+  bodyCacheChatForPublisher,
   bodyCacheEntryMatchesPublisherContract,
   getBodyCacheEntries,
   isGroundedBodyCacheEntry,
@@ -1187,12 +1193,17 @@ export async function runHarness(
       : null;
   let priorEntries: NormalizedEntry[] = [];
   let previousBodyPendingIds: string[] = [];
+  let previousChatRepairIds: string[] = [];
   let previousBodyBudgetEvictedIds: string[] = [];
   if (existing?.content) {
     try {
       const parsed = JSON.parse(existing.content) as {
         entries?: NormalizedEntry[];
-        health?: { bodyMergePendingIds?: unknown; bodyBudgetEvictedIds?: unknown };
+        health?: {
+          bodyMergePendingIds?: unknown;
+          chatRepairPendingIds?: unknown;
+          bodyBudgetEvictedIds?: unknown;
+        };
       };
       priorEntries = parsed.entries ?? [];
       const pendingIds = parsed.health?.bodyMergePendingIds;
@@ -1200,6 +1211,12 @@ export async function runHarness(
         previousBodyPendingIds = [...new Set(
           pendingIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
         )].slice(0, 100);
+      }
+      const chatRepairIds = parsed.health?.chatRepairPendingIds;
+      if (Array.isArray(chatRepairIds)) {
+        previousChatRepairIds = [...new Set(
+          chatRepairIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+        )].slice(0, 5);
       }
       // Body-budget enforcement (LL-411): entries budget enforcement has been
       // evicting are excluded from new generation candidates until they are
@@ -1766,6 +1783,7 @@ export async function runHarness(
     publisherContractFingerprint,
     {
       previousPendingIds: previousBodyPendingIds,
+      previousChatRepairIds,
       previousBudgetEvictedIds: previousBodyBudgetEvictedIds,
       enqueueCap: effectiveBodyEnqueueCap,
       preferredCandidateIds: bodyBound.bodyBatchIds,
@@ -1984,6 +2002,11 @@ export interface HeartbeatHealthSnapshot {
   bodyLookupCount?: number;
   /** KV lookups made by the chat backfill lane (CHAT_LOOKUP_CAP). */
   chatLookupCount?: number;
+  chatCompatibilityRejected?: number;
+  chatRepairBlocked?: number;
+  chatRepairCandidates?: number;
+  chatRepairEnqueued?: number;
+  chatRepairPendingIds?: string[];
   bodyMerged?: number;
   bodyPruned?: number;
   bodyQueueDrainEstimateHours?: number;
@@ -2034,6 +2057,11 @@ export function buildHeartbeatPayload(
     bodyEnqueued: health.bodyEnqueued,
     bodyLookupCount: health.bodyLookupCount,
     chatLookupCount: health.chatLookupCount,
+    chatCompatibilityRejected: health.chatCompatibilityRejected,
+    chatRepairBlocked: health.chatRepairBlocked,
+    chatRepairCandidates: health.chatRepairCandidates,
+    chatRepairEnqueued: health.chatRepairEnqueued,
+    chatRepairPendingIds: health.chatRepairPendingIds ?? [],
     bodyMerged: health.bodyMerged,
     bodyPruned: health.bodyPruned,
     bodyQueueDrainEstimateHours: health.bodyQueueDrainEstimateHours,
@@ -2281,6 +2309,15 @@ export interface BodyPipelineResult {
     bodyLookupCount: number;
     /** KV lookups made by the chat backfill lane (CHAT_LOOKUP_CAP). */
     chatLookupCount: number;
+    /** Cache chats rejected by provenance or structure; never published. */
+    chatCompatibilityRejected: number;
+    /** Rejected cache chats that cannot be regenerated from source context. */
+    chatRepairBlocked: number;
+    /** Repairable missing chats seen in this run's bounded KV lookup window. */
+    chatRepairCandidates: number;
+    /** Bounded body jobs reserved to regenerate missing or rejected chats. */
+    chatRepairEnqueued: number;
+    chatRepairPendingIds: string[];
     bodyPendingLookupCount: number;
     bodyMergePendingIds: string[];
     bodyMerged: number;
@@ -2313,6 +2350,13 @@ function isUsableBodyCacheEntry(
     ) &&
     isGroundedBodyCacheEntry(job.entry, candidate) &&
     !hasKnownProductBodyRecordConflict(job.entry, candidate)
+  );
+}
+
+function canRegenerateChat(entry: NormalizedEntry): boolean {
+  return (
+    hasSufficientBodySourceGrounding(entry) &&
+    hasUsableGroundedBilingualSummary(entry, entry)
   );
 }
 
@@ -2371,6 +2415,7 @@ export async function runBodyPipeline(
   publisherContractFingerprint: string,
   options: {
     previousPendingIds?: readonly string[];
+    previousChatRepairIds?: readonly string[];
     previousBudgetEvictedIds?: readonly string[];
     enqueueCap?: number;
     /** The article excerpt lane's body batch (bodyBoundExcerptPriority); enqueued first. */
@@ -2425,6 +2470,11 @@ export async function runBodyPipeline(
       bodyQueueDrainEstimateHours: 0,
       bodyLookupCount: 0,
       chatLookupCount: 0,
+      chatCompatibilityRejected: 0,
+      chatRepairBlocked: 0,
+      chatRepairCandidates: 0,
+      chatRepairEnqueued: 0,
+      chatRepairPendingIds: [],
       bodyPendingLookupCount: 0,
       bodyMergePendingIds: [],
       bodyMerged: 0,
@@ -2458,6 +2508,7 @@ export async function runBodyPipeline(
     );
     const existingBodies = sanitizedBodies.payload;
     const present = bodiesPresentSet(existingBodies);
+    const retainedEntriesById = new Map(retainedEntries.map((entry) => [entry.id, entry]));
     const retainedIds = new Set(retainedEntries.map((e) => e.id));
 
     // Current candidates still use one selection for lookup and enqueue
@@ -2501,6 +2552,8 @@ export async function runBodyPipeline(
       if (pre && !hits.has(job.url)) hits.set(job.url, pre);
     }
     const newBodies: NewBody[] = [];
+    const normalCacheMissingChat: BodyJob[] = [];
+    let chatCompatibilityRejected = 0;
     for (const job of selection.lookupJobs) {
       const candidate = hits.get(job.url);
       const hit = isUsableBodyCacheEntry(
@@ -2511,7 +2564,21 @@ export async function runBodyPipeline(
         ? candidate
         : undefined;
       if (hit) {
-        newBodies.push({ id: job.entry.id, bodyJa: hit.bodyJa, bodyEn: hit.bodyEn, chat: hit.chat, model: hit.model, cachedAt: hit.cachedAt });
+        const chat = bodyCacheChatForPublisher(hit, publisherContractFingerprint);
+        if (hit.chat && !chat) chatCompatibilityRejected += 1;
+        if (!chat) normalCacheMissingChat.push(job);
+        newBodies.push({
+          id: job.entry.id,
+          bodyJa: hit.bodyJa,
+          bodyEn: hit.bodyEn,
+          ...(chat ? {
+            chat,
+            publisherContractFingerprint: hit.publisherContractFingerprint,
+            articleChatRevision: hit.articleChatRevision,
+          } : {}),
+          model: hit.model,
+          cachedAt: hit.cachedAt,
+        });
       }
     }
     // 1a) Chat backfill lane (bounded): entries whose bodies.json record is a
@@ -2530,9 +2597,11 @@ export async function runBodyPipeline(
     // (tests/data-schema.test.ts) is bodyMerged <= bodyLookupCount +
     // chatLookupCount, since chat grafts also increment mergeBodies' added.
     let chatLookupCount = 0;
+    const chatRepairCandidates: BodyJob[] = [];
+    const previousChatRepairSet = new Set(options.previousChatRepairIds ?? []);
     if (chatLookupCap > 0) {
       const alreadyLookedUp = new Set(selection.lookupJobs.map((job) => job.entry.id));
-      const chatCandidates = retainedEntries
+      const missingChat = retainedEntries
         .filter((entry) => {
           if (alreadyLookedUp.has(entry.id)) return false;
           const record = existingBodies.bodies[entry.id];
@@ -2542,8 +2611,17 @@ export async function runBodyPipeline(
           String(a.publishedAt ?? a.collectedAt ?? "").localeCompare(
             String(b.publishedAt ?? b.collectedAt ?? ""),
           ),
-        )
-        .slice(0, chatLookupCap);
+        );
+      const pendingChat = missingChat.filter((entry) => previousChatRepairSet.has(entry.id));
+      const others = missingChat.filter((entry) => !previousChatRepairSet.has(entry.id));
+      const start = roundRobinStart(retentionNowMs, others.length, chatLookupCap);
+      const chatCandidates = [
+        ...pendingChat.slice(0, chatLookupCap),
+        ...Array.from(
+          { length: Math.min(others.length, Math.max(0, chatLookupCap - pendingChat.length)) },
+          (_, offset) => others[(start + offset) % others.length]!,
+        ),
+      ];
       chatLookupCount = chatCandidates.length;
       if (chatCandidates.length > 0) {
         const chatHits = await getBodyCacheEntries(
@@ -2552,15 +2630,24 @@ export async function runBodyPipeline(
         );
         for (const entry of chatCandidates) {
           const hit = chatHits.get(entry.url);
-          if (hit && validateArticleChat(hit.chat)) {
+          const chat = bodyCacheChatForPublisher(hit, publisherContractFingerprint);
+          if (hit?.chat && !chat) chatCompatibilityRejected += 1;
+          const job = bodyJobForEntry(entry, publisherContractFingerprint);
+          if (hit && isUsableBodyCacheEntry(job, hit, publisherContractFingerprint) && chat) {
             newBodies.push({
               id: entry.id,
               bodyJa: hit.bodyJa,
               bodyEn: hit.bodyEn,
-              chat: hit.chat,
+              chat,
+              publisherContractFingerprint: hit.publisherContractFingerprint,
+              articleChatRevision: hit.articleChatRevision,
               model: hit.model,
               cachedAt: hit.cachedAt,
             });
+          } else if (hit || !previousChatRepairSet.has(entry.id)) {
+            // A pending miss gets one lookup before returning to the normal
+            // round-robin window; an incompatible hit is retried immediately.
+            chatRepairCandidates.push(job);
           }
         }
       }
@@ -2584,14 +2671,32 @@ export async function runBodyPipeline(
     //     too, as a last resort (LL-411 follow-up 2).
     const budget = enforceBodiesBudget(merge.payload, retainedEntries, budgetTargetBytes);
 
-    // 2) Enqueue the selected entries that do NOT yet have a generated body (KV
-    //    miss), so worker-body generates them for a future run's merge.
-    const toEnqueue = selectBodyJobsToEnqueue(
+    // 2) Reserve at most five of the same shared body Queue slots for missing
+    //    chats. These are ordinary body jobs: the consumer writes a fresh
+    //    body+chat cache, but mergeBodies keeps already-published prose intact.
+    //    This is bounded even if an old consumer overwrites the same KV key.
+    let chatRepairBlocked = 0;
+    const repairableJobs = [...new Map(
+      [...chatRepairCandidates, ...normalCacheMissingChat].map((job) => [job.entry.id, job]),
+    ).values()]
+      .filter((job) => {
+        const record = budget.payload.bodies[job.entry.id];
+        if (!isRealBody(record) || validateArticleChat(record.chat)) return false;
+        const entry = retainedEntriesById.get(job.entry.id);
+        if (!entry || !canRegenerateChat(entry)) {
+          chatRepairBlocked += 1;
+          return false;
+        }
+        return true;
+      });
+    const repairJobs = repairableJobs.slice(0, Math.min(5, enqueueCap));
+    const bodyJobs = selectBodyJobsToEnqueue(
       selection,
       hits,
       publisherContractFingerprint,
-      enqueueCap,
+      Math.max(0, enqueueCap - repairJobs.length),
     );
+    const toEnqueue = [...bodyJobs, ...repairJobs];
     let enqueued = 0;
     if (toEnqueue.length > 0) {
       const CHUNK = 100;
@@ -2607,9 +2712,14 @@ export async function runBodyPipeline(
       }
     }
     const totalPruned = sanitizedBodies.pruned + merge.pruned;
+    if (chatCompatibilityRejected || chatRepairBlocked) {
+      console.warn(
+        `[worker] chat cache compatibility: rejected=${chatCompatibilityRejected}, unrepairable=${chatRepairBlocked}, repairJobs=${repairJobs.length}`,
+      );
+    }
     if (selection.eligibleCount > 0 || sanitizedBodies.changed || merge.changed || budget.changed) {
       console.log(
-        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, merged=${merge.added}, pruned=${totalPruned}, budgetPruned=${budget.prunedIds.length}, budgetBytes=${budget.bytes}/${budgetTargetBytes}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
+        `[worker] body pipeline: backlog=${selection.eligibleCount}, pendingLookup=${selection.pendingJobs.length}, candidateLookup=${selection.candidateJobs.length}, chatLookup=${chatLookupCount}, chatRepair=${repairJobs.length}, merged=${merge.added}, pruned=${totalPruned}, budgetPruned=${budget.prunedIds.length}, budgetBytes=${budget.bytes}/${budgetTargetBytes}, enqueue=${enqueued}, enqueueCap=${enqueueCap}`,
       );
     }
 
@@ -2639,8 +2749,15 @@ export async function runBodyPipeline(
           : 0,
         bodyLookupCount: selection.lookupJobs.length,
         chatLookupCount,
+        chatCompatibilityRejected,
+        chatRepairBlocked,
+        chatRepairCandidates: repairableJobs.length,
+        chatRepairEnqueued: Math.max(0, enqueued - bodyJobs.length),
+        chatRepairPendingIds: toEnqueue.slice(0, enqueued)
+          .filter((job) => repairJobs.includes(job))
+          .map((job) => job.entry.id),
         bodyPendingLookupCount: selection.pendingJobs.length,
-        bodyMergePendingIds: toEnqueue.slice(0, enqueued).map((job) => job.entry.id),
+        bodyMergePendingIds: bodyJobs.slice(0, enqueued).map((job) => job.entry.id),
         bodyMerged: merge.added,
         bodyPruned: totalPruned,
         bodiesTotal: budget.payload.count,

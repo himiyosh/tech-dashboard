@@ -35,10 +35,44 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/check-approval-authorship.mjs "$PR_BASE_SHA..HEAD"
 
+  data-snapshot:
+    name: pin immutable main data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      main_sha: ${{ steps.prepare.outputs.main_sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Capture current main data for non-main CI
+        id: prepare
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        env:
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/ci-current-data.mjs prepare "$RUNNER_TEMP/ci-main-snapshot" "$CI_BASE_SHA"
+
+      - name: Upload pinned data snapshot
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-main-data-${{ github.run_id }}
+          path: ${{ runner.temp }}/ci-main-snapshot/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
   unit:
     name: unit + typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: data-snapshot
     steps:
       - uses: actions/checkout@v6
 
@@ -47,6 +81,19 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
+
+      - name: Download pinned data snapshot
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-main-data-${{ github.run_id }}
+          path: ${{ runner.temp }}/ci-main-snapshot
+
+      - name: Hydrate pinned data for unit tests
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        env:
+          CI_MAIN_SHA: ${{ needs.data-snapshot.outputs.main_sha }}
+        run: node scripts/ci-current-data.mjs apply "$RUNNER_TEMP/ci-main-snapshot" "$CI_MAIN_SHA"
 
       - name: Install root deps
         run: npm ci
@@ -81,6 +128,7 @@ jobs:
     name: web build
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
+    needs: data-snapshot
     steps:
       - uses: actions/checkout@v6
 
@@ -90,6 +138,19 @@ jobs:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: web/package-lock.json
+
+      - name: Download pinned data snapshot
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-main-data-${{ github.run_id }}
+          path: ${{ runner.temp }}/ci-main-snapshot
+
+      - name: Hydrate pinned data for Web build
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        env:
+          CI_MAIN_SHA: ${{ needs.data-snapshot.outputs.main_sha }}
+        run: node scripts/ci-current-data.mjs apply "$RUNNER_TEMP/ci-main-snapshot" "$CI_MAIN_SHA"
 
       - name: Install web deps
         run: npm --prefix web ci
@@ -110,7 +171,7 @@ jobs:
     name: e2e (Playwright)
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
-    needs: [unit, web-build]
+    needs: [unit, web-build, data-snapshot]
     steps:
       - uses: actions/checkout@v6
 
@@ -119,6 +180,19 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
+
+      - name: Download pinned data snapshot
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-main-data-${{ github.run_id }}
+          path: ${{ runner.temp }}/ci-main-snapshot
+
+      - name: Hydrate pinned data for E2E
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
+        env:
+          CI_MAIN_SHA: ${{ needs.data-snapshot.outputs.main_sha }}
+        run: node scripts/ci-current-data.mjs apply "$RUNNER_TEMP/ci-main-snapshot" "$CI_MAIN_SHA"
 
       - name: Install root deps
         run: npm ci

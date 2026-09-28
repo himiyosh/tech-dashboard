@@ -6,6 +6,7 @@ import {
 import { SITE_URL } from "./site.ts";
 
 export const SITE_WIDE_RSS_HREF = "/rss.xml" as const;
+export const MAJOR_RSS_HREF = "/rss/major.xml" as const;
 export const ARXIV_RSS_HREF = "/rss/arxiv.xml" as const;
 export const KNOWLEDGE_RSS_HREF = "/rss/knowledge.xml" as const;
 export const PUBLIC_RSS_LANGUAGE = "ja" as const;
@@ -28,6 +29,14 @@ export const SITE_WIDE_RSS_FEED: PublicRssFeed = {
   htmlHref: "/",
   title: "TECH Dashboard \u2014 AI Daily",
   description: "AI コーディング/エコシステムの公式情報を毎日自動収集・要約",
+};
+
+export const MAJOR_RSS_FEED: PublicRssFeed = {
+  key: "major",
+  href: MAJOR_RSS_HREF,
+  htmlHref: "/",
+  title: "TECH Dashboard | Major updates",
+  description: "一覧で読めるAI要約済みの実効重要度 High (3/3) の新着イベントのみを配信",
 };
 
 export const ARXIV_RSS_FEED: PublicRssFeed = {
@@ -67,6 +76,7 @@ export function publicRssFeeds(
 ): readonly PublicRssFeed[] {
   const feeds = [
     SITE_WIDE_RSS_FEED,
+    MAJOR_RSS_FEED,
     ...categories.map(categoryRssFeed),
     ARXIV_RSS_FEED,
     KNOWLEDGE_RSS_FEED,

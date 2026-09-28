@@ -39,6 +39,12 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import { bodyBudgetPriorityRank, DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
+import {
+  MAJOR_UPDATE_INDEX_PATH,
+  MAJOR_UPDATE_MAX_INDEX_BYTES,
+  MAJOR_UPDATE_MAX_MONTH_BYTES,
+  parseMajorUpdateState,
+} from "../web/src/lib/major-update-ledger.ts";
 
 interface RawEntry {
   id?: unknown;
@@ -78,6 +84,12 @@ interface IndexShape {
     bodyEnqueueCandidates?: number;
     bodyEnqueued?: number;
     bodyLookupCount?: number;
+    chatCompatibilityRejected?: number;
+    chatRepairBlocked?: number;
+    chatRepairCandidates?: number;
+    chatRepairEnqueued?: number;
+    chatRepairPendingIds?: string[];
+    bodyMergePendingIds?: string[];
     bodyMerged?: number;
     bodyBacklog?: number;
     bodyQueueDrainEstimateHours?: number;
@@ -655,8 +667,7 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(invalid).toEqual([]);
   });
 
-  it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {
-    const health = data.health;
+  function expectQueueTelemetryConsistent(health: IndexShape["health"]): void {
     const summaryEnqueued = health?.summaryQueueEnqueued;
     const bodyEnqueued = health?.bodyEnqueued;
     const bodyCandidates = health?.bodyEnqueueCandidates;
@@ -677,6 +688,18 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     if (bodyEnqueued !== undefined) {
       expect(bodyEnqueued).toBeLessThanOrEqual(bodyCandidates ?? 0);
       expect(bodyEnqueued).toBeLessThanOrEqual(bodyCap ?? 0);
+    }
+    if (health?.chatRepairEnqueued !== undefined) {
+      expect(health.chatRepairEnqueued).toBeLessThanOrEqual(bodyEnqueued ?? 0);
+      expect(health.chatRepairEnqueued).toBeLessThanOrEqual(health.chatRepairCandidates ?? 0);
+      expect(health.chatRepairPendingIds).toHaveLength(health.chatRepairEnqueued);
+      expect(health.chatCompatibilityRejected).toBeGreaterThanOrEqual(0);
+      expect(health.chatRepairBlocked).toBeGreaterThanOrEqual(0);
+      const pending = health.chatRepairPendingIds ?? [];
+      expect(new Set(pending).size).toBe(pending.length);
+      for (const id of pending) {
+        expect(health.bodyMergePendingIds ?? []).not.toContain(id);
+      }
     }
     if (bodyMerged !== undefined) {
       // The chat backfill lane (CHAT_LOOKUP_CAP) grafts chats through the same
@@ -700,6 +723,47 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     ) {
       expect(sharedRemaining).toBe(Math.max(0, sharedCap - sharedEnqueued));
     }
+  }
+
+  it("summary/body/shared Queue telemetry は候補・実送信・反映を混同しない", () => {
+    expectQueueTelemetryConsistent(data.health);
+  });
+
+  it("repair-only Queue health uses the same shared allowance without pretending a body is missing", () => {
+    const repairOnly: IndexShape["health"] = {
+      summaryQueueSnapshotStage: "final-entries",
+      summaryQueueBacklog: 0,
+      summaryQueueEnqueued: 0,
+      enqueueCandidates: 0,
+      bodyEnqueueCap: 5,
+      bodyEnqueueCandidates: 1,
+      bodyEnqueued: 1,
+      bodyLookupCount: 0,
+      bodyMergePendingIds: [],
+      bodyMerged: 0,
+      bodyBacklog: 0,
+      chatCompatibilityRejected: 1,
+      chatRepairBlocked: 0,
+      chatRepairCandidates: 1,
+      chatRepairEnqueued: 1,
+      chatRepairPendingIds: ["existing-body"],
+      enrichmentEnqueueCap: 5,
+      enrichmentEnqueued: 1,
+      enrichmentRemaining: 4,
+    };
+    expect(() => expectQueueTelemetryConsistent(repairOnly)).not.toThrow();
+    expect(() => expectQueueTelemetryConsistent({
+      ...repairOnly,
+      bodyEnqueueCandidates: 0,
+    })).toThrow();
+    expect(() => expectQueueTelemetryConsistent({
+      ...repairOnly,
+      chatRepairPendingIds: [],
+    })).toThrow();
+    expect(() => expectQueueTelemetryConsistent({
+      ...repairOnly,
+      bodyMergePendingIds: ["existing-body"],
+    })).toThrow();
   });
 
   it("known product name と矛盾する AI 解説本文を保持しない", () => {
@@ -950,6 +1014,28 @@ describe("data/stats.json", () => {
       (bucket) => bucket.total < 0 || bucket.last30d < 0 || bucket.last30d > bucket.total,
     );
     expect(negative).toEqual([]);
+  });
+});
+
+describe("data/updates append-only tracking", () => {
+  it("keeps its indexed monthly cursor history complete and within byte budgets", () => {
+    const root = join(process.cwd(), "data", "updates");
+    const indexText = readFileSync(join(process.cwd(), MAJOR_UPDATE_INDEX_PATH), "utf8");
+    const monthFiles = readdirSync(root)
+      .filter((name) => /^\d{4}-\d{2}\.json$/.test(name))
+      .sort();
+    const months = monthFiles.map((name) =>
+      JSON.parse(readFileSync(join(root, name), "utf8")) as unknown);
+    const state = parseMajorUpdateState(JSON.parse(indexText) as unknown, months);
+    expect(monthFiles).toEqual(state.index.months.map(({ month }) => `${month}.json`));
+    expect(Buffer.byteLength(indexText, "utf8")).toBeLessThanOrEqual(MAJOR_UPDATE_MAX_INDEX_BYTES);
+    for (const name of monthFiles) {
+      expect(
+        statSync(join(root, name)).size,
+        name,
+      ).toBeLessThanOrEqual(MAJOR_UPDATE_MAX_MONTH_BYTES);
+    }
+    expect(state.index.initializedAt === null || state.index.lastObservedAt !== null).toBe(true);
   });
 });
 

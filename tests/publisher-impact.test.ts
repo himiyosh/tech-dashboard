@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  PUBLISHER_DATA_PATH_RE,
   MAX_DETAIL_ROUTE_GROWTH_PER_RUN,
   assertPublisherImpactGrowth,
   buildPublisherImpactPlan,
@@ -70,6 +71,29 @@ function files(values: Record<string, unknown>): Map<string, string | null> {
 }
 
 describe("Publisher incremental impact plan", () => {
+  it("allows only versioned monthly update artifacts and declares both public route families", () => {
+    expect(PUBLISHER_DATA_PATH_RE.test("data/updates/_index.json")).toBe(true);
+    expect(PUBLISHER_DATA_PATH_RE.test("data/updates/2026-10.json")).toBe(true);
+    expect(PUBLISHER_DATA_PATH_RE.test("data/updates/../secrets.json")).toBe(false);
+    const beforeFiles = files({
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [] },
+      "data/updates/_index.json": { schemaVersion: 1 },
+    });
+    const afterFiles = files({
+      "data/index.json": { generatedAt: "2026-08-12T00:00:00Z", entries: [] },
+      "data/updates/_index.json": { schemaVersion: 1 },
+      "data/updates/2026-10.json": { events: [] },
+    });
+    const impact = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "a".repeat(40),
+      beforeFiles,
+      afterFiles,
+      changedPaths: ["data/updates/_index.json", "data/updates/2026-10.json"],
+    });
+    expect(impact.routeFamilies).toEqual(expect.arrayContaining(["major-rss", "update-json"]));
+    expect(impact.changedEntryIds).toEqual([]);
+  });
   it("keeps an entry-only change scoped to that detail while declaring all affected aggregates", () => {
     const beforeEntry = entry("00000000000000c1");
     const afterEntry = entry("00000000000000c1", { summaryEn: "Updated usable summary." });

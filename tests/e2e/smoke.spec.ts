@@ -22,6 +22,7 @@ import { isBuiltDetailEntry } from "./detail-route-fixture.ts";
 import { CATEGORY_META } from "../../web/src/lib/category-meta.ts";
 import { hasMeaningfulSourceSnippet } from "../../web/src/lib/source-snippet.ts";
 import { DEFAULT_MUTED_CATEGORIES } from "../../web/src/lib/category-visibility.ts";
+import { presentArticleChatTurn, validateArticleChat } from "../../web/src/lib/article-chat.ts";
 
 /** Category count follows the taxonomy source of truth, not a hard-coded number. */
 const CATEGORY_COUNT = CATEGORY_META.length;
@@ -2104,10 +2105,16 @@ test.describe("TECH Dashboard smoke", () => {
       );
       expect(counts[index], `bar ${index} renders the number it labels`).toBe(Number(value));
     });
-    expect(
-      counts.slice(0, -1).reduce((sum, value) => sum + value, 0),
-      `stats.byDay produced only zeros: ${counts.join(",")}`,
-    ).toBeGreaterThan(0);
+    const recordedInWindow = barLabels.slice(0, -1).some((label) => {
+      const date = label.split(": ")[0]!;
+      return (recordedByDate.get(date) ?? 0) > 0;
+    });
+    if (recordedInWindow) {
+      expect(
+        counts.slice(0, -1).some((value) => value > 0),
+        "published activity in the chart window remains visible",
+      ).toBe(true);
+    }
     const dayScope = await digest.getAttribute("data-day-scope");
     expect(dayScope).toMatch(/^(today|latest)$/);
     await expect(digest.locator(".title h2.i18n-ja")).toHaveText(
@@ -2440,7 +2447,7 @@ test.describe("TECH Dashboard smoke", () => {
     const digest = page.locator(".ed-summary-only");
     const pending = page.locator(".ed-pending-summary");
     const sourceCta = page.locator('a.ed-header-cta[target="_blank"]');
-    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
+    const shareAction = page.locator('button[data-article-share][data-share-variant="detail"]');
     const disclaimer = page.locator(".ed-disclaim");
     const hasProse = (await prose.count()) > 0;
     const hasDigest = (await digest.count()) > 0;
@@ -2450,9 +2457,9 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(sourceCta).toBeVisible();
     await expect(sourceCta.locator(".ed-header-cta-copy > .i18n-ja")).toHaveText("元記事を読む");
     await expect(sourceCta.locator("small")).not.toHaveText("");
-    await expect(copyAction).toHaveCount(1);
-    await expect(copyAction).toBeVisible();
-    await expect(copyAction.locator(".i18n-ja")).toHaveText("タイトルと URL をコピー");
+    await expect(shareAction).toHaveCount(1);
+    await expect(shareAction).toBeVisible();
+    await expect(shareAction.locator(".share-label.i18n-ja")).toHaveText("この記事をシェア");
     await expect(
       page.locator(
         ".ed-freshness, .rail-freshness, .rail-cta, .ed-cta-row, .ed-summary-only-link, .ed-tldr-source",
@@ -2616,7 +2623,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator("#toc-list-en")).toBeHidden();
     await expect(page.locator(".reading-card .rail-title > .i18n-ja")).toBeVisible();
     await expect(page.locator(".ed-pn")).toHaveAccessibleName("同カテゴリの前後の記事");
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("トップに戻る");
+    await expect(page.locator("#ed-fab .ed-fab-label > .i18n-ja")).toHaveText("ページ上部へ");
 
     await page.getByRole("button", { name: "英語表示に切り替え" }).click();
     await expect(bodyOrigin.locator(":scope > .i18n-en")).toBeVisible();
@@ -2628,13 +2635,14 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".reading-card .rail-title > .i18n-en")).toContainText(
       "Before reading",
     );
+    await page.locator(".ed-meta-details > summary").click();
     await expect(
       page.locator(".ed-meta-strip .k > .i18n-en").filter({ hasText: "Source" }).first(),
     ).toBeVisible();
     await expect(page.locator(".ed-pn")).toHaveAccessibleName(
       "Adjacent articles in this category",
     );
-    await expect(page.locator("#ed-fab")).toHaveAccessibleName("Back to top");
+    await expect(page.locator("#ed-fab .ed-fab-label > .i18n-en")).toHaveText("Scroll to top");
 
     // Scroll-spy: the TOC entry for the second section (or second paragraph
     // in the excerpt fallback) activates when its content is in view.
@@ -2675,7 +2683,10 @@ test.describe("TECH Dashboard smoke", () => {
     );
   });
 
-  test("detail copy action writes the title and one URL", async ({ page, context }) => {
+  test("detail share falls back to copying the title and one URL", async ({ page, context }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    });
     await page.goto("/");
     const firstEntryLink = page.locator(TIMELINE_ENTRY_LINK_SELECTOR).first();
     await expect(firstEntryLink).toBeVisible();
@@ -2683,31 +2694,33 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    const copyAction = page.locator("button.ed-share-btn[data-share-copy]");
-    await expect(copyAction).toHaveAccessibleName("タイトルと URL をコピー");
-    const titleJa = (await copyAction.getAttribute("data-title-ja"))?.trim() ?? "";
-    const titleEn = (await copyAction.getAttribute("data-title-en"))?.trim() ?? "";
-    const url = (await copyAction.getAttribute("data-url"))?.trim() ?? "";
+    const shareAction = page.locator('button[data-article-share][data-share-variant="detail"]');
+    await expect(shareAction).toHaveAccessibleName(/^この記事をシェア\s*:\s*\S/);
+    const titleJa = (await shareAction.getAttribute("data-share-title-ja"))?.trim() ?? "";
+    const titleEn = (await shareAction.getAttribute("data-share-title-en"))?.trim() ?? "";
+    const url = (await shareAction.getAttribute("data-share-url"))?.trim() ?? "";
     expect(titleJa).toBeTruthy();
     expect(titleEn).toBeTruthy();
     expect(url).toBe(`https://techdb.studio344.net${new URL(page.url()).pathname}`);
     await expect(page.locator('meta[property="article:modified_time"]')).toHaveCount(0);
     const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(jsonLd.join("\n")).not.toContain('"dateModified"');
-    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-live", "polite");
-    await expect(page.locator("#ed-toast")).toHaveAttribute("aria-atomic", "true");
-    await copyAction.click();
+    await expect(page.locator("#article-share-status")).toHaveAttribute("aria-live", "polite");
+    await expect(page.locator("#article-share-status")).toHaveAttribute("aria-atomic", "true");
+    await shareAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(`${titleJa}\n${url}`);
+    await expect(page.locator("#article-share-status")).toHaveText("タイトルとURLをコピーしました。");
 
     await page.locator('.lang-btn[data-lang="en"]').click();
     await expect(page.locator("html")).toHaveAttribute("data-lang", "en");
-    await expect(copyAction).toHaveAccessibleName("Copy title + URL");
-    await copyAction.click();
+    await expect(shareAction).toHaveAccessibleName(/^Share this article\s*:\s*\S/);
+    await shareAction.click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(`${titleEn}\n${url}?lang=en`);
+    await expect(page.locator("#article-share-status")).toHaveText("Title and URL copied.");
   });
 
   test("wide screens keep the article reading column centered with section headings", async ({ page }) => {
@@ -2783,7 +2796,7 @@ test.describe("TECH Dashboard smoke", () => {
 
       const actionStrip = page.locator(".ed-action-strip");
       const sourceCta = actionStrip.locator(".ed-header-cta");
-      const copyAction = actionStrip.locator(".ed-share-btn[data-share-copy]");
+      const copyAction = actionStrip.locator('[data-article-share][data-share-variant="detail"]');
       await expect(actionStrip).toBeVisible();
       await expect(sourceCta).toHaveCount(1);
       await expect(copyAction).toHaveCount(1);
@@ -2792,7 +2805,7 @@ test.describe("TECH Dashboard smoke", () => {
       const geometry = await page.evaluate(() => {
         const stripEl = document.querySelector(".ed-action-strip");
         const sourceEl = document.querySelector<HTMLElement>(".ed-header-cta");
-        const copyEl = document.querySelector(".ed-share-btn[data-share-copy]");
+        const copyEl = document.querySelector('[data-article-share][data-share-variant="detail"]');
         const strip = stripEl?.getBoundingClientRect();
         const source = sourceEl?.getBoundingClientRect();
         const copy = copyEl?.getBoundingClientRect();
@@ -2836,49 +2849,47 @@ test.describe("TECH Dashboard smoke", () => {
       await expect(page.locator(".ed-freshness, .rail-freshness")).toHaveCount(0);
 
       if (width === 390) {
-        await page.evaluate(() => window.scrollTo({ top: 900, behavior: "auto" }));
-        const fab = page.locator("#ed-fab");
-        await expect(fab).toHaveClass(/show/);
-        await expect
-          .poll(() =>
-            page.evaluate(() => {
-              const fab = document.querySelector<HTMLElement>("#ed-fab");
-              const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-              if (!fab || !tabbar) return Number.NEGATIVE_INFINITY;
-              return tabbar.getBoundingClientRect().top - fab.getBoundingClientRect().bottom;
-            }),
-          )
-          .toBeGreaterThanOrEqual(8);
-        const fixedGeometry = await page.evaluate(() => {
-          const fab = document.querySelector<HTMLElement>("#ed-fab");
+        await page.evaluate(() => window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: "instant",
+        }));
+        const backToTop = page.locator("#ed-fab");
+        await expect(backToTop).toHaveAttribute("href", "#");
+        await expect(backToTop).toBeVisible();
+        const fabGeometry = await page.evaluate(() => {
+          const action = document.querySelector<HTMLElement>("#ed-fab");
           const tabbar = document.querySelector<HTMLElement>(".mobile-tabbar");
-          if (!fab || !tabbar) return null;
-          const fabRect = fab.getBoundingClientRect();
+          if (!action || !tabbar) return null;
+          const actionRect = action.getBoundingClientRect();
           const tabbarRect = tabbar.getBoundingClientRect();
           const hit = document.elementFromPoint(
-            fabRect.left + fabRect.width / 2,
-            fabRect.top + fabRect.height / 2,
+            actionRect.left + actionRect.width / 2,
+            actionRect.top + actionRect.height / 2,
           );
           return {
-            fab: {
-              top: fabRect.top,
-              right: fabRect.right,
-              bottom: fabRect.bottom,
-              left: fabRect.left,
-              width: fabRect.width,
-              height: fabRect.height,
+            position: getComputedStyle(action).position,
+            inMain: document.querySelector(".entry-main")?.contains(action),
+            action: {
+              top: actionRect.top,
+              right: actionRect.right,
+              bottom: actionRect.bottom,
+              left: actionRect.left,
+              width: actionRect.width,
+              height: actionRect.height,
             },
             tabbarTop: tabbarRect.top,
-            hitIsFab: hit === fab || fab.contains(hit),
+            hitIsAction: hit === action || action.contains(hit),
           };
         });
-        expect(fixedGeometry).not.toBeNull();
-        expect(fixedGeometry!.fab.width).toBeGreaterThanOrEqual(44);
-        expect(fixedGeometry!.fab.height).toBeGreaterThanOrEqual(44);
-        expect(fixedGeometry!.fab.bottom).toBeLessThanOrEqual(
-          fixedGeometry!.tabbarTop - 8,
+        expect(fabGeometry).not.toBeNull();
+        expect(fabGeometry!.position).toBe("fixed");
+        expect(fabGeometry!.inMain).toBe(true);
+        expect(fabGeometry!.action.width).toBeGreaterThanOrEqual(44);
+        expect(fabGeometry!.action.height).toBeGreaterThanOrEqual(44);
+        expect(fabGeometry!.action.bottom).toBeLessThanOrEqual(
+          fabGeometry!.tabbarTop - 8,
         );
-        expect(fixedGeometry!.hitIsFab).toBe(true);
+        expect(fabGeometry!.hitIsAction).toBe(true);
       }
     }
   });
@@ -3645,6 +3656,7 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(page.locator(".cat-jump-link")).toHaveAttribute("href", "/arxiv/");
     await expect(page.locator(".cat-jump-link .cat-jump-name")).toHaveText("arXiv");
     await expect(page.locator('.cat-jump-link[href="/c/research"]')).toHaveCount(0);
+    await page.locator(".ed-meta-details > summary").click();
     const importanceStanding = page.locator('[data-importance-standing="arxiv"] .muted-sm');
     await expect(importanceStanding.locator(".i18n-ja")).toContainText(
       /^\(arXiv \d+件中、同等以上 \d+件\)$/,
@@ -4865,9 +4877,17 @@ test.describe("TECH Dashboard smoke", () => {
     const siteWideRss = page.locator('.page-hero-actions a[href="/rss.xml"]');
     const jsonFeed = page.locator('.page-hero-actions a[href="/feed.json"]');
     const opmlBundle = page.locator('.page-hero-actions a[href="/feeds.opml"]');
+    const majorRss = page.locator('.sharing-checklist a[href="/rss/major.xml"]');
+    const updateHistory = page.locator('.sharing-checklist a[href="/updates/index.json"]');
     await expect(siteWideRss).toBeVisible();
     await expect(jsonFeed).toBeVisible();
     await expect(opmlBundle).toBeVisible();
+    await expect(majorRss).toBeVisible();
+    await expect(majorRss).toHaveAccessibleName("主要更新RSSを購読");
+    await expect(majorRss).toHaveAttribute("type", "application/rss+xml");
+    await expect(updateHistory).toBeVisible();
+    await expect(updateHistory).toHaveAccessibleName("新着履歴JSONを見る");
+    await expect(updateHistory).toHaveAttribute("type", "application/json");
     await expect(siteWideRss.locator(".i18n-ja")).toHaveText("全体RSS");
     await expect(siteWideRss).toHaveAccessibleName("全体RSS");
     await expect(jsonFeed).toHaveAccessibleName("JSON Feed");
@@ -4898,6 +4918,8 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(opmlBundle.locator(".i18n-en")).toBeVisible();
     await expect(opmlBundle.locator(".i18n-en")).toHaveText("Subscribe via OPML");
     await expect(opmlBundle).toHaveAccessibleName("Subscribe via OPML");
+    await expect(majorRss).toHaveAccessibleName("Subscribe to major updates RSS");
+    await expect(updateHistory).toHaveAccessibleName("Open the update history JSON");
     await expect(aboutDescription.locator(".i18n-en")).toHaveAttribute("lang", "en");
     await expect(aboutHero).toHaveAccessibleDescription(
       /TECH Dashboard tracks daily changes across AI coding and the agent ecosystem/,
@@ -4909,7 +4931,7 @@ test.describe("TECH Dashboard smoke", () => {
     ]) {
       await page.setViewportSize(viewport);
       await settleResponsiveLayout(page);
-      for (const link of [siteWideRss, jsonFeed, opmlBundle]) {
+      for (const link of [siteWideRss, jsonFeed, opmlBundle, majorRss, updateHistory]) {
         const box = await link.boundingBox();
         expect(box).not.toBeNull();
         expect(box!.width).toBeGreaterThanOrEqual(44);
@@ -10571,7 +10593,10 @@ test.describe("TECH Dashboard smoke", () => {
     await summarizedEntryLink.click();
     await expect(page).toHaveURL(/\/e\/.+\/$/);
 
+    const metadataDetails = page.locator(".ed-meta-details");
     const strip = page.locator(".ed-meta-strip");
+    await expect(strip).toBeHidden();
+    await metadataDetails.locator("summary").click();
     await expect(strip).toBeVisible();
 
     const bylineAuthority = page.locator(".ed-byline [data-source-authority]");
@@ -10604,21 +10629,19 @@ test.describe("TECH Dashboard smoke", () => {
       /^(blog|release|changelog|paper|community)$/,
     );
     await expect(authorityPill).toHaveAttribute(
-      "aria-label",
-      /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
-    );
-    await expect(authorityPill).toHaveAttribute(
       "title",
       /^(Official|Paper|Community|News|Aggregator|Source) source \(.+\)( · registry tier \d+)?$/,
     );
     await expect(authorityPill.locator(".pill-authority-label")).toHaveCount(1);
 
-    // Source average shows the last-30 denominator and explicit 1-3 scale.
-    const srcAvg = strip.locator('li .v[aria-label*="last 30 listed entries"]');
+    // Source average shows the actual listed sample and explicit 1-3 scale.
+    const srcAvg = strip.locator("[data-source-sample-count]");
     await expect(srcAvg).toHaveCount(1);
-    await expect(srcAvg).toHaveAttribute("aria-label", /1=Info, 2=Medium, 3=High/);
-    await expect(srcAvg).toContainText("/ 3");
-    await expect(srcAvg).toContainText("1=Info · 2=Medium · 3=High");
+    const sampleCount = Number(await srcAvg.getAttribute("data-source-sample-count"));
+    expect(sampleCount).toBeGreaterThan(0);
+    await expect(srcAvg.locator(".k .i18n-ja")).toContainText(`掲載直近 ${sampleCount} 件・最大 30 件`);
+    await expect(srcAvg.locator(".v")).toContainText("/ 3");
+    await expect(srcAvg.locator(".v")).toContainText("1=Info · 2=Medium · 3=High");
     await expect(strip).toContainText(/件中、同等以上 \d+件/);
     const sourceCta = page.locator(".ed-header-cta");
     await expect(sourceCta).toHaveCount(1);
@@ -12880,13 +12903,373 @@ test.describe("TECH Dashboard smoke", () => {
       .toBe(true);
   });
 
-  test("the article chat reads as prose on phones and drops the cast introduction", async ({ page }) => {
-    // The chat used to open with two cast cards (name + role) and indent every
-    // bubble behind a 34px avatar, alternating sides. Measured at 375px that
-    // left 241px of text at 13.5px while the article body had 305px at 16.5px,
-    // so the generated conversation was the smallest long-form text on the
-    // page. The cast introduction is gone, and on phones the avatar moves into
-    // the name row so each bubble starts at the same edge.
+  test("Poko and the original TECH Guide remain illustrated, readable, and truthful on article detail", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: unknown }>;
+    };
+    const hasChat = (entry: { id: string }) => (
+      Array.isArray(bodyFile.bodies[entry.id]?.chat)
+      && isBuiltDetailEntry(entry as never)
+    );
+    const chatEntry = index.entries.find((entry) => entry.id === "60582ab80f6848d9" && hasChat(entry))
+      ?? index.entries.find(hasChat);
+    expect(chatEntry, "the corpus contains a built detail route carrying a chat").toBeTruthy();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/e/${chatEntry!.id}/`);
+    const chat = page.locator("[data-article-chat]");
+    await expect(chat).toBeVisible();
+    await expect(chat).toHaveAttribute("data-cast-art", "original-provisional");
+    await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
+    await expect(chat.locator("#ed-chat-poko-art")).toHaveCount(1);
+    await expect(chat.locator("#ed-chat-guide-art")).toHaveCount(1);
+    expect(await chat.locator("#ed-chat-guide-art > *").count()).toBeGreaterThan(7);
+    const pokoArt = chat.locator("#ed-chat-poko-art");
+    await expect(pokoArt).toHaveAttribute("viewBox", "0 0 144 206");
+    const drawing = await pokoArt.evaluate((symbol) => {
+      const bounds = (part: string) => {
+        const node = symbol.querySelector<SVGGraphicsElement>(`[data-poko-part="${part}"]`);
+        if (!node) throw new Error(`Poko illustration is missing ${part}`);
+        const { x, y, width, height } = node.getBBox();
+        return { x, y, width, height };
+      };
+      const face = symbol.querySelector<SVGEllipseElement>('[data-poko-part="face"]');
+      const chat = symbol.closest(".ed-chat");
+      if (!face || !chat) throw new Error("Poko face or palette is missing");
+      const css = getComputedStyle(chat);
+      return {
+        parts: [...symbol.querySelectorAll("[data-poko-part]")].map((part) => part.getAttribute("data-poko-part")),
+        leftLeaf: bounds("leaf-left"),
+        rightLeaf: bounds("leaf-right"),
+        hood: bounds("hood"),
+        body: bounds("body"),
+        face: bounds("face"),
+        feet: bounds("feet"),
+        pouch: bounds("pouch"),
+        eyeRims: symbol.querySelectorAll('[data-poko-part="eyes"] ellipse[fill="var(--poko-eye-white)"]').length,
+        faceRatio: Number(face.getAttribute("rx")) / Number(face.getAttribute("ry")),
+        colors: {
+          felt: css.getPropertyValue("--poko-felt").trim(),
+          leaf: css.getPropertyValue("--poko-leaf").trim(),
+          cream: css.getPropertyValue("--poko-cream").trim(),
+          pouch: css.getPropertyValue("--poko-pouch").trim(),
+        },
+        hasRaster: /<image\b|data:image\/|\.png\b/i.test(symbol.outerHTML),
+        usesGoldBody: symbol.outerHTML.includes("var(--important)"),
+      };
+    });
+    expect(drawing.parts).toEqual([
+      "leaf-left", "leaf-right", "feet", "arms", "body", "hood", "face",
+      "cheeks", "eyes", "brows", "nose", "mouth", "strap", "pouch",
+    ]);
+    expect(drawing.face.width / drawing.hood.width).toBeGreaterThanOrEqual(0.82);
+    expect(drawing.faceRatio).toBeGreaterThan(1.4);
+    expect(drawing.body.width / drawing.hood.width).toBeLessThan(0.8);
+    expect(drawing.body.height / drawing.hood.height).toBeGreaterThan(0.8);
+    expect(drawing.eyeRims).toBe(2);
+    expect(drawing.leftLeaf.x + drawing.leftLeaf.width / 2).toBeLessThan(drawing.face.x + drawing.face.width / 2);
+    expect(drawing.rightLeaf.x + drawing.rightLeaf.width / 2).toBeGreaterThan(drawing.face.x + drawing.face.width / 2);
+    expect(Math.max(drawing.leftLeaf.y, drawing.rightLeaf.y)).toBeLessThan(drawing.face.y);
+    expect(drawing.pouch.x + drawing.pouch.width / 2).toBeLessThan(drawing.face.x + drawing.face.width / 2);
+    expect(drawing.pouch.y).toBeGreaterThan(drawing.face.y + drawing.face.height / 2);
+    expect(drawing.feet.y + drawing.feet.height).toBeGreaterThan(drawing.pouch.y + drawing.pouch.height);
+    expect(drawing.colors).toEqual({
+      felt: "#407569", leaf: "#536523", cream: "#ffe2b2", pouch: "#dfa21d",
+    });
+    expect(drawing.hasRaster).toBe(false);
+    expect(drawing.usesGoldBody).toBe(false);
+    await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
+    await expect(chat.locator(".ed-chat-notes p")).toHaveCount(1);
+    await expect(chat.locator(".ed-chat-provenance")).toHaveCount(0);
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("ポコと当サイトのTECHガイド");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("記事の要約と収集した情報");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toContainText("AI生成の対話");
+    expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);
+    const bubbles = chat.locator(".ed-chat-bubble");
+    await expect(bubbles).toHaveCount(6);
+    await expect(chat.locator(".ed-chat-turn[data-speaker='a']")).toHaveCount(3);
+    await expect(chat.locator(".ed-chat-turn[data-speaker='b']")).toHaveCount(3);
+    const stored = requirePresent(
+      validateArticleChat(bodyFile.bodies[chatEntry!.id]?.chat),
+      "selected article has a valid six-turn bilingual chat",
+    );
+    expect(await chat.locator(".ed-chat-text.i18n-ja").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).ja));
+    expect(await chat.locator(".ed-chat-text.i18n-en").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).en));
+    await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toBeVisible();
+    await expect(chat.locator(".ed-chat-text.i18n-en").first()).toBeHidden();
+    if (chatEntry!.id === "60582ab80f6848d9") {
+      await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toContainText("AI");
+      await expect(chat.locator(".ed-chat-text.i18n-en").first()).toContainText("AI");
+    }
+    await expect(chat.locator(".ed-chat-turn .ed-chat-face-outside").first()).toBeVisible();
+    await expect(chat.locator(".ed-chat-turn .ed-chat-face-inline").first()).toBeHidden();
+    const contrastRatios = await chat.evaluate((node) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d")!;
+      const luminance = (color: string) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        const linear = (value: number) => {
+          const channel = value / 255;
+          return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+      };
+      return [...node.querySelectorAll<HTMLElement>(".ed-chat-bubble")].flatMap((bubble) => {
+        const background = luminance(getComputedStyle(bubble).backgroundColor);
+        return [...bubble.querySelectorAll<HTMLElement>(".ed-chat-name, .ed-chat-text.i18n-ja")].map((text) => {
+          const foreground = luminance(getComputedStyle(text).color);
+          return (Math.max(background, foreground) + 0.05) / (Math.min(background, foreground) + 0.05);
+        });
+      });
+    });
+    expect(Math.min(...contrastRatios), "speaker names and prose maintain 4.5:1 contrast").toBeGreaterThanOrEqual(4.5);
+    const desktopLefts = await bubbles.evaluateAll((nodes) =>
+      [...new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().left)))],
+    );
+    expect(desktopLefts.length, "desktop alternates the bubble sides").toBeGreaterThan(1);
+    expect(await chat.evaluate((node) =>
+      [...node.querySelectorAll("*")].filter((element) => getComputedStyle(element).position === "fixed").length,
+    ), "article chat container has no fixed descendants").toBe(0);
+
+    for (const width of [1280, 1181, 981, 980, 948, 768, 414, 390, 375, 320]) {
+      await page.setViewportSize({ width, height: width === 375 ? 667 : 844 });
+      await chat.scrollIntoViewIfNeeded();
+      const layout = await chat.evaluate((node) => {
+        const text = node.querySelector<HTMLElement>(".ed-chat-text.i18n-ja")!;
+        const inside = node.querySelector<HTMLElement>(".ed-chat-turn .ed-chat-face-inline")!;
+        const outside = node.querySelector<HTMLElement>(".ed-chat-turn .ed-chat-face-outside")!;
+        const headRect = node.querySelector(".ed-chat-head")!.getBoundingClientRect();
+        const notesRect = node.querySelector(".ed-chat-notes")!.getBoundingClientRect();
+        const duoRect = node.querySelector(".ed-chat-duo")!.getBoundingClientRect();
+        const badge = node.querySelector<HTMLElement>(".ed-chat-origin .ai-badge")!;
+        const badgeRect = badge.getBoundingClientRect();
+        const originText = node.querySelector<HTMLElement>(".ed-chat-origin .i18n-ja")!;
+        const originRect = originText.getBoundingClientRect();
+        const phrases = [...originText.querySelectorAll<HTMLElement>(".ed-chat-term")].map((phrase) => {
+          const value = phrase.textContent ?? "";
+          const word = phrase.firstChild;
+          if (!word || word.nodeType !== Node.TEXT_NODE) throw new Error("Poko disclosure phrase is missing");
+          const rows = new Set<number>();
+          for (let index = 0; index < value.length; index++) {
+            const range = document.createRange();
+            range.setStart(word, index);
+            range.setEnd(word, index + 1);
+            rows.add(Math.round(range.getBoundingClientRect().top));
+          }
+          return {
+            value,
+            rows: rows.size,
+            fragments: phrase.getClientRects().length,
+            width: phrase.getBoundingClientRect().width,
+          };
+        });
+        const figures = [...node.querySelectorAll<SVGUseElement>(".ed-chat-duo use, .ed-chat-face-inline use")]
+          .filter((use) => use.getClientRects().length > 0)
+          .map((use) => ({
+            href: use.getAttribute("href"),
+            width: use.getBBox().width,
+            height: use.getBBox().height,
+          }));
+        const chatRect = node.getBoundingClientRect();
+        const chatStyle = getComputedStyle(node);
+        const chatContentWidth = chatRect.width
+          - Number.parseFloat(chatStyle.paddingLeft)
+          - Number.parseFloat(chatStyle.paddingRight)
+          - Number.parseFloat(chatStyle.borderLeftWidth)
+          - Number.parseFloat(chatStyle.borderRightWidth);
+        const pokoRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='poko']")!.getBoundingClientRect();
+        const guideRect = node.querySelector<HTMLElement>(".ed-chat-duo [data-chat-character='tech-guide']")!.getBoundingClientRect();
+        return {
+          lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
+            Math.round(el.getBoundingClientRect().left)))],
+          textWidth: text.getBoundingClientRect().width,
+          fontSize: Number.parseFloat(getComputedStyle(text).fontSize),
+          insideDisplay: getComputedStyle(inside).display,
+          outsideDisplay: getComputedStyle(outside).display,
+          castNameFragments: [...node.querySelectorAll<HTMLElement>(".ed-chat-h .ed-chat-cast-name")]
+            .filter((name) => name.getClientRects().length > 0)
+            .map((name) => name.getClientRects().length),
+          figures,
+          headerPortraits: {
+            poko: { left: pokoRect.left, right: pokoRect.right, width: pokoRect.width, height: pokoRect.height },
+            guide: { left: guideRect.left, right: guideRect.right, width: guideRect.width, height: guideRect.height },
+            chatRight: chatRect.right,
+          },
+          originLayout: {
+            containerWidth: chatContentWidth,
+            headLeft: headRect.left,
+            headWidth: headRect.width,
+            notesLeft: notesRect.left,
+            notesWidth: notesRect.width,
+            notesTop: notesRect.top,
+            duoBottom: duoRect.bottom,
+            duoRight: duoRect.right,
+            badgeGap: originRect.left - badgeRect.right,
+            badgeTop: badgeRect.top,
+            badgeClipped: badge.scrollWidth > badge.clientWidth + 1,
+            textTop: originRect.top,
+            textOverflow: originText.scrollWidth > originText.clientWidth + 1,
+            phrases,
+            textWidth: originRect.width,
+          },
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      expect(layout.overflow, `${width}px article has no horizontal scrolling`).toBe(false);
+      expect(layout.castNameFragments, `${width}px keeps the cast name unbroken`).toEqual([1]);
+      expect(layout.originLayout.textOverflow, `${width}px disclosure text stays readable`).toBe(false);
+      expect(layout.originLayout.badgeClipped, `${width}px AI badge stays readable`).toBe(false);
+      expect(layout.originLayout.badgeGap, `${width}px badge does not crowd the text`).toBeGreaterThanOrEqual(7);
+      expect(Math.abs(layout.originLayout.badgeTop - layout.originLayout.textTop)).toBeLessThanOrEqual(1);
+      expect(layout.originLayout.phrases.map((phrase) => phrase.value))
+        .toEqual(["記事の要約", "収集した情報", "読みどころを", "AI生成"]);
+      for (const phrase of layout.originLayout.phrases) {
+        expect(phrase.rows, `${width}px ${phrase.value} stays on one line`).toBe(1);
+        expect(phrase.fragments, `${width}px ${phrase.value} has one painted fragment`).toBe(1);
+        expect(phrase.width, `${width}px ${phrase.value} fits inside the disclosure text`).toBeLessThan(layout.originLayout.textWidth);
+      }
+      if (layout.originLayout.containerWidth <= 930) {
+        expect(Math.abs(layout.originLayout.notesLeft - layout.originLayout.headLeft)).toBeLessThanOrEqual(1);
+        expect(Math.abs(layout.originLayout.notesWidth - layout.originLayout.headWidth)).toBeLessThanOrEqual(1);
+        expect(layout.originLayout.notesTop - layout.originLayout.duoBottom).toBeGreaterThanOrEqual(7);
+      } else {
+        expect(layout.originLayout.notesLeft).toBeGreaterThan(layout.originLayout.duoRight);
+      }
+      expect(layout.headerPortraits.poko.height, `${width}px Poko is larger than Guide`).toBeGreaterThan(layout.headerPortraits.guide.height);
+      expect(layout.headerPortraits.guide.left, `${width}px both portraits are visible`).toBeGreaterThan(layout.headerPortraits.poko.left);
+      expect(layout.headerPortraits.guide.right, `${width}px duo stays within the panel`).toBeLessThanOrEqual(layout.headerPortraits.chatRight);
+      expect(layout.figures.length, `${width}px has painted Poko + TECH Guide`).toBeGreaterThanOrEqual(2);
+      for (const figure of layout.figures) {
+        expect(["#ed-chat-poko-art", "#ed-chat-guide-art"]).toContain(figure.href);
+        expect(figure.width).toBeGreaterThan(30);
+        expect(figure.height).toBeGreaterThan(40);
+      }
+      if (width <= 640) {
+        expect(layout.lefts, `${width}px bubbles align for prose reading`).toHaveLength(1);
+        expect(layout.insideDisplay).not.toBe("none");
+        expect(layout.outsideDisplay).toBe("none");
+        expect(layout.fontSize).toBeGreaterThanOrEqual(15);
+        expect(layout.textWidth, `${width}px preserves the prose measure`)
+          .toBeGreaterThanOrEqual(width === 375 ? 275 : width - 105);
+      }
+    }
+
+    await page.setViewportSize({ width: 2000, height: 900 });
+    await chat.evaluate((node) => { (node as HTMLElement).style.maxWidth = "948px"; });
+    const screenshotWidth = await chat.evaluate((node) => {
+      const header = node.querySelector(".ed-chat-head")!.getBoundingClientRect();
+      const notes = node.querySelector(".ed-chat-notes")!.getBoundingClientRect();
+      return { chat: node.getBoundingClientRect().width, header: header.width, notes: notes.width, leftGap: notes.left - header.left };
+    });
+    expect(Math.abs(screenshotWidth.chat - 948)).toBeLessThanOrEqual(1);
+    expect(Math.abs(screenshotWidth.notes - screenshotWidth.header)).toBeLessThanOrEqual(1);
+    expect(Math.abs(screenshotWidth.leftGap)).toBeLessThanOrEqual(1);
+    await chat.evaluate((node) => { (node as HTMLElement).style.removeProperty("max-width"); });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(chat.getByRole("heading", { name: /Poko & TECH Guide/ })).toBeVisible();
+    await expect(chat.locator(".ed-chat-turn[data-speaker='a'] .ed-chat-name .i18n-en").first()).toHaveText("Poko");
+    await expect(chat.locator(".ed-chat-turn[data-speaker='b'] .ed-chat-name .i18n-en").first()).toHaveText("TECH Guide");
+    await expect(chat.locator(".ed-chat-origin .i18n-ja")).toBeHidden();
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toBeVisible();
+    await expect(chat.locator(".ed-chat-text.i18n-ja").first()).toBeHidden();
+    await expect(chat.locator(".ed-chat-text.i18n-en").first()).toBeVisible();
+    expect(await chat.locator(".ed-chat-text.i18n-en").allTextContents())
+      .toEqual(stored.map((turn) => presentArticleChatTurn(turn).en));
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("AI-generated conversation");
+    await expect(chat.locator(".ed-chat-origin .i18n-en")).toContainText("summary and collected source details");
+    expect(await chat.locator(".ed-chat-notes").innerText()).not.toMatch(/試作絵|元画像|旧配役|site-drawn|source image|Earlier scripts/i);
+    for (const width of [390, 375, 320, 948, 980, 981, 1280, 2000]) {
+      await page.setViewportSize({ width, height: width <= 390 ? 844 : 900 });
+      const englishNote = await chat.evaluate((node) => {
+        const head = node.querySelector(".ed-chat-head")!.getBoundingClientRect();
+        const notes = node.querySelector(".ed-chat-notes")!.getBoundingClientRect();
+        const duo = node.querySelector(".ed-chat-duo")!.getBoundingClientRect();
+        const badge = node.querySelector<HTMLElement>(".ed-chat-origin .ai-badge")!;
+        const en = node.querySelector<HTMLElement>(".ed-chat-origin .i18n-en")!;
+        const chatRect = node.getBoundingClientRect();
+        const chatStyle = getComputedStyle(node);
+        return {
+          containerWidth: chatRect.width
+            - Number.parseFloat(chatStyle.paddingLeft)
+            - Number.parseFloat(chatStyle.paddingRight)
+            - Number.parseFloat(chatStyle.borderLeftWidth)
+            - Number.parseFloat(chatStyle.borderRightWidth),
+          leftGap: notes.left - head.left,
+          widthGap: notes.width - head.width,
+          notesLeft: notes.left,
+          duoRight: duo.right,
+          badgeGap: en.getBoundingClientRect().left - badge.getBoundingClientRect().right,
+          badgeClipped: badge.scrollWidth > badge.clientWidth + 1,
+          textOverflow: en.scrollWidth > en.clientWidth + 1,
+          pageOverflow: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+      if (englishNote.containerWidth <= 930) {
+        expect(Math.abs(englishNote.leftGap), `${width}px EN note starts below art`).toBeLessThanOrEqual(1);
+        expect(Math.abs(englishNote.widthGap), `${width}px EN note uses the full header`).toBeLessThanOrEqual(1);
+      } else {
+        expect(englishNote.notesLeft, `${width}px EN wide layout keeps the side note`).toBeGreaterThan(englishNote.duoRight);
+      }
+      expect(englishNote.badgeGap).toBeGreaterThanOrEqual(7);
+      expect(englishNote.badgeClipped).toBe(false);
+      expect(englishNote.textOverflow).toBe(false);
+      expect(englishNote.pageOverflow).toBe(false);
+    }
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await chat.locator(".ed-chat-duo svg").first().evaluate((svg) => ({
+      animation: getComputedStyle(svg).animationName,
+      transition: getComputedStyle(svg).transitionDuration,
+    }))).toEqual({ animation: "none", transition: "0s" });
+    await expect(chat.locator("[data-reveal]")).toHaveCount(0);
+    await expect(chat.locator("a, button, [tabindex]")).toHaveCount(0);
+  });
+
+  test("existing speaker addresses are restaged without rewriting Sora product facts", async ({ page }) => {
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: Array<{ s: "a" | "b"; ja: string; en: string }> }>;
+    };
+    const address = index.entries.find((entry) =>
+      isBuiltDetailEntry(entry as never)
+      && bodies.bodies[entry.id]?.chat?.some((turn) =>
+        turn.s === "b" && /,\s*Sora[.!?]\s*$/.test(turn.en) && /\byou\b/i.test(turn.en)
+      ),
+    );
+    if (address) {
+      await page.goto(`/e/${address.id}/?lang=en`);
+      const turn = page.locator("[data-article-chat] .ed-chat-b[data-speaker='b'] .ed-chat-text.i18n-en")
+        .filter({ hasText: /,\s*Poko[.!?]\s*$/ });
+      await expect(turn).toHaveCount(1);
+      await expect(turn).toBeVisible();
+    }
+    const product = index.entries.find((entry) =>
+      isBuiltDetailEntry(entry as never)
+      && bodies.bodies[entry.id]?.chat?.some((turn) =>
+        turn.s === "b" && /\bSora is shutting down\b/i.test(turn.en)
+      ),
+    );
+    test.skip(!address && !product, "No legacy vocative or Sora product remains in this built corpus; pure fixtures cover both.");
+    if (product) {
+      await page.goto(`/e/${product.id}/?lang=en`);
+      await expect(page.locator("[data-article-chat] .ed-chat-b .ed-chat-text.i18n-en")
+        .filter({ hasText: /Sora is shutting down/i })).toHaveCount(1);
+    }
+  });
+
+  test("article chat survives blocked image requests and is absent when no stored chat exists", async ({ page }) => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
@@ -12894,46 +13277,53 @@ test.describe("TECH Dashboard smoke", () => {
       bodies: Record<string, { chat?: unknown }>;
     };
     const chatEntry = index.entries.find((entry) => (
-      Array.isArray(bodyFile.bodies[entry.id]?.chat)
-      && isBuiltDetailEntry(entry as never)
+      Array.isArray(bodyFile.bodies[entry.id]?.chat) && isBuiltDetailEntry(entry as never)
     ));
-    expect(chatEntry, "the corpus contains a built detail route carrying a chat").toBeTruthy();
-
-    await page.setViewportSize({ width: 1280, height: 900 });
+    expect(chatEntry).toBeTruthy();
+    await page.route("**/*.svg", (route) => route.abort());
     await page.goto(`/e/${chatEntry!.id}/`);
-    const chat = page.locator("[data-article-chat]");
-    await expect(chat).toBeVisible();
-    await expect(chat.locator(".ed-chat-cast")).toHaveCount(0);
-    const bubbles = chat.locator(".ed-chat-bubble");
-    await expect(bubbles).toHaveCount(6);
-    // Desktop keeps the messaging layout: avatars outside, sides alternating.
-    await expect(chat.locator(".ed-chat-turn .ed-chat-face").first()).toBeVisible();
-    const desktopLefts = await bubbles.evaluateAll((nodes) =>
-      [...new Set(nodes.map((node) => Math.round(node.getBoundingClientRect().left)))],
-    );
-    expect(desktopLefts.length, "desktop alternates the bubble sides").toBeGreaterThan(1);
+    await expect(page.locator(".ed-chat-duo [data-chat-character='poko'] svg use")).toHaveAttribute("href", "#ed-chat-poko-art");
+    await expect(page.locator(".ed-chat-duo [data-chat-character='tech-guide'] svg use")).toHaveAttribute("href", "#ed-chat-guide-art");
+    expect(await page.locator(".ed-chat-duo svg use").first().evaluate((use: SVGUseElement) => use.getBBox().width))
+      .toBeGreaterThan(30);
 
-    await page.setViewportSize({ width: 375, height: 812 });
-    await chat.scrollIntoViewIfNeeded();
-    const mobile = await chat.evaluate((node) => {
-      const bubble = node.querySelector(".ed-chat-bubble")!;
-      const text = node.querySelector(".ed-chat-text.i18n-ja")!;
-      const face = node.querySelector(".ed-chat-turn .ed-chat-face")!;
-      const name = node.querySelector(".ed-chat-name")!;
-      return {
-        lefts: [...new Set([...node.querySelectorAll(".ed-chat-bubble")].map((el) =>
-          Math.round(el.getBoundingClientRect().left)))],
-        textWidth: Math.round(text.getBoundingClientRect().width),
-        fontSize: Number.parseFloat(getComputedStyle(text).fontSize),
-        faceDisplay: getComputedStyle(face).display,
-        nameEmoji: getComputedStyle(name, "::before").content,
-        bubbleWidth: Math.round(bubble.getBoundingClientRect().width),
-      };
-    });
-    expect(mobile.lefts, "every phone bubble starts at the same edge").toHaveLength(1);
-    expect(mobile.faceDisplay, "the avatar column is reclaimed on phones").toBe("none");
-    expect(mobile.nameEmoji, "the speaker emoji moves into the name row").not.toBe("none");
-    expect(mobile.fontSize, "phone chat text is at least 15px").toBeGreaterThanOrEqual(15);
-    expect(mobile.textWidth, "phone chat text keeps a readable measure").toBeGreaterThan(275);
+    const withoutChat = index.entries.find((entry) => (
+      !Array.isArray(bodyFile.bodies[entry.id]?.chat) && isBuiltDetailEntry(entry as never)
+    ));
+    if (withoutChat) {
+      await page.goto(`/e/${withoutChat.id}/`);
+      await expect(page.locator("[data-article-chat]")).toHaveCount(0);
+      await expect(page.locator("main h1")).toBeVisible();
+      await expect(page.locator("main .ed-body, main .ed-pending-summary, main .ed-tldr").first()).toBeVisible();
+    }
+  });
+
+  test("article chat portraits and dialogue survive without client JavaScript", async ({ browser, baseURL }) => {
+    if (!baseURL) throw new Error("Playwright baseURL is required for static article verification");
+    const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
+      entries: Array<{ id: string }>;
+    };
+    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      bodies: Record<string, { chat?: unknown }>;
+    };
+    const entry = index.entries.find((item) => (
+      Array.isArray(bodies.bodies[item.id]?.chat) && isBuiltDetailEntry(item as never)
+    ));
+    expect(entry).toBeTruthy();
+    const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+    try {
+      const staticPage = await context.newPage();
+      await staticPage.goto(new URL(`/e/${entry!.id}/`, baseURL).href);
+      const chat = staticPage.locator("[data-article-chat]");
+      await expect(chat.getByRole("heading", { name: /ポコとTECHガイド/ })).toBeVisible();
+      await expect(chat.locator(".ed-chat-text.i18n-ja")).toHaveCount(6);
+      await expect(chat.locator(".ed-chat-duo [data-chat-character]")).toHaveCount(2);
+      expect(await chat.locator(".ed-chat-duo svg use").first().evaluate((use: SVGUseElement) => use.getBBox().width))
+        .toBeGreaterThan(30);
+      await expect(chat.locator(".ed-chat-turn .ed-chat-face-inline").first()).toBeVisible();
+      expect(await staticPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    } finally {
+      await context.close();
+    }
   });
 });

@@ -30,6 +30,7 @@
 - `develop -> main` releaseは履歴のancestryを保つためmerge commitを使い、squash/rebase mergeを使わない。main merge前のユーザー承認、CI、R-027 rollout gateは従来どおり必須。
 - GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
 - Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
+- developとPRのCIでは36時間の鮮度gateを緩めず、同一のimmutableなremote main SHAの生成dataをunit/Web/E2Eへ配布する。PRが生成dataを明示変更した場合は上書きを拒否し、trackerの新規`data/updates` seedは保持する。main pushは当該commit自身のdataを検証する。
 - fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
 
 ### R-002: Cloudflare Pages project 設定の固定値
@@ -238,12 +239,17 @@
 - `tests/worker-config.test.ts`、`tests/free-plan-bridge.test.ts`、`tests/publisher-runner.test.ts`、`tests/publisher-impact.test.ts`、`npm --prefix worker run deploy -- --dry-run` で Free plan contract を検証する。
 
 ### R-027: publisher contract mismatch 時は data publish を fail-closed にする
-- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、その `web/src/lib/**` critical dependencies、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
+- `worker/publisher-contract.json` は data 生成契約を表す SHA-256 fingerprint の単一情報源とする。`.github/workflows/publisher.yml`、`scripts/run-publisher.ts`、`scripts/publisher-impact.ts`、`web/src/**` 全体、`harness/**`、`worker/src/**`、`worker/wrangler.toml`、Worker/root package files、Worker tsconfig を変更したら、同じ PR で `npm run publisher:contract -- --apply` を実行する。
 - incremental shadowのrenderer、publisher client、専用Worker、D1 migration、Wrangler configもpublisher fingerprintのcritical pathへ含める。generationはrenderer shell digestと分離した固有revision、exact source commit、coverage route family、object byte、quota projectionを保持し、D1 active pointerはexpected revisionとのcompare-and-swapでだけ更新する。coverage incomplete、traffic未観測、budget超過、fingerprint不一致では`serve`へ進まずPagesへ戻す。
 - Node publisher は収集開始時に checkout と remote main が同じ HEAD SHA であることを確認し、その SHA の contract marker と runner fingerprint を照合する。`data/index.json`、`data/bodies.json`、archive index / month、stats の baseline はすべて同じ immutable SHA から読む。data commit または effect-only flush 前にも main ref が開始時 SHA と完全一致することを再確認し、進んでいれば commit と遅延 effects を中止する。commit parent も同じ SHA に固定し、push は non-force とする。
 - Node publisher は収集開始前、data commit 直前、遅延 effects flush 直前に Free bridge の public health が同じ publisher fingerprint を公開していることを確認する。bridge の fingerprint が未公開・不一致・unhealthy の場合は harness、data commit、effects flush を fail-closed で中止する。
 - summary/body Queue job と生成 cache には publisher fingerprint を伝播する。現在の fingerprint と明示的に異なる cache は採用せず再生成対象にする。fingerprint 導入前の既存 cache は本文・要約テキストだけ互換読み込みし、summary の importance / extraTags は exact fingerprint 一致時だけ採用する。fingerprint 無し job を受けた更新済み consumer は `legacy-unversioned-job` を保存し、既存 legacy cache と区別する。
 - fingerprint を変える変更はCI後にdevelopへ統合してよいが、その時点ではproduction Workerをdeployしない。develop→main release PRのexact headから Queue consumer (`tech-dashboard-summarizer`、`tech-dashboard-body`) を先にdeployし、旧consumerのin-flight処理が残らないことを確認してからrelease PRをmerge commitでmainへmergeする。merge後は原則として旧 harness が marker mismatch で停止したことを確認し、明示承認のうえ Free bridge を deployする。deployment provenanceやguard到達性を確認できずmismatchを観測できない場合は、その事実を明記し、旧runのterminal failure、merge後のdata commit不在、旧heartbeat非更新をすべて実測できた場合に限り「旧writerがpublish不能」という安全条件でbridge置換へ進む。いずれかを確認できなければ停止してユーザー判断を求める。bridge health、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
+- `worker-body/src/**` と `worker-summarizer/src/**` も publisher fingerprint の critical path に含める。consumer の実装変更を hash 対象から漏らさず、変更した PR で `npm run publisher:contract -- --apply` と `--dry-run` を行う。
+- **新規記事対話**だけは job からコピーした publisher fingerprint に加え、`worker-body` にコンパイルされた Poko / TECHガイドの会話revision (prompt版とrelease fingerprint由来) が **双方 exact current** のcacheからしか採用しない。通常本文merge、既存本文へのchat-only graft、最終 `mergeBodies` の全境界で検査する。新版consumerが旧fingerprintまたは無印jobを受けても本文のretry/DLQ契約を維持し、新版対話は生成・保存しない。旧版consumerの新fingerprint echoや同じ `b:` keyへの上書きは出自証明にならないため、新規会話を拒否し、出典が十分な対象だけを本文Queueの共有枠から最大5件/runで再生成する。既存 `data/bodies.json` のrevisionなし6発言と実本文は書き換えない。`chatRepairPendingIds`、`chatRepairEnqueued`、`chatCompatibilityRejected`、`chatRepairBlocked` は本文backlogとは別に観測する。直接KVへ書く旧chat backfillの `--apply` は出自を証明できないため拒否する。
+- **今回の会話prompt/persona変更に限る旧drain代替案 (未承認、既定のdrainは維持)**: **PRE-MERGE のcode-safety証拠**は、guard自体を除くimmutable main→release exact headのconsumer差分が `article-chat` prompt/personaだけであること、旧binary+新fingerprintのRED→GREENで通常本文/cache、chat-only graft、最終merge、旧/無印job、KV上書きが不適合会話をpublishしないこと、既存sidecarのJA/EN6発言と本文が同じIDで維持されることである。別途承認済みのcandidate consumer deploy後にはpublic `/health` のcode由来revisionをrelease markerと照合する。条件とownerの**別の判断**が揃う場合だけ旧in-flight=0を観測できない時の代替を提案できる。まだ新Publisherがmainで走れない段階へ、POST-MERGE の実cache→sidecar graftを前提条件として持ち込まない。provider read-back等が必要なのに取得できない場合は旧drain gateのままSTOPする。安全PRはmain merge、consumer/bridge deploy、認証変更の承認を兼ねない。
+- **POST-MERGE / bridge置換後の別gate**: main mergeとbridge deployの各別承認・R-027の旧writer停止確認を経て新Publisherが実際に処理できる状態になってから、immutableなmain snapshotの全chat欠落IDと旧sidecar6発言IDを記録する。拒否された同一IDについて新版revisionの `b:` cache→後続Publisherのsidecar graftを実read-backし、本文と旧6発言を維持したままQueueの修復進捗を観測する。`chatRepairBlocked>0`、修復候補への送信枠が無い、保存済み6発言の減少、read-back不能、または進捗停止は**production完了宣言を停止**し、追加の反映を中断して承認済みrollback手順を検討する（無断でmain/dataを巻き戻さない）。
+- `chatRepairCandidates` / `chatRepairBlocked` / `chatRepairEnqueued` は**各runの最大 `CHAT_LOOKUP_CAP` 件**に関する値で、全欠落IDの修復可能性や会話のsidecar到達を証明しない。POST-MERGE に全IDを確認する際も単一runの0件/非0件を全件証拠と読み替えない。全件のprovider read-backができなければproduction完了を宣言せず、PRE-MERGE の安全コード証拠とPOST-MERGE の実反映結果を混同しない。
 - `data/index.json` の entry が変わる publish では、`data/archive/_index.json` と `data/stats.json` の `generatedAt` も同一 commit の reference clock へ揃える。月次 archive は timestamp-only churn を避ける。
 
 ### R-028: in-place checkout の Git mutation と session automation を直列化する
@@ -265,6 +271,13 @@
 - PRの必須条件はbranch-flow、unit/typecheck、Web build、E2E、secret/security checks、Publisher CAS、明示承認が必要なdeploy・production変更境界で構成する。
 - 通常のGitHub reviewと任意のcode review / security reviewはリスクに応じて利用できるが、session固有の承認コメント、identity用repository variable、専用CI job、再実行手順をmerge条件へ追加しない。
 - 必須clearanceを廃止する変更では、CI、CLI、tests、instructions、docs、GitHub settingsを同じ変更単位で除去し、通常の品質jobが残る回帰testを追加する。
+
+### R-032: 主要更新の追跡は公開履歴を正本とし、SEO保留と混同しない
+- `/rss.xml` は全体feedとして維持する。`web/src/lib/major-updates.ts` の単一selectorは、実効重要度 High (3/3)、実要約あり、一覧で読める詳細routeあり、hot/warm、snapshot時刻以前の元記事公開を必須とし、既存のoff-topic判定とcanonical URL / 同一発表のtopic dedupeも適用する。通常のpatch/prereleaseを保存時のimportanceだけで再採用しない。`publicationHold`はSEO向けnoindexであり、一覧から読める新着を対外配信禁止と解釈しない。
+- Node Publisher は同一のimmutable main SHAにある前回indexを最初の基準点として既存候補をseedし、そのrunのfinal snapshotで初めて条件を満たした候補だけを`data/updates/_index.json`と`YYYY-MM.json`へ同じdata-only commitで記録する。次回以降もcanonical URL/topicと単調増加sequenceで再収集・再要約の二重eventを防ぐ。月別履歴は期間で削除せず、byte上限超過や不正cursorはfail-closedにする。
+- JSON `/updates/index.json`はlatestCursorと月別sequence範囲を、`/updates/YYYY-MM.json`は全eventを配信する。利用者は保存したcursorより新しい月を取得してsequence順に処理でき、100件上限のRSSや静的endpointの`?since=`を漏れのない履歴APIとみなさない。`/rss/major.xml`は同じ履歴の最新100eventのみの購読用投影で、GUIDはevent ID、pubDateは初めて候補になったPublisher snapshot時刻（元記事公開日と区別）とする。
+- RSSを購読できることを外部サービスへの自動投稿完了と扱わない。将来の自動投稿は恒久リンク、送信先別の権限・明示承認、topic/channel単位の冪等キー、投稿結果read-back、失敗・rate limit時の停止を先に設計する。既存のPublisher/bridgeのPages deploy禁止とfingerprint/CASを緩和しない。
+- 手動シェアは各記事詳細、Timeline/Knowledgeの主要カード、Spotlightで共有シートを優先し、非対応時のみタイトルとURLをコピーする。clipboard拒否時は読み上げだけに頼らず、選択できるタイトルとURLを可視ダイアログで提示し、閉じたら元の共有buttonへfocusを戻す。Top 3、Ticker、compact rowは高密度の判断面なので記事詳細から共有し、表示言語をサイトURLへ保持する。外部元記事URLへ`lang`を付けない。
 
 ---
 
@@ -3097,3 +3110,161 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 変更前 2 週間の起動時刻は 0〜59 分に均等に分散しており、特定の枠の混雑ではなく GitHub の予約実行そのものが遅延・欠落していた。6 時間ごとの別ワークフローも同日に 41 分〜約 5 時間遅れていた。判断の前にこの分布を見ていなかった。
 - **対策**: 起動を Cloudflare Cron Trigger から `workflow_dispatch` する方式に移した(`worker/src/publisher-dispatch.ts`)。直近の run が 50 分以内なら dispatch しないため、GitHub 側の遅れた run と重複しない。
 - **教訓**: 定期実行の欠落を直す前に、実際の開始時刻の分布と他ワークフローの遅延を確認する。起動方式に依存する設定(上限値など)は、起動回数の改善を実測で確認してから変える。監視の失敗原因は 1 件の標本で決めず、期間内の全件を分類する。
+
+### LL-468: 要約済みと公開許可を同じ配信gateへ潰さない
+- **事象**: 初期の主要更新RSSでは`PUBLISHABLE_ENTRIES`に加えて`publicationHold === false`を条件にした。しかし最新checkoutでは承認manifestのbaseline以降に404件の新着があり、そのうちHigh 27件は全件`publicationHold=true`だった。一覧では記事を閲覧できても、主要更新追跡は新着を1件も出せない構成だった。
+- **根本原因**: `publicationHold`は検索index/sitemapを段階公開するSEO上のgateで、記事カードと詳細の閲覧禁止ではない。検索エンジンへのindex許可と読者へ公開済みの情報発信を同じbooleanで制御した。
+- **対策**: ユーザー判断により、`selectMajorUpdates()`は要約品質、実効High、詳細route、hot/warm、時刻、topic/source重複を維持し、SEO専用holdで除外しない。イベントには発見時のholdをsnapshotとして記録しても、投稿の可否には流用しない。
+- **教訓**: `noindex`とprivate/未公開は別契約である。読者に一覧・詳細が公開されているなら、検索向け段階indexの未承認を新着配信の禁止条件にしない。異なる公開境界を再利用すると新着が永続的に0件になるため、母集団とholdの意味を実データで確かめる。
+
+### LL-469: 高密度の判断枠へ共有buttonを足すとmetadataと要約幅が失われる
+- **事象**: Home Top 3の各cardへ45pxの共有buttonを追加すると、1440pxのmetadata行が28px以内から45pxへ拡大した。別配置で左grid列を広げると、1280pxの要約幅が180pxの最低基準に対して167pxまで縮んだ。
+- **根本原因**: 3列gridの小さなdecision cardに別の操作面を常時追加し、first-viewの比較密度、source disclosure、時刻、要約の利用可能幅を同時に維持できるか先に測っていなかった。
+- **対策**: Top 3のbuttonとgrid変更を取り消し、Spotlight、通常記事カード、Knowledgeカード、記事詳細だけに直接共有操作を置いた。Top 3/Ticker/compact rowは内部detail linkを保ち、記事を開いてから共有する。既存のTop 3境界幅とmobile card検証を再実行した。
+- **教訓**: 「各記事の共有可能性」と「全てのコンパクト面へ共有buttonを並べること」は別である。操作を加える前に同一行のmetadata高、要約幅、44px target、first-view下端を実ブラウザで測り、内容を削ってまでactionを常設しない。
+
+### LL-470: Astro componentのclient script追加はincremental detailのasset shell契約も変える
+- **事象**: 共有componentへclient scriptを追加すると通常のWeb buildは成功したが、`tests/incremental-renderer.test.ts`の実detail renderはscript moduleを4件、synthetic production shellは3件と数え、body-only incremental shadowをfail-closedで拒否した。
+- **根本原因**: detail HTMLに出るAstro module script数がcomponent importで変わるのに、asset shell fixtureは旧script構成を固定していた。UI変更と増分rendererのproduction shellを別の変更面として扱っていた。
+- **対策**: synthetic fixtureへinline bootstrapと共有component moduleを含む4 module構成を反映し、shadow rendererの対象testを再実行した。production artifactのshell captureと実detail render parityも確認対象とする。
+- **教訓**: UIへclient scriptを増減したら、通常のAstro buildだけでなく、built detailのmodule script inventory、incremental asset shellのfixture、実renderのmodule parityを同じ変更で確認する。件数不一致を静かに無視してshellを継ぎ足さない。
+
+### LL-471: visually-hiddenな共有buttonの言語spanも表示言語と同じ階層で隠す
+- **事象**: full E2Eのcold Archive mobileでdocument自体の横scrollは0でも、記事ごとの共有button内で隠したENタイトルの`span`が最大700px以上まで張り出し、全DOMRectの非交差検証に失敗した。さらにその修正後も、body直下の共有結果live regionが幅1px・左端-1pxとなった。
+- **根本原因**: JA/ENを包含する親`span.visually-hidden`の子を言語別表示にしたが、親だけのclipは子自身の矩形を縮めない。また`visually-hidden` utilityの`margin:-1px`をbody直下で使うと、左端0の要素が-1pxに配置される。
+- **対策**: JA/ENの各spanへ`visually-hidden`を付けて実矩形を拘束し、body直下の常設live regionは`left:1px`を明示して負のmarginを相殺する。`left:0`では位置に負marginが加わり-1pxのままなので補正にならない。Archiveの実cold targetでmobile非交差を再検証する。
+- **教訓**: 多言語のvisually-hiddenはclipする親だけでなく各言語variant自身の矩形を測る。body直下へ置くaccessible-only nodeはutilityの負marginで境界外へ出ない位置に固定する。page-level`scrollWidth=innerWidth`だけでは子要素のclient rectがviewport内とは限らない。
+
+### LL-472: 古いsnapshotの7日chartが全0件でも、表示とstatsの一致が正しければ成功である
+- **事象**: 現行checkoutの`data/index.json`が約8日前のgeneratedAtで、新たな収集が無いまま時刻が進んだためHomeの7日chartが全0件となり、full browser testの固定`sum>0`が失敗した。`data-schema.test.ts`の36時間鮮度gateも同じ理由で失敗した。
+- **根本原因**: chartの目的は実際の`stats.byDay`をその日付で表示することなのに、E2Eが「直近7日の収集は常に1件以上」を必須化していた。固定のローカル生成snapshotは時間経過で正当に当日窓から外れる。
+- **対策**: E2Eは全barの表示値と`stats.byDay`の同一日付を厳密比較したまま、記録側の窓に非0がある場合だけ「画面にも非0がある」を検証する。最新dataを仮装せず、ローカルの一時的な鮮度gateに限り`ALLOW_STALE_DATA=1`で全unitを検証し、本番へはそのままcommitしない。
+- **教訓**: generated artifactを使用するUIのE2Eは時間が過ぎるだけで壊れる活動量下限を固定しない。表示値と保存された同日bucketの一致を主契約とし、productionの鮮度監視とローカルsnapshotの時間経過を別のgateにする。
+
+### LL-473: incremental shadowのsemantic hashへAstro dev属性とasset間改行を含めない
+- **事象**: 現行Web buildからasset shellを取得し、同じindexのdetailを増分rendererで再生成すると、リンク・metadata・script moduleは一致しているのに`incremental detail HTML does not match the static semantic snapshot`でparityが失敗した。
+- **根本原因**: `AstroContainer`のserver renderは全DOM elementへ`data-astro-source-file`/`data-astro-source-loc`を付けるが、static production buildには無い。さらにstatic writerがheadのasset間へ追加する改行を、semantic snapshotがparse後のdocument SHAへそのまま含めていた。reader-facing contentとは無関係な開発用属性と書式差が一致条件を厳しくしていた。
+- **対策**: document digestに限りdev-only source属性を除去し、head/bodyの直接の空白専用text nodeだけを正規化する。metadata、本文、script/styleの内容は引き続きparity検証し、実Web buildのcapture→render→verify-parityと改変metadata拒否testを通す。
+- **教訓**: semantic parityで無視する差分は何でもではなく、toolchainが挿入する非意味的な属性とcontainer直下のformatting whitespaceへ厳密に限定する。synthetic fixtureだけで合格とせず、実production buildと実rendererを同じsnapshotで比較する。
+
+### LL-474: clipboard失敗時のnative promptは視覚的な回復導線の代わりにならない
+- **事象**: desktopとmobileのpersona監査で共有buttonを押すと、クリップボードの`NotAllowedError`を検出していても、案内は`1x1px`の視覚非表示live regionにしか現れなかった。browser promptに手動コピー文を渡したが、ブラウザ/自動化環境ではprompt自体が表示されず、利用者は何をコピーすべきか分からなかった。
+- **根本原因**: 非同期の失敗通知を読み上げsurfaceへ置き、browser promptが必ず可視になると仮定した。正常時の共有シートとクリップボード成功しかE2Eで可視性を検証していなかった。共有componentのscoped CSSは数千の記事HTMLへ反復inliningされ、コストも増えていた。
+- **対策**: clipboard失敗は`showModal()`でタイトルとURLを読み取り専用textareaへ表示し、textを選択済みにしてkeyboard/mobileで手動コピー可能にした。Chromiumの初回実測ではdialog末尾の閉じるbuttonからTabを押すと`<body>`へfocusが落ちたため、textareaと閉じるbutton間をTab/Shift+Tabで明示wrapする。閉じる/Escapeは元のbuttonへfocusを戻し、JA/ENのname/description、viewport安全域、スクリーンリーダーと可視contentをE2Eで検証する。共有controlとdialogのCSSは共通`portal.css`へ移し、数千ページへstyleを複製しない。
+- **教訓**: ネイティブ共有、clipboard、手動コピーの3段階は実browserで**視覚面とaccessible面の両方**を検証する。`role=status`が存在しても視覚利用者へ回復方法が伝わるとは限らず、native modalでもブラウザ実装によって末尾Tabでfocusがbodyに落ちることがある。大量SSGで共通componentのstyleを増やすとroute数分複製されるため、全ページ共通の操作styleはbundle共通CSSへ置く。
+
+### LL-475: 最新N件のRSSと再収集時刻は取りこぼしのない新着履歴ではない
+- **事象**: 主要更新RSSは`publishedAt`順の現在のHigh記事を最大100件表示していた。外部利用者が長期間取得しないと101件目以降を再生できず、既存記事が後から要約完了した場合も元記事の古い公開日だけでは「サイトで新たに読めるようになった時刻」を示せなかった。
+- **根本原因**: `normalize()`は収集runごとに`collectedAt`を更新し、`publishedAt`は元記事の公開日、`generatedAt`はsnapshotの生成時刻である。いずれも「初めてHigh・要約済み・reader-facingに到達した」というimmutableなevent時刻ではなく、最新100件RSSはそもそも履歴の保持機構ではなかった。
+- **対策**: Node Publisherがcaptured main SHAの直前indexを基準点にして、final snapshotで初めて適格となった記事を月別`data/updates`へ同一data-only commitでappendする。再収集・タイトル修正はcanonical source/topicで重複排除し、単調増加cursor、`observedAt`、元記事`sourcePublishedAt`を分離する。RSSは履歴の最新100件投影、無期限再生の正本は月別JSONとmanifestにする。
+- **教訓**: 汎用新着追跡は外部サービスの投稿先でなく、イベント同一性、初出時刻、初回基準点、無期限の順序再生を先に定義する。静的siteではquery付きRSS/JSON URLだけで動的なsinceフィルタを実現できないため、月別range indexと保存済みcursorを公開契約にする。
+
+### LL-476: Webの型だけを共有するときもdata loaderへのimportはWorker型チェックを巻き込む
+- **事象**: Node Publisherから主要更新台帳をimportすると、Workerの`tsc --noEmit`が`relative-time.ts`の`HTMLElement`などDOM型を解決できず停止した。rootとWebの型チェックは成功していた。
+- **根本原因**: 台帳とrankingが`data.ts`から`NormalizedEntry`をtype-only importしても、TypeScriptは参照先のWeb data loaderとその再exportであるbrowser専用moduleもprogramへ含めた。Workerの`lib`は意図どおり`ES2022`だけなのでDOMは存在しない。
+- **対策**: `NormalizedEntry`と`RawIndexEntry`をJSON/DOM非依存の`entry-types.ts`へ分離し、Web loaderは既存の型名を再exportする。台帳、選定、rankingはpure type moduleだけを参照し、WorkerのDOM設定を拡張しない。
+- **教訓**: Node/WorkerとWebが型を共有する場合、`import type`でも参照先moduleの依存を型チェックに取り込む。runtime data loaderで型を定義せず、Web内のpure moduleに置いて同じ型を全consumerへ提供する。
+
+### LL-477: developの古い生成dataは鮮度例外で隠さずmainの単一snapshotを検証する
+- **事象**: High記事トラッカーのfeature→develop PRを準備した時、developの`data/index.json`は約204時間前、remote mainは約1時間前のsnapshotだった。36時間gateを維持した`data-schema.test.ts`は鮮度だけで失敗した。
+- **根本原因**: Publisherはdata-only commitをmainへ直接追加し、developへ毎時複製しない。従来CIは各jobでPR checkoutの古いdataをそのまま読み、unit、Web build、E2Eの検証母集団をproductionの最新dataへ揃える手段が無かった。
+- **対策**: `scripts/ci-current-data.mjs`がPR/pushで変更された生成dataを先に拒否し、remote mainのexact SHAからindex、bodies、全archive、stats、承認manifestを一度だけ取得してhash付きartifactにする。unit、Web build、E2Eは同じSHAとheadを照合して適用し、trackerの新規update seedは触らない。main自体が36時間超のときはfail-closedとし、main pushのCIはそのcommit自身のdataを使う。
+- **教訓**: integration branchへ定期生成dataを複製しない構成で鮮度を検証するなら、例外フラグではなくimmutableなproduction snapshotを全jobで共有する。生成dataを変更するPRをsilent overwriteせず停止し、品質gate、対象commit、ブラウザ成果物の母集団を同じ単位に固定する。
+
+### LL-478: Timelineのfilter済みcardはDOMに残るため共有E2Eで先頭nodeを操作しない
+- **事象**: mainの最新生成dataで`main article.card`の最初の1件がカテゴリfilterにより`display:none`となり、共有button自体はhydration済みでも7件の共有E2Eの複数操作がhidden要素を選んで失敗した。直後の可視cardでは同じbuttonが45pxで操作可能だった。
+- **根本原因**: category filterはcardをDOMから削除しない。`locator("main article.card").first()`を「最初に見えている記事」と誤認し、buttonの実表示や状態を区別せずclick対象にした。
+- **対策**: markupの配線件数は全cardで検証したまま、操作・寸法・詳細遷移の対象は`article.card:visible`へ限定した。実main snapshotで7件の共有E2Eをretryなしで再実行した。
+- **教訓**: filterやtabで非表示のfeed itemはDOMに残る。data駆動E2Eの操作対象はDOM先頭でなく利用者から到達可能な可視itemを選び、SSR配線の件数検査とは別に保持する。
+
+### LL-479: 新規cursor APIは初期値を含むJSON wire型まで明示する
+- **事象**: previewの`/updates/index.json`は初期cursorを`"0"`として返したが、利用者側が数値`0`を期待する余地があった。APIは発番後もcursorを文字列にしており、要件の「単調増加」だけではJSONの型が決まらない。
+- **根本原因**: Publisherの内部sequenceはsafe integer、公開manifest・月別range・eventのcursorは`String(sequence)`なのに、READMEは保持・再生の順序だけを説明し、文字列型と辞書順比較の危険を明示していなかった。
+- **対策**: READMEへ全cursor fieldの10進JSON文字列、初期値`"0"`、`count`だけ数値、文字列保存と`BigInt`等による数値順比較を記載した。空の初回状態、発番後のrangeとevent、built previewのwire型をunit/E2Eで固定する。
+- **教訓**: cursor/IDのAPI契約は「単調」だけでなくwire型、初期値、比較方法まで公開し、`"10" < "2"`のような辞書順誤用を防ぐ。未初期化と発番後の両方のfixtureでJSONとしての型を検証する。
+
+### LL-480: 共有E2Eは可視先頭カードでなく共有先の種類を指定する
+- **事象**: developのCIで手動コピーのEN検証だけが失敗した。先頭の可視Timelineカードは元記事URLを共有する外部記事で、実際のコピー内容は正しく外部URLのままだったが、テストはサイト内部記事向けの`?lang=en`を期待していた。新しいmainデータでは先頭が内部記事に変わり、同じテストが偶然通った。
+- **根本原因**: `article.card:visible`は表示状態だけを保証し、`data-share-target`の`detail`/`source`を保証しない。`buildArticleSharePayload()`は内部detailだけに言語queryを付け、外部sourceのURLは変更しない契約である。
+- **対策**: 失敗したCIのimmutable main snapshotで旧テストを再現し、手動コピーのJA→ENテストは可視の`data-detail-destination="internal"`かつ`data-share-target="detail"`を選ぶ。共有URLがcanonical siteのdetail routeでquery/hashを持たないことを先に検証し、ENでは`?lang=en`が付くことを固定する。外部sourceを変更しない既存unit gateは維持する。
+- **教訓**: データ駆動のE2Eで「先頭の可視記事」を内部routeや共有payloadの代用にしない。操作対象は表示状態とdestination kindの両方で選び、URLの言語付与は内部detailと外部sourceで異なる契約として検証する。
+
+### LL-481: 保存済み対話の配役変更は新台本と旧台本のprovenanceを分ける
+- **事象**: 記事末尾のソラ/博士の対話をポコとTECHガイドへ改める際、`data/bodies.json`には`a/b`の6発言だけを持つ旧配役の台本が1,030件あり、1件は英語で聞き手へ直接`Sora`と呼びかけていた。AI製品名のSoraに言及する別記事もあるため、名前の一括置換では記事の事実まで壊れる。
+- **根本原因**: 保存schemaはspeaker keyだけで生成当時の配役versionを持たない。Webの名前・絵だけを置き換えても、旧台本の呼びかけや博士口調が残り、反対に「旧台本は文面を変えない」と表示しながらrender時に呼称を直すと説明と実装が矛盾する。
+- **対策**: 保存JSONと記事本文は不変のまま、Web表示に限りspeaker keyと文頭/文末の明白な旧配役への呼びかけだけを整え、製品名Sora、引用、複合語は保持する。新規生成のWorker/Web personaはポコを疑問役、TECHガイドをサイト独自の回答役へ対称更新する。旧台本と試作イラストの状態は開発文書とdraft PRで管理し、読者向けにはAI対話の用途と根拠だけをJA/ENで簡潔に示す (LL-483)。小さなオリジナルSVG spriteをページ内で1回定義し、両話者で参照してmobileでも人物像を見せ、CSSは全detailで共有する。
+- **教訓**: 生成済みcontentに配役versionが無いとき、絵とlabelの変更を「そのキャラクターが元から発言した」と扱わない。新台本のpromptと旧台本の表示provenanceを分け、台本・記事事実を上書きせず、旧名の修正は文脈が明白なvocativeだけに限定する。非公開画像を直接流用せず選ばれたデザインの特徴から独自に描き、試作状態は開発文書へ保持する。繰り返し表示する絵とCSSのstatic build負荷も計測する。
+
+### LL-482: 選ばれた非公開デザイン参照と元画像の公開許可を分ける
+- **事象**: 記事末尾のポコは、以前の変更が統合済みでも丸い金色の独自絵のままで、利用者が選んだ外見と一致しなかった。別リポジトリの正面・三面・表情の参照画像は`canonical`というファイル名を含む一方、manifestでは候補と明記されており、元PNGを公開リポジトリへ複製する許可も確認できていなかった。
+- **根本原因**: main/developへの統合やファイル名を利用者による造形の採用・画像バイナリの再配布許可と同一視すると、視覚的に違う絵を完成扱いするか、確認前に非公開の画像を公開してしまう。文章設定だけの抽象的な描画は、具体的な顔・耳・体型・ポーチの比率を保証しない。
+- **対策**: 非公開の参照は特定commitとSHA-256で読み取り、正面・三面・表情を局所比較する。Webには葉脈のある2枚の耳、横長クリーム色の顔、青緑のフェルト風体、斜めの肩紐とポーチを持つ独自のSVGだけを追加し、元PNGはリポジトリ、PR、Pagesへ移さない。試作状態は文書とdraft PRで保持し、読者向け画面には制作経緯を出さず、実際のPR Previewを参照画像と並べた利用者の明示的な視覚承認があるまでPRをdraftのままにする。
+- **教訓**: キャラクターデザインの選択は元画像バイナリの公開許可でも、後で描く別のイラストの事前承認でもない。非公開素材はmainにあると推測せずimmutableな参照で個別に確認し、公開側はオリジナルの造形をviewportと小さなアバターで比較したうえで別途承認を待つ。
+- **追補**: 初回SVGは右目のクリーム色の内縁だけを欠き、目のgroupが存在するという構造testだけでは検出できなかった。左右の実描画を拡大して比較し、内縁が2件あることをE2Eへ固定した。対称な造形要素は親groupの存在だけでなく、左右それぞれの構造と描画を検証する。
+
+### LL-483: 対話を読む人へ制作過程や素材管理の内情を説明しない
+- **事象**: 実PR Previewのポコ対話欄に「選ばれたデザインから描き起こした試作絵」「元画像は非掲載」「旧配役の台本」といった制作・保管の説明を表示し、利用者から「そんな説明はいらない。もっと適切な説明にして」と指摘された。
+- **根本原因**: 非公開参照画像の公開権限と旧台本の保全を明記する開発・レビュー上の必要性を、記事の読みどころを知りたい読者への説明と混同した。AI対話の根拠を示す既存文の下へ制作経緯を重ねたため、情報が重複し読む目的から逸れた。
+- **対策**: 制作・権利・旧台本の扱いはREADME、LL、draft PRへ保持し、読者向けにはポコと当サイトのTECHガイドが記事の要約と収集情報をもとに読みどころを語るAI生成の対話であることだけをJA/ENの一段で示す。不要になった段落とCSSを削除し、E2Eで両言語の説明と制作過程文言の不在を固定する。
+- **教訓**: 透明性は内部の制作履歴を読者へ全部見せることではない。画面の説明は「これは何か、何を根拠に読めるか」へ絞り、素材の権利確認、試作状態、保存済み台本の移行契約は開発文書・PR reviewで管理する。
+
+### LL-484: 対話の説明を画像横のGrid列に固定すると語中で折り返す
+- **事象**: 実PR Previewの対話ヘッダーで、利用者が「文字の配置に問題」と指摘した。約948px幅の画像ではAI説明がキャラクター2人の右側だけに押し込まれ、日本語の「読みどころ」が「読みど / ころ」に分断され、AIバッジも本文へ窮屈に接していた。
+- **根本原因**: `.ed-chat-duo`をGridの2行にまたがらせ、`.ed-chat-notes`を常に右列へ固定したため、説明文が長いほど画像幅を差し引いた細い列で折り返された。日本語はその列内で語中改行でき、段落内のinlineバッジも後続行の開始位置を揃えなかった。
+- **対策**: 対話パネルをinline-size containerとして扱い、内容幅が930px以下では画像と見出しの次の行へ説明を2列分の全幅で置く。十分な幅のdesktopでは既存の右列配置を保つ。AIバッジと文を小さな2列Gridで揃える。なおmobileで「収集し / た情報」が残ったため、「記事の要約」「収集した情報」「読みどころを」「AI生成」だけをinlineの非分割spanにし、接続詞「をもとに」を「から」へ短縮して390pxでも2行に収めた。320pxで「読みどころ / を語る」と助詞だけが次行へ孤立する経路もあり、助詞を同じ短い単位に含めた。320〜1280pxのJA/ENで説明幅、バッジとの間隔、語句の行位置、横overflowをDOM寸法で検証する。
+- **教訓**: 語中分断を`nowrap`で全段落へ強制したり短縮文だけで隠したりする前に、その文へ配分されたGrid trackの幅と隣接画像の占有を実測する。情報の階層は保ったまま、利用可能なコンポーネント幅に応じて説明の所有行を変え、バッジと本文は折返し後の開始位置まで揃える。広さの是正後も残る語中改行は、その意味単位だけを保護し、段落全体を切り詰めない。
+### LL-485: 記事の字間とメタデータはsource CSSでなく実表示・実母集団を測る
+- **事象**: 日本語本文の字間が行ごとに伸び、記事末尾には英語slugのトピックと、平均・重要度・寿命・収集時刻が同じ重みで並んだ。Meta Oneの保存本文には不自然な空白が無い一方、実ブラウザの段落は320/390/948/1280pxで`text-align:justify`かつ`text-justify:inter-character`だった。
+- **根本原因**: 両端揃えが日本語の文字間を引き伸ばした。さらに本文の`set:html`から生成された`a.kw`にはAstroのscoped属性が無く、source上の左右padding付き装飾はcomputed padding 0・下線なしで**実際には適用されていなかった**。出典の直近30件平均は比較対象0件でも閲覧記事自身の重要度を平均として返し、archive-onlyで事実と違う値を表示できた。保存済み重要度が旧データで過大なreleaseは表示側で補正されるが、カテゴリ内の同等以上件数は保存値のまま比較し、同じ行のラベルと分母が別の尺度になっていた。
+- **対策**: 本文を言語別の読書幅、左揃え、自然な改行へ整え、見出しと段落の左端を揃えた。生成linkには親でscopeを保つ`:global(a.kw)`からpadding無しの下線を適用する。タグのraw key、href、検索/SEO metadataは維持して表示名だけを整え、5件を超える分はnative disclosureへ置く。出典・公開・重要度は上部に残し、収集・比較値は`dt/dd`で母集団とJSTを明記する開示面へ移した。source平均は`{average:number|null,listedCount:number}`とし、0件は「記録なし」、実件数は最大30件と区別する。カテゴリ内比較は対象記事と比較記事の双方に`effectiveImportance()`を使う。AI生成の説明は本文付近に常時表示する。
+- **教訓**: Astroの生成HTMLではsource CSSにselectorが存在するだけで適用を断定しない。computed styleと実描画、保存された文章を別々に確認する。記事本文のjustify、語リンクの余白、初段落の字下げは混在言語で字間と視線の起点を乱しやすい。統計はfallbackで値を捏造せず、比較母集団0件と観測済み件数を型・表示・回帰テストで分離する。
+
+### LL-486: 記事幅は実 CSS viewport と各レールの矩形から判断し、共通 header の子要素への誤適用を防ぐ
+- **事象**: 記事詳細の2000px画像では左右と本文周辺の余白が大きく見えた。実PreviewのCSS viewportで900→901pxになると、単列の本文左右余白130/130pxから左レール228px＋右非表示による293/49pxへ急変し、1180pxでも396/144pxの非対称が残った。1280px時は左レール236px・主列996px・右レール非表示の一方で本文最大640px、対話994pxまで広がった。1360pxで右レールが突然復帰し、スクロール時には対話見出しと左右レールの先頭がサイトヘッダーへ重なった。
+- **根本原因**: 共通layoutが901–1359pxで右レールを一律非表示にしつつ、901pxで左レールだけを復帰させ、記事に特有の読書幅と右側の目次・出典情報を考慮していなかった。`<header class="ed-chat-head">`は全`header`へ適用するsticky/暗色背景/blur/z-indexを継承し、aside/TOCのtop 72–80pxも実ヘッダー下端109–117pxより上だった。画像の物理ピクセル幅はbrowser zoomやDPRを含むため、CSS viewportと同一視できない。
+- **対策**: 記事だけの`.layout.entry-layout`を設け、901–1180pxでは片側だけのTimelineカテゴリレールを隠し、主列を最大960pxで中央へ寄せた。Header Categoriesと記事Heroのカテゴリリンクは残す。1181–1359pxは左/本文/右の3列、広幅では右レールを最大360pxへ伸ばし、本文640px/68chと共通1680pxキャンバスは保つ。対話ヘッダーの誤継承をscopeして打ち消し、stickyレール・TOCとanchorの位置をヘッダー下へ移した。狭幅のbreadcrumb/topicと新たに表示するTOCの操作面も45pxへ広げた。固定ボタンの重なりに関する利用者判断はLL-491へ分離する。
+- **教訓**: screenshotのラスタ幅からCSS viewportを推測せず、`innerWidth`、`documentElement.clientWidth`、`visualViewport.width/scale`、DPR、`outerWidth`を分けて測る。片側railだけを残すと、横overflowが0でも本文の左右余白が250px以上偏る。読書本文のmax-widthを外して無理に広げず、狭い画面は主列を中央に戻し、両railが入る幅では余剰幅を記事特有の補助レールへ配分する。globalなelement selectorはcomponent内の同じHTML tagにも作用するため、DOMRectに加えてcomputed position/background/layerを確認する。
+- **追補**: Pokoの既存E2Eは「viewportが1280pxなら対話の説明は絵の右」という近似を固定していたが、右レールを表示した後の対話は758pxで、930px以下のcontainer queryにより説明が全幅の次行に置かれる正当な状態になった。テストはviewport幅ではなく対話のcontent-box幅を測り、948pxの境界fixtureは十分広い親を持つviewportで試す。component queryの検証にpage幅のproxyを使わない。
+
+### LL-487: 固定の「ページ上部へ」は読書中の実文字に重なる場合がある
+- **事象**: 記事の固定FABはmobile tabbarとの最終距離を8px以上にしても、スクロール時に実テキストのRangeへ重なった。元のPreviewと幅変更後の双方で390pxの本文が最大391 CSS px²、948pxの関連記事が最大454px²、1181/1280pxの右レールが最大1064px²、1440/1680pxの右レールが最大834px²遮蔽された。1784px以上の余白に出る幅だけは重なりが無かった。
+- **根本原因**: `position:fixed`でviewport右端へ置いた44pxボタンの下を本文やstickyレールが流れるため、画面全体の横overflow0、ボタン自身の44px、tabbarとの安全距離、中心hit-testのいずれも文字の可視性を保証しなかった。mobileで入口の8px transformだけを止めても、本文との遮蔽は残った。1180px以下だけをin-flowへ移しても、1181–1680pxの右レールで同じ問題が続く。
+- **対策**: 初版は文字・画像・操作面を実矩形で照合して交差中だけ隠したが、読書中にほぼ見えないことを利用者が拒否した。最終判断はLL-491の常時表示を優先し、↑の丸い52pxボタンを画面右下の一定座標に固定する。本文やレールとの重なりは了承済みとし、mobile tabbarとfooterには固定の間隔を取り、メニュー等のモーダル中だけ操作を外す。JavaScriptが無い時は同じanchorが記事末尾に残り、2個目のボタンは出さない。
+- **教訓**: fixedな補助操作はスクロール中に文字へ重なり得る。非交差を絶対条件にすると狭い画面やsticky railのある画面では操作自体が消えるため、利用者が重なりを許容して常時表示を優先した場合は、実際の操作可用性、tabbar/footerとの間隔、focusとpointerを受入条件へ切り替える。
+
+### LL-488: 「トップに戻る」はトップページへの遷移に見える
+- **事象**: 記事内の戻るlinkに「トップに戻る」と表示したところ、読者は現在の記事の先頭でなくサイトのトップページへ遷移すると解釈した。
+- **根本原因**: 「トップ」がページ内の上端とサイトのHomeの両方を指し得るのに、操作label・tooltip・accessible nameで到達先を区別しなかった。
+- **対策**: 記事だけの↑操作をJA「ページ上部へ」、EN「Scroll to top」に統一し、focus/hoverで見えるtooltipとaccessible nameに同じ文を使う。URLは記事のまま上へ移動し、Homeへ遷移しないことをkeyboard/クリックの回帰で確認する。
+- **教訓**: ページ内scrollとサイト内navigationを同じ「トップ」という語にしない。iconだけで意味を補わせず、可視の補足と操作名が効果を正確に表すようにする。
+
+### LL-489: FABのhover tooltipはボタンと別の表示矩形を持つ
+- **事象**: ↑ボタン自体は実文字と非交差なのに、当初左へ固定表示したhover labelは948/1181/1280/1440pxの読書中に本文文字へ重なった。
+- **根本原因**: ボタンの52px円だけを安全判定に使い、focus/hover時に別の幅で広がるlabelを同じ遮蔽判定に含めていなかった。
+- **対策**: 初版はtooltipまで本文と非交差になる場合だけボタンを表示したが、常時表示が優先になったため、説明は上方の一定位置でJA/ENを表示し、viewport内とtabbar/footerとの間隔を確保する。tooltipは`pointer-events:none`で円の外側のclickを奪わず、hover/focusで文が読めることを検証する。本文・レール文字との交差は利用者が明示許容した。
+- **教訓**: fixed controlの可視状態には本体と追加説明の別々の矩形がある。本文との非交差を満たすために操作を消すかどうかは利用者の優先順位で決め、常時表示の場合もtooltipの言語、可視性、viewport内配置、pointer非干渉を別々に検証する。
+
+### LL-490: 固定FABの座標と可視性は別の受入条件である
+- **事象**: 記事の↑ボタンは内容との交差を避ける候補探索で、390pxでは下端offsetが69/133/261px、1280pxでは記事側余白と画面端をスクロール位置ごとに行き来した。利用者には読書中にボタンが飛び回って見えた。
+- **根本原因**: ボタンとtooltipの非交差だけを成功条件とし、同一viewportでの固定座標という操作の予測可能性を検証していなかった。1181–1440pxの右レールでは画面右下が9/9標本で塞がるため、到達性を求めて移動するほど位置の揺れが増えた。
+- **対策**: 画面右下に1つのanchorを定め、モバイルtabbarの高さとsafe area、desktop footerの高さを使いscrollと無関係なoffsetにする。衝突時に隠す案は最終的に利用者から「最下部に行かないと表示されない」と再指摘されたため撤回した（LL-491）。位置の固定と本文上でも操作できることを両方E2Eで守る。
+- **教訓**: 可用性を最大化する位置探索は空間的な一貫性と対立し、同座標のまま隠す方法も操作の可用性と対立する。固定座標と常時可視は別々に合否判定し、どちらか片方が正しいだけで完成とみなさない。
+
+### LL-491: 読書中の固定操作は本人が重なりを許容したら「常時可視」を優先する
+- **事象**: 画面右下に固定した↑を、本文や右railの実文字とtooltipが交差する間だけ隠すPreviewでは、390pxは最下部付近、1181–1440pxはsticky railのためほぼ全scroll位置で見えなかった。利用者は「最下部に行かないと表示されないので、オーバーレイされてもいいので常時表示して欲しいです」と優先順位を変更した。
+- **根本原因**: 見た目の非交差を補助操作の利用可能性より優先し、「右下の座標を固定」「読書中いつでも押せる」を独立の受入条件にしていなかった。安全な位置が無い中間幅では衝突検知が機能するほどFABの意味を失った。
+- **対策**: 本文・対話・rail・画像を読書中に走査して隠す処理を撤去し、52pxの丸いlinkを全scroll位置で同じ画面右下へ表示する。位置はmobile tabbarの実高とdesktop footerの実高に固定の余白を足して決め、重なりを許容した本文文字のために読書幅は削らない。modal中のkeyboard/inertだけは保ち、hover/focusのJA/EN tooltipは円外のpointerを取らない。全幅・top/mid/endで座標、可視性、hit、focus、tabbar/footer間隔、同記事上部への遷移、no-JSをE2Eと実ブラウザで固定する。
+- **残余トレードオフ**: local built previewの1280x900では、実right-rail記事linkの矩形`x=1055..1253`とFAB`x=1204..1256`が右端49pxで重なる。この49px内のhitはFABだが、残り149pxはJA/ENとも可視・クリック可能で、FABのhover/focus tooltipを表示しても操作できた。同じ実linkへTabで到達しEnterでHTTP 200の記事へ遷移することも確認した。これは「円内だけpointerを取る」優先の下で残る限定的な遮りであり、rail link全面をクリック可能と誤って報告しない。検証用fixtureはこの198px link/49px重なり/149px残余を再現し、44px以上の操作帯とtooltip表示中のpointer・Tab/Enterを守る。
+- **教訓**: collision-freeとalways-availableは狭いviewportでは両立しないことがある。本人が実際の遮蔽を知った上で可用性を選んだ場合、旧い非交差assertionを残して機能を隠さず、意図したオーバーレイと他の主要操作面の安全を分けて測る。
+
+### LL-492: job fingerprint のechoは会話を生成したconsumer codeの証明ではない
+- **事象**: 旧 `worker-body` は新版jobのpublisher fingerprintをそのまま `b:` cacheへ転記して旧ソラ/博士の6発言を生成できた。新版Publisherは同じfingerprintのcacheを通常本文mergeで採用し、既存本文向けのchat-only lookupはfingerprint自体を検査せず会話を追加できた。
+- **根本原因**: job由来の互換性markerと、実際に生成したconsumerのprompt/persona revisionを同一視した。chat-only laneはKVを読むだけで不適合cacheの再生成経路も持たなかった。
+- **対策**: 新版consumerはコンパイル済みの会話revisionをcurrent jobで生成した6発言にのみ付け、旧/無印jobでは本文だけを生成する。Publisherはjob/cache fingerprintとcompiled revisionの双方を通常・chat-only・最終mergeで確認し、本文と既存sidecarのrevisionなし対話は保持する。不適合または未生成の会話は共有Queue枠から最大5件/runで再送し、修復不能はtelemetryへ明示する。直接KVへ書く旧backfillは停止する。旧consumerの新版fingerprint echoを2経路で失敗させるRED commitから実装し、consumer sourceをfingerprint対象へ加えた。
+- **教訓**: producerが送ったversionをconsumerがechoしてもconsumerのコード出自は証明されない。生成者由来のmarkerを別に記録・検証し、read pathだけでなく最終merge境界を守る。cacheを拒否するだけではlivenessを保証できないので、boundedな再送と修復不能のrelease STOPをセットにし、受入済みの旧sidecarを一括失効させない。
+
+### LL-493: bridge-last rolloutの事前gateへ新版Publisherの実処理結果を要求しない
+- **事象**: 旧consumer drainの代替安全条件へ、新版cacheから本番sidecarへ6発言がgraftされたread-backをmain merge前の必須条件として置きかけた。
+- **根本原因**: R-027のbridge-last順序では、旧bridgeが新版Publisherのfingerprintを拒否する。main mergeと別承認のbridge置換が終わる前は新版jobを処理できず、post-releaseの実結果をpre-mergeに要求すると達成不能な循環gateになる。1 runのbounded repair telemetryも全件進捗の証拠ではない。
+- **対策**: PRE-MERGEはimmutable diff、旧binaryの新job echoを含むRED→GREEN、全chat ingressのコード上の拒否、既存sidecar6発言の保持、別途承認されたconsumerのpublic revision read-backに限定する。POST-MERGE/bridge置換後は実cacheと同じIDのsidecar反映・修復進捗・既存本文の不変を確認し、不能ならproduction完了宣言と追加反映を停止して承認済みrollbackを検討する。provider read-backが無ければ前段で旧drain代替を承認しない。
+- **教訓**: staged rolloutのgateは各段階で実際に観測可能な事実だけを前提にする。code-safetyとproduction livenessを分け、後段でしか起きない副作用を前段の通過条件へ持ち込まない。bounded telemetryを全件の実証に読み替えない。

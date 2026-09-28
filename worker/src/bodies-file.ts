@@ -18,6 +18,11 @@ import {
 } from "../../harness/pipeline/source-grounding.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
 import { validateArticleChat, type ArticleChatTurn } from "./article-chat.ts";
+import {
+  bodyCacheChatForPublisher,
+  type ArticleChatCacheProvenance,
+} from "./body-cache.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "./publisher-contract.ts";
 
 export interface BodyRecord {
   bodyJa: string;
@@ -253,11 +258,10 @@ export function mergeBodiesWithGuards(
   };
 }
 
-export interface NewBody {
+export interface NewBody extends ArticleChatCacheProvenance {
   id: string;
   bodyJa: string;
   bodyEn: string;
-  chat?: ArticleChatTurn[];
   model?: string;
   cachedAt?: string;
 }
@@ -289,7 +293,7 @@ export function mergeBodies(
 
   for (const nb of newBodies) {
     if (!isRealBody(nb)) continue;
-    const chat = validateArticleChat(nb.chat) ?? undefined;
+    const chat = bodyCacheChatForPublisher(nb, DEPLOYED_PUBLISHER_FINGERPRINT) ?? undefined;
     const existingRecord = bodies[nb.id];
     if (existingRecord && isRealBody(existingRecord)) {
       // Don't overwrite a real body — but DO graft a chat it doesn't have yet.

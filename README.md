@@ -2,7 +2,7 @@
 
 AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline / VSCode / OpenCode / Local LLM / Agent FW / MCP / Tech News / Research の **13 カテゴリ**) を **一括で追跡** できるポータルサイト。Harness Engineering のプラクティスに沿って、AI エージェントが自律的に情報収集・正規化・公開を行う。
 
-**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、全体 RSS (`/rss.xml`)・カテゴリ別 RSS (`/rss/<category>.xml`)・JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
+**現状**: GitHub Actions の Node publisher が registry の有効 source を **毎時自動収集** (6 バッチローテーション) し、Cloudflare の OIDC bridge 経由で Queue / KV を利用します。Astro 静的サイト生成、全体 RSS (`/rss.xml`)・主要更新 RSS (`/rss/major.xml`)・月別カーソルJSON (`/updates/index.json`)・カテゴリ別 RSS (`/rss/<category>.xml`)・JSON Feed 配信、Cloudflare Queue 分離の GitHub Copilot Enterprise (Claude Sonnet 4.6) 要約パイプライン、Pagefind 全文検索、品質監査 Skill、AI Scrum 開発運用 Skill、UI 表示ガード Skill、Modern Web Guidance Skill、og:image 自動取得 (KV キャッシュ) まで動作可能です。現在の source 件数・coverage は `/status` を単一情報源として確認してください。
 
 ## 🔭 運用ステータス早見表 (Single Source of Truth)
 
@@ -77,6 +77,15 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 
 > **デプロイは GitHub Actions から行いません。** Publisher workflow は data の収集、検証、commit と OIDC bridge 経由の Queue / KV effects だけを担当し、Pages deploy は Cloudflare Pages Git Integration が行います ([.github/copilot-instructions.md](.github/copilot-instructions.md) R-001 参照)。
 > `.github/workflows/ci.yml` は **テスト目的のみ** で、Publisher workflow も Pages / Worker の deploy は行いません。
+
+### 主要更新の新着履歴、RSS、記事シェア
+
+- **履歴の正本はJSON**: `/updates/index.json`に`baselineSnapshotAt`、`latestCursor`、各月の`firstCursor`/`lastCursor`/`href`を公開します。`latestCursor`、月別の`firstCursor`/`lastCursor`、各eventの`cursor`は**10進数のJSON文字列**です（初期値は`"0"`、eventは`"1"`から）。`count`はJSON数値のままです。利用側は最終処理済みcursorを文字列で保持し、大小比較は辞書順でなく`BigInt(cursor)`などの数値順で行います。新しい月の`/updates/YYYY-MM.json`を取得して、最終処理済みcursorより大きいeventをsequence順に処理します。月別履歴は期限で削除しません。静的配信なので`?since=`などのqueryは月別取得の代用になりません。前回cursorが`"0"`なら全月を順に再生できます。
+- Publisherの最初の実行では、**実行前のmain snapshot**に既にある適格記事を基準点へ登録し、その実行の新着からsequence 1で記録します。2回目以降、実効重要度 High (3/3)、実要約あり、詳細へ到達可能、hot/warm、元記事の公開日がsnapshot時刻以前、という条件を満たす記事だけをappendします。同一元記事・同一モデル発表、通常のpatch/prerelease、要約待ち、off-topic記事は出しません。`observedAt`は初めて適格になったPublisher snapshot時刻、`sourcePublishedAt`は元記事の公開日です。検索向け`publicationHold/noindex`は記事の閲覧可否ではないため、新着配信の禁止条件にはしません。
+- `/rss/major.xml`は**上記履歴の最新100件だけ**をRSSへ投影します。GUIDはstableなevent ID、`pubDate`は`observedAt`、`link`は当サイトの詳細です。RSSだけでは長期間未取得時に取りこぼすため、完全な再生にはJSONの月別cursorを使います。既存の全体RSS`/rss.xml`は変更せず、OPML`/feeds.opml`に両方を掲載します。
+- 記事詳細と主要カードのシェアは端末の共有シートを使い、非対応時はタイトルとURLをコピーします。クリップボードも使えない場合は手動コピー用ダイアログを開きます。元記事へ直接遷移するカードは元記事を共有し、当サイトの詳細は表示言語 (`?lang=en`) をURLへ保持します。
+- 記事詳細に有効な AI 対話がある場合は、選ばれた非公開の外見参照からこのサイト用に独自に描き起こしたポコ（疑問を持つ聞き手）と、TECH Dashboard 独自の編集キャラクター「TECHガイド」（回答役）のイラストで表示します。参照画像そのものはリポジトリや Web に含めず、ポコの SVG は承認済み公式素材ではなく試作です。保存済みの旧配役の対話は上書きせず、明らかな旧名への呼びかけだけ表示時に整えます。要約・本文・対話の事実は変更せず、対話や本文が無い記事に偽のキャストや生成予告は表示しません。
+- **外部サービスへの自動投稿は未接続です。** RSSをそのまま転送せず、汎用eventのconsumer側で最終cursor、送信済みID、レート制限、失敗時の再試行・停止を管理します。通常記事の詳細URLは保持期間後に消える可能性があるため、外部への自動送信を有効化する前に恒久リンクを整備してください。
 >
 > 第2段階の増分配信は、専用R2へcontent-addressedなdetail HTMLを生成し、専用D1 pointerでshadow generationを切り替える**無効既定の検証経路**だけを追加しています。productionは引き続きPagesです。Workers Static Assetsの差分uploadをsource-level増分生成とは扱わず、全route family、search、traffic、CPU、rollbackのcutover gateが揃うまでPages buildを止めません。
 
@@ -174,6 +183,8 @@ protected branch への直接 commit / push は通常禁止です。当該セッ
 in-place session では branch と index が全 turn で共有されます。Git mutation を行う前に session automation と先行 turn を停止し、current branch、status、push 先 ref を直前に再確認してください。
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) は **検証目的のみ**で、デプロイは行いません。main/develop pushと両branch向けPRでbranch-flow gateを実行し、feature→mainを拒否します。push / PR ごとに dependency audit (soft gate) + `typecheck + npm test + npm run build:web + npm run test:e2e` を実行し、Cloudflare Pages の build 失敗を事前に検知します。
+
+develop は毎時の生成dataを受け取らないため、develop pushとPRのCIは `scripts/ci-current-data.mjs` でremote mainの**同一immutable SHA**から `index`、`bodies`、全archive月とindex、`stats`、公開承認manifestをpinします。unit・Web build・E2Eは同じartifactを検証し、PR自身の`data/updates/_index.json`は保持します。mainのindexが36時間を超えて古い場合やPRが生成dataを意図的に変更した場合は上書きせず失敗します。main pushのCIはそのcommit自身のdataを検証します。`ALLOW_STALE_DATA=1`はCIで使いません。
 
 通常の GitHub review と任意の code review / security review は、変更リスクに応じて引き続き利用できます。ただし session 固有の承認コメントや repository variable を使う専用 clearance は CI / merge の必須条件にしません。
 
@@ -450,7 +461,15 @@ fingerprint を変える変更はまずdevelopへ統合し、production Worker�
 4. 明示承認のうえ `tech-dashboard-harness` を Free bridgeへdeployする。`wrangler deployments list` が 100% と報告した直後でも、release verifierからの `/health` が最大 60 秒ほど旧fingerprintを返すことがある。immediateな1回の応答だけで判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定120s timeout / 5s interval / 3回連続一致) で観測経路の安定収束を確認してから次へ進む。これは全edge PoPの収束証明ではない。
 5. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages productionを順に確認する。
 
+**記事対話の互換性ガード:** 新規に採用する対話はjob由来の `publisherContractFingerprint` **と** consumerコード由来の `articleChatRevision` がreleaseとexact一致した `b:` cacheに限ります。新版body consumerは旧/無印jobの本文を処理しても新版Poko対話を作りません。通常本文とchat-only lookupで旧cacheの対話を拒否しても、既存 `data/bodies.json` のrevisionなしJA/EN6発言・実本文は維持します。本文があるが対話が無い場合は出典が十分なら本文Queueの**同じ共有上限**内で最大5件/runを修復用に再送します (`chatRepairEnqueued` / `chatRepairPendingIds`)。`bodyEnqueued`にはこの修復用body jobも含まれ、`bodyBacklog`は本文を欠く記事だけを示します。旧 `scripts/backfill-article-chats.mts --apply` の直接KV書込みは出自を証明できず拒否します。`worker-body/src/**` と `worker-summarizer/src/**` もfingerprint更新対象です。
+
+**PRE-MERGE: 旧consumer drainの代替は今回の会話prompt/persona差分だけの未承認案です。** 既定は上記手順2を維持します。代替を別途判断するためのcode-safety証拠は、immutable mainとrelease exact headでguard以外のconsumer差分が会話prompt/personaだけであること、旧binary+新fingerprintのRED→GREENで通常cache、chat-only graft、最終merge、旧/無印job、KV上書きから旧会話を新規publishできないこと、既存sidecarのJA/EN6発言と本文が同じIDで維持されることです。別途承認されたcandidate consumer deployの後にbody `/health` のcode由来 `articleChatRevision` とrelease markerを照合します。この段階の旧bridgeは新版Publisherをブロックするので、**新版cache→本番sidecar graftはPRE-MERGE条件にしません**。証拠やprovider read-backを得られなければ従来の旧drain gateでSTOPします。安全PRはmain merge・いずれのWorker deploy・Cloudflare権限変更の承認を兼ねません。
+
+**POST-MERGE / bridge（それぞれ別承認後）:** 新Publisherの処理が開始できてから、immutable main snapshotの全chat欠落IDと既存の6発言IDを記録し、不適合cacheを拒否したIDの新版revision付きcache→後続Publisherの**同一ID** sidecar graftを実read-backします。本文と既存JA/EN6発言の不変、修復の実送信・反映進捗も確認します。`chatRepairBlocked>0`、共有枠がなく修復が進まない、既存6発言の消失、同一IDのread-back不能なら**production完了を宣言せず**、追加反映を停止して承認済みrollback手順を検討します。新Publisher/bridgeが動く前にこの実結果を要求したり、無承認でdata/mainを戻したりしません。
+
 #### 監視 / ヘルスチェック
+
+`chatRepairCandidates` はそのrunのbounded lookup窓で修復可能な会話件数であり、`chatRepairEnqueued` は実際に送信できた内数です。`chatRepairBlocked=0` や送信>0も全欠落IDの修復・sidecar到達の証拠ではありません。候補があっても共有enqueue枠が0ならPOST-MERGEの修復は未了と判断し、単一runの数字を全件read-backの代用にしません。
 
 Publisher は実行ごとに `data/index.json` の `health` フィールドにメタデータ (`lastRunAt` / `batchIndex` / `sourcesOk` / `sourcesFailed[]` / `copilotOk` / `fallbackTotal` / `queueMode` / `excerptFetchCandidates` / `excerptFetchAttempted` / `excerptFetched` / `excerptFetchUnavailable` / `excerptFetchDeferred` / `excerptFetchPrioritized` / `excerptFetchUnlockable` / `excerptBodyBatchPinned` / `excerptBodyBatchEnqueued` / `enqueueCandidates` / `summaryQueueBacklog` / `summaryQueueEnqueued` / `summaryQueueDrainEstimateHours` / `bodyQueueMode` / `bodyRetentionEligible` / `bodyBacklog` / `bodyEnqueueCandidates` / `bodyEnqueueCap` / `bodyEnqueued` / `bodyLookupCount` / `bodyMerged` / `bodyQueueDrainEstimateHours` / `bodyMergePendingIds` / `enrichmentEnqueueCap` / `enrichmentEnqueued` / `enrichmentRemaining` / `summaryFallbacks` / `bodyFallbacks` / `ogCached` 等) を埋め込みます。candidate、実 enqueue、lookup、merge は別指標で、field が無い場合は 0 件ではなく未観測です。Web の Queue 表示はこの artifact health を正本とし、`enabled` かつ backlog 0 の場合だけ処理待ちなしと表示します。run 停止中は保存済み ETA を確定値として表示しません。Node Publisher は `heartbeat.v1` を bridge の KV write へ送らず、Free bridge の write allowlist は `og.v1` のみに保ちます。サイトの [https://techdb.studio344.net/status/](https://techdb.studio344.net/status/) 上部の **Worker Health** セクションで一目で確認できます。
 

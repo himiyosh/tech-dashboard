@@ -98,6 +98,7 @@ const {
   entriesForTagPage,
   adjacentInCategory,
   categoryImportanceStanding,
+  sourceImportanceStats,
   isLowSignalRelease,
   isMutableReleaseAliasEntry,
   isOffTopicForHero,
@@ -1007,6 +1008,23 @@ describe("categoryImportanceStanding", () => {
     expect(categoryImportanceStanding(e1)).toEqual({ total: 2, sameOrHigher: 1 });
     expect(categoryImportanceStanding(e3)).toEqual({ total: 2, sameOrHigher: 2 });
     expect(categoryImportanceStanding(e2)).toEqual({ total: 1, sameOrHigher: 1 });
+  });
+
+  it("uses the displayed importance for routine releases and their peers", () => {
+    const routine = { ...e3, title: "Claude Haiku v3.5.2", importance: 3 as const };
+    expect(categoryImportanceStanding(routine)).toEqual({ total: 2, sameOrHigher: 2 });
+  });
+});
+
+describe("sourceImportanceStats", () => {
+  it("reports the actual listed sample rather than assuming 30 entries", () => {
+    expect(sourceImportanceStats(e1)).toEqual({ average: 2.5, listedCount: 2 });
+    expect(sourceImportanceStats(e1, 1)).toEqual({ average: 3, listedCount: 1 });
+  });
+
+  it("does not mislabel an archive-only article's own importance as an average", () => {
+    expect(sourceImportanceStats({ ...e1, source: "not-in-live-index" }))
+      .toEqual({ average: null, listedCount: 0 });
   });
 });
 

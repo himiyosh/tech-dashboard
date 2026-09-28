@@ -54,6 +54,7 @@ describe("publisher contract runtime guard", () => {
     const contract = parsePublisherContractContent(readFileSync(CONTRACT_PATH, "utf8"));
     expect(contract.criticalPaths).toContain("scripts/run-publisher.ts");
     expect(contract.criticalPaths).toContain("scripts/publisher-impact.ts");
+    expect(contract.criticalPaths).toContain("scripts/publisher-updates.ts");
     expect(contract.criticalPaths).toContain("web/src");
   });
 
@@ -289,6 +290,8 @@ describe("publisher contract updater", () => {
       "web/scripts/incremental-render-core.mjs",
       "web/scripts/render-incremental-shadow.mjs",
       "web/src",
+      "worker-body/src",
+      "worker-summarizer/src",
       "worker/migrations/incremental-serving",
       "worker/src",
       "worker/wrangler.incremental.toml",

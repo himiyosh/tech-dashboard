@@ -4,22 +4,15 @@
  * Backfills the 記事ディスカッション (article chat) for entries that already
  * carry a real body in data/bodies.json but predate the chat feature.
  *
- * Route: this script NEVER writes data files. It generates a chat per entry
- * (production prompt + validation from worker/src/article-chat.ts, gpt-5.6
- * chain via /responses per R-007) and PUTs a body+chat BodyCacheEntry into
- * the same per-URL `b:` KV keys worker-body uses. The hourly publisher's
- * chat-missing lookup lane (worker/src/index.ts) then reads them back and
- * mergeBodies grafts ONLY the chat onto the existing bodies.json record — so
- * the published prose never churns and no data-file PR can conflict with the
- * hourly data commits (R-001c).
- *
- * Idempotent: an entry whose KV record already holds a valid chat is skipped,
- * so re-runs continue where the last one stopped.
+ * Direct KV writes are disabled: this local process cannot attest to the
+ * deployed body consumer's compiled chat revision. Existing sidecar chats
+ * remain untouched; the Publisher uses bounded body Queue repair for missing
+ * or incompatible chats instead.
  *
  * Usage:
  *   npx tsx scripts/backfill-article-chats.mts                # dry-run report
  *   npx tsx scripts/backfill-article-chats.mts --limit 25     # dry-run, first 25
- *   npx tsx scripts/backfill-article-chats.mts --apply --limit 25
+ *   --apply is intentionally rejected; do not bypass the Queue provenance gate.
  *
  * R-028: do not run concurrently with other automation in this checkout.
  */
@@ -61,6 +54,10 @@ for (let i = 0; i < args.length; i++) {
     console.error("Usage: npx tsx scripts/backfill-article-chats.mts [--apply] [--limit N]");
     process.exit(1);
   }
+}
+if (apply) {
+  console.error("ERR: direct KV chat writes cannot prove the deployed consumer revision; use bounded Publisher Queue repair");
+  process.exit(1);
 }
 
 // ------------------------------------------------------------------ copilot --

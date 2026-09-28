@@ -4,7 +4,43 @@ import {
   hasSufficientBodySourceGrounding,
   type SourceGroundingInput,
 } from "../../harness/pipeline/source-grounding.ts";
-import type { ArticleChatTurn } from "./article-chat.ts";
+import {
+  ARTICLE_CHAT_PROMPT_REVISION,
+  validateArticleChat,
+  type ArticleChatTurn,
+} from "./article-chat.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "./publisher-contract.ts";
+import type { BodyJob } from "./body-generate.ts";
+
+export const DEPLOYED_ARTICLE_CHAT_REVISION =
+  `${ARTICLE_CHAT_PROMPT_REVISION}@${DEPLOYED_PUBLISHER_FINGERPRINT}`;
+
+export interface ArticleChatCacheProvenance {
+  /** Six bilingual bubbles are only trusted with the compiled code revision. */
+  chat?: ArticleChatTurn[];
+  /** Set by the compiled body consumer, never taken from a Queue job. */
+  articleChatRevision?: string;
+  publisherContractFingerprint?: string;
+}
+
+export function isCurrentArticleChatJob(
+  job: Pick<BodyJob, "publisherContractFingerprint">,
+): boolean {
+  return job.publisherContractFingerprint === DEPLOYED_PUBLISHER_FINGERPRINT;
+}
+
+/** A job's echoed fingerprint alone cannot prove which consumer generated its chat. */
+export function bodyCacheChatForPublisher(
+  entry: ArticleChatCacheProvenance | null | undefined,
+  expectedFingerprint: string,
+): ArticleChatTurn[] | null {
+  if (
+    expectedFingerprint !== DEPLOYED_PUBLISHER_FINGERPRINT ||
+    entry?.publisherContractFingerprint !== expectedFingerprint ||
+    entry.articleChatRevision !== DEPLOYED_ARTICLE_CHAT_REVISION
+  ) return null;
+  return validateArticleChat(entry.chat);
+}
 
 /**
  * Per-URL body cache (KV) helpers — body-file architecture, Phase B (LL-115).
@@ -21,18 +57,11 @@ import type { ArticleChatTurn } from "./article-chat.ts";
  * Key format: `b:{hex-sha256(url)}` — stable across Workers (subtle.digest) and
  * Node (crypto.subtle), 66 chars, well under KV's 512-byte key limit.
  */
-export interface BodyCacheEntry {
+export interface BodyCacheEntry extends ArticleChatCacheProvenance {
   bodyJa: string;
   bodyEn: string;
-  /**
-   * Optional article chat (worker/src/article-chat.ts): six alternating
-   * bilingual bubbles. Best-effort — absent when generation failed or the
-   * entry predates the feature; the publisher grafts it onto bodies.json.
-   */
-  chat?: ArticleChatTurn[];
   model: string;
   cachedAt: string;
-  publisherContractFingerprint?: string;
 }
 
 const KEY_PREFIX = "b:";

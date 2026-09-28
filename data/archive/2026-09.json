@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-28T15:00:44.273Z",
+  "generatedAt": "2026-09-28T16:23:02.577Z",
   "month": "2026-09",
-  "count": 315,
+  "count": 316,
   "entries": [
+    {
+      "id": "ef681932d2dc210a",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/heftykoo/items/b8cee9745878de914050",
+      "title": "AIエージェントをDev Containerで動かしても、画像の書き出しは別に検証する",
+      "titleJa": "AIエージェントをDev Containerで動かしても、画像の書き出しは別に検証する",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-28T10:04:20.000Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "画像プレビューの修正をエージェントに頼むなら、自分は最初に「保存した画像をもう一度開く」と決めておきたい。画面では縦長に見えても、ダウンロードしたファイルは元の横長のまま、という実装は作れてしまう。型チェックも通る。 VS Code 1.138では、ローカルのDev Container内でagent sessionを動かす機能が案内されている。プロジェクトのツールや依存関係を使えるのはありがたい。ただし、開発環境が揃うことと、画像UIの出力が正しいことは別の話だ。この記事は製品の実測レポートではなく、React/TypeScriptの小さな画像UIでその境界を確かめるための手順である。 題材は、ローカル画像を読み込み、 fit と crop を切り替えて4:5の枠に表示し、PNGをダウンロードする画面。以下は読者のリポジトリで試すための仮想課題で、実在のアプリの検証結果ではない。 横長と縦長のテスト画像を1枚ずつ用意する。端に色や文字を置くと、どこが切れたか分かりやすい。顧客画像は使わない。 出力サイズは、この課題では 1080 × 1350 ピクセルと決める。公開先に応じたサイズ選択は別工程にする。 fit では画像全体を残す。縦横比が違えば余白ができてよい。 crop では枠を埋める。縦横比が違えば端が切れてよいが、画像を引き伸ばさない。 プレビューだけでなく、保存されたPNGも同じ構図と指定サイズにする。外部への画像送信や依存追加は、この課題では許可しない。 「いい感じにリサイズして」だけだと、CSSでプレビューを整えた時点で作業が終わりかねない。PNGまで見る、と先に決めておく。 まずリポジトリの .devcontainer/devcontainer.json と package.json を確認する。Dockerが動くかも確かめる。基準コミットと使うツールの版を控えてから、エージェントに変更を渡す。",
+      "feedSnippet": "画像プレビューの修正をエージェントに頼むなら、自分は最初に「保存した画像をもう一度開く」と決めておきたい。画面では縦長に見えても、ダウンロードしたファイルは元の横長のまま、という実装は作れてしまう。型チェックも通る。 VS Code 1.138では、ローカルのDev Con...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSUpwQTE5QWJOcDFrT0tBcE1ISmo1aHh4R2loQnpyUEltYUdLMzdRNGRnaUtWalJnJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWFkYTAzNzBmNzJkNTNiZWEwZjIyOWMzMzFiYWYwNmRk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db599133b325fa1b83ac5108210eb35e5?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODIlOTJEZXYlMjBDb250YWluZXIlRTMlODElQTclRTUlOEIlOTUlRTMlODElOEIlRTMlODElOTclRTMlODElQTYlRTMlODIlODIlRTMlODAlODElRTclOTQlQkIlRTUlODMlOEYlRTMlODElQUUlRTYlOUIlQjglRTMlODElOEQlRTUlODclQkElRTMlODElOTclRTMlODElQUYlRTUlODglQTUlRTMlODElQUIlRTYlQTQlOUMlRTglQTglQkMlRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zYzU5YjYxNTZiNmQzYWNkN2EwZTkzNWEyZmNjMzQwNw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoZWZ0eWtvbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNjZjhkMzEzODdiNDViYTNiOTI5M2QyOTAwNTZjZGI4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=7e2ae359c85b70890393e1f6f5488ef4",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jSUpwQTE5QWJOcDFrT0tBcE1ISmo1aHh4R2loQnpyUEltYUdLMzdRNGRnaUtWalJnJTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWFkYTAzNzBmNzJkNTNiZWEwZjIyOWMzMzFiYWYwNmRk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Db599133b325fa1b83ac5108210eb35e5?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QUklRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODIlOTJEZXYlMjBDb250YWluZXIlRTMlODElQTclRTUlOEIlOTUlRTMlODElOEIlRTMlODElOTclRTMlODElQTYlRTMlODIlODIlRTMlODAlODElRTclOTQlQkIlRTUlODMlOEYlRTMlODElQUUlRTYlOUIlQjglRTMlODElOEQlRTUlODclQkElRTMlODElOTclRTMlODElQUYlRTUlODglQTUlRTMlODElQUIlRTYlQTQlOUMlRTglQTglQkMlRTMlODElOTklRTMlODIlOEImdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0zYzU5YjYxNTZiNmQzYWNkN2EwZTkzNWEyZmNjMzQwNw&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBoZWZ0eWtvbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWNjZjhkMzEzODdiNDViYTNiOTI5M2QyOTAwNTZjZGI4&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=7e2ae359c85b70890393e1f6f5488ef4",
+        "alt": "AIエージェントをDev Containerで動かしても、画像の書き出しは別に検証する",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "1b2bef39b07cb8e1",
       "source": "qiita-vscode",
@@ -13,7 +44,7 @@
       "titleEn": "VSCode Extensions for IBM i Developers! #6",
       "lang": "ja",
       "publishedAt": "2026-09-28T07:01:17.000Z",
-      "collectedAt": "2026-09-28T10:00:50.205Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
       "tags": [
         "dds",
         "ibm-i",
@@ -26,8 +57,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "IBM i のディスプレイファイル（DSPF／DDS）を VSCode 上で視覚的に確認・編集するために開発している IBM i DSPF Screen Designer について、対応キーワードと編集機能をさらに拡充しました。 本記事では、最新の操作マニュアルで追加・強化された内容のうち、前回までの記事で十分に取り上げていなかったものを中心に紹介します。 CNTFLD は、1つの入力フィールドを 「桁幅 × 行数」の長方形入力フィールド として扱うためのキーワードです。 DSPF Screen Designerでは、フィールドプロパティから継続入力の桁幅を指定できるようにしました。 画面イメージだけではなく、Excel出力でも長方形として扱います。 また、2行目以降も実際に画面を占有するため、他の項目との重なりについても「配置の警告」で検出します。 DSPF Screen Designerでは、例えば次のような指定を検証します。 新しく作るときだけでなく、既存ソースを読み込んだ場合も、仕様に合わない指定は検証結果へ表示します。 IBM i の DDS には、古い資産で AUTO が使われていることがあります。 今回、 AUTO を単なる未対応キーワードとして残すのではなく、IBM i の仕様に合わせて CHECK の別表記として扱えるようにしました 。 を含むDDSをインポートすると、プロパティ上では CHECK(RZ) 相当として編集できます。 一方で重要なのは、 読み込んだAUTOを勝手にCHECKへ書き換えない ことです。 新規に設定するときは、基本的には CHECK 表記を使用します。 既存DDSを保守するツールとしては、 意味だけでなく元の書き方をできるだけ保持する ことも重要だと考えています。 入力フィールドの比較検査を行う COMP にも対応しました。 フィールドプロパティでは、演算子をプルダウンから選択し、比較する値を入力します。 なお、COMPのエラーメッセージを差し替える CHKMSGID は、現時点では編集対象外です。 4.",
-      "feedSnippet": "IBM i DSPF Screen Designerをアップデートしました はじめに IBM i のディスプレイファイル（DSPF／DDS）を VSCode 上で視覚的に確認・編集するために開発している IBM i DSPF Screen Designer について、対...",
       "excerptOrigin": "article",
+      "feedSnippet": "IBM i DSPF Screen Designerをアップデートしました はじめに IBM i のディスプレイファイル（DSPF／DDS）を VSCode 上で視覚的に確認・編集するために開発している IBM i DSPF Screen Designer について、対...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS29KQkxzQjJEMmEzR0xwM1ZxV0hnVThQcnVDVTlpN0lkMUxKa19ZQnJPQ1ZLaHV3JTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTA3YzI2MTc0MWYyN2RkMDY4NGNhY2UzYjdmMjNjNWM4%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D4fd30f3289043b36c98d98868ba48179?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9SUJNJTIwaSUyMCVFOSU5NiU4QiVFNyU5OSVCQSVFOCU4MCU4NSVFNSU5MCU5MSVFMyU4MSU5MSVFRiVCQyU4MSUyMFZTQ29kZSVFNiU4QiVBMSVFNSVCQyVCNSVFNiVBOSU5RiVFOCU4MyVCRCUyMCUyMzYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1iNmE4OTAxYWRkMzM1ZDU5YWRjMDk3ZDQ3YmRkZTQ1OA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBpb19uYWdhbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWE0ZTNmZWQ1NDNjNGE1ZmVkODUzODU3ZDhlNjVmMmM0&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e36f6b7229333c0c4fc7e06a162435aa",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS29KQkxzQjJEMmEzR0xwM1ZxV0hnVThQcnVDVTlpN0lkMUxKa19ZQnJPQ1ZLaHV3JTNEczk2LWM_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPTA3YzI2MTc0MWYyN2RkMDY4NGNhY2UzYjdmMjNjNWM4%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D4fd30f3289043b36c98d98868ba48179?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9SUJNJTIwaSUyMCVFOSU5NiU4QiVFNyU5OSVCQSVFOCU4MCU4NSVFNSU5MCU5MSVFMyU4MSU5MSVFRiVCQyU4MSUyMFZTQ29kZSVFNiU4QiVBMSVFNSVCQyVCNSVFNiVBOSU5RiVFOCU4MyVCRCUyMCUyMzYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1iNmE4OTAxYWRkMzM1ZDU5YWRjMDk3ZDQ3YmRkZTQ1OA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBpb19uYWdhbyZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWE0ZTNmZWQ1NDNjNGE1ZmVkODUzODU3ZDhlNjVmMmM0&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=e36f6b7229333c0c4fc7e06a162435aa",
@@ -47,7 +78,7 @@
       "titleEn": "Installing Geant4 11.4.0 on macOS and Setting Up VS Code",
       "lang": "ja",
       "publishedAt": "2026-09-28T05:24:21.000Z",
-      "collectedAt": "2026-09-28T10:00:50.205Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
       "tags": [
         "cmake",
         "environment-setup",
@@ -62,8 +93,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "Geant4 11.4.0をmacOSにインストール（VS Code環境構築） macOS環境にGeant4 11.4.0をインストールする手順を、備忘録としてまとめました。プログラミングや環境構築の経験がない方にも分かりやすいよう、順を追って説明していきます。専門用語には解説ページへのリンクを貼っているので、必要に応じてご参照ください。 おまけとして、VS CodeでGeant4コードを編集するための環境構築も行います。 すでにmacOSのファイルシステムやコマンド操作に慣れている方は、ご自身の使いやすいディレクトリ構成で進めていただいて構いません。 作業時間の目安は約3時間です。特に ビルド やインストールには時間がかかるため、時間に余裕を持って進めることをお勧めします。 今回は、Geant4 11.3.2がすでに入っている環境で作業しています。初めてインストールする場合は、表示される内容やコマンドの実行結果が、異なる可能性があります。 Geant4 11.4.0をmacOSにインストールし、動作確認まで行う まず、Geant4のビルドに必要なツールと、可視化や解析に使用するツールをインストールします。今回使用するツールは次のとおりです。 Appleが提供する開発ツール一式です。Geant4のビルドに必要なコンパイラなどが含まれています。 コマンドを使ってソフトウェアをインストール・更新・管理するツールです。 Geant4やシミュレーションプログラムをビルドするための設定を行うツールです。 シミュレーション結果の解析・グラフ化に使用するソフトウェアです。Geant4のインストールには必須ではありません。 検出器構造などを記述するファイルの読み書きに必要なライブラリです。 Qt 6・Xerces-C++・XQuartzは、Geant4で使用する機能に応じて必要になります。本記事では、これらを使用する構成で進めます。 Finderで「アプリケーション」→「ユーティリティ」→「ターミナル」を開きます。起動したら、次のコマンドを実行します。",
-      "feedSnippet": "はじめに macOS環境にGeant4 11.4.0をインストールする手順を、備忘録としてまとめました。プログラミングや環境構築の経験がない方にも分かりやすいよう、順を追って説明していきます。専門用語には解説ページへのリンクを貼っているので、必要に応じてご参照ください。 ...",
       "excerptOrigin": "article",
+      "feedSnippet": "はじめに macOS環境にGeant4 11.4.0をインストールする手順を、備忘録としてまとめました。プログラミングや環境構築の経験がない方にも分かりやすいよう、順を追って説明していきます。専門用語には解説ページへのリンクを貼っているので、必要に応じてご参照ください。 ...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NTA4MzAwJTJGZjRjOTg2MDllODY4YjY2ZmEwZWM5NjA2Yzg2NDhmMjZhZDdkOTkxOSUyRmxhcmdlLnBuZyUzRjE3OTA1NzM3MTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ3ZTFiMTQ4OTE2YjRjYjYxNzUyNzBjNDI1MWMyNDdk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2e9aee074d1b418a8044dfde5a793ef6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2VhbnQ0JTIwMTEuNC4wJUUzJTgyJTkybWFjT1MlRTMlODElQUIlRTMlODIlQTQlRTMlODMlQjMlRTMlODIlQjklRTMlODMlODglRTMlODMlQkMlRTMlODMlQUIlRUYlQkMlODhWUyUyMENvZGUlRTclOTIlQjAlRTUlQTIlODMlRTYlQTclOEIlRTclQUYlODklRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00OTMxYjg4NTdiOTZiNGExMjhkNmU4M2ZiMjE4ODQ4Ng&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBmczEyMjgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMWI5YTQ2YTQ5MjI3ZDhkNmM4OTJjOWYwYTU2YzIzNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9027a0c723f9723395ff648c156a6c36",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NTA4MzAwJTJGZjRjOTg2MDllODY4YjY2ZmEwZWM5NjA2Yzg2NDhmMjZhZDdkOTkxOSUyRmxhcmdlLnBuZyUzRjE3OTA1NzM3MTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ3ZTFiMTQ4OTE2YjRjYjYxNzUyNzBjNDI1MWMyNDdk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2e9aee074d1b418a8044dfde5a793ef6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2VhbnQ0JTIwMTEuNC4wJUUzJTgyJTkybWFjT1MlRTMlODElQUIlRTMlODIlQTQlRTMlODMlQjMlRTMlODIlQjklRTMlODMlODglRTMlODMlQkMlRTMlODMlQUIlRUYlQkMlODhWUyUyMENvZGUlRTclOTIlQjAlRTUlQTIlODMlRTYlQTclOEIlRTclQUYlODklRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00OTMxYjg4NTdiOTZiNGExMjhkNmU4M2ZiMjE4ODQ4Ng&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBmczEyMjgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMWI5YTQ2YTQ5MjI3ZDhkNmM4OTJjOWYwYTU2YzIzNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9027a0c723f9723395ff648c156a6c36",
@@ -1128,8 +1159,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered"
+      "contentSnippet": "Enterprises rely on mission-critical operational databases where performance slowdowns simply aren’t an option. Yet when even a few agents execute dense reasoning loops, the unpredictable surge in queries can easily overwhelm traditional architectures. Today, we’re announcing that AlloyDB delivers PostgreSQL for agents (in preview), enabling real-time data access without compromising your mission-critical systems. AlloyDB now scales to dynamic agent bursts by provisioning sandboxed database instances in seconds, enabling full workload isolation. You can cost-effectively run your agents at any scale — from a few agents to millions of agents — and the instances automatically spin down when agents finish. With this announcement: AlloyDB now features an agentic database architecture engineered",
+      "evergreen": true
     },
     {
       "id": "2720d05187170c6b",
@@ -5896,7 +5927,7 @@
       "titleEn": "Siri AI, a profoundly more capable and personal assistant, is here",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-28T10:00:50.205Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -5928,6 +5959,8 @@
       "title": "Configure cost and quality in Copilot auto model selection",
       "titleJa": "Copilot自動モデル選択でコストと品質を設定可能に",
       "titleEn": "Configure cost and quality in Copilot auto model selection",
+      "summaryJa": "GitHub Copilotの自動モデル選択に「効率」「バランス」「知性」の3段階の階層が追加され、各プロンプトでコスト・品質・応答速度のどれを重視するかを選べるようになった。単純作業には効率、複雑なタスクには知性を選ぶことで、開発者は用途に応じた最適なモデル選択を実現できる。",
+      "summaryEn": "GitHub Copilot's auto model selection now lets users pick from three tiers—efficiency, balance, and intelligence—to control how cost, quality, and response time are weighted per prompt. This helps developers match model choice to task complexity, from quick edits to complex work.",
       "lang": "en",
       "publishedAt": "2026-09-14T16:05:27.000Z",
       "collectedAt": "2026-09-17T13:56:20.099Z",
@@ -5940,7 +5973,7 @@
       "category": "copilot",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "GitHub Copilot auto model selection now offers three tiers: efficiency, balance, and intelligence. Choose the tier that reflects how you want auto to weigh cost, quality, and response time for each prompt. Copilot will then optimize accordingly. Efficiency prioritizes keeping costs low and suits fast, straightforward tasks. Balance weighs cost, quality, and latency together, and is a good fit for everyday work. Intelligence prioritizes quality and is built for complex tasks. All three tiers use the same set of available models. Auto individually evaluates each prompt to select a best-suited model. For example, a simple task like adding a docstring to an existing function may use a small, efficient model even when auto is optimizing for intelligence. This feature is currently rolling out in Visual Studio Code, Copilot CLI, and GitHub Copilot app.",
       "excerptOrigin": "article",
       "feedSnippet": "GitHub Copilot auto model selection now offers three tiers: efficiency, balance, and intelligence. Choose the tier that reflects how you want auto to weigh cost, quality, and response time for… The post Configure cost and quality in Copilot auto model selection appeared first on The GitHub Blog .",
@@ -5961,6 +5994,8 @@
       "title": "Zed Editor Releases v1.20.1-pre",
       "titleJa": "Zed Editor、v1.20.1-preをリリース",
       "titleEn": "Zed Editor Releases v1.20.1-pre",
+      "summaryJa": "Zed v1.20.1-preは、UnixとmacOSで起動時のファイル記述子ソフト上限を引き上げ、監視イベントを確認してJSONへ書き出せる開発者向け診断機能を追加した。大規模な作業領域でのEMFILEエラー回避と監視問題の調査に役立つ。",
+      "summaryEn": "Zed v1.20.1-pre raises the startup file descriptor limit on Unix and macOS and adds JSON-exportable filesystem watcher diagnostics, helping large workspaces avoid EMFILE failures.",
       "lang": "en",
       "publishedAt": "2026-09-14T15:58:36.000Z",
       "collectedAt": "2026-09-23T12:32:53.793Z",
@@ -5975,7 +6010,7 @@
       "category": "cursor",
       "importance": 1,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "Raised the default open file descriptor soft limit at startup on Unix/macOS to prevent EMFILE ( Too many open files ) errors in large workspaces. ( #64188 ) Added dev: Debug Filesystem Watching to inspect local watcher events, watch roots, and scan exclusions, and export diagnostic captures as JSON. ( #64186 ) Fixed Linux mailto: URI handling when using Help → Email Us... . ( #64090 ) Fixed diagnostics batches stopping at paths without a worktree ( #64073 ) Fixed an issue in SSH remote mode where reopening a newly created file at a path that was previously renamed could incorrectly reuse the buffer for the renamed file. ( #64028 ) Fixed CRLF line breaks not normalized in completion labels ( #63984 ) Improved trial descriptions to show $5 of GPT Luna and unlimited edit predictions for 14 da",
       "image": {
         "src": "https://avatars.githubusercontent.com/in/2008959?s=60&v=4",
@@ -9783,7 +9818,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-28T10:00:50.205Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -10577,7 +10612,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-28T10:00:50.205Z",
+      "collectedAt": "2026-09-28T16:22:46.563Z",
       "tags": [
         "agent",
         "deepmind",

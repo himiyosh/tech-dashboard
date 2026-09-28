@@ -13,7 +13,9 @@ import {
   isGroundedBodyCacheEntry,
   type BodyCacheEntry,
 } from "../worker/src/body-cache.ts";
+import { validateArticleChat } from "../worker/src/article-chat.ts";
 import { UNVERSIONED_JOB_FINGERPRINT } from "../worker/src/kv-cache.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 import {
   buildBodyPromptJa,
   buildBodyPromptEn,
@@ -77,6 +79,30 @@ describe("isBodyComplete (LL-115)", () => {
   });
 
   describe("body consumer cache provenance", () => {
+    it("models an old binary echoing the new job fingerprint without code-origin chat provenance", () => {
+      const oldChat = Array.from({ length: 6 }, (_, index) => ({
+        s: index % 2 === 0 ? "a" as const : "b" as const,
+        ja: index % 2 === 0 ? "博士、この記事はどうなるの？" : "ソラ、記事の範囲を確かめよう。",
+        en: index % 2 === 0 ? "Doc, what does the article say?" : "Sora, let's check the article.",
+      }));
+      const cacheEntry = buildBodyCacheEntry(
+        {
+          url: entry.url,
+          publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+          entry: { ...entry, id: "old-binary" },
+        },
+        "本文です。".repeat(50),
+        "This is the body. ".repeat(50),
+        "claude-opus-4.8",
+        "2026-09-28T00:00:00.000Z",
+        oldChat,
+      );
+
+      expect(cacheEntry.publisherContractFingerprint).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
+      expect(validateArticleChat(cacheEntry.chat)).toHaveLength(6);
+      expect("articleChatRevision" in cacheEntry).toBe(false);
+    });
+
     it("copies the publisher contract fingerprint from the job", () => {
       const fingerprint = `sha256:${"f".repeat(64)}`;
       const cacheEntry = buildBodyCacheEntry(

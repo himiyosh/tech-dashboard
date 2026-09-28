@@ -32,6 +32,9 @@ import {
   serializeBodies,
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
+import { validateArticleChat, type ArticleChatTurn } from "../worker/src/article-chat.ts";
+import type { BodyCacheEntry } from "../worker/src/body-cache.ts";
+import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 import type { KeyValueBinding, QueueBatchBinding } from "../worker/src/runtime-bindings.ts";
 import type { BodyJob } from "../worker/src/body-generate.ts";
 
@@ -862,6 +865,96 @@ function baseEnv(overrides: Partial<PublisherEnv> = {}): PublisherEnv {
     ...overrides,
   };
 }
+
+describe("old consumer echoes the new fingerprint without a chat code revision", () => {
+  const at = "2026-09-28T00:00:00.000Z";
+  const article = entry({ id: "old-consumer", publishedAt: "2026-09-27T00:00:00.000Z" });
+  const oldChat: ArticleChatTurn[] = Array.from({ length: 6 }, (_, index) => ({
+    s: index % 2 === 0 ? "a" : "b",
+    ja: index % 2 === 0 ? "博士、記事では何が変わるの？" : "ソラ、記事の内容を確かめよう。",
+    en: index % 2 === 0 ? "Doc, what does the article say?" : "Sora, let's check the article.",
+  }));
+  const oldCache: BodyCacheEntry = {
+    ...bodyGeneratedRecordText("old-consumer"),
+    chat: oldChat,
+    model: "claude-opus-4.8",
+    cachedAt: at,
+    publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+  };
+
+  function oldBinaryKv(): KeyValueBinding {
+    return {
+      get: async () => oldCache,
+      put: async () => {},
+    } as unknown as KeyValueBinding;
+  }
+
+  function storedBody(chat?: ArticleChatTurn[]): string {
+    return serializeBodies({
+      generatedAt: at,
+      count: 1,
+      bodies: {
+        [article.id]: {
+          ...bodyGeneratedRecordText("existing"),
+          model: "legacy-import",
+          generatedAt: at,
+          ...(chat ? { chat } : {}),
+        },
+      },
+    });
+  }
+
+  it("does not publish old six-turn chat when the normal body KV read accepts its prose", async () => {
+    expect(validateArticleChat(oldCache.chat)).toHaveLength(6);
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(), BODY_LOOKUP_CAP: "1", CHAT_LOOKUP_CAP: "0" }),
+      [article],
+      null,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+
+    const persisted = parseBodies(result.bodiesFileContent).bodies[article.id];
+    expect(persisted?.bodyJa).toBe(oldCache.bodyJa);
+    expect(persisted?.bodyEn).toBe(oldCache.bodyEn);
+    expect(persisted?.chat).toBeUndefined();
+  });
+
+  it("does not graft old six-turn chat from chat-only KV onto existing prose", async () => {
+    const existingContent = storedBody();
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+
+    const persisted = parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id];
+    expect(persisted?.bodyJa).toBe(bodyGeneratedRecordText("existing").bodyJa);
+    expect(persisted?.bodyEn).toBe(bodyGeneratedRecordText("existing").bodyEn);
+    expect(persisted?.chat).toBeUndefined();
+  });
+
+  it("leaves already-published revision-less JA/EN six-turn chat intact", async () => {
+    const existingContent = storedBody(oldChat);
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+
+    const persisted = parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id];
+    expect(persisted?.chat).toEqual(oldChat);
+    expect(persisted?.chat?.map((turn) => turn.ja)).toEqual(oldChat.map((turn) => turn.ja));
+    expect(persisted?.chat?.map((turn) => turn.en)).toEqual(oldChat.map((turn) => turn.en));
+  });
+});
 
 describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
   const GENERATED_AT = "2026-07-25T00:00:00.000Z";

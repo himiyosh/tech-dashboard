@@ -465,6 +465,8 @@ fingerprint を変える変更はまずdevelopへ統合し、production Worker�
 
 **旧consumer drainの代替は今回の会話prompt/persona差分だけの未承認案です。** 既定は上記手順2を維持します。代替を検討する場合、main/developとrelease exact headを再比較して会話以外のbody/summary生成差分が無いこと、旧binary+新fingerprintのRED→GREENと正常/旧/無印cache、chat-only、KV上書き、既存sidecarのJA/EN6発言を検証したこと、deployed body `/health` の `articleChatRevision` がrelease markerと一致すること、`chatRepairBlocked=0`かつ拒否cacheの修復送信が可能なことを別々に実測します。1つでも欠ければreleaseを止めて旧drainルールに戻します。安全PRの承認はmain merge・いずれのWorker deploy・Cloudflare権限変更の承認ではありません。
 
+**注意:** `chatRepairBlocked=0`、`chatRepairCandidates`、`chatRepairEnqueued` はそのrunが読めたbounded windowの観測値で、全chat欠落記事の修復可能性や新版会話のsidecar到達を証明しません。旧drainの代替を別途判断する際は、immutable release snapshotの全chat欠落IDを列挙し、対応するcache、source grounding、Queue再送、実際の新版revision付きcacheとsidecar graftを同一IDで確認します。元から存在するJA/EN6発言のID/本文を同じsnapshot基準で比較し、read-backを得られないIDがあれば**release STOP**です。Cloudflareのprovider read-backが使えない現在は、この条件の達成を宣言しません。
+
 #### 監視 / ヘルスチェック
 
 `chatRepairCandidates` はそのrunのbounded lookup窓で修復可能な会話件数であり、`chatRepairEnqueued` は実際に送信できた内数です。候補があっても共有enqueue枠が0なら修復済みとは扱わず、旧consumer drainの代替releaseを停止します。

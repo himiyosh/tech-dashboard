@@ -26,6 +26,7 @@ export interface ArticleChatTurn {
 }
 
 export const ARTICLE_CHAT_TURNS = 6;
+export const ARTICLE_CHAT_PROMPT_REVISION = "poko-tech-guide-v1";
 /** Bubbles are chat-sized, not paragraphs. */
 export const CHAT_TURN_MAX_JA_CHARS = 150;
 export const CHAT_TURN_MAX_EN_CHARS = 300;

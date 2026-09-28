@@ -5,10 +5,13 @@
  * two-call plain-text body prompts. Cloudflare-runtime-free modules only.
  */
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
+  DEPLOYED_ARTICLE_CHAT_REVISION,
+  bodyCacheChatForPublisher,
   bodyCacheEntryMatchesPublisherContract,
   bodyCacheKeyForUrl,
+  isCurrentArticleChatJob,
   isBodyComplete,
   isGroundedBodyCacheEntry,
   type BodyCacheEntry,
@@ -85,22 +88,92 @@ describe("isBodyComplete (LL-115)", () => {
         ja: index % 2 === 0 ? "博士、この記事はどうなるの？" : "ソラ、記事の範囲を確かめよう。",
         en: index % 2 === 0 ? "Doc, what does the article say?" : "Sora, let's check the article.",
       }));
-      const cacheEntry = buildBodyCacheEntry(
-        {
-          url: entry.url,
-          publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
-          entry: { ...entry, id: "old-binary" },
-        },
-        "本文です。".repeat(50),
-        "This is the body. ".repeat(50),
-        "claude-opus-4.8",
-        "2026-09-28T00:00:00.000Z",
-        oldChat,
-      );
+      const cacheEntry: BodyCacheEntry = {
+        bodyJa: "本文です。".repeat(50),
+        bodyEn: "This is the body. ".repeat(50),
+        chat: oldChat,
+        model: "claude-opus-4.8",
+        cachedAt: "2026-09-28T00:00:00.000Z",
+        publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+      };
 
       expect(cacheEntry.publisherContractFingerprint).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
       expect(validateArticleChat(cacheEntry.chat)).toHaveLength(6);
       expect("articleChatRevision" in cacheEntry).toBe(false);
+      expect(bodyCacheEntryMatchesPublisherContract(cacheEntry, DEPLOYED_PUBLISHER_FINGERPRINT)).toBe(true);
+      expect(bodyCacheChatForPublisher(cacheEntry, DEPLOYED_PUBLISHER_FINGERPRINT)).toBeNull();
+    });
+
+    it("stamps accepted new chat with the compiled consumer revision, never a job field", () => {
+      const chat = Array.from({ length: 6 }, (_, index) => ({
+        s: index % 2 === 0 ? "a" as const : "b" as const,
+        ja: index % 2 === 0 ? "ポコの質問です。" : "TECHガイドの回答です。",
+        en: index % 2 === 0 ? "Poko asks about the article." : "TECH Guide answers from the article.",
+      }));
+      const job = {
+        url: entry.url,
+        publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
+        articleChatRevision: "forged-by-job",
+        entry: { ...entry, id: "new-binary" },
+      };
+      const current = buildBodyCacheEntry(
+        job,
+        "あ".repeat(200),
+        "a".repeat(200),
+        "claude-opus-4.8",
+        "2026-09-28T00:00:00.000Z",
+        chat,
+      );
+
+      expect(isCurrentArticleChatJob(job)).toBe(true);
+      expect(DEPLOYED_ARTICLE_CHAT_REVISION).toContain(DEPLOYED_PUBLISHER_FINGERPRINT);
+      expect(current.articleChatRevision).toBe(DEPLOYED_ARTICLE_CHAT_REVISION);
+      expect(current.articleChatRevision).not.toBe(job.articleChatRevision);
+      expect(bodyCacheChatForPublisher(current, DEPLOYED_PUBLISHER_FINGERPRINT)).toEqual(chat);
+      expect(bodyCacheChatForPublisher({
+        ...current,
+        articleChatRevision: "old-prompt",
+      }, DEPLOYED_PUBLISHER_FINGERPRINT)).toBeNull();
+      expect(bodyCacheChatForPublisher({
+        ...current,
+        publisherContractFingerprint: `sha256:${"e".repeat(64)}`,
+      }, DEPLOYED_PUBLISHER_FINGERPRINT)).toBeNull();
+      expect(bodyCacheChatForPublisher({
+        ...current,
+        publisherContractFingerprint: undefined,
+      }, DEPLOYED_PUBLISHER_FINGERPRINT)).toBeNull();
+    });
+
+    it.each([
+      ["old", `sha256:${"e".repeat(64)}`],
+      ["unversioned", undefined],
+    ])("keeps %s job body prose but emits no new chat or revision", (_kind, fingerprint) => {
+      const job = {
+        url: entry.url,
+        publisherContractFingerprint: fingerprint,
+        entry: { ...entry, id: "old-job" },
+      };
+      const cacheEntry = buildBodyCacheEntry(
+        job,
+        "あ".repeat(200),
+        "a".repeat(200),
+        "claude-opus-4.8",
+        "2026-09-28T00:00:00.000Z",
+        Array.from({ length: 6 }, (_, index) => ({
+          s: index % 2 === 0 ? "a" as const : "b" as const,
+          ja: "旧会話です。",
+          en: "Old chat.",
+        })),
+      );
+
+      expect(isCurrentArticleChatJob(job)).toBe(false);
+      expect(cacheEntry.bodyJa).toBe("あ".repeat(200));
+      expect(cacheEntry.bodyEn).toBe("a".repeat(200));
+      expect(cacheEntry.chat).toBeUndefined();
+      expect(cacheEntry.articleChatRevision).toBeUndefined();
+      expect(cacheEntry.publisherContractFingerprint).toBe(
+        fingerprint ?? UNVERSIONED_JOB_FINGERPRINT,
+      );
     });
 
     it("copies the publisher contract fingerprint from the job", () => {
@@ -192,6 +265,142 @@ describe("isBodyComplete (LL-115)", () => {
       },
       source,
     )).toBe(false);
+  });
+});
+
+describe("body Queue consumer article chat rollout", () => {
+  const chat = Array.from({ length: 6 }, (_, index) => ({
+    s: index % 2 === 0 ? "a" as const : "b" as const,
+    ja: index % 2 === 0 ? "ポコ、GLM-5.2の記事はどう読むの？" : "TECHガイドは記事の情報だけを説明する。",
+    en: index % 2 === 0 ? "Poko asks what the GLM-5.2 article says." : "TECH Guide explains only the article.",
+  }));
+
+  async function consume(fingerprint: string | undefined) {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const put = vi.fn(async (_key: string, _value: string) => {});
+    const kv = {
+      get: async () => null,
+      put,
+    } as unknown as KVNamespace;
+    let modelCalls = 0;
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        return Response.json({
+          token: "test-ide-token",
+          expires_at: Math.floor(Date.now() / 1000) + 1200,
+        });
+      }
+      modelCalls += 1;
+      const content = [
+        "GLM-5.2をCloudflare Workers AIで試す手順を記事に沿って説明する。".repeat(8),
+        "The article walks through running GLM-5.2 on Cloudflare Workers AI. ".repeat(8),
+        JSON.stringify(chat),
+      ][modelCalls - 1];
+      if (!content) throw new Error("unexpected model request");
+      return Response.json({ choices: [{ message: { content } }] });
+    });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      await bodyWorker.queue!(
+        {
+          messages: [{
+            body: {
+              url: entry.url,
+              publisherContractFingerprint: fingerprint,
+              entry: { ...entry, id: "queue-chat-test" },
+            },
+            ack,
+            retry,
+          }],
+        } as unknown as MessageBatch,
+        {
+          SUMMARY_CACHE: kv,
+          COPILOT_PAT: `test-pat-${fingerprint ?? "unversioned"}`,
+          BODY_MODEL: "claude-opus-4.8",
+        },
+        {} as ExecutionContext,
+      );
+      const writes = put.mock.calls.map(([, value]) => JSON.parse(value) as BodyCacheEntry);
+      return { ack, retry, modelCalls, writes, warning: warning.mock.calls.map(([message]) => String(message)) };
+    } finally {
+      vi.unstubAllGlobals();
+      warning.mockRestore();
+    }
+  }
+
+  it.each([
+    ["old", `sha256:${"e".repeat(64)}`],
+    ["unversioned", undefined],
+  ])("acknowledges %s jobs after both real bodies, without generating or storing Poko chat", async (_kind, fingerprint) => {
+    const result = await consume(fingerprint);
+    expect(result.ack).toHaveBeenCalledOnce();
+    expect(result.retry).not.toHaveBeenCalled();
+    expect(result.modelCalls).toBe(2);
+    expect(result.writes).toHaveLength(1);
+    expect(result.writes[0]?.bodyJa).toContain("GLM-5.2");
+    expect(result.writes[0]?.bodyEn).toContain("GLM-5.2");
+    expect(result.writes[0]?.chat).toBeUndefined();
+    expect(result.writes[0]?.articleChatRevision).toBeUndefined();
+    expect(result.warning.some((message) => message.includes("chat generation skipped"))).toBe(true);
+  });
+
+  it("generates exactly six bilingual turns for a current job and stamps its compiled revision", async () => {
+    const result = await consume(DEPLOYED_PUBLISHER_FINGERPRINT);
+    expect(result.ack).toHaveBeenCalledOnce();
+    expect(result.retry).not.toHaveBeenCalled();
+    expect(result.modelCalls).toBe(3);
+    expect(result.writes).toHaveLength(1);
+    expect(result.writes[0]?.chat).toEqual(chat);
+    expect(result.writes[0]?.articleChatRevision).toBe(DEPLOYED_ARTICLE_CHAT_REVISION);
+    expect(result.writes[0]?.publisherContractFingerprint).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
+  });
+
+  it("preserves Queue retry rather than acknowledging a failed old-job body", async () => {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const put = vi.fn(async () => {});
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.includes("api.github.com/copilot_internal/v2/token")) {
+        return Response.json({
+          token: "test-retry-token",
+          expires_at: Math.floor(Date.now() / 1000) + 1200,
+        });
+      }
+      throw new Error("model unavailable");
+    }));
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await bodyWorker.queue!(
+        { messages: [{
+          body: {
+            url: entry.url,
+            publisherContractFingerprint: `sha256:${"e".repeat(64)}`,
+            entry: { ...entry, id: "old-job-retry" },
+          },
+          ack,
+          retry,
+        }] } as unknown as MessageBatch,
+        {
+          SUMMARY_CACHE: {
+            get: async () => null,
+            put,
+          } as unknown as KVNamespace,
+          COPILOT_PAT: "test-pat-retry",
+          BODY_MODEL: "claude-opus-4.8",
+        },
+        {} as ExecutionContext,
+      );
+      expect(ack).not.toHaveBeenCalled();
+      expect(retry).toHaveBeenCalledOnce();
+      expect(put.mock.calls.every(([key]) => key === "body.issue.v1")).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+      warning.mockRestore();
+    }
   });
 });
 

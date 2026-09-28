@@ -84,6 +84,11 @@ interface IndexShape {
     bodyEnqueueCandidates?: number;
     bodyEnqueued?: number;
     bodyLookupCount?: number;
+    chatCompatibilityRejected?: number;
+    chatRepairBlocked?: number;
+    chatRepairCandidates?: number;
+    chatRepairEnqueued?: number;
+    chatRepairPendingIds?: string[];
     bodyMerged?: number;
     bodyBacklog?: number;
     bodyQueueDrainEstimateHours?: number;
@@ -683,6 +688,13 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     if (bodyEnqueued !== undefined) {
       expect(bodyEnqueued).toBeLessThanOrEqual(bodyCandidates ?? 0);
       expect(bodyEnqueued).toBeLessThanOrEqual(bodyCap ?? 0);
+    }
+    if (health?.chatRepairEnqueued !== undefined) {
+      expect(health.chatRepairEnqueued).toBeLessThanOrEqual(bodyEnqueued ?? 0);
+      expect(health.chatRepairEnqueued).toBeLessThanOrEqual(health.chatRepairCandidates ?? 0);
+      expect(health.chatRepairPendingIds).toHaveLength(health.chatRepairEnqueued);
+      expect(health.chatCompatibilityRejected).toBeGreaterThanOrEqual(0);
+      expect(health.chatRepairBlocked).toBeGreaterThanOrEqual(0);
     }
     if (bodyMerged !== undefined) {
       // The chat backfill lane (CHAT_LOOKUP_CAP) grafts chats through the same

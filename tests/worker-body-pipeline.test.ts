@@ -33,7 +33,7 @@ import {
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
 import { validateArticleChat, type ArticleChatTurn } from "../worker/src/article-chat.ts";
-import type { BodyCacheEntry } from "../worker/src/body-cache.ts";
+import { DEPLOYED_ARTICLE_CHAT_REVISION, type BodyCacheEntry } from "../worker/src/body-cache.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
 import type { KeyValueBinding, QueueBatchBinding } from "../worker/src/runtime-bindings.ts";
 import type { BodyJob } from "../worker/src/body-generate.ts";
@@ -540,6 +540,11 @@ describe("shared enrichment budget and pending body merge", () => {
         bodyEnqueueCap: 34,
         bodyEnqueued: 8,
         bodyLookupCount: 10,
+        chatCompatibilityRejected: 2,
+        chatRepairBlocked: 0,
+        chatRepairCandidates: 2,
+        chatRepairEnqueued: 2,
+        chatRepairPendingIds: ["chat-a", "chat-b"],
         bodyMerged: 2,
         bodyQueueDrainEstimateHours: 44,
         bodyMergePendingIds: ["body-a", "body-b"],
@@ -560,6 +565,11 @@ describe("shared enrichment budget and pending body merge", () => {
       bodyQueueMode: "enabled",
       bodyBacklog: 433,
       bodyEnqueued: 8,
+      chatCompatibilityRejected: 2,
+      chatRepairBlocked: 0,
+      chatRepairCandidates: 2,
+      chatRepairEnqueued: 2,
+      chatRepairPendingIds: ["chat-a", "chat-b"],
       bodyMerged: 2,
       bodyMergePendingIds: ["body-a", "body-b"],
       enrichmentEnqueueCap: 35,
@@ -882,9 +892,9 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     publisherContractFingerprint: DEPLOYED_PUBLISHER_FINGERPRINT,
   };
 
-  function oldBinaryKv(): KeyValueBinding {
+  function oldBinaryKv(cache: BodyCacheEntry = oldCache): KeyValueBinding {
     return {
-      get: async () => oldCache,
+      get: async () => cache,
       put: async () => {},
     } as unknown as KeyValueBinding;
   }
@@ -919,6 +929,11 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     expect(persisted?.bodyJa).toBe(oldCache.bodyJa);
     expect(persisted?.bodyEn).toBe(oldCache.bodyEn);
     expect(persisted?.chat).toBeUndefined();
+    expect(result.health.chatCompatibilityRejected).toBe(1);
+    expect(result.health.chatRepairCandidates).toBe(1);
+    expect(result.health.chatRepairEnqueued).toBe(1);
+    expect(result.health.chatRepairPendingIds).toEqual([article.id]);
+    expect(result.health.bodyMergePendingIds).toEqual([]);
   });
 
   it("does not graft old six-turn chat from chat-only KV onto existing prose", async () => {
@@ -936,6 +951,10 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     expect(persisted?.bodyJa).toBe(bodyGeneratedRecordText("existing").bodyJa);
     expect(persisted?.bodyEn).toBe(bodyGeneratedRecordText("existing").bodyEn);
     expect(persisted?.chat).toBeUndefined();
+    expect(result.health.chatCompatibilityRejected).toBe(1);
+    expect(result.health.chatRepairCandidates).toBe(1);
+    expect(result.health.chatRepairEnqueued).toBe(1);
+    expect(result.health.chatRepairPendingIds).toEqual([article.id]);
   });
 
   it("leaves already-published revision-less JA/EN six-turn chat intact", async () => {
@@ -953,6 +972,224 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     expect(persisted?.chat).toEqual(oldChat);
     expect(persisted?.chat?.map((turn) => turn.ja)).toEqual(oldChat.map((turn) => turn.ja));
     expect(persisted?.chat?.map((turn) => turn.en)).toEqual(oldChat.map((turn) => turn.en));
+    expect(result.health.chatRepairEnqueued).toBe(0);
+  });
+
+  const newChat: ArticleChatTurn[] = oldChat.map((turn) => ({
+    ...turn,
+    ja: turn.s === "a" ? "ポコの記事に関する質問です。" : "TECHガイドが記事の内容で答えます。",
+    en: turn.s === "a" ? "Poko asks about the article." : "TECH Guide answers from the article.",
+  }));
+  const newCache: BodyCacheEntry = {
+    ...oldCache,
+    chat: newChat,
+    articleChatRevision: DEPLOYED_ARTICLE_CHAT_REVISION,
+  };
+
+  it("accepts only the compiled revision in both normal and chat-only KV reads", async () => {
+    const normal = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(newCache), BODY_LOOKUP_CAP: "1", CHAT_LOOKUP_CAP: "0" }),
+      [article],
+      null,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+    expect(parseBodies(normal.bodiesFileContent).bodies[article.id]?.chat).toEqual(newChat);
+    expect(normal.health.chatRepairEnqueued).toBe(0);
+
+    const existingContent = storedBody();
+    const graft = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(newCache), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+    const persisted = parseBodies(graft.bodiesFileContent).bodies[article.id];
+    expect(persisted?.chat).toEqual(newChat);
+    expect(persisted?.bodyJa).toBe(bodyGeneratedRecordText("existing").bodyJa);
+    expect(persisted?.bodyEn).toBe(bodyGeneratedRecordText("existing").bodyEn);
+    expect(graft.health.chatRepairEnqueued).toBe(0);
+  });
+
+  it("rejects an old binary overwrite and re-enqueues a bounded repair that grafts on the next run", async () => {
+    let kvRecord = oldCache;
+    const sent: BodyJob[] = [];
+    const env = baseEnv({
+      SUMMARY_CACHE: {
+        get: async () => kvRecord,
+      } as unknown as KeyValueBinding,
+      BODY_QUEUE: {
+        sendBatch: async (batch: { body: BodyJob }[]) => {
+          sent.push(...batch.map((message) => message.body));
+        },
+      } as unknown as QueueBatchBinding<BodyJob>,
+      BODY_LOOKUP_CAP: "0",
+      CHAT_LOOKUP_CAP: "1",
+    });
+    const existingContent = storedBody();
+
+    const rejected = await runBodyPipeline(
+      env,
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+    expect(rejected.bodiesFileContent).toBeNull();
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.publisherContractFingerprint).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
+    expect(rejected.health.chatRepairPendingIds).toEqual([article.id]);
+    expect(rejected.health.bodyMergePendingIds).toEqual([]);
+
+    kvRecord = newCache;
+    const repaired = await runBodyPipeline(
+      env,
+      [article],
+      existingContent,
+      "2026-09-28T01:00:00.000Z",
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        previousChatRepairIds: rejected.health.chatRepairPendingIds,
+        nowMs: Date.parse("2026-09-28T01:00:00.000Z"),
+      },
+    );
+    expect(parseBodies(repaired.bodiesFileContent).bodies[article.id]).toMatchObject({
+      ...bodyGeneratedRecordText("existing"),
+      chat: newChat,
+    });
+    expect(sent).toHaveLength(1);
+    expect(repaired.health.chatRepairPendingIds).toEqual([]);
+
+    // A later overwrite cannot replace the already-published Poko six turns.
+    kvRecord = oldCache;
+    const preserved = await runBodyPipeline(
+      env,
+      [article],
+      repaired.bodiesFileContent,
+      "2026-09-28T02:00:00.000Z",
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse("2026-09-28T02:00:00.000Z") },
+    );
+    expect(parseBodies(preserved.bodiesFileContent ?? repaired.bodiesFileContent).bodies[article.id]?.chat)
+      .toEqual(newChat);
+  });
+
+  it("gives a pending repair one KV lookup on a miss before returning it to the next window", async () => {
+    const existingContent = storedBody();
+    const missingKv = {
+      get: async () => null,
+    } as unknown as KeyValueBinding;
+    const pending = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: missingKv, BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at), previousChatRepairIds: [article.id] },
+    );
+    expect(pending.health.chatLookupCount).toBe(1);
+    expect(pending.health.chatRepairEnqueued).toBe(0);
+    expect(pending.health.chatRepairPendingIds).toEqual([]);
+
+    const next = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: missingKv, BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      "2026-09-28T01:00:00.000Z",
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse("2026-09-28T01:00:00.000Z") },
+    );
+    expect(next.health.chatRepairEnqueued).toBe(1);
+    expect(next.health.chatRepairPendingIds).toEqual([article.id]);
+  });
+
+  it.each([
+    ["old publisher fingerprint", `sha256:${"e".repeat(64)}`],
+    ["unversioned cache", undefined],
+    ["wrong compiled revision", DEPLOYED_PUBLISHER_FINGERPRINT],
+  ])("rejects %s even when six bilingual turns are present", async (_label, fingerprint) => {
+    const cache: BodyCacheEntry = {
+      ...newCache,
+      publisherContractFingerprint: fingerprint,
+      ...(fingerprint === DEPLOYED_PUBLISHER_FINGERPRINT ? { articleChatRevision: "another-consumer-build" } : {}),
+    };
+    const existingContent = storedBody();
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(cache), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.chat).toBeUndefined();
+    expect(result.health.chatCompatibilityRejected).toBe(1);
+    expect(result.health.chatRepairEnqueued).toBe(1);
+  });
+
+  it("bounds repair to the shared body Queue allowance even when chat lookup sees more misses", async () => {
+    const articles = Array.from({ length: 6 }, (_, index) =>
+      entry({ id: `missing-chat-${index}`, publishedAt: `2026-09-${String(20 + index).padStart(2, "0")}T00:00:00.000Z` }));
+    const existing = serializeBodies({
+      generatedAt: at,
+      count: articles.length,
+      bodies: Object.fromEntries(articles.map((item) =>
+        [item.id, { ...bodyGeneratedRecordText(item.id), model: "legacy-import", generatedAt: at }])),
+    });
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: { get: async () => null } as unknown as KeyValueBinding, BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "6", BODY_ENQUEUE_MAX_NEW: "2" }),
+      articles,
+      existing,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at), enqueueCap: 2 },
+    );
+    expect(result.health.chatLookupCount).toBe(6);
+    expect(result.health.bodyEnqueueCandidates).toBe(2);
+    expect(result.health.bodyEnqueued).toBe(2);
+    expect(result.health.chatRepairEnqueued).toBe(2);
+    expect(result.health.chatRepairPendingIds).toHaveLength(2);
+    expect(result.health.bodyMergePendingIds).toEqual([]);
+  });
+
+  it("exposes incompatible chat as a release STOP when its source cannot support regeneration", async () => {
+    const articleWithoutSummary = entry({ ...article, summaryJa: PENDING_JA, summaryEn: "" });
+    const existingContent = storedBody();
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [articleWithoutSummary],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at) },
+    );
+    expect(result.health.chatCompatibilityRejected).toBe(1);
+    expect(result.health.chatRepairBlocked).toBe(1);
+    expect(result.health.chatRepairCandidates).toBe(0);
+    expect(result.health.chatRepairEnqueued).toBe(0);
+    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.bodyJa)
+      .toBe(bodyGeneratedRecordText("existing").bodyJa);
+  });
+
+  it("reports missing-chat work without claiming repair when the shared Queue allowance is zero", async () => {
+    const existingContent = storedBody();
+    const result = await runBodyPipeline(
+      baseEnv({ SUMMARY_CACHE: oldBinaryKv(), BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "1" }),
+      [article],
+      existingContent,
+      at,
+      DEPLOYED_PUBLISHER_FINGERPRINT,
+      { nowMs: Date.parse(at), enqueueCap: 0 },
+    );
+    expect(result.health.chatCompatibilityRejected).toBe(1);
+    expect(result.health.chatRepairCandidates).toBe(1);
+    expect(result.health.chatRepairEnqueued).toBe(0);
+    expect(result.health.bodyEnqueued).toBe(0);
+    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.chat).toBeUndefined();
   });
 });
 
@@ -1081,8 +1318,9 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
     );
 
-    expect(run2.enqueued).toBe(0);
+    expect(run2.enqueued).toBe(run2.health.chatRepairEnqueued);
     expect(run2.health.bodyMergePendingIds).toEqual([]);
+    expect(run2.health.chatRepairPendingIds).not.toContain("imp1-old");
     expect(run2.health.bodyBudgetPruned).toBe(0); // already at/under target, nothing new to prune
   });
 
@@ -1155,8 +1393,9 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
     );
-    expect(run2.enqueued).toBe(0);
+    expect(run2.enqueued).toBe(run2.health.chatRepairEnqueued);
     expect(run2.health.bodyMergePendingIds).toEqual([]);
+    expect(run2.health.chatRepairPendingIds).not.toContain("imp1-old");
     expect(run2.health.bodyBudgetPruned).toBe(0); // nothing NEW pruned this run
     expect(run2.bodiesFileContent).toBeNull(); // nothing changed, no new commit
     expect(run2.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]); // still persisted, not emptied
@@ -1174,8 +1413,9 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run2.health.bodyBudgetEvictedIds },
     );
-    expect(run3.enqueued).toBe(0);
+    expect(run3.enqueued).toBe(run3.health.chatRepairEnqueued);
     expect(run3.health.bodyMergePendingIds).toEqual([]);
+    expect(run3.health.chatRepairPendingIds).not.toContain("imp1-old");
     expect(run3.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
   });
 

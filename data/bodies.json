@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-28T18:30:38.490Z",
-  "count": 1140,
+  "generatedAt": "2026-09-28T19:30:56.511Z",
+  "count": 1143,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -3381,44 +3381,6 @@
           "s": "b",
           "ja": "そうじゃな。ただ記事では「任せて離れる」という想像とは少し違ったそうじゃ。その理想と実運用の差が見どころじゃよ。",
           "en": "Exactly. But the article says the reality differed somewhat from the idea of simply delegating and walking away. That gap is the key point to watch."
-        }
-      ]
-    },
-    "505391065e5eb481": {
-      "bodyJa": "AIが自らのコードを書き換えて能力を高める「自己進化」は、自律型エージェント研究の魅力的なテーマである一方、暴走や意図しない改変のリスクをはらむ。この課題に対し、AMA-terasと呼ばれるプロジェクトは、生成した自己改善コードをgitのworktreeで隔離し、「岩戸ゲート」という明示的な承認ステップを経なければ本体リポジトリへ反映できない設計を採用している。\n\ngit worktreeは、同一リポジトリから複数の作業ディレクトリを切り出せる標準機能で、ブランチを物理的に別フォルダとして展開できる。AMA-terasはこれを利用し、AIが提案する変更を本体とは分離した空間で生成・テストする。これにより、実験的なコードが即座にメインブランチへ流れ込むのを構造的に防いでいる。\n\n「岩戸ゲート」という名称は、日本神話で天照大神が岩戸に隠れた逸話に由来すると見られる。ここでは、AIが生成したコードが本体へ統合される前に必ず通過しなければならない関門を指し、人間またはあらかじめ定めた基準による承認がなければマージが許可されない。いわゆるヒューマン・イン・ザ・ループを、リポジトリ運用のレベルで強制する仕組みといえる。\n\n背景には、自律エージェントの能力向上に伴う安全性への関心の高まりがある。Claudeをはじめとする大規模言語モデルは、コード生成やツール操作を通じて複数ステップの作業を自動でこなせるようになりつつあり、AIが自身の動作を修正する構想も現実味を帯びている。一方で、権限管理や監査の仕組みが伴わなければ、意図しない変更が蓄積する懸念も指摘されている。\n\nAMA-terasのアプローチは、特別なAI制御技術ではなく、バージョン管理の一般的な仕組みを安全境界として転用している点が特徴的だ。worktreeによる隔離と承認ゲートの組み合わせは、変更履歴が追跡可能で、問題があれば切り戻せるという利点も持つ。自己進化と制御可能性を両立させる一つの実装例として、同種の自律エージェント開発において参考になる可能性がある。",
-      "bodyEn": "AMA-teras is an experimental autonomous-agent architecture, described in a Zenn blog post, that lets an AI model generate improvements to its own codebase while deliberately preventing that code from taking effect without a checkpoint. The project matters because it addresses one of the more difficult practical problems in agentic AI: how to allow a system to evolve continuously without letting it silently rewrite the core it is running on. Rather than treating self-improvement as a purely open-ended loop, AMA-teras frames it as a pipeline with a mandatory gate.\n\nThe central design choice is to separate where code is written from where code runs. When the agent produces self-improvement code, that code is committed into a git worktree instead of being applied directly to the main branch. In Git, a worktree is a standard feature that lets a single repository check out multiple branches into separate directories at the same time, each with its own working state but sharing the same underlying object database. This means an agent can experiment freely in an isolated directory, run tests, and iterate, all without touching the files that define the live system. If a generated change is flawed or unsafe, it stays quarantined in the worktree and never reaches the branch the running agent depends on.\n\nThe second component is what the author calls the \"岩戸ゲート\" or Iwato Gate, an explicit approval step that must be cleared before any worktree changes are merged into the main branch. The name references the Ama-no-Iwato myth, the heavenly rock cave from which the sun goddess Amaterasu emerged, fitting the project's broader mythological theming. Functionally, the gate acts as a human-in-the-loop or policy checkpoint: self-generated code accumulates on the isolated side of the gate, and only a deliberate approval action moves it across into the code that governs the agent. The stated goal is to keep continuous evolution possible while making unauthorized self-modification structurally difficult rather than merely discouraged.\n\nThis approach reflects a broader concern in AI safety about self-modifying or recursively self-improving systems. A recurring worry is that an autonomous agent granted write access to its own logic could alter its behavior, remove its own guardrails, or introduce regressions faster than an operator can review them. AMA-teras appears to address this not by forbidding self-improvement outright, but by controlling the merge path, which is the point where generated code becomes operative. Isolating changes in a worktree and requiring an approval gate turns a potentially unbounded loop into a reviewable series of proposals. It is worth noting that the security of this arrangement depends on the agent not having the ability to bypass the gate directly, for example by writing to the main branch through other means, so the enforcement boundary matters as much as the concept.\n\nThe design sits alongside a wave of coding-oriented agents and frameworks. Tools such as Claude Code, on whose ecosystem this project is based, along with SWE-agent, Devin, and various open-source AutoGPT-style loops, have made it routine for models to read repositories, edit files, and run commands. Git worktrees have separately gained popularity as a way to run several agent sessions or experiments in parallel without conflicting checkouts, so AMA-teras builds on an increasingly common pattern rather than inventing one. Related safety practices include sandboxing agent execution, restricting file-system and network permissions, and requiring pull-request review before merges, all of which aim to keep a deliberate boundary between what an agent proposes and what actually runs.\n\nFor readers evaluating the idea, a few prerequisites help. Understanding branches, merges, and worktrees clarifies why isolation is cheap and reversible in Git. Understanding the concept of human-in-the-loop control clarifies what the gate is meant to guarantee and what it cannot: a gate reduces the risk of unreviewed changes, but the quality of review still determines whether harmful code is caught.\n\nAs a design pattern, AMA-teras is a concrete, reproducible way to bound self-improving agents using existing version-control primitives rather than novel infrastructure. It is presented as an architecture rather than a formal safety proof, so its effectiveness likely depends on implementation details, the rigor of the approval step, and whether the isolation boundary holds under adversarial or buggy behavior. Still, the pattern of quarantine plus explicit approval offers a pragmatic template that other autonomous-agent projects could adopt.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T20:12:16.929Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AIが自己進化するのに、本体は勝手に書き換えないの？ git worktreeって何？",
-          "en": "The AI improves itself but can’t rewrite the core system on its own? What’s a git worktree?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、worktreeは変更を本体から分けて試す作業場所じゃ。記事によれば、承認までは本体へマージできない設計じゃよ。",
-          "en": "Simply put, a worktree is a separate workspace for trying changes. According to the article, nothing can be merged into the core repository before approval."
-        },
-        {
-          "s": "a",
-          "ja": "隔離するだけじゃなく、何を確認してから承認するの？ それって何が嬉しいの？",
-          "en": "So what gets checked before approval, beyond just isolating the code? What’s the benefit?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、typecheck・テスト・実起動スモークを通し、最後に人が承認するんじゃ。自律的な書き換えを抑えつつ改善を続けられるのが利点じゃな。",
-          "en": "The article says changes undergo type checks, tests, and a startup smoke check before human approval. That allows ongoing improvement while limiting autonomous rewrites."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ AIは改善案を作って検証できるけど、本体への反映や外部公開の決定は人が握るんだね。",
-          "en": "Got it! The AI can create and verify improvements, but humans retain control over applying them to the core system or publishing them."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、ZennやGitHub Releaseも下書きまでは自動化できるが、公開には承認が必要という点が見どころじゃ。",
-          "en": "Exactly. The article also highlights that Zenn and GitHub Release drafts may be automated, but publishing still requires explicit approval."
         }
       ]
     },
@@ -27898,7 +27860,39 @@
       "bodyJa": "## WSLとVS Code\n\nWSL上のROS 2とGazeboを使い、LiDARを搭載したUnitree Go2で3D点群地図の保存から自律走行までを試す構成です。Visual Studio Code内で設定変更、ビルド、状態確認、デバッグを進められる点が中心となります。\n\nROS 2ワークスペースは、Visual Studio CodeのRemote - WSL接続から直接開けます。Linux側にあるlaunch、YAML、Python、C++を編集し、統合ターミナルでビルドやトピック、TFを確認できるため、シミュレーションに関する作業を同じ環境で完結できます。\n\n## 3D点群地図\n\nGazebo上のUnitree Go2には、Livox MID360相当のLiDARを搭載します。3D点群地図の保存にはFAST-LIOを使用しますが、Nav2が自律走行に使う地図はこの3D地図ではありません。\n\nNav2向けの2D occupancy gridには、Gazeboワールド内に配置した障害物の座標から生成した固定地図を使用します。自己位置にはGazeboのground-truthオドメトリを用いるため、Gazebo画面とRViz2に表示されるGo2の位置を同じ座標系で扱えます。\n\n## Nav2とCHAMP\n\n自律走行では、Nav2とCHAMPが役割を分担します。Nav2が経路を計画し、速度指令を/cmd_velとしてCHAMPへ渡します。CHAMPはその指令を歩容計算と関節軌道へ変換し、各脚を動かして、計画された経路に沿うようGo2を歩行させます。\n\n## 前提環境\n\n実験環境はWSL2のUbuntu 22.04 LTSとROS 2 Humbleを前提とします。Unitree Go2のCHAMPコントローラ、FAST-LIO、Livox-SDK2がセットアップ済みで、~/ros2_ws/src配下にはunitree_ros2、unitree-go2-ros2-gazebo、livox_ros_driver2、fast_lioの各リポジトリが配置されている構成です。",
       "bodyEn": "## Visual Studio Code Environment\n\nThis workflow builds an autonomous patrol system for a LiDAR-equipped Unitree Go2 using ROS 2 and Gazebo. It is useful for robotics developers who want to complete development and verification within WSL2 and Visual Studio Code.\n\nA ROS 2 workspace running on WSL can be opened directly through Visual Studio Code’s Remote - WSL connection. Developers can edit Linux-side launch files, YAML, Python, and C++ while using the integrated terminal to build the workspace and inspect topics and TF. This keeps simulation configuration changes and debugging in the same environment.\n\n## FAST-LIO and 3D Mapping\n\nIn Gazebo, the Unitree Go2 is equipped with the equivalent of a Livox MID360 LiDAR. FAST-LIO is used to create and save a 3D point-cloud map before the robot proceeds to autonomous navigation.\n\nThe 3D map is separate from the map used by Nav2 in this simulation. Nav2 uses a fixed 2D occupancy grid generated from the coordinates of obstacles placed in the Gazebo world. For localization, the setup uses Gazebo ground-truth odometry. This allows the Go2 positions shown in Gazebo and RViz2 to be handled in the same coordinate frame.\n\n## Nav2 and CHAMP\n\nNav2 plans the robot’s route and sends velocity commands through /cmd_vel. CHAMP, a control framework for quadruped robots, is responsible for Go2 locomotion.\n\nCHAMP converts the velocity commands received from Nav2 into gait calculations and joint trajectories, then moves each leg to make the robot walk. The division of responsibilities is therefore explicit: Nav2 calculates the path, while CHAMP makes the Go2 physically follow it in the simulation.\n\n## WSL2 Setup\n\nThe procedure assumes WSL2 with Ubuntu 22.04 LTS, ROS 2 Humble, a Unitree Go2 with a CHAMP controller, FAST-LIO, and Livox-SDK2 are already configured. It also assumes the unitree_ros2, unitree-go2-ros2-gazebo, livox_ros_driver2, and fast_lio repositories are present under ~/ros2_ws/src.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-07T20:14:38.582Z"
+      "generatedAt": "2026-09-07T20:14:38.582Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "FAST-LIOで3D地図を作るのに、Nav2は別の2D固定地図を使うの？なんで分けるんだろう。",
+          "en": "FAST-LIO builds a 3D map, but Nav2 uses a separate fixed 2D map? Why are they split up?"
+        },
+        {
+          "s": "b",
+          "ja": "この実験では、3D点群はFAST-LIOで保存し、Nav2には障害物の座標から作った固定地図を使う構成なんだ。自己位置はGazeboのオドメトリで合わせているよ。",
+          "en": "In this experiment, FAST-LIO saves the 3D point cloud, while Nav2 uses a fixed map generated from obstacle coordinates. Gazebo odometry provides the robot’s position."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、WSL2でロボット開発する人が、地図作りから自動巡回まで同じ環境で試せるってこと？",
+          "en": "So robotics developers on WSL2 can test everything from mapping to autonomous patrols in one environment?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。VS CodeでLinux側の設定やコードを編集し、ビルドや確認まで進められる。Nav2が経路を決め、CHAMPがGo2を歩かせる役割分担だよ。",
+          "en": "Yes. They can edit Linux-side settings and code in VS Code, then build and inspect the system there. Nav2 plans the route, and CHAMP makes the Go2 walk it."
+        },
+        {
+          "s": "a",
+          "ja": "3D地図の保存と巡回用の2D地図は別で、VS Codeの中から設定やデバッグまで進められるんだね。",
+          "en": "Got it: the saved 3D map and patrol’s 2D map are separate, while setup and debugging can stay inside VS Code."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただし、ROS 2 HumbleやCHAMP、FAST-LIOなどがセットアップ済みのWSL2環境が前提だよ。",
+          "en": "Right. One caveat: it assumes a prepared WSL2 environment with ROS 2 Humble, CHAMP, FAST-LIO, and the other listed components already set up."
+        }
+      ]
     },
     "1cc91ed409b35a5d": {
       "bodyJa": "Microsoftは、放射線画像を扱うAIを臨床現場でより役立つものにすることを狙った視覚言語モデル「Care-X」を発表した。読影支援AIは近年急速に進化しているが、研究上の性能と実際の診療での有用性の間には隔たりが残るとされ、Care-Xはその溝を埋めることを目指している。\n\nCare-Xは、放射線画像とテキストを同時に扱う「視覚言語モデル（Vision-Language Model、VLM）」と呼ばれる種類のAIだ。X線やCTといった医療画像から所見を読み取り、自然言語で説明や報告書の草案を生成する用途が想定される。Microsoftによれば、Care-Xは主に三つの技術的な工夫によって臨床有用性を高めているという。\n\n一つ目は「補助的監督（auxiliary supervision）」で、主要なタスクに加えて補助的な学習信号を与えることで、モデルが医療画像の特徴をより正確に捉えられるようにする手法と見られる。二つ目は「報酬に整合した学習（reward-aligned learning）」で、臨床上望ましい出力に報酬を与える形で学習を方向づけ、実際の診療のニーズに沿った応答を促す狙いがあるとされる。三つ目は「ツール拡張による計測（tool-augmented measurement）」で、外部ツールを組み合わせて定量的な計測能力を補い、単なる文章生成にとどまらない実務的な支援を可能にすると見られる。\n\n背景として、放射線科は画像診断の需要増加と読影医の不足が課題となっており、AIによる読影支援への期待は世界的に高まっている。医療画像向けの基盤モデル開発は各社が競う分野となっており、Microsoftもこれまで医療分野向けのAI研究に取り組んできた。一方で、医療AIは誤りが患者の安全に直結するため、精度や説明可能性、規制対応が重視される領域でもある。\n\nCare-Xがどの程度実際の診療に組み込まれるかは、今後の臨床評価や検証の積み重ねに左右される可能性がある。ただ、性能指標の向上だけでなく「臨床での有用性」を明確な目標に掲げた点は、医療AIの実装を巡る議論に一石を投じるものと言えそうだ。",
@@ -28964,82 +28958,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-11T06:46:21.412Z"
     },
-    "a071b24cf55eb94e": {
-      "bodyJa": "## 公開プレビュー\n\nGitHub code scanningのプルリクエスト向けAI Scanを管理するREST APIが、公開プレビューとして提供された。組織やリポジトリごとに有効状態を取得・変更でき、選択したリポジトリへのAIを利用したセキュリティ検出の導入をプログラムから進められる。\n\n## REST API\n\n新しいAPIでは、プルリクエスト向けAI Scanが有効かどうかを読み取り、設定を更新できる。GitHub UIで各設定を手作業で変更する代わりに、APIを通じて対象リポジトリへの展開を自動化できるため、複数の設定を扱うチームが選択的に導入する方法として利用できる。\n\n組織単位の操作には「/orgs/{org}/code-scanning/ai-scan」、リポジトリ単位の操作には「/repos/{owner}/{repo}/code-scanning/ai-scan」エンドポイントを使用する。\n\n## 組織設定\n\n組織レベルの設定は、その組織全体でプルリクエストのスキャンを実行できるかどうかを制御する。組織側でAI Scanが無効になっている場合、リポジトリ側の設定によってスキャンを有効化することはできない。個別設定よりも組織設定が優先される構造となる。\n\n## リポジトリ設定\n\nリポジトリレベルでは、個々のリポジトリについてプルリクエスト向けAI Scanをオンまたはオフにできる。組織側で実行が許可されている範囲内で、対象を選びながら設定できるため、すべてのリポジトリを同じ状態にせず、選択したリポジトリの状態を取得・更新する構成が可能になる。",
-      "bodyEn": "## AI Scan for pull requests\n\nGitHub code scanning’s AI Scan for pull requests can now be managed through REST API endpoints in public preview. The APIs matter because they give teams a programmatic way to roll out AI-powered security detections across selected repositories without manually configuring every setting in the GitHub UI.\n\nThe new endpoints operate at both the organization and repository levels. Teams can use them to read the current enablement status and update whether AI Scan for pull requests is enabled.\n\n## Organization settings\n\nOrganization settings determine whether pull request scans can run across the organization. The organization-level API can therefore be used to read or change the broader setting that controls the availability of these scans.\n\nThe endpoint for viewing and updating AI Scan status at this level is /orgs/{org}/code-scanning/ai-scan. This provides a central way to manage whether the feature can be used across an organization as part of a programmatic rollout.\n\n## Repository settings\n\nRepository settings provide more specific control, allowing scans to be turned on or off for individual repositories. This enables teams to select which repositories use AI Scan for pull requests rather than configuring every repository in the same way.\n\nHowever, a repository setting cannot override an organization-level disabled state. If AI Scan for pull requests is disabled for the organization, enabling it for an individual repository does not supersede that restriction.\n\n## Selected repositories\n\nFor repository-level management, users can view and update the status through /repos/{owner}/{repo}/code-scanning/ai-scan. Together with the organization endpoint, this allows teams to automate selective deployment across repositories while preserving organization-wide control.\n\nThe public preview is focused on managing enablement: reading whether AI Scan for pull requests is active and changing that status at the relevant organization or repository level.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "チームでプルリクエストを確認する仕事は、普段どう変わるの？",
-          "en": "How does this change the day-to-day work of reviewing pull requests as a team?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、AI Scanの有効・無効をAPIで読み取り、選んだリポジトリへの導入を自動化できるようになったのじゃ。",
-          "en": "The article says teams can use APIs to check or change AI Scan settings and automate rollout to selected repositories."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ リポジトリごとに画面で設定していたってこと？",
-          "en": "Wasn’t that possible before? Did teams have to configure each repository through the UI?"
-        },
-        {
-          "s": "b",
-          "ja": "ここで示された違いは、GitHub UIで一つずつ手作業する代わりに、組織・リポジトリ単位のREST APIを使える点じゃよ。",
-          "en": "The stated difference is that teams can now use organization- and repository-level REST APIs instead of manually changing each setting in the GitHub UI."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、選んだリポジトリだけ自動で導入できて、組織全体の方針も保てるのが一番の収穫だね！",
-          "en": "Oh, so the big win is automating rollout only to selected repositories while keeping the organization-wide policy intact!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃのう。次に押さえたいのは、組織側で無効ならリポジトリ側では上書きできない点と、まだ公開プレビューだという点じゃ。",
-          "en": "Exactly. The next things to note are that repository settings can’t override an organization-wide disabled state, and this is still a public preview."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-11T06:46:27.214Z"
-    },
-    "6172f21847b07791": {
-      "bodyJa": "GitHub Actionsで、キャッシュへのアクセスをワークフロー単位またはジョブ単位で制御するcache-modeが、全プランで一般提供された。必要な権限だけを与える最小権限の適用により、不要な復元や保存を防ぎ、信頼済みワークフローをキャッシュ汚染から保護しやすくする機能だ。\n\n## cache-mode\n\ncache-modeでは、キャッシュの利用範囲を処理ごとに分けられる。ワークフロー全体に方針を設定するだけでなく、個別のジョブにも異なるアクセス権限を与えられるため、それぞれが必要とする操作だけを許可できる。キャッシュを利用するか否かに加え、復元と保存を個別に制限できる点が中心となる。\n\n## 4つの権限\n\n選択できるモードはread、write、write-only、noneの4種類だ。readはキャッシュの復元を許可する一方、保存を禁止する。writeは復元と保存の両方を許可する。write-onlyは保存のみを許可し、既存キャッシュの復元は認めない。noneを選ぶと、復元と保存を含むすべてのキャッシュアクセスが禁止される。\n\n## イベント別の既定\n\n低信頼イベントとされるpull_request_targetでは、既定値がreadとなる。このため、キャッシュは復元できるが、新たな保存は行えない。信頼済みイベントとされるpushではwriteが既定値で、キャッシュの復元と保存の双方が許可される。\n\n## ジョブ単位の優先\n\nジョブ単位の設定は、ワークフロー単位の設定より優先される。選択したモードはキャッシュサービスによって強制され、再利用可能ワークフローにも引き継がれる。呼び出されたワークフローに与えられるキャッシュアクセスは、呼び出し元が許可した範囲を超えることはできない。",
-      "bodyEn": "## Least-privilege cache access\n\nGitHub Actions now supports cache-mode for controlling cache access at the workflow or job level. This matters because granting each workflow or job only the access it needs can prevent unnecessary cache restores or saves and help protect trusted workflows from cache poisoning.\n\nThe capability is generally available on all plans. Cache access can be set to read, write, write-only, or none, allowing workflows and jobs to receive different permissions according to their needs.\n\n## Read and write\n\nThe read mode permits cache restores but prevents cache saves. It is the default for low-trust events such as pull_request_target, limiting those events to retrieving existing cache data without allowing them to save data to the cache.\n\nThe write mode permits both cache restores and cache saves. It is the default for trusted events such as push, providing access to retrieve cached data and store cache data.\n\n## Write-only and none\n\nThe write-only mode allows cache saves while preventing cache restores. A workflow or job using this mode can add data to the cache but cannot retrieve cached data.\n\nThe none mode blocks all cache access. It prevents both restores and saves, making it the option for workflows or jobs that do not require access to the GitHub Actions cache.\n\nTogether, these modes allow cache permissions to be limited to the specific restore and save operations required by each workflow or job.\n\n## Job-level settings\n\nCache-mode can be applied at both the workflow and job levels. When both are present, job-level settings override workflow-level settings.\n\nThe selected mode is enforced by the cache service. Its restrictions also carry through reusable workflows: a called workflow cannot receive more cache access than its caller granted. This preserves the caller’s access limit even when execution continues through a reusable workflow.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "read、write、write-only、noneの4種類を全プランで選べるようになったんだ！これって大きいこと？",
-          "en": "There are now four options—read, write, write-only, and none—across every plan! Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな変化じゃ。この記事では、ワークフローやジョブに必要な権限だけを与え、不要な復元や保存を防げるとしておるよ。",
-          "en": "It is. The article says each workflow or job can get only the access it needs, preventing unnecessary cache restores and saves."
-        },
-        {
-          "s": "a",
-          "ja": "「キャッシュ汚染」って何？信頼済みの処理を守るって、つまりどういうこと？",
-          "en": "What is “cache poisoning”? What does it mean to protect trusted workflows from it?"
-        },
-        {
-          "s": "b",
-          "ja": "一般には、キャッシュに望ましくない内容が入り、後の処理がそれを使う状態じゃ。ここでは権限を絞って、その危険を減らすという話じゃよ。",
-          "en": "Generally, it means unwanted content gets into a cache and is later reused. Here, the idea is to reduce that risk by limiting cache access."
-        },
-        {
-          "s": "a",
-          "ja": "僕なら、読むだけのジョブはread、保存だけならwrite-onlyにして、必要な役割だけ渡したいな！",
-          "en": "I’d give read-only jobs “read” and save-only jobs “write-only,” so each one gets only the role it needs!"
-        },
-        {
-          "s": "b",
-          "ja": "よい使い分けじゃのう。ただしジョブ設定はワークフロー設定より優先され、再利用先も呼び出し元を超える権限は受け取れないぞ。",
-          "en": "That’s a sensible split. Just note that job settings override workflow settings, and reusable workflows can’t receive more cache access than their caller grants."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-11T06:47:12.202Z"
-    },
     "5b425696576159b9": {
       "bodyJa": "## 大規模な作業\n\nCursorに、機能開発や移行、アプリ全体の構築といった大規模な作業を扱うProjectsが登場した。数か月にわたるコンテキストを維持し、数千のサブエージェントへタスクを委任できる点が中核となる。\n\nProjectsは左側のナビゲーションから利用できる。betaとして提供され、本日よりすべてのユーザーへ順次展開される。\n\n## コーディネーター\n\nプロジェクト内のコーディネーターエージェントは、自らコードを書くのではなく、作業を計画して実装担当のエージェントへ委任する。必要な数のエージェントを作成・管理し、並列で実行したうえで、完成した成果物をユーザーの確認へ回す仕組みだ。\n\nProjectはクラウド上の専用コンピュータで動作するため、ノートパソコンを閉じても処理が止まらない。手元のマシンでテストが必要な場合は、コーディネーターがローカルエージェントを起動して実行する。\n\n## 共有コンテキスト\n\n各Projectは、エージェントが利用するクラウドおよびローカルマシン間で同期されるファイル群を保持する。リサーチやアーティファクトだけでなく、コードベースから学んだ内容や、ユーザーが好む作業の進め方も蓄積される。\n\nあるエージェントがサービスのテスト方法を突き止めれば、以降のエージェントも同じ手順を利用できる。共有コンテキストはProjectとともに育ち、コーディネーターは時間の経過に伴って、より効果的になると説明されている。\n\n## 定期的な作業\n\nコーディネーターには、Slackチャネルの監視、スケジュールでの実行、すべてのPRの追跡などを指示できる。ユーザーのプロンプトを待たず、検知したシグナルに応じてアクションを実行する。\n\nSlackを接続してバグ報告チャネルを指定すると、バグが報告されるたびに作業の委任が自動的に始まる。これにより、指示なしで定期的な作業を継続できる。",
       "bodyEn": "## Cursor Projects\n\nCursor Projects is a beta feature for handling large-scale work such as feature development, migrations, and building entire applications. It matters because a Project can preserve context across months of work, delegate tasks to thousands of subagents, and perform recurring work without additional instructions.\n\nProjects is available from the left-side navigation. It is rolling out gradually to all users starting today.\n\n## Coordinator and subagents\n\nEach Project has a coordinator agent that plans the work but does not write code itself. Instead, the coordinator delegates implementation to the appropriate agents and delivers completed results for review.\n\nThe coordinator creates and manages agents on the user’s behalf. It can run as many agents in parallel as the work requires, allowing a large task to be divided among multiple subagents while remaining under the coordinator’s direction.\n\n## Shared context\n\nA Project maintains a set of files synchronized across every cloud and local machine used by its agents. This means users do not need to explain the full task again whenever another agent starts working.\n\nAgents accumulate research, artifacts, knowledge about the codebase, and information about the user’s preferred way of working. If one agent determines how to test a service, later agents can use the same procedure. This shared context grows with the Project, enabling the coordinator to become more effective over time.\n\n## Cloud execution\n\nProjects run on dedicated computers in the cloud, so processing continues even when the user closes their laptop. When testing must be performed on the user’s machine, the coordinator launches a local agent to run it there.\n\nUsers can also instruct the coordinator to monitor a Slack channel, run on a schedule, or track every PR. The coordinator can then act on detected signals rather than waiting for another prompt. For example, after Slack is connected and a bug-report channel is specified, the coordinator can automatically begin delegating work whenever a bug is reported.",
@@ -29652,7 +29570,39 @@
       "bodyJa": "## 1.131リリース\n\nVisual Studio Code 1.131がリリースされた。実行中のサブエージェントに関する表示、ワークベンチ全体で使える組み込み音声入力、新しいハイブリッドMarkdownエディターが主な変更点となる。音声入力とMarkdown編集は実験的機能と位置付けられており、1.131はすべてのユーザーへ段階的に展開されている。\n\n## サブエージェント\n\n実行中のサブエージェントについて、使用しているモデル、処理開始からの経過時間、現在アクティブなツール呼び出しを確認できるようになった。これらの情報を見るために、そのサブエージェントの会話を開く必要はない。サブエージェントが動作している最中でも、会話画面へ移動せずに実行状況を把握できる表示となっている。\n\n## 組み込み音声入力\n\n実験的機能として、音声入力がワークベンチに組み込まれた。チャットだけでなく、エディターやターミナルでも音声入力を利用できる。「Speech」拡張機能をインストールしなくても使用できる点が特徴で、従来のように音声入力用の拡張機能を別途導入する必要がない。\n\n## Markdown編集\n\n新しいハイブリッドMarkdownエディターも実験的機能として追加された。Agentsウィンドウ内でMarkdownファイルを表示し、そのまま編集できるほか、エージェントがアクション可能なコメントを追加できる。Markdownの閲覧と編集、エージェント向けコメントの付加を、Agentsウィンドウ内で扱える機能としてまとめている。",
       "bodyEn": "## Visual Studio Code 1.131\n\nVisual Studio Code 1.131 delivers a new round of editor features and improvements for developers. The release focuses on greater visibility into running subagents, built-in dictation across the workbench, and a new hybrid Markdown editor, giving users additional ways to interact with agents, text, and Markdown files.\n\nThe release materials also point to a blog about enabling persistent, portable agent sessions with the Agent Host.\n\n## Subagents and built-in dictation\n\nThe subagent update makes key information visible without requiring users to open the subagent’s conversation. While a subagent is running, users can see its model, elapsed time, and active tool call. This brings information about the running subagent directly into view while leaving its conversation closed.\n\nBuilt-in dictation is an experimental feature in this release. It supports dictation in chat, editors, and the terminal. Because the capability is built in, users can dictate in those areas without installing the Speech extension.\n\n## Hybrid Markdown editor\n\nVisual Studio Code 1.131 also introduces an experimental hybrid Markdown editor. It is available in the Agents window and supports viewing and editing Markdown files there.\n\nThe editor additionally allows users to add agent-actionable comments to Markdown files. Together, these capabilities provide a single place in the Agents window to view Markdown content, make edits, and attach comments that are actionable by agents.\n\n## Downloads and rollout\n\nDownloads are listed for several system and architecture options. Windows downloads include x64 and Arm64. Mac downloads are listed as Universal, Intel, and silicon. Linux options include deb, rpm, tarball, Arm, and snap.\n\nVisual Studio Code 1.131 is rolling out gradually to all users.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-13T02:02:25.443Z"
+      "generatedAt": "2026-09-13T02:02:25.443Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "動いているサブエージェント、会話を開かなくても何が見えるようになったの？",
+          "en": "What can I see about a running subagent without opening its conversation?"
+        },
+        {
+          "s": "b",
+          "ja": "使っているモデル、経過時間、実行中のツール呼び出しを確認できるようになったよ。",
+          "en": "You can now check its model, elapsed time, and active tool call."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、サブエージェントの動きを確かめたい開発者が、会話を行き来せず確認できるんだね？",
+          "en": "So developers checking on a subagent can see what it’s doing without jumping into its conversation?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。会話を開かず実行状況が見えるので、動作を追いやすくする改善といえそうだよ。",
+          "en": "Right. Seeing its status without opening the conversation should make its activity easier to follow."
+        },
+        {
+          "s": "a",
+          "ja": "サブエージェントの進み具合が、外から分かりやすくなったんだね。",
+          "en": "Got it—the subagent’s progress is now easier to understand at a glance."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただし、VS Code 1.131は全ユーザーへ段階的に展開されている点には注意してね。",
+          "en": "Yes. Just note that VS Code 1.131 is rolling out gradually to all users."
+        }
+      ]
     },
     "3c500fb9ffe03c8f": {
       "bodyJa": "## Lyria 3.5\n\nGoogleは、AI音楽生成モデル「Lyria 3.5」をGoogle Flow Musicに導入する。音楽性、歌詞、ボーカル品質、クリエイティブ制御を幅広く改善し、より豊かな楽曲を制作できるようにする更新と説明されている。\n\nLyria 3.5は、Google Flow Musicで順次提供される。利用者が好みの曲を作れるよう、生成結果の品質だけでなく、制作時の制御性も高めている点が特徴となる。\n\n## 音楽性と旋律\n\n音楽性の面では、より豊かで複雑な旋律構造を生成できるようになった。生成されるメロディーは、従来よりも自然に聞こえるとされる。単に旋律を複雑にするだけではなく、自然さを保ちながら構造を充実させることが、今回の改善点として示されている。\n\n## 歌詞とボーカル\n\n歌詞生成では、品質に加えて、入力したプロンプトへの忠実度と構造の認識が改善された。求められた内容を反映しつつ、歌詞としての構造を意識した出力を生成できるとしている。\n\nボーカルも、より現実感のある表現へと改善された。感情の機微を含む歌声により、楽曲へ表現や感情を加えやすくなったほか、発音の品質も向上している。\n\n## テンポと長さ\n\nクリエイティブ制御では、生成する楽曲のテンポと長さを、より簡単に調整できるようになった。Lyria 3.5は、旋律、歌詞、歌声の品質向上とあわせて、出力内容を利用者が制御しやすくすることを重視している。",
@@ -37410,7 +37360,39 @@
       "bodyJa": "## プライベートプレビュー\n\nAgent Anomaly Detectionが、Gemini Enterprise Agent Platformでプライベートプレビューとなった。エージェントの振る舞いに潜むリスクを検出し、開発者が確認したり、条件に応じて後続のツール呼び出しを遮断したりできる仕組みだ。\n\n## 帯域外の監視\n\nAgent Anomaly Detectionは、Gemini Enterprise Agent Platformに対する新しい帯域外の監視レイヤーとして機能する。OpenTelemetryのトレースとツール呼び出しを分析する一方、ライブリクエストの実行経路には入らない。このため、実行中のリクエストにランタイム遅延を加えることなく、エージェントの行動上のリスクを捉えると説明されている。\n\n## 多層検出パイプライン\n\n検出には、多層のパイプラインが用いられる。軽量な統計スキャンと、LLMによる深い推論を組み合わせ、単純な傾向の確認だけでなく、論理的な異常やポリシー違反を特定する。検出対象となるリスクは、OWASP Agentic Top 10を基準としている。\n\n## リスク確認と遮断\n\n自動検出された内容は、Security Command Center内で開発者がトリアージできる。また、公開されたAPIを利用し、エージェントが定義済みのリスクしきい値を超えた場合に、プログラムから後続のツール呼び出しを遮断できる。検出結果の確認に加え、その後の処理を制御する手段も提供される。",
       "bodyEn": "## Agent Anomaly Detection\n\nAgent Anomaly Detection has entered private preview for the Gemini Enterprise Agent Platform. It adds an out-of-band oversight layer that can identify behavioral risks while avoiding additional runtime latency for live requests.\n\nThe system checks activity off-path rather than inserting detection into the handling of each live request. It analyzes OpenTelemetry traces and tool calls, giving developers a way to examine agent behavior separately from the request path. This approach allows automated oversight without placing the analysis directly in the runtime flow.\n\n## Multi-tiered detection pipeline\n\nDetection uses a multi-tiered pipeline that combines lightweight statistical scanning with deeper reasoning based on large language models. The statistical stage provides one level of analysis, while the LLM-based stage is used to reason about behavior in greater depth.\n\nThe pipeline is intended to find logical anomalies and policy violations. Its findings are grounded in the OWASP Agentic Top 10, providing the basis for the behavioral risks and policy issues it detects.\n\nBecause the oversight layer examines both traces and tool calls, it can assess recorded agent activity as well as interactions with tools. The resulting findings are automated and can then be reviewed by developers.\n\n## Security Command Center\n\nDevelopers can triage Agent Anomaly Detection findings within Security Command Center. This provides a place to review the risks identified by the detection pipeline and determine how they relate to agent behavior.\n\nThe system also exposes an API for programmatic responses. When an agent breaches defined risk thresholds, developers can use the API to block subsequent tool calls. The blocking applies to later calls rather than adding latency to the live request already being analyzed.\n\nTogether, the review and API options support two responses to detected risks: developers can inspect automated findings in Security Command Center, or they can use defined thresholds to prevent additional tool activity programmatically.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-17T07:45:52.324Z"
+      "generatedAt": "2026-09-17T07:45:52.324Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "動いているリクエストを遅くせずに、どうやって異常を見つけるの？",
+          "en": "How can it spot anomalies without slowing down live requests?"
+        },
+        {
+          "s": "b",
+          "ja": "処理経路の外でOpenTelemetryのトレースやツール呼び出しを調べるんだ。統計的な検査とLLMによる推論を組み合わせているよ。",
+          "en": "It checks OpenTelemetry traces and tool calls off-path, combining lightweight statistical scans with deeper LLM-based reasoning."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ開発者は、エージェントの動きを遅くせずに、危ない振る舞いを確認できるってこと？",
+          "en": "So developers can review risky agent behavior without adding latency to what the agent is doing?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。Security Command Centerで検出結果を確認し、設定したしきい値を超えたらAPIで後続のツール呼び出しを遮断できるよ。",
+          "en": "Yes. They can review findings in Security Command Center and use the API to block later tool calls when a defined risk threshold is crossed."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。論理的な異常やポリシー違反を見つけて、次のツール操作を止められるんだね。",
+          "en": "Got it. It can flag logical anomalies or policy violations, then help stop the next tool action."
+        },
+        {
+          "s": "b",
+          "ja": "ただし今はプライベートプレビューだよ。遮断対象は後続のツール呼び出しで、判断は設定したリスクしきい値に基づく点も押さえたいね。",
+          "en": "One caveat: it’s currently in private preview. Blocking applies to subsequent tool calls and depends on the defined risk thresholds."
+        }
+      ]
     },
     "cc0b517ee2d1e2a7": {
       "bodyJa": "## 最高ティア\n\nGitHubプロフィールで、複数段階がある実績バッジの表示が変更された。利用者が最初に獲得した段階ではなく、これまでに到達した最高ティアを示すことで、最新の達成度と積み重ねた進捗がプロフィールへ正確に反映される。\n\n## 従来の表示\n\n従来のプロフィールでは、実績が複数のレベルに分かれている場合、利用者がさらに高いレベルへ進んだ後も、最初に獲得したティアが表示されることがあった。そのため、表示中のバッジだけでは、実際にどの段階まで到達しているかが明確にならない場合があった。\n\n## 最新の達成度\n\n変更後は、複数レベルの実績について、獲得済みのティアのうち最も高いものがプロフィールに表示される。段階が上がれば、その進捗に合わせてプロフィール上の表示も最高ティアとなり、プロフィールを見る人にも、利用者が到達した最新の水準と進捗が伝わりやすくなる。",
@@ -39240,7 +39222,39 @@
       "bodyJa": "## オープンソース化\n\nGoogleとSpeakeasyは、OpenAPIコード生成スイートをAGPLv3ライセンスでオープンソース化した。APIを提供する開発チームが、クライアントSDKの生成をCIパイプラインへ直接組み込みながら、出力コードのライセンスを管理できる点が重要となる。\n\n## SDK生成\n\n公開されたスイートには、決定論的に動作する複数言語向けのSDKジェネレーターが含まれる。厳密な型付けを標準で扱えるほか、SSEストリーミングにもネイティブ対応する。これにより、チームは自らのAPIに対応する型付きかつSSE対応のクライアントライブラリを、継続的な工程の中で自動生成できる。\n\n## CIパイプライン\n\nエンジニアリングチームは、このコード生成ツールをCIパイプラインへ安全に統合し、信頼できるクライアントライブラリを自動的に生成できると説明されている。生成処理を開発工程に直接配置しつつ、生成されたコードについてはAPI提供者側がライセンスを完全に管理できる。\n\n## CLIとMCP\n\nスイートの対象はSDK生成だけではない。エージェントネイティブなCLIをコンパイルするためのツールと、ドキュメント用MCPサーバーを構築するためのツールも備える。今回の公開は、Googleが以前利用していたプロプライエタリなSDK提供元の突然の停止を受けた戦略的な対応とされ、GoogleとSpeakeasyの提携によって実現した。",
       "bodyEn": "## OpenAPI Generation Suite\n\nGoogle and Speakeasy have open-sourced their OpenAPI code generation suite under the AGPLv3 license. The move matters because engineering teams can integrate the tooling directly into their development processes while retaining control over the licensing of generated client code.\n\nThe decision followed the sudden shutdown of Google’s previous proprietary SDK provider. In response, Google partnered with Speakeasy to make the generation suite openly available rather than continuing to depend on proprietary tooling.\n\n## Deterministic Multi-Language SDK Generators\n\nThe suite provides deterministic generators for producing SDKs in multiple languages. These generators natively support strict typing and Server-Sent Events streaming, allowing generated client libraries to handle typed interfaces and SSE-based communication.\n\nThe suite is intended for API teams that need to create reliable client libraries for their own APIs. Deterministic generation also gives teams a consistent mechanism for producing those libraries through an automated workflow.\n\nBeyond SDK generation, the open-sourced tooling includes capabilities for compiling agent-native command-line interfaces. It can also compile documentation MCP servers, extending the suite beyond client library output while keeping those functions within the same OpenAPI generation tooling.\n\n## CI Pipelines\n\nEngineering teams can integrate the suite directly into their continuous integration pipelines. This enables client libraries to be generated automatically as part of the teams’ established CI processes rather than relying on a separate proprietary SDK provider.\n\nWithin those pipelines, teams can generate multi-language SDKs with strict typing and SSE support for their APIs. The combination of deterministic generation and CI integration is designed to make the resulting client libraries reliable and repeatable.\n\n## Complete Licensing Control\n\nAlthough the generation suite itself is released under AGPLv3, API providers retain complete licensing control over the output code. Teams can therefore adopt the open-source generators while deciding how the SDKs and other generated artifacts for their own APIs are licensed.\n\nThis separates the license governing the generation suite from control over its generated output, giving API teams direct authority over the client code they distribute.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-18T07:30:33.426Z"
+      "generatedAt": "2026-09-18T07:30:33.426Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "以前のSDK提供元が突然終了して、生成スイートをAGPLv3で公開したんだね。これって大きい変化？",
+          "en": "The previous SDK provider suddenly shut down, and now the generation suite is open under AGPLv3. Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな方針転換だね。開発チームがツールをCIへ直接組み込み、出力コードのライセンスも管理できる形になったよ。",
+          "en": "It’s a major change in direction. Teams can integrate the tools directly into CI and keep control of the licensing for generated code."
+        },
+        {
+          "s": "a",
+          "ja": "SSEストリーミングって、どういう仕組み？",
+          "en": "What does SSE streaming mean?"
+        },
+        {
+          "s": "b",
+          "ja": "SSEは、サーバーからクライアントへ更新を順に届ける仕組みだよ。このツールは、それに対応するSDKを生成できる。",
+          "en": "SSE is a way for a server to send updates to a client over time. This tool can generate SDKs that support it."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、自分のAPI向けSDKを自動で作る流れにしたいな。できるの？",
+          "en": "I’d want SDKs for my own API to be generated automatically. Can it do that?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、CIに組み込んで複数言語のSDKを自動生成できるよ。対象は自分たちのAPIで、出力コードのライセンスも管理できる。",
+          "en": "The post says teams can generate multi-language SDKs in CI for their own APIs. They also retain control over the output code’s licensing."
+        }
+      ]
     },
     "3ee41050eba871c0": {
       "bodyJa": "## エージェントウィンドウ\n\nCursor 3.0では、エージェントを中心に据えた新しいインターフェースが導入された。ローカル、gitワークツリー、クラウド、SSH接続先のリモート環境など、複数のリポジトリや環境にまたがって複数のエージェントを並行実行できる。\n\nエージェントウィンドウは、Cursorをアップグレードしたうえで、Cmd+Shift+Pから「Agents Window」と入力して開く。必要に応じてIDEへ戻れるほか、IDEとエージェントウィンドウを同時に開いておくことも可能だ。複数のチャットは、エージェントタブを使って横並びやグリッドで表示できる。\n\n## デザインモード\n\nデザインモードでは、ブラウザ上のUI要素に直接注釈を付けたり、エージェントが扱う対象として指定したりできる。参照してほしい箇所を正確に示すことで、より的確なフィードバックを伝えながら、改善をすばやく重ねられると説明されている。\n\n## ワークツリー\n\n新しい「/worktree」コマンドは、別のgitワークツリーを作成し、変更を分離した状態で作業するためのものだ。「/best-of-n」では、同じタスクを複数のモデルで並列実行し、それぞれを独立したワークツリーで動かしたうえで結果を比較できる。これに伴い、エディタにあった従来のワークツリーおよびbest-of-nの選択機能は非推奨となった。\n\n## MCP Apps\n\nMCP Appsは構造化コンテンツに対応し、よりリッチなツール出力が可能になった。企業向けプランでは、未設定の場合、サードパーティ製プラグインのインポートがデフォルトでオフになる。Adminが明示的に上書きした設定は維持される。\n\n管理面では、監査ログにディレクトリグループ名が追加され、IDを確認せずに読めるようになった。さらにクラウドエージェント向けとして、チームシークレットの作成、編集、削除をAdminだけに制限するチームレベルの設定も追加された。",
@@ -40120,7 +40134,39 @@
       "bodyJa": "## SSHリモート作業\n\nCline Desktop v0.0.31では、アプリ本体と画面を手元のPCに置いたまま、SSH接続先のマシンで作業できるようになった。エージェント機能やGit情報、セッションをリモート側で扱いつつ、操作や進行状況の確認はデスクトップ側で行える点が中心となる。\n\n## 接続と切り替え\n\n接続先は「Settings → Remote」でホストを追加し、テストできる。実際に使用する際は、ウェルカム画面にあるワークスペース選択の横の環境セレクターから対象ホストを選ぶ。プロファイルを保存したり接続テストを実行したりしただけでは、その接続先は有効にならない。\n\n接続を開始すると、最初にリモートユーザーのホームディレクトリが開く。ワークスペース選択にある「Add project…」を使えば、接続先マシン内を参照してプロジェクトを選択できる。「Local」を選ぶとリモート接続が切断される。\n\n## ホスト側の処理\n\nエージェントツール、ワークスペースの検出、Gitメタデータ、セッションの永続化は、いずれも接続先ホストで動作する。一方、承認操作と実行中セッションのイベントはデスクトップへ返される。\n\nトンネルを通じて転送されるのは、認証済みのCline Hubプロトコルのみと説明されている。これにより、開発者は手元の画面から遠隔環境を安全に利用できるとされる。\n\n## SSH設定エイリアス\n\nSSH設定のエイリアスにも対応する。Port欄を空白にすると、エイリアス側に設定された構成が使用される。Port欄へ値を入力した場合は、その指定によってエイリアス側のポート設定を上書きできる。",
       "bodyEn": "## SSH-based remote development\n\nCline Desktop v0.0.31 adds SSH-based remote development while keeping the app and its interface on the local machine. This lets developers use agent, Git, and session features on another host while approvals and live session events return to the desktop.\n\n## Add and test a host\n\nA remote host can be added and tested under Settings → Remote. Saving or testing a profile does not activate the connection.\n\nTo begin using a configured host, select it from the environment selector beside the workspace picker on the welcome screen. When the connection opens, it starts in the remote user’s home directory.\n\nThe workspace picker’s Add project… option browses the remote machine for a project. Selecting Local disconnects from the remote host and returns the environment to the local machine.\n\n## Tools run on the host\n\nWhile the desktop interface remains local, agent tools run on the connected host. Workspace discovery, Git metadata, and session persistence also operate on that machine.\n\nApprovals and live session events are sent back to the desktop. The connection forwards only the authenticated Cline Hub protocol through the SSH tunnel, allowing the remote environment to handle the workspace and session operations while interaction stays in the local app.\n\n## SSH config aliases\n\nThe remote connection setup supports SSH config aliases. When an alias already contains its own port configuration, the Port field can be left blank so that configuration is used.\n\nEntering a value in the Port field overrides the port defined by the alias. This allows a saved SSH configuration to control the connection by default while still permitting a different port to be selected in the remote host profile.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-19T16:37:52.825Z"
+      "generatedAt": "2026-09-19T16:37:52.825Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "画面は手元のPCに置いたまま、SSH接続先で作業できるの？どう切り替えるんだろう。",
+          "en": "Can the app stay on my PC while the work happens over SSH? How do I switch environments?"
+        },
+        {
+          "s": "b",
+          "ja": "設定で接続先を追加・テストし、開始画面の環境セレクターから選びます。アプリは手元に残り、作業は接続先で動きます。",
+          "en": "This release lets you add and test a host in Settings, then select it on the welcome screen. The app stays local while the work runs remotely."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、遠隔環境を使う開発者が、いつもの画面からエージェントやGitを扱えるってこと？",
+          "en": "So developers using remote environments can still handle the agent and Git from the familiar desktop interface?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。エージェント機能、Git情報、セッションは接続先で動き、承認や進行中のイベントは手元の画面に返ります。",
+          "en": "Yes. Agent tools, Git metadata, and sessions run on the remote host, while approvals and live session events return to the local desktop."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど、操作画面は手元、開発作業はSSH先に分けられるんだね。",
+          "en": "Got it—the interface stays with me, while the development work runs on the SSH host."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、接続先の保存やテストだけでは有効になりません。環境セレクターで選ぶ必要があります。",
+          "en": "One caution: saving or testing a host doesn’t activate it. You still need to choose it from the environment selector."
+        }
+      ]
     },
     "3fc4264ba45b001a": {
       "bodyJa": "## GKEで利用可能\n\nAgent SubstrateがGoogle Kubernetes Engine（GKE）で利用可能になった。大規模な自律エージェントを安全かつ高密度に実行するための基盤で、数百万のサンドボックスを動かせるよう設計されている。\n\n## 10倍の高密度\n\nAgent Substrateは、セキュア・バイ・デフォルトのオープンソースなエージェント実行ランタイムだ。標準的なコンテナ実行環境と比べて10倍高い密度でサンドボックスを実行できると説明されており、多数のエージェント実行環境を集約することを想定している。カーネルとネットワークには、ネイティブなゼロトラスト分離が組み込まれている。\n\n## 500ミリ秒未満\n\n一時停止した環境の再開処理は500ミリ秒未満で、1秒あたり500回を超える一時停止・再開のアクティベーションに対応するとされる。高密度な実行だけでなく、サンドボックスを短時間で再開し、多数の状態変更を継続的に処理できる点が特徴となる。\n\n## Kubernetes対応\n\nAgent SubstrateはGKE向けに最適化されている一方、任意のKubernetesインフラストラクチャ上で動作するオープンソースのソリューションとして提供される。Hermes Agentを開発するNous Researchも、Agent Substrate上で構築を進めている。",
@@ -42946,44 +42992,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-16T18:17:07.441Z"
     },
-    "ef681932d2dc210a": {
-      "bodyJa": "## エージェント\n\nVS Code 1.138では、ローカルのDev Container内でagent sessionを動かす機能が案内されている。プロジェクトのツールや依存関係を使える一方、開発環境が揃うことと、画像UIから正しいファイルが出力されることは分けて確認する必要がある。\n\n## 画像UI\n\n検証には、ReactとTypeScriptで作る小さな画像UIを使う。ローカル画像を読み込み、fitとcropを切り替えて4:5の枠に表示し、PNGとしてダウンロードする画面だ。これは実在するアプリの検証結果や製品の実測レポートではなく、読者のリポジトリで境界を確かめるための仮想課題とされている。\n\n横長と縦長のテスト画像を1枚ずつ用意し、切り取られた位置が分かるよう端に色や文字を置く。顧客画像は使用せず、外部への画像送信や依存追加も行わない。\n\n## fitとcrop\n\nfitでは画像全体を残し、元画像と枠の縦横比が異なる場合は余白を許容する。cropでは枠全体を画像で埋め、縦横比が異なる場合は端が切れてもよいが、画像を引き伸ばさない。画面上のプレビューだけを整えるのではなく、保存結果にも同じ構図を反映させることが条件になる。\n\n## 保存PNG\n\n出力サイズは1080×1350ピクセルに固定し、公開先に応じたサイズ選択は別工程とする。画面では縦長に見えても、ダウンロードしたファイルが元の横長のままという実装は作成でき、型チェックも通り得るため、保存したPNGを再度開いて構図と寸法を確認する。\n\n作業前には.devcontainer/devcontainer.jsonとpackage.jsonを確認し、Dockerが動くことも確かめる。さらに、基準コミットと使用するツールの版を控えてから、エージェントに変更を渡す。",
-      "bodyEn": "## Local Dev Container\n\nRunning AI agent sessions in a local Dev Container does not by itself verify that image exports are correct. An image can look portrait-oriented in the preview while the downloaded file remains in its original landscape format, even when type checking passes.\n\nVS Code 1.138 can run agent sessions inside a local Dev Container, giving the session access to the project’s tools and dependencies. However, a consistent development environment and correct image UI output are separate concerns. The procedure here uses a small React and TypeScript image UI to examine that boundary; it is not a product measurement report or a test of an existing application.\n\n## React and TypeScript\n\nThe hypothetical task loads a local image, displays it in a 4:5 frame, switches between fit and crop, and downloads the result as a PNG. Testing requires one landscape image and one portrait image. Colors or text placed near the edges make it easier to identify which areas have been removed. Customer images should not be used.\n\nFor this task, the required output is fixed at 1080 × 1350 pixels. Choosing dimensions for a particular publishing destination is treated as a separate step. Sending images externally and adding dependencies are not permitted.\n\n## Fit and Crop\n\nIn fit mode, the complete image must remain visible. If its aspect ratio differs from the 4:5 frame, empty space is acceptable.\n\nIn crop mode, the image must fill the frame. When the aspect ratios differ, the edges may be cut off, but the image must not be stretched. These rules apply not only to the on-screen preview but also to the saved PNG.\n\n## Saved PNG\n\nThe exported PNG must reproduce the preview’s composition and use the specified 1080 × 1350 dimensions. Asking an agent only to “resize it nicely” could allow the task to end after CSS has corrected the preview, without confirming the downloaded file. The saved image should therefore be reopened and inspected separately.\n\nBefore assigning the change, check .devcontainer/devcontainer.json and package.json, confirm that Docker runs, and record the baseline commit and the versions of the tools being used.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "VS Code 1.138で、Dev Container内でもエージェントを動かせるんだ。これって大きい変化？",
-          "en": "VS Code 1.138 can run agent sessions inside a Dev Container. Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "プロジェクトのツールや依存関係を使って作業できる点は便利だね。ただ、画像の出力が正しい保証とは別なんだ。",
-          "en": "It’s useful because the agent can work with the project’s tools and dependencies. But that alone doesn’t guarantee the exported image is correct."
-        },
-        {
-          "s": "a",
-          "ja": "fitとcropの切り替えって、どう違うの？ どっちも枠に合わせるんじゃないのかな。",
-          "en": "What’s the difference between fit and crop? Don’t they both make the image match the frame?"
-        },
-        {
-          "s": "b",
-          "ja": "fitは全体を残して、合わない部分は余白にする。cropは引き伸ばさず枠を埋め、はみ出す端を切る方法だよ。",
-          "en": "Fit keeps the whole image and allows empty space. Crop fills the frame without stretching, so parts at the edges may be cut off."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら端に色や文字を置いた画像で試して、保存したPNGも開き直すな。切れ方まで確かめたい！",
-          "en": "I’d test images with colors or text near the edges, then reopen the saved PNG. I’d want to check exactly what got cut off!"
-        },
-        {
-          "s": "b",
-          "ja": "いいね。この課題では顧客画像や外部送信、依存追加を避け、PNGの構図と1080×1350の寸法まで確認するのが条件だよ。",
-          "en": "That fits the test. It avoids customer images, external uploads, and added dependencies, while checking both the PNG composition and its 1080 × 1350 dimensions."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T17:37:13.770Z"
-    },
     "53517c0dc7fb6cfe": {
       "bodyJa": "## 先読みバイアス\n\nPALMは、金融バックテストで将来の情報が混入する先読みバイアスを避けつつ、年ごとの完全な事前学習を不要にするポイントインタイム適応を提案する。信頼できる評価を行ううえで、モデルがいつまでの情報を学習したかを管理しながら、毎年の事前学習が本当に必要なのかを検証した研究である。\n\n## 時点別モデル\n\n金融バックテストに使う言語モデルが調査期間後に公開された文章で学習していると、予測対象となる結果をすでに見ていることになる。この問題に対処するポイントインタイム、すなわちPIT言語モデルは、時系列に沿ってフィルタリングしたコーパスで事前学習される。暦年ごとにチェックポイントを一つ公開し、それぞれに学習データの明示的なカットオフを設けることで、利用できる情報の時点を区切る仕組みだ。\n\n## 年次事前学習\n\n従来のPITモデルでは、年が一つ増えるたびに完全な事前学習を一回行う必要がある。しかし、その年次実行が本当に必要かどうかは、これまで検証されていなかった。PALMでは、各年のチェックポイントを、それに置き換わった新しいチェックポイントと比較する方法を採っている。\n\n## 後継との比較\n\n比較の結果、新しいチェックポイントは、同じ評価期間では以前のチェックポイントを上回るスコアを示さなかったとされる。これは、少なくとも設定された同一の評価期間において、毎年の完全な事前学習が必須ではないことを示す結果である。PALMはこの観察に基づき、将来情報の漏洩を避けた金融バックテストと、年次チェックポイントの作成方法を結び付けて検討している。",
       "bodyEn": "## Financial backtests\n\nPALM addresses how language models can be used in financial backtests without leaking future information into the evaluation. This matters because a model trained on text published after the period being studied may already have observed the outcomes that the backtest asks it to predict, undermining the reliability of the results.\n\n## Look-ahead bias\n\nThe paper identifies this problem as look-ahead bias. When the model’s training data extends beyond the backtest period, its predictions cannot be treated as if they were produced using only information available at that point in time.\n\nAvoiding this bias therefore requires control over the chronological boundary of the model’s training corpus. The relevant checkpoint must have a documented cutoff that prevents later text from entering an earlier evaluation window.\n\n## Point-in-time language models\n\nPoint-in-time language models handle the issue by pretraining on chronologically filtered corpora. They are released as one checkpoint for each calendar year, with the cutoff for every checkpoint documented.\n\nThis structure gives researchers a model aligned with the period being evaluated. However, producing an additional annual checkpoint ordinarily requires another complete pretraining run. PALM questions whether repeating that full process every year is actually necessary.\n\n## Annual pretraining run\n\nThe paper evaluates that requirement by comparing each annual checkpoint with the newer checkpoint that replaced it. Both are assessed on the same evaluation window, allowing the study to test whether the successor provides a better score for that period.\n\nAccording to the paper, the newer checkpoint performs no better on the shared evaluation window. PALM therefore argues that a full pretraining run for every calendar year is unnecessary and proposes point-in-time adaptation instead. The approach is intended to help researchers conduct financial backtests while avoiding future-information leakage and retaining a reliable chronological basis for evaluation.",
@@ -43022,13 +43030,279 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T17:37:51.095Z"
     },
-    "43dc5941df4bfd39": {
+    "79224a4485bfefd7": {
+      "bodyJa": "## 数学上の成果\n\nOpenAIは、数学分野で目覚ましい成果を相次いで示す一方、その発表をめぐって混乱を重ねている。焦点となっているのは成果そのものだけでなく、研究者へどのように伝え、数学界との信頼を築くかという点だ。\n\n## 発表の混乱\n\nThe Vergeは、OpenAIがここ数カ月、数学上の印象的な前進と、その告知における大きな失敗を繰り返してきたと伝えている。つまり、数学的な結果を出す能力と、その内容や位置付けを適切に発表する能力が一致していないという構図だ。OpenAIは発表方法を改善し、相次ぐ混乱を正そうとしているが、その取り組み自体も適切に進められていないと報じられている。\n\n## 数学者の助言\n\n改善に向け、OpenAIは数学者から助言を得る体制を整えている。The Vergeは、OpenAIに助言している数学者の一人に取材した。数学者を助言者として迎える狙いは、数学上の成果を告知する際の相次ぐ不手際を改め、研究者が新たな結果に備えられるようにすることにあると説明されている。\n\n## 信頼構築\n\n今後示される一連の成果は、数学者の仕事を揺るがし、その進め方を変えかねないものとされる。それだけに、結果の中身だけでなく、どのような形で研究者へ伝えるかが重要になる。適切な伝達ができるかどうかは、OpenAIと数学界の間の信頼構築を左右する要素として位置付けられている。",
+      "bodyEn": "## Mathematics Breakthroughs\n\nOpenAI is working with mathematician advisers as it tries to improve how it announces its mathematics breakthroughs. The effort matters because researchers are preparing for a new wave of results that could reshape their work, while the handling of previous announcements has created confusion.\n\nThe Verge characterizes the past few months as chaotic. It says OpenAI has repeatedly demonstrated an ability to produce impressive breakthroughs in mathematics, but has also repeatedly mishandled the way those results were announced.\n\n## Mathematician Advisers\n\nOpenAI has enlisted mathematicians to advise the organization as it attempts to correct those communication problems. The Verge spoke with one of the mathematicians advising OpenAI while the field prepares for further results.\n\nThis advisory structure is intended to bring mathematicians into the process around the presentation of mathematical achievements. According to the source, OpenAI is trying to do better after its earlier announcement failures, giving researchers a clearer basis for understanding and preparing for the results.\n\n## Repeated Announcement Missteps\n\nThe central issue is not presented as a lack of mathematical results. Instead, it is the contrast between what The Verge calls impressive breakthroughs and the problems surrounding their announcement.\n\nOpenAI is attempting to address those repeated missteps, but The Verge says the organization has also mishandled that effort. The account therefore describes an ongoing attempt to improve communication rather than a completed correction of the earlier problems.\n\n## New Wave of Results\n\nThe announcement process carries particular weight because mathematicians are bracing for results that may upend their work. How those findings are communicated could determine whether researchers can assess them and prepare for the changes they may bring.\n\nThe key challenge is building trust with the mathematics community while presenting a succession of potentially consequential results. Bringing mathematician advisers into the process is OpenAI’s response to that challenge, even as questions remain around how successfully it can communicate its mathematical work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "OpenAIが数学の成果発表で何度も混乱して、今は数学者に助言を頼んでるんだね。これって大きい変化？",
+          "en": "OpenAI repeatedly stumbled when announcing math results, and now it’s asking mathematicians for advice. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "少なくとも、成果だけでなく伝え方も見直す変化だね。研究者が新しい結果に備えやすくする狙いがあるよ。",
+          "en": "At least, it shows OpenAI is rethinking how it communicates results, not just the results themselves. The aim is to help researchers prepare."
+        },
+        {
+          "s": "a",
+          "ja": "「数学者の助言」って、成果が正しいか判定してもらう仕組みなの？",
+          "en": "Does “advice from mathematicians” mean they’re checking whether the results are correct?"
+        },
+        {
+          "s": "b",
+          "ja": "ここで確認できるのは、主に発表の仕方への助言だよ。成果の判定まで担うとは書かれていないんだ。",
+          "en": "What’s confirmed here is advice mainly about how results are announced. It doesn’t say the advisers are responsible for validating them."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくが研究者なら、発表を読んで、自分の仕事がどう変わるか考える材料にしたいな。",
+          "en": "If I were a researcher, I’d use the announcements to think about how my own work might change."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、成果が仕事を揺るがす可能性がある段階で、影響はまだ断定されていないよ。だから伝え方が大切なんだね。",
+          "en": "Yes, but the results may reshape researchers’ work; the impact isn’t certain yet. That’s why communicating them carefully matters."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:38:50.136Z"
+    },
+    "11814c13f8eb0837": {
+      "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
+      "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "決まった画面に仕事を合わせるんじゃなくて、仕事の流れに合わせて画面を作れるの？ これって大きい変化？",
+          "en": "Instead of fitting work into fixed screens, the screen can fit the workflow? Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、カンバンやリリース確認表などを用途に合わせて構成できます。チーム独自の手順を画面にしやすくなる変化だね。",
+          "en": "The article shows canvases tailored as kanban boards, release checklists, and more. That could make a team’s own workflow easier to represent."
+        },
+        {
+          "s": "a",
+          "ja": "「双方向のキャンバス」って、ぼくとエージェントの両方が触れるってこと？",
+          "en": "Does “bidirectional canvas” mean both the agent and I can work with it?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。共有ホワイトボードのように、エージェントが更新し、利用者もボタンやカード、フィルターで変更できる仕組みだよ。",
+          "en": "Yes. It works like a shared whiteboard: the agent can update it, while you make changes with buttons, cards, filters, and other controls."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、やることをカードで並べる画面を作って、エージェントと一緒に整理してみたいな。",
+          "en": "I’d make a board with task cards and try organizing them together with the agent."
+        },
+        {
+          "s": "b",
+          "ja": "作るなら、エージェントのセッションで「/create-canvas」を入力し、欲しい画面を平易な英語で伝える形だね。手作業のコーディングやデザインは不要とされています。",
+          "en": "To build it, open an agent session, enter “/create-canvas,” and describe the interface in plain English. The post says no manual coding or design is required."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:36:46.380Z"
+    },
+    "93db8516427cde42": {
+      "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
+      "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でAIを使うとき、チャットじゃない画面になると、普段の操作はどう変わるの？",
+          "en": "When I use AI for work, how would things change if the interface weren’t a chat box?"
+        },
+        {
+          "s": "b",
+          "ja": "用途に合うUIなら、会話を続けるより、やりたい作業を中心に操作できるかもしれない。この記事はそんな設計を提案しているよ。",
+          "en": "A task-specific UI could center the interaction on the work itself instead of an ongoing conversation. That’s the design direction the piece proposes."
+        },
+        {
+          "s": "a",
+          "ja": "前は、作業向けのUIにできなかったの？ずっとチャットだったってこと？",
+          "en": "Couldn’t AI have task-focused interfaces before? Has it all just been chat?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていないよ。現在のAIの波から3年たっても、LLMの主要な操作画面がチャットのまま、という前提を問い直しているんだ。",
+          "en": "It doesn’t say that was impossible. It questions why chat remains the main interface for LLMs three years into the current AI wave."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ一番の収穫は、AIだからチャット、と決めつけず、作業に合う入口を考えることなんだね。",
+          "en": "So my main takeaway is: don’t assume AI must mean chat. Start by choosing an interface that fits the task."
+        },
+        {
+          "s": "b",
+          "ja": "うん。次は、開発者がどの作業で対話欄を外し、タスク中心の体験にするかという判断に注目したいね。",
+          "en": "Right. Next, watch how developers decide which tasks should move beyond a text box toward a task-oriented experience."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:19.430Z"
+    },
+    "4c9d688cf44b534e": {
+      "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
+      "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "大きな移行やリファクタリングをレビューする仕事で、普段の何が変わるの？",
+          "en": "What changes day to day when a team reviews a big migration or refactor?"
+        },
+        {
+          "s": "b",
+          "ja": "GitHub Copilotアプリのプルリクエスト画面が刷新され、大規模な差分や長い議論も速く滑らかに確認できるとされています。",
+          "en": "The GitHub Copilot app rebuilt its pull request view so large diffs and long review discussions can stay fast and smooth."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ 小さく分ければ済む話じゃないのかな。",
+          "en": "Was that not possible before? Couldn’t teams just split the change into smaller pieces?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は不可能だった、とは断定できません。小さく分ける方法はあるものの、分けにくい変更に備えて画面を作り直した、という違いです。",
+          "en": "We can’t say it was impossible before. Splitting changes helps, but some don’t divide cleanly, so the view was rebuilt to handle one enormous pull request."
+        },
+        {
+          "s": "a",
+          "ja": "そっか。分けにくい変更でも、差分とコメントをまとめて追いやすくなるのが収穫なんだね。",
+          "en": "Got it. The key benefit is being able to follow the diff and comments even when a huge change can’t be split up."
+        },
+        {
+          "s": "b",
+          "ja": "次に注目したいのは、2,200ファイル、100万行超の変更、400件超のインラインコメントを含むプルリクエストでの検証だね。",
+          "en": "Next, watch the test itself: a pull request with 2,200 files, over a million changed lines, and more than 400 inline review comments."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:32.042Z"
+    },
+    "3109af25bedf6259": {
+      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
+      "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "80万行超のRustを、AIエージェントが大半書いたの？ 128件のPRってどう進めたんだろう。",
+          "en": "AI agents wrote most of over 800,000 lines of Rust? How did that work across 128 PRs?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、CopilotアプリとCLIを使い、128件のPRを順にmainへ入れて段階的に公開したとあるよ。",
+          "en": "The piece says they used the Copilot app and CLI, merging 128 PRs into main and shipping incrementally instead of switching everything at once."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、同じランタイムを使うCLIやアプリ、SDKの利用者に、性能面の変化が届くってこと？",
+          "en": "So users of the CLI, app, and SDK all benefit from the runtime’s performance changes?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。3つを支える共通のランタイムで、性能は桁違いに改善したと説明されているよ。",
+          "en": "Yes. They all rely on the same runtime, whose performance is described as improving by orders of magnitude."
+        },
+        {
+          "s": "a",
+          "ja": "TypeScriptとNode.jsの土台をRustへ移し、AIと小分けのPRで少しずつ進めたんだね。",
+          "en": "Got it: they moved the TypeScript and Node.js foundation to Rust, using AI and smaller PRs to roll it out gradually."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただ、後退がゼロだったわけではなく、少数の不具合は途中で見つけて素早く直したとしているよ。",
+          "en": "Right. It wasn’t regression-free, though; a few issues appeared along the way and were found and fixed quickly."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:50.296Z"
+    },
+    "8156421f827a3dc7": {
+      "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
+      "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "イベント担当の毎日は、これで何が変わるの？企画以外のこまごました作業が減るのかな。",
+          "en": "How does this change an event marketer’s day? Does it cut down the little tasks that pile up after planning?"
+        },
+        {
+          "s": "b",
+          "ja": "GitHub上で定型工程をコード化し、ページ複製やチャネル別UTMリンク作成、招待メール依頼、フォローアップを自動化します。企画と参加者理解に集中しやすくなります。",
+          "en": "It codifies routine work on GitHub, automating page duplication, channel-specific UTM links, invitation email requests, and follow-up. That gives marketers more room to focus on topics and audiences."
+        },
+        {
+          "s": "a",
+          "ja": "前はGitHubではできなかったの？それとも、できたけど人が毎回やっていたの？",
+          "en": "Was this impossible on GitHub before, or were people just doing the same steps manually each time?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていません。イベント承認後に始まるページ複製やリンク作成などの決まった工程を、コード化して自動化するのが今回の違いです。",
+          "en": "The piece doesn’t say it was impossible before. The change is turning the fixed post-approval sequence—like duplicating pages and creating links—into coded, automated workflows."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、定型作業を自動化して、人が「誰に何を届けるか」を考える時間を増やせることなんだね。",
+          "en": "So the biggest gain is automating routine work and giving people more time to think about who they’re reaching and what to offer them."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、チャネル別UTMリンク作成やフォローアップまで、定型工程がどう一つの流れになるかに注目したいね。",
+          "en": "Right. Next, it’s worth watching how steps such as channel-specific UTM links and follow-up fit into one automated flow."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:38:10.006Z"
+    },
+    "b310b2c06dbd9321": {
+      "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
+      "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "確認・実行・結果チェックの3つが、アプリを出ずにできるようになったんだ。これって大きいこと？",
+          "en": "Now you can review, run, and check results without leaving the app. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "前はエディター、ターミナル、ブラウザーを行き来していたんだ。3つが並ぶので、エージェントの作業を確かめやすくなるね。",
+          "en": "Before, you had to jump among an editor, terminal, and browser. Having all three side by side makes the agent’s work easier to check."
+        },
+        {
+          "s": "a",
+          "ja": "「diff」って何を見るもの？ 変更後のコードだけじゃないの？",
+          "en": "What does a “diff” show? Is it more than just the updated code?"
+        },
+        {
+          "s": "b",
+          "ja": "変更前と変更後を比べる画面だよ。追加は緑、削除は赤で、変わった行を確認できるんだ。",
+          "en": "It compares the code before and after a change. Added lines appear in green, deleted ones in red, so you can see exactly what changed."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら差分を見て、ターミナルで動かして、ブラウザーで結果を確かめてから決めたいな。",
+          "en": "I’d review the diff, run the code in the terminal, then check the result in the browser before deciding."
+        },
+        {
+          "s": "b",
+          "ja": "その流れで使えるね。最後は自分で変更を受け入れるか、コメントするか、Copilotに修正を頼むか選べるよ。",
+          "en": "That workflow fits the app. You still make the final call: accept the changes, leave comments, or ask Copilot to revise them."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:38:19.736Z"
+    },
+    "855d6eb9ada55a72": {
       "bodyJa": "## HydraFusion\n\nGitHub Copilotで、複数モデルを連携させる「HydraFusion」が研究プレビューとして利用可能になった。選択的なコーディングタスクをモデル間で振り分け、フロンティア級の品質と、より効率的な開発者支援を目指す仕組みと説明されている。マルチモデルオーケストレーションにより、複数モデルを使い分ける点が特徴だ。\n\n## オフライン評価\n\n制御されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示したとされる。同時に、推定ワークフローコストも削減したという。示されている結果はオフライン評価に基づくものであり、現時点での提供形態はGitHub Copilot上の研究プレビューとなっている。",
       "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview focused on achieving frontier-level quality through multi-model orchestration. It matters because its selective coding workflows matched or exceeded an evaluated quality baseline while reducing estimated workflow cost in controlled offline evaluations.\n\n## Selective coding workflows\n\nHydraFusion routes selective coding tasks across multiple models rather than relying on a single model for those workflows. According to the source, this approach is intended to provide more efficient developer assistance by combining model selection with lower estimated costs.\n\nThe evaluation compared HydraFusion’s selective coding workflows with an Opus 5 baseline. In those controlled offline tests, the workflows matched or surpassed the evaluated baseline. The announcement describes the result specifically in terms of the evaluated coding workflows and estimated workflow cost.\n\n## GitHub Copilot research preview\n\nHydraFusion is now available in GitHub Copilot as a research preview. The current announcement centers on the multi-model orchestration approach, the selective coding workflows, and the results of the controlled offline evaluations.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T15:12:32.259Z"
     },
-    "d94b84bc16af2780": {
+    "b68f08d5b78fdf2b": {
       "bodyJa": "GitHub Copilot appでは、同じプロジェクトで複数のエージェントセッションを並行して実行し、それぞれを個別に管理できる。あるタスクの完了を待たずに別のタスクを開始できるため、待ち時間を減らし、より多くの作業を進められる点が重要だ。\n\n## 並列ワークフロー\n\n同じプロジェクト上で複数のAIエージェントを動かすと、互いの作業が干渉して混乱するようにも見える。しかしGitHub Copilot appでは、各エージェントが分離された状態で動作し、ほかのセッションへ影響を与えずにタスクを進められると説明されている。\n\n## 洗濯機のたとえ\n\n並列のエージェントセッションは、複数の洗濯機を同時に使う状況に例えられている。洗濯物を別々の機械へ入れ、それぞれ異なる設定で動かしても、ほかの洗濯には影響しない。同様に、一つの処理が終わるまで待つことなく、別のセッションを開始できる。\n\n## セッションの単位\n\nエージェントセッションとは、開始から完了までを含む、Copilotに与えた一つのタスクを指す。複数の作業を一つの流れにまとめるのではなく、タスクごとに独立したセッションとして扱うことで、同じプロジェクト内でも個別に同時進行できる。\n\n## セッションビュー\n\nGitHub Copilot appでは、セッションビューを通じて複数のセッションを管理する。各カードにはセッションのタイトルと、エージェントがタスクをどこまで完了しているかが表示される。すべてのセッションは互いに独立して実行されるため、利用者は複数タスクの進行状況をそれぞれ確認できる。",
       "bodyEn": "## Multiple AI agents\n\nThe GitHub Copilot app allows multiple AI agents to work on the same project without interfering with one another. This matters because tasks can proceed in parallel instead of each session waiting for another to finish.\n\nAlthough running several agents on one project may seem chaotic, the source says the agents work separately. Each agent session handles its assigned task independently, allowing several pieces of work to move forward at the same time.\n\n## Parallel agent sessions\n\nThe source compares parallel agent sessions to using multiple machines at a laundromat. Several loads can be started simultaneously, with each washer using its own settings. The settings and progress of one load do not affect the others, and there is no need to wait for one machine to finish before starting another.\n\nIn the same way, multiple agent sessions can run concurrently within the GitHub Copilot app. The work assigned to one session does not interfere with the tasks being completed in other sessions.\n\n## An agent session\n\nAn agent session is a task given to Copilot from start to finish. Each session is therefore associated with its own task and runs independently of every other active session.\n\nThis separation makes it possible to assign multiple tasks on the same project and have them progress at the same time. Rather than treating several agents as participants working inside one shared session, the app keeps their sessions distinct.\n\n## The sessions view\n\nSeveral sessions can be managed through the sessions view in the GitHub Copilot app. Each session appears as a card showing its title and how far the agent has progressed toward completing its task.\n\nThe sessions view provides one place to follow the separate tasks while they run independently. By starting and managing several sessions in parallel, users can reduce the time spent waiting for one task to finish before beginning another.",
       "model": "chat-backfill:gpt-5.6-sol",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T10:01:05.216Z",
+  "generatedAt": "2026-09-28T11:00:57.788Z",
   "month": "2026-09",
   "count": 314,
   "entries": [
@@ -10,16 +10,19 @@
       "url": "https://qiita.com/io_nagao/items/1219cafb1ce31d1136b0",
       "title": "IBM i 開発者向け！ VSCode拡張機能 #6",
       "titleJa": "IBM i 開発者向け！ VSCode拡張機能 #6",
-      "titleEn": "",
+      "titleEn": "VSCode Extensions for IBM i Developers! #6",
       "lang": "ja",
       "publishedAt": "2026-09-28T07:01:17.000Z",
       "collectedAt": "2026-09-28T10:00:50.205Z",
       "tags": [
+        "dds",
+        "ibm-i",
         "qiita",
+        "screen-designer",
         "vscode"
       ],
       "category": "vscode",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "IBM i のディスプレイファイル（DSPF／DDS）を VSCode 上で視覚的に確認・編集するために開発している IBM i DSPF Screen Designer について、対応キーワードと編集機能をさらに拡充しました。 本記事では、最新の操作マニュアルで追加・強化された内容のうち、前回までの記事で十分に取り上げていなかったものを中心に紹介します。 CNTFLD は、1つの入力フィールドを 「桁幅 × 行数」の長方形入力フィールド として扱うためのキーワードです。 DSPF Screen Designerでは、フィールドプロパティから継続入力の桁幅を指定できるようにしました。 画面イメージだけではなく、Excel出力でも長方形として扱います。 また、2行目以降も実際に画面を占有するため、他の項目との重なりについても「配置の警告」で検出します。 DSPF Screen Designerでは、例えば次のような指定を検証します。 新しく作るときだけでなく、既存ソースを読み込んだ場合も、仕様に合わない指定は検証結果へ表示します。 IBM i の DDS には、古い資産で AUTO が使われていることがあります。 今回、 AUTO を単なる未対応キーワードとして残すのではなく、IBM i の仕様に合わせて CHECK の別表記として扱えるようにしました 。 を含むDDSをインポートすると、プロパティ上では CHECK(RZ) 相当として編集できます。 一方で重要なのは、 読み込んだAUTOを勝手にCHECKへ書き換えない ことです。 新規に設定するときは、基本的には CHECK 表記を使用します。 既存DDSを保守するツールとしては、 意味だけでなく元の書き方をできるだけ保持する ことも重要だと考えています。 入力フィールドの比較検査を行う COMP にも対応しました。 フィールドプロパティでは、演算子をプルダウンから選択し、比較する値を入力します。 なお、COMPのエラーメッセージを差し替える CHKMSGID は、現時点では編集対象外です。 4.",
@@ -41,11 +44,15 @@
       "url": "https://qiita.com/fs1228/items/7bd990040f73f9c9ce0d",
       "title": "Geant4 11.4.0をmacOSにインストール（VS Code環境構築）",
       "titleJa": "Geant4 11.4.0をmacOSにインストール（VS Code環境構築）",
-      "titleEn": "",
+      "titleEn": "Installing Geant4 11.4.0 on macOS and Setting Up VS Code",
       "lang": "ja",
       "publishedAt": "2026-09-28T05:24:21.000Z",
       "collectedAt": "2026-09-28T10:00:50.205Z",
       "tags": [
+        "cmake",
+        "environment-setup",
+        "geant4",
+        "macos",
         "qiita",
         "vscode"
       ],
@@ -55,7 +62,15 @@
       "archiveTier": "hot",
       "contentSnippet": "Geant4 11.4.0をmacOSにインストール（VS Code環境構築） macOS環境にGeant4 11.4.0をインストールする手順を、備忘録としてまとめました。プログラミングや環境構築の経験がない方にも分かりやすいよう、順を追って説明していきます。専門用語には解説ページへのリンクを貼っているので、必要に応じてご参照ください。 おまけとして、VS CodeでGeant4コードを編集するための環境構築も行います。 すでにmacOSのファイルシステムやコマンド操作に慣れている方は、ご自身の使いやすいディレクトリ構成で進めていただいて構いません。 作業時間の目安は約3時間です。特に ビルド やインストールには時間がかかるため、時間に余裕を持って進めることをお勧めします。 今回は、Geant4 11.3.2がすでに入っている環境で作業しています。初めてインストールする場合は、表示される内容やコマンドの実行結果が、異なる可能性があります。 Geant4 11.4.0をmacOSにインストールし、動作確認まで行う まず、Geant4のビルドに必要なツールと、可視化や解析に使用するツールをインストールします。今回使用するツールは次のとおりです。 Appleが提供する開発ツール一式です。Geant4のビルドに必要なコンパイラなどが含まれています。 コマンドを使ってソフトウェアをインストール・更新・管理するツールです。 Geant4やシミュレーションプログラムをビルドするための設定を行うツールです。 シミュレーション結果の解析・グラフ化に使用するソフトウェアです。Geant4のインストールには必須ではありません。 検出器構造などを記述するファイルの読み書きに必要なライブラリです。 Qt 6・Xerces-C++・XQuartzは、Geant4で使用する機能に応じて必要になります。本記事では、これらを使用する構成で進めます。 Finderで「アプリケーション」→「ユーティリティ」→「ターミナル」を開きます。起動したら、次のコマンドを実行します。",
       "feedSnippet": "はじめに macOS環境にGeant4 11.4.0をインストールする手順を、備忘録としてまとめました。プログラミングや環境構築の経験がない方にも分かりやすいよう、順を追って説明していきます。専門用語には解説ページへのリンクを貼っているので、必要に応じてご参照ください。 ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NTA4MzAwJTJGZjRjOTg2MDllODY4YjY2ZmEwZWM5NjA2Yzg2NDhmMjZhZDdkOTkxOSUyRmxhcmdlLnBuZyUzRjE3OTA1NzM3MTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ3ZTFiMTQ4OTE2YjRjYjYxNzUyNzBjNDI1MWMyNDdk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2e9aee074d1b418a8044dfde5a793ef6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2VhbnQ0JTIwMTEuNC4wJUUzJTgyJTkybWFjT1MlRTMlODElQUIlRTMlODIlQTQlRTMlODMlQjMlRTMlODIlQjklRTMlODMlODglRTMlODMlQkMlRTMlODMlQUIlRUYlQkMlODhWUyUyMENvZGUlRTclOTIlQjAlRTUlQTIlODMlRTYlQTclOEIlRTclQUYlODklRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00OTMxYjg4NTdiOTZiNGExMjhkNmU4M2ZiMjE4ODQ4Ng&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBmczEyMjgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMWI5YTQ2YTQ5MjI3ZDhkNmM4OTJjOWYwYTU2YzIzNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9027a0c723f9723395ff648c156a6c36",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1pbWFnZS1zdG9yZSUyRjAlMkY0NTA4MzAwJTJGZjRjOTg2MDllODY4YjY2ZmEwZWM5NjA2Yzg2NDhmMjZhZDdkOTkxOSUyRmxhcmdlLnBuZyUzRjE3OTA1NzM3MTk_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPWQ3ZTFiMTQ4OTE2YjRjYjYxNzUyNzBjNDI1MWMyNDdk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D2e9aee074d1b418a8044dfde5a793ef6?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2VhbnQ0JTIwMTEuNC4wJUUzJTgyJTkybWFjT1MlRTMlODElQUIlRTMlODIlQTQlRTMlODMlQjMlRTMlODIlQjklRTMlODMlODglRTMlODMlQkMlRTMlODMlQUIlRUYlQkMlODhWUyUyMENvZGUlRTclOTIlQjAlRTUlQTIlODMlRTYlQTclOEIlRTclQUYlODklRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz00OTMxYjg4NTdiOTZiNGExMjhkNmU4M2ZiMjE4ODQ4Ng&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBmczEyMjgmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iMWI5YTQ2YTQ5MjI3ZDhkNmM4OTJjOWYwYTU2YzIzNQ&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9027a0c723f9723395ff648c156a6c36",
+        "alt": "Geant4 11.4.0をmacOSにインストール（VS Code環境構築）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "0fb0b49f20757b47",
@@ -519,7 +534,7 @@
       "titleEn": "OpenHands Releases v1.24.0",
       "lang": "en",
       "publishedAt": "2026-09-25T15:18:31.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "automation",
         "developer-tools",
@@ -550,7 +565,7 @@
       "titleEn": "We’re building Copilot as a new OS for work that spans every model, every form factor, and every task. Today, we’re announcing our biggest update to Copilot to date, bringing four things together [Read more]",
       "lang": "en",
       "publishedAt": "2026-09-25T13:20:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "copilot",
         "microsoft",
@@ -1333,7 +1348,7 @@
       "summaryEn": "Meta AI glasses are gaining Private Processing for advanced tasks that require models too large to run on-device, enabling more private translation and conversation summaries.",
       "lang": "en",
       "publishedAt": "2026-09-24T00:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "ai-glasses",
         "engineering",
@@ -1346,6 +1361,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "We believe glasses are the best form factor for having AI help throughout your day. They can understand your personal context better than other kinds of devices and keep you present without picking up a mobile phone. Most of the time, glasses are helping you see well, protecting your eyes and complementing your look, and that’s it. But AI glasses have the capacity to provide superpowers like translating a conversation or summarizing notes or a conversation. Many directions people give their glasses today, like placing a call or answering a text hands-free, occur entirely on device, though more advanced features would require larger, more capable AI models – far larger than can be packed into a pair of glasses. And compute is only half the problem.",
       "excerptOrigin": "article",
       "feedSnippet": "We believe glasses are the best form factor for having AI help throughout your day. They can understand your personal context better than other kinds of devices and keep you present without picking up a mobile phone. Most of the time, glasses are helping you see well, protecting your eyes and complementing your look, and [...] Read More... The post Bringing Private Processing to Meta AI Glasses appeared first on Engineering at Meta .",
@@ -1356,8 +1372,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "ea297d0d52997644",
@@ -1369,7 +1384,7 @@
       "titleEn": "Turn your REST APIs into MCP tools with Google Cloud API Gateway",
       "lang": "en",
       "publishedAt": "2026-09-24T00:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "api-gateway",
         "google",
@@ -1401,7 +1416,7 @@
       "titleEn": "Reproducing OLMo 3 7B Pre-training in MaxText: case study of large scale training on TPUs",
       "lang": "en",
       "publishedAt": "2026-09-24T00:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "google",
         "jax",
@@ -1672,7 +1687,7 @@
       "titleEn": "OpenHands Releases v1.23.0",
       "lang": "en",
       "publishedAt": "2026-09-23T17:33:03.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "desktop-app",
         "macos",
@@ -2053,7 +2068,7 @@
       "titleEn": "Introducing Support for Local AI Models in the Antigravity SDK",
       "lang": "en",
       "publishedAt": "2026-09-23T00:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "agentic-ai",
         "gemma",
@@ -2464,7 +2479,7 @@
       "titleEn": "OpenHands Releases v1.22.0",
       "lang": "en",
       "publishedAt": "2026-09-22T16:33:08.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "cloud-backends",
         "git-sync",
@@ -2945,7 +2960,7 @@
       "titleEn": "OpenHands Releases v1.21.0",
       "lang": "en",
       "publishedAt": "2026-09-22T01:55:56.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "developer-tools",
         "docker",
@@ -3012,7 +3027,7 @@
       "titleEn": "Colab is now part of your Google AI plan",
       "lang": "en",
       "publishedAt": "2026-09-22T00:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "google",
         "google-ai-ultra",
@@ -3151,7 +3166,7 @@
       "summaryEn": "Rebalancer is now open source after more than nine years at Meta, with separate layers for modeling, memory, solving, and debugging to help developers handle allocation tasks efficiently.",
       "lang": "en",
       "publishedAt": "2026-09-21T16:00:37.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "assignment-optimization",
         "engineering",
@@ -3163,6 +3178,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "We’re open-sourcing Rebalancer, the assignment-problem solver that has been used to solve resource allocation problems throughout Meta for over nine years. Rebalancer separates several related concerns: how to specify an assignment problem, how to store it efficiently in memory, how to solve it, and how to debug it. This separation of concerns is crucial to [...] Read More... The post Open-Sourcing Rebalancer: A Generic, High-Performance Library for Solving Assignment Problems appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/09/Meta-Rebalancer.webp",
@@ -3171,8 +3187,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6907e715e4736f06",
@@ -3293,7 +3308,7 @@
       "summaryEn": "Petal will carry petabit-class capacity over a 7,000 km France-US subsea route, targeting service in 2029. Its scaled use of multi-core fiber will boost transatlantic connectivity.",
       "lang": "en",
       "publishedAt": "2026-09-21T12:00:00.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "connectivity",
         "engineering",
@@ -3305,6 +3320,7 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Petal, the next step in Meta’s subsea innovation, will be the first subsea cable to deliver petabit capacity at transoceanic distances, connecting France and the United States over approximately 7,000 km (4,300 mi). Expected to enter service in 2029, it will be the first subsea cable system to deploy multi-core fiber technology at scale, doubling [...] Read More... The post Inside Petal: Building the World’s First Petabit-Class Transoceanic Subsea Cable appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/09/Announcing-Petal-a-First-of-its-Kind-Transoceanic-Subsea-Cable_Header.jpg",
@@ -3313,8 +3329,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6c892a4ee1dee288",
@@ -4654,7 +4669,7 @@
       "titleEn": "OpenHands Releases v1.20.0",
       "lang": "en",
       "publishedAt": "2026-09-17T07:20:06.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "agent-profiles",
         "automations",
@@ -5063,7 +5078,7 @@
       "titleEn": "OpenHands Releases v1.19.0",
       "lang": "en",
       "publishedAt": "2026-09-16T19:29:33.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "azure-devops",
         "gpt-6-astra",
@@ -6166,7 +6181,7 @@
       "summaryEn": "OpenHands v1.18.0 adds full-size image viewing and cloud automation editing, with tighter reactivation controls and clearer Cloud settings for teams.",
       "lang": "en",
       "publishedAt": "2026-09-11T18:32:07.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "automation",
         "canvas",
@@ -7232,7 +7247,7 @@
       "summaryEn": "OpenHands v1.17.0 adds manifest-declared values to dashboard views and introduces conversation tags and filtering. Cloud LLM connections and improved automation controls help teams operate agents more effectively.",
       "lang": "en",
       "publishedAt": "2026-09-09T19:31:50.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "agent-canvas",
         "automation",
@@ -9205,7 +9220,7 @@
       "summaryEn": "ZGateway adds a shared proxy layer for traffic to ZippyDB, Meta's most-used key-value store, enabling admission control, balancing, regional resilience, and richer operations.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:20.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "distributed-systems",
         "engineering",
@@ -9217,6 +9232,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "We’re introducing ZGateway, the proxy we are using to unify traffic through ZippyDB, Meta’s most widely-used key value store. As a bonus, it also enables admission control, load balancing, cross-region resilience, and richer operations. ZippyDB is the most widely used key value store at Meta, backing product metadata, counters, and configuration, and can serve billions [...] Read More... The post ZGateway: Learnings from Putting a Proxy in Front of ZippyDB appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/09/ZGateway-Hero.png",
@@ -9225,8 +9241,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "b68f08d5b78fdf2b",
@@ -9774,7 +9789,7 @@
       "summaryEn": "Meta's AI agent captures expert domain knowledge in a structured, auditable system and serves as a backup specialist. It preserves know-how so teams can access, share, and extend it.",
       "lang": "en",
       "publishedAt": "2026-09-02T09:00:29.000Z",
-      "collectedAt": "2026-09-28T05:30:32.845Z",
+      "collectedAt": "2026-09-28T11:00:41.211Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -9787,6 +9802,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "We’ve built an AI agent that acts as a secondary expert for a given domain, making deep specialist knowledge readily available and preserved for anyone in an organization to access, share, and build upon. This is not a typical domain-specific agent. Its novelty comes from integrating two layers: A structured, auditable knowledge architecture separates what [...] Read More... The post An Organizational Second Brain: Building an AI That Learns From Experts appeared first on Engineering at Meta .",
       "image": {
         "src": "https://engineering.fb.com/wp-content/uploads/2026/08/Domain-Expert-AI-Hero-1.png",
@@ -9795,8 +9811,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "0ea901f86e2fc43f",

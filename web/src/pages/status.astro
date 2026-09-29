@@ -14,7 +14,7 @@ import {
 import { sourceFreshnessStatus, type FreshnessSourceType } from "../lib/freshness.ts";
 import { SOURCE_META, sourceAnchorId, sourceLabel } from "../lib/source-meta.ts";
 import { DASHBOARD_METRICS } from "../lib/metrics.ts";
-import { deriveQueueDisplay } from "../lib/queue-health.ts";
+import { bodyBudgetExclusionCopy, deriveQueueDisplay } from "../lib/queue-health.ts";
 import { deriveWorkerRunStatus, WORKER_RUN_STATE_COPY } from "../lib/run-health.ts";
 import {
   REACTION_CONFIG_FLAG_LABELS,
@@ -189,9 +189,14 @@ const bodyQueue = deriveQueueDisplay({
   mode: DASHBOARD_METRICS.bodyQueueMode,
   backlog: bodyQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
+  budgetExcludedCount: DASHBOARD_METRICS.bodyQueueBudgetExcludedCount,
   runTone: workerRun.tone,
   runState: workerRun.state,
 });
+const bodyBudgetExclusion = DASHBOARD_METRICS.bodyQueueBudgetExcludedCount !== null
+  && DASHBOARD_METRICS.bodyQueueBudgetExcludedCount > 0
+  ? bodyBudgetExclusionCopy(DASHBOARD_METRICS.bodyQueueBudgetExcludedCount)
+  : null;
 const enrichmentEnqueueCap = DASHBOARD_METRICS.enrichmentEnqueueCap;
 const enrichmentEnqueued = DASHBOARD_METRICS.enrichmentEnqueued;
 const hasEnrichmentBudgetTelemetry = enrichmentEnqueueCap !== null && enrichmentEnqueued !== null;
@@ -290,8 +295,8 @@ const workerSummary = wh
         label: "本文待ち",
         labelEn: "Bodies pending",
         value: bodyQueue.showBacklog ? bodyQueue.backlog : "n/a",
-        detail: "AI 解説本文の生成待ち",
-        detailEn: "Retention-eligible body queue",
+        detail: bodyBudgetExclusion?.ja ?? "AI 解説本文の生成待ち",
+        detailEn: bodyBudgetExclusion?.en ?? "Retention-eligible body queue",
         scope: "body-backlog",
       },
       {
@@ -441,21 +446,25 @@ const workerSummary = wh
             data-health-scope="body-queue"
             data-health-domain="body-queue"
             data-health-tone={bodyQueue.tone}
+            role="group"
+            aria-labelledby="body-queue-metric-label"
+            aria-describedby="body-queue-metric-detail"
             data-body-queue-mode={bodyQueue.mode}
             data-body-queue-state={bodyQueue.state}
             data-body-queue-backlog={bodyQueue.showBacklog ? bodyQueue.backlog : "unknown"}
             data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
+            data-body-queue-budget-excluded-count={DASHBOARD_METRICS.bodyQueueBudgetExcludedCount ?? "unknown"}
             data-body-queue-merged={bodyQueueMerged ?? "unknown"}
             data-body-queue-enqueued={bodyQueueEnqueued ?? "unknown"}
             data-body-queue-candidates={bodyQueueCandidates ?? "unknown"}
             data-body-queue-enqueue-cap={bodyQueueEnqueueCap ?? "unknown"}
           >
-            <span>
+            <span id="body-queue-metric-label">
               <span class="i18n-ja">AI解説本文 Queue</span>
               <span class="i18n-en" lang="en">AI explainer queue</span>
             </span>
             <strong>{bodyQueue.showBacklog ? bodyQueue.backlog : "n/a"}</strong>
-            <small>
+            <small id="body-queue-metric-detail">
               <span class="i18n-ja">
                 {bodyQueue.mode !== "enabled" || bodyQueueMerged === null ? "" : `本文ファイル反映 +${bodyQueueMerged} · `}
                 {bodyQueue.mode !== "enabled"
@@ -463,7 +472,9 @@ const workerSummary = wh
                   : bodyQueueEnqueued === null
                     ? "送信件数 未計測 · "
                     : `送信 +${bodyQueueEnqueued} · `}
-                {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null ? "" : `上限 ${bodyQueueEnqueueCap}件/run基準 · `}
+                <span class="body-queue-cap-note" data-body-queue-cap-ja>
+                  {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null || (DASHBOARD_METRICS.bodyQueueBudgetExcludedCount ?? 0) > 0 ? "" : `上限 ${bodyQueueEnqueueCap}件/run基準 · `}
+                </span>
                 <span data-queue-label-ja>{bodyQueue.labelJa}</span>
               </span>
               <span class="i18n-en" lang="en">
@@ -473,7 +484,9 @@ const workerSummary = wh
                   : bodyQueueEnqueued === null
                     ? "enqueue count not measured · "
                     : `enqueued +${bodyQueueEnqueued} · `}
-                {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null ? "" : `based on a ${bodyQueueEnqueueCap}/run cap · `}
+                <span class="body-queue-cap-note" data-body-queue-cap-en>
+                  {bodyQueue.mode !== "enabled" || bodyQueueEnqueueCap === null || (DASHBOARD_METRICS.bodyQueueBudgetExcludedCount ?? 0) > 0 ? "" : `based on a ${bodyQueueEnqueueCap}/run cap · `}
+                </span>
                 <span data-queue-label-en>{bodyQueue.labelEn}</span>
               </span>
             </small>
@@ -1094,6 +1107,16 @@ const workerSummary = wh
     font-size: 11px;
   }
 
+  .status-metric-card .body-queue-cap-note {
+    display: inline;
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    text-transform: none;
+  }
+
   .status-metric-card.warn {
     border-color: color-mix(in srgb, var(--important) 42%, var(--border));
     background: color-mix(in srgb, var(--tutorial-bg) 30%, transparent);
@@ -1637,16 +1660,23 @@ const workerSummary = wh
       backlogAttribute: string,
       drainAttribute: string,
       run: ReturnType<typeof deriveWorkerRunStatus>,
+      budgetExcludedAttribute?: string,
     ) => {
       const card = document.querySelector<HTMLElement>(selector);
       if (!card) return;
+      const budgetExcludedCount = budgetExcludedAttribute
+        ? numberValue(card.getAttribute(budgetExcludedAttribute) ?? undefined)
+        : null;
+      const budgetLimited = budgetExcludedCount !== null && budgetExcludedCount > 0;
       const queue = deriveQueueDisplay({
         mode: card.getAttribute(modeAttribute),
         backlog: numberValue(card.getAttribute(backlogAttribute) ?? undefined),
-        drainEstimateHours: numberValue(card.getAttribute(drainAttribute) ?? undefined),
+        drainEstimateHours: budgetLimited ? null : numberValue(card.getAttribute(drainAttribute) ?? undefined),
+        budgetExcludedCount,
         runTone: run.tone,
         runState: run.state,
       });
+      if (budgetLimited) card.setAttribute(drainAttribute, "unknown");
       card.classList.remove("ok", "warn", "err", "neutral");
       card.classList.add(queue.tone);
       card.dataset.healthTone = queue.tone;
@@ -1658,6 +1688,13 @@ const workerSummary = wh
         if (modeLabelEn) modeLabelEn.textContent = queue.modeLabelEn;
       } else {
         card.dataset.bodyQueueState = queue.state;
+        const cap = numberValue(card.dataset.bodyQueueEnqueueCap);
+        const capJa = card.querySelector<HTMLElement>("[data-body-queue-cap-ja]");
+        const capEn = card.querySelector<HTMLElement>("[data-body-queue-cap-en]");
+        if (capJa) capJa.textContent = queue.mode === "enabled" && cap !== null && !budgetLimited
+          ? `上限 ${cap}件/run基準 · ` : "";
+        if (capEn) capEn.textContent = queue.mode === "enabled" && cap !== null && !budgetLimited
+          ? `based on a ${cap}/run cap · ` : "";
       }
       const labelJa = card.querySelector<HTMLElement>("[data-queue-label-ja]");
       const labelEn = card.querySelector<HTMLElement>("[data-queue-label-en]");
@@ -1718,6 +1755,7 @@ const workerSummary = wh
         "data-body-queue-backlog",
         "data-body-queue-drain-hours",
         run,
+        "data-body-queue-budget-excluded-count",
       );
     };
 

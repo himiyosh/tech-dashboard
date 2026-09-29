@@ -3268,3 +3268,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: R-027のbridge-last順序では、旧bridgeが新版Publisherのfingerprintを拒否する。main mergeと別承認のbridge置換が終わる前は新版jobを処理できず、post-releaseの実結果をpre-mergeに要求すると達成不能な循環gateになる。1 runのbounded repair telemetryも全件進捗の証拠ではない。
 - **対策**: PRE-MERGEはimmutable diff、旧binaryの新job echoを含むRED→GREEN、全chat ingressのコード上の拒否、既存sidecar6発言の保持、別途承認されたconsumerのpublic revision read-backに限定する。POST-MERGE/bridge置換後は実cacheと同じIDのsidecar反映・修復進捗・既存本文の不変を確認し、不能ならproduction完了宣言と追加反映を停止して承認済みrollbackを検討する。provider read-backが無ければ前段で旧drain代替を承認しない。
 - **教訓**: staged rolloutのgateは各段階で実際に観測可能な事実だけを前提にする。code-safetyとproduction livenessを分け、後段でしか起きない副作用を前段の通過条件へ持ち込まない。bounded telemetryを全件の実証に読み替えない。
+
+### LL-494: 保存予算で除外中の本文 Queue に全件の有限 ETA を示さない
+- **事象**: `data/bodies.json` が9MBの保存上限にほぼ達した本番snapshotで、持ち越された`bodyBudgetEvictedIds`に322件あり本文Queueの候補から除外されていた。それでも`bodyBacklog=588`と1 runの上限30件から`bodyQueueDrainEstimateHours=20`が保存され、公開Statusは全件が20時間ほどで処理されるように見えた。直近の実送信は6件だった。
+- **根本原因**: 生成器のcapによる割算は、容量制限による永続的な候補除外も実送信数の変動も考慮しない。保存済みの数値をそのまま公開ETAにすると、Queueが動いていても処理対象外の本文に完了時刻を約束する。
+- **対策**: Webは今回のprune数ではなく持ち越し済みの除外ID集合を検証・重複排除して数える。除外がある間は本文待ちと除外件数を別々に示し、Statusとmetricsの有限ETAを抑止する。未記録と空集合を区別し、Queueの停止・障害・収集再開待ちは従来の状態を保つ。生成器・Queue設定・保存済みartifactは変更しない。
+- **教訓**: throughputからの見込みは、対象の全件が実際に処理可能な場合だけreader-facingに出す。eligibilityと保存budgetはcapとは別のgateであり、持ち越し除外が1件でもあれば全件ETAを隠す。未記録を0件へ補完せず、見込みの有無、待機件数、除外件数、ARIA/機械可読値を同じsnapshotで揃える。

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T16:14:47.483Z",
+  "generatedAt": "2026-09-29T17:31:01.939Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -13690,7 +13690,15 @@
       "archiveTier": "warm",
       "contentSnippet": "ollama は num_ctx を超えた入力をエラーなく切り捨てます。HTTP 200 が返り、 done_reason は stop になります。この挙動そのものは 別記事 で扱いました。ここでは続きとして、 切り捨てが起きたことをレスポンスだけで判定するコード を書きます。 先に結論を書くと、この検知器は 3回作り直しました 。1回目と2回目は、書いた本人が「動いている」と思っていた状態で外部レビューに出し、いずれも本番相当の条件では発火しないと指摘されました。3回目は個別の判定はどれも正しかったのですが、 判定どうしの組み合わせに穴が空いていました 。 読者への価値は完成したコードより、 3つの壊れ方 のほうにあると思います。いずれも「試したら動いた」を根拠にしたことが原因で、検知器を書く人なら踏みうるものです。 検証環境は ollama v0.32.1 / Windows / Python 3.10 以上です。対象は /api/generate を非ストリームで呼び、送信した num_ctx / num_keep を手元に持っている Python 利用者を想定します。 prompt_eval_count が返すのは切り捨て 後 の値です。一方 /api/generate が raw 偽のときに返す context は、切り捨て 前 のプロンプトを再トークン化した列です。 この2つの差が最初の材料になります。 切り捨て後の prompt_eval_count には、もう一つ性質があります。v0.32.1 の llm/llama_server.go を読むと、値は閉じた式で決まります。 num_ctx と num_keep はクライアントが送っているので、この値は手元で計算できます。実測で確かめると、 num_ctx=1024 に対して num_keep を振った結果はこうなりました。 最初に書いた検査は、切り捨てを prompt_eval_count >= num_ctx - margin で見ようとしていました。 margin は 512 にしていました。",
       "feedSnippet": "ollama は num_ctx を超えた入力をエラーなく切り捨てます。HTTP 200 が返り、done_reason は stop になります。この挙動そのものは別記事で扱いました。ここでは続きとして、切り捨てが起きたことをレスポンスだけで判定するコードを書きます。 先に結論を書くと、この検知器は3回作り直しました。1回目と2回目は、書いた本人が「動いている」と思っていた状態で外部レビューに出し、いずれも本番相当の条件では発火しないと指摘されました。3回目は個別の判定はどれも正しかったのですが、判定どうしの組み合わせに穴が空いていました。 読者への価",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--eavYwvJ0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ollama%2520%25E3%2581%25AE%25E5%2585%25A5%25E5%258A%259B%25E5%2588%2587%25E3%2582%258A%25E6%258D%25A8%25E3%2581%25A6%25E3%2582%2592%25E3%2583%25AC%25E3%2582%25B9%25E3%2583%259D%25E3%2583%25B3%25E3%2582%25B9%25E3%2581%25A0%25E3%2581%2591%25E3%2581%25A7%25E6%25A4%259C%25E7%259F%25A5%25E3%2581%2599%25E3%2582%258B%2520%25E2%2580%2594%25203%25E5%259B%259E%25E4%25BD%259C%25E3%2582%258A%25E7%259B%25B4%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:itdevnote%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzY5YWQ2ZDhiZjcuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--eavYwvJ0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ollama%2520%25E3%2581%25AE%25E5%2585%25A5%25E5%258A%259B%25E5%2588%2587%25E3%2582%258A%25E6%258D%25A8%25E3%2581%25A6%25E3%2582%2592%25E3%2583%25AC%25E3%2582%25B9%25E3%2583%259D%25E3%2583%25B3%25E3%2582%25B9%25E3%2581%25A0%25E3%2581%2591%25E3%2581%25A7%25E6%25A4%259C%25E7%259F%25A5%25E3%2581%2599%25E3%2582%258B%2520%25E2%2580%2594%25203%25E5%259B%259E%25E4%25BD%259C%25E3%2582%258A%25E7%259B%25B4%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E9%258C%25B2%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:itdevnote%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzY5YWQ2ZDhiZjcuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "ollama の入力切り捨てをレスポンスだけで検知する — 3回作り直した記録",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "11a38575d8732a1d",
@@ -33869,7 +33877,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-09-29T11:30:43.105Z",
+      "collectedAt": "2026-09-29T17:30:43.140Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -40200,7 +40208,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-09-29T11:30:43.105Z",
+      "collectedAt": "2026-09-29T17:30:43.140Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -42735,7 +42743,7 @@
       "category": "vscode",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "contentSnippet": "🎬 Watch The Story of VS Code! Blog: Enable persistent, portable agent sessions with the Agent Host. Join GitHub Copilot Day live on September 10! Downloads: Windows: x64 Arm64 | Mac: Universal Intel silicon | Linux: deb rpm tarball Arm snap Welcome to the 1.127 release of Visual Studio Code. This release brings agents that can build and test web apps in the browser, safer per-site browsing, and new ways to keep busy agent sessions organized. Browser tools for agents : Let agents open pages, take screenshots, and click through to validate their own work, now generally available. Per-site browser permissions : Grant pages access to the camera, location, devices, and more, with a prompt for each site. Agent sessions : Group related sessions and drag and drop to arrange a busy Agents window.",
       "image": {
         "src": "https://code.visualstudio.com/assets/updates/1_127/release-highlights.webp",

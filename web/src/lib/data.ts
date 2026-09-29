@@ -135,6 +135,7 @@ export interface WorkerHealth {
   bodyMerged?: number;
   bodyPruned?: number;
   bodyQueueDrainEstimateHours?: number;
+  bodyBudgetEvictedIds?: string[];
   /** Legacy artifact key retained while older Publisher snapshots age out. */
   bodyDrainEstimateHours?: number;
   bodyMergePendingIds?: string[];

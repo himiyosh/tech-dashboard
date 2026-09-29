@@ -21,6 +21,8 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
 | Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 (deploy 成功後 `node scripts/verify-worker-deploy.mjs` で fingerprint 伝播を bounded polling 確認、非 blocking) |
 
+本文 Queue の `health.bodyBacklog` は本文待ちの件数、`health.bodyBudgetEvictedIds` は保存容量の上限により**run をまたいで生成対象から除外中**の ID 集合です（今回 prune した件数ではありません）。Status は両方を区別して表示します。`/metrics.json.bodyQueueBudgetExcludedCount` は未記録なら `null`、空集合なら `0`、除外中なら重複を除いた件数です。除外がある間、`/metrics.json.bodyQueueDrainEstimateHours` は `null` とし、Status でも全件が処理されるかのような有限 ETA を出しません。Publisher が保存する `health.bodyQueueDrainEstimateHours` は変更しません。
+
 ### 手動運用 (年 1 回程度)
 
 | 作業 | コマンド | 期日の気付き方 |

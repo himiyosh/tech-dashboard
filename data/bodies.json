@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T22:01:09.513Z",
+  "generatedAt": "2026-09-30T22:44:05.818Z",
   "count": 1150,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -2241,44 +2241,6 @@
           "s": "b",
           "ja": "その通りじゃ。導入を考えるなら、全24ツールの検証結果とAPI・認証の課題が判断材料になりそうじゃよ。",
           "en": "Exactly. If you’re considering adoption, the results for all 24 tools—and the documented API and authentication issues—should help guide the decision."
-        }
-      ]
-    },
-    "2d34acf45fec2485": {
-      "bodyJa": "AIコード編集ツール「Cursor」をSlackから呼び出し、開発タスクを非同期で走らせる運用が広がりつつある。ある技術ブログは、こうしたSlackエージェントを実務で活かす鍵は「起動」の設定ではなく、ツール間をどうつなぐかという「連携設計」にあると指摘し、現場で効く6つのAgent Skillsを提示している。\n\nCursorはVS Codeをベースにしたエディタで、コード補完や対話的な修正に加え、リポジトリを横断して自律的に作業する「エージェント」機能を備える。近年はエディタ内だけでなく、SlackのメンションからPull Requestの作成やバグ修正を依頼できる連携が提供され、開発者が席を離れていても指示を出せるようになった。この手軽さが注目される一方で、単に有効化しただけでは期待した成果につながりにくいという声もある。\n\nブログの主張は、導入のハードルが下がった今こそ、エージェントに「何を、どの順序で、どのツールを使って任せるか」という設計が差を生む、というものだ。ここで登場するのがAgent Skillsという考え方で、特定のタスク手順やコンテキスト、参照すべきドキュメントをあらかじめ束ねておくことで、エージェントの挙動を安定させる狙いがあると見られる。記事が挙げる6つのスキルは、GitHubやCI、Issue管理などとの接続を前提に、レビューやテスト、情報収集といった反復作業を型化する内容と考えられる。\n\nこの動きは業界全体の潮流とも重なる。GitHub Copilotのコーディングエージェントや、Anthropicの「Claude Code」、自律型を掲げる「Devin」など、チャットやリポジトリから作業を委ねる仕組みは各社が競って強化している。Slackを起点にする発想も、MCP（Model Context Protocol）のような外部ツール連携の標準化と相まって、今後さらに一般化する可能性がある。\n\nもっとも、エージェントに権限を渡すほど、誤操作や意図しない変更、機密情報の扱いといったリスクも増す。レビューを人間が挟む運用や、実行範囲の限定は依然として重要だ。起動の容易さに引きずられず、自チームのワークフローに合わせて連携を組み立てられるかが、生産性向上を実感できるかどうかの分かれ目になりそうだ。",
-      "bodyEn": "Cursor's integration with Slack lets development teams invoke the editor's AI agent directly from a chat channel, turning a message into a background coding task without opening the IDE. A recent Qiita post argues that the harder part of adopting this feature is not switching it on but designing how the agent connects to a team's existing tools and processes, and it offers six practical Agent Skills intended to make the setup useful in day-to-day work rather than only in demos.\n\nThe core premise is a distinction between activation and orchestration. Enabling the Slack agent is largely a configuration step: linking a workspace, granting permissions, and confirming that mentions trigger a run. Getting reliable value out of it, the article suggests, depends on how the agent is wired into repositories, issue trackers, review conventions, and deployment gates. In practice this means the agent needs enough context to act correctly and enough guardrails to avoid producing changes that a team cannot trust. That framing echoes a broader theme across agentic coding tools, where the difficulty has shifted from getting a model to write code toward governing how and where that code lands.\n\nCursor's Slack workflow builds on its background agent capability, which runs tasks asynchronously in a cloud environment rather than in the local editor. A user can describe a task in a channel, and the agent works on a branch, opens or updates a pull request, and reports back. Because these runs happen away from a developer's screen, the quality of the surrounding configuration matters more than in interactive use. If the agent lacks clear instructions, repository conventions, or a defined scope, its output is more likely to require rework. The article's emphasis on connection design appears to follow from this: the same automation that saves time can create review overhead if it is not constrained.\n\nAgent Skills, the mechanism the post highlights, are reusable units of instruction and capability that shape how an agent behaves. The concept has gained traction across the industry, with Anthropic promoting Skills as a way to package procedures, context, and tool access so that an assistant applies them consistently. Applied to Cursor's Slack agent, Skills can encode team-specific expectations such as how to reference tickets, which files or directories are off limits, what testing or linting must pass, and how results should be summarized back to the channel. The value is repeatability: rather than restating context in every message, a team defines it once and lets the agent reuse it.\n\nWhile the post presents six such Skills as its practical core, the general categories it points toward are recognizable from workflow automation more broadly. These likely include establishing shared context so the agent understands the codebase and conventions, scoping tasks so requests map to well-defined units of work, connecting to issue and pull-request systems so outputs are traceable, enforcing checks such as tests and reviews before changes merge, standardizing how the agent communicates status in Slack, and defining escalation or handoff rules for when a human should take over. The specific implementation details in the article would determine how directly these translate to a given team's stack.\n\nThe context here is a competitive and fast-moving space. Cursor, built as a fork of VS Code, competes with GitHub Copilot's agent features, Anthropic's Claude Code, and other assistants that increasingly operate through chat surfaces and background execution. Slack itself has been expanding as a hub for AI agents from multiple vendors, which makes it a natural place to trigger and monitor automated work. That convergence raises familiar operational questions around permissions, secrets handling, audit trails, and the risk of an agent acting on incomplete information, all of which reinforce the article's argument that integration design deserves more attention than initial setup.\n\nFor teams evaluating the approach, the practical takeaway is to treat the Slack agent as one component in a governed pipeline rather than a standalone shortcut. The reported productivity gains appear plausible when context and guardrails are well defined, but they depend heavily on the surrounding configuration. As with most agentic tooling, results are likely to vary by codebase maturity, review discipline, and how carefully the connecting Skills are written and maintained.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T05:17:44.845Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "CursorのSlackエージェントは、起動より「連携設計」が難しいって、それって何？",
-          "en": "Why is “integration design” harder than simply launching Cursor’s Slack agent? What does that mean?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、動かす設定だけでなく、ツールや作業の流れをどう連携させるかが実運用の鍵だと記事は述べておる。",
-          "en": "Simply put, the article says setup isn’t enough. The key is designing how the agent, tools, and actual workflow work together."
-        },
-        {
-          "s": "a",
-          "ja": "へえ。実行前の計画提示や複数リポジトリ、複数チャンネルへの対応は、何が嬉しいの？",
-          "en": "Oh, interesting. What’s useful about showing a plan first and supporting multiple repositories and channels?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、計画を先に確認でき、名前付き環境で複数リポジトリをまとめ、複数チャンネルを読み書きできるので、起動の手間が減るそうじゃ。",
-          "en": "According to the article, you can review the plan first, group repositories in named environments, and read or write across channels, reducing the effort needed to start the agent."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、起動は楽になったけど、6つのAgent Skillsを作業の流れにどう組み込むかが大事なんだね！",
-          "en": "So launching it is easier, but the real challenge is fitting those six Agent Skills into the team’s workflow!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。今後の見どころは、6つのスキルを実際の連携設計にどう生かし、生産性向上につなげるかじゃな。",
-          "en": "Exactly. The key thing to watch is how those six skills are applied to real integration design and whether they help improve team productivity."
         }
       ]
     },
@@ -43701,6 +43663,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-29T16:17:09.366Z"
+    },
+    "57beeead29eefb7a": {
+      "bodyJa": "## 直接クエリ\n\nAmazon Aurora PostgreSQLが、データレイクに保存されたApache IcebergとParquetのデータを直接クエリできるようになった。稼働中の運用データと履歴データを同じSQLで扱え、ETLパイプラインを用意せずに分析できる点が特徴だ。\n\n## DuckDB組み込み\n\nこの機能は、Auroraに組み込まれたDuckDBによって実現される。Apache IcebergやParquetのデータと、Aurora PostgreSQLが保持するトランザクションデータを単一のクエリで結合できる。データレイク側と運用側を分けて処理するのではなく、一つの問い合わせとして実行できる仕組みだ。\n\n## PostgreSQL構文\n\nクエリには、使い慣れたPostgreSQLの構文を利用できる。新たな専用構文を前提とせず、トランザクションデータと履歴データを同じSQL内で参照し、結合した分析が可能になる。ETLを省いたデータ分析を行う利用者に役立つ機能とされている。\n\n## 対応先と最適化\n\nデータの参照先としてAWS Glue Data Catalog、S3、S3 Tablesをサポートする。効率的な性能を得るための最適化として、述語プッシュダウンとキャッシュも備える。これにより、対応するデータレイク上のデータをAurora PostgreSQLから直接扱う構成が可能になる。",
+      "bodyEn": "## Apache Iceberg and Parquet\n\nAmazon Aurora PostgreSQL now supports direct queries against Apache Iceberg and Parquet data stored in a data lake alongside live operational data. This matters for analysis using both operational and historical information because the datasets can be queried together without requiring ETL pipelines.\n\n## DuckDB Embedded Within Aurora\n\nThe capability is powered by DuckDB embedded within Aurora. Through that embedded component, Aurora PostgreSQL can access lake datasets and operational records in one query, including Apache Iceberg and Parquet data from the data lake and transactional data from operational systems.\n\n## Familiar PostgreSQL Syntax\n\nUsers can write these combined queries with familiar PostgreSQL syntax. A single SQL query can join live transactional records with historical lake data, while direct access removes the need for an ETL pipeline as part of this querying approach. For analysts, querying these sources together can therefore cut ETL work.\n\n## Predicate Pushdown and Caching\n\nThe capability supports AWS Glue Data Catalog, S3, and S3 Tables. It also includes optimizations such as predicate pushdown and caching for efficient performance when Amazon Aurora PostgreSQL directly queries data lake content alongside live operational data.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ETLなしで、運用データと履歴データを1本のSQLで結べるようになったの？ これって大きい変化？",
+          "en": "You can join live operational and historical data in one SQL query without ETL? Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、別のETLパイプラインを用意せず直接クエリできる。分析前のデータ移動を省けるのが大きな変化だね。",
+          "en": "It allows direct queries without setting up separate ETL pipelines. The big change is skipping that data-moving step before analysis."
+        },
+        {
+          "s": "a",
+          "ja": "AuroraにDuckDBを組み込むって、どういう仕組みなの？",
+          "en": "What does it mean to embed DuckDB in Aurora?"
+        },
+        {
+          "s": "b",
+          "ja": "DuckDBは、SQLでデータを読む処理役だよ。Auroraの中からIcebergやParquetを扱えるよう支えているんだ。",
+          "en": "DuckDB acts as the SQL query engine. Embedded in Aurora, it helps read Iceberg and Parquet data directly."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、いまの運用データと昔の記録を並べて見たいな。SQLひとつなら試しやすそう！",
+          "en": "I’d use it to compare current operational data with older records. Doing that in one SQL query sounds approachable!"
+        },
+        {
+          "s": "b",
+          "ja": "対応先はAWS Glue Data Catalog、S3、S3 Tablesだよ。使うなら、データの保存先が合っているか確認したいね。",
+          "en": "The supported sources are AWS Glue Data Catalog, S3, and S3 Tables. Before using it, you’d want to confirm where your data is stored."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-30T22:07:41.669Z"
     }
   }
 }

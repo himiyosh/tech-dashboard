@@ -31,6 +31,7 @@
 - GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
 - Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
 - developとPRのCIでは36時間の鮮度gateを緩めず、同一のimmutableなremote main SHAの生成dataをunit/Web/E2Eへ配布する。PRが生成dataを明示変更した場合は上書きを拒否し、trackerの新規`data/updates` seedは保持する。main pushは当該commit自身のdataを検証する。
+- ローカルpre-pushに限り、単一の作業branchが現在のremote `origin/develop`を祖先に持ち、**developからの累積PR差分**がroot/docs/agent rulesのMarkdownまたは鮮度policyの明示4ファイルだけなら、古いdevelop indexの36時間超過をWARNとして許容する。remote SHAとtracking ref、push先/HEAD、差分・file modeを証明できない場合、data/**、WebやPublisher等のアプリ・data生成コード、未知path、main/releaseのpushは厳格な36時間gateに戻す。secret scanは従来のpush rangeのまま、全unitの他のassertion、Web build、該当E2Eは維持し、`ALLOW_STALE_DATA=1`をhookから渡さない (LL-495)。
 - fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
 
 ### R-002: Cloudflare Pages project 設定の固定値
@@ -713,7 +714,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-072: UX merge で data artifact を古い状態へ巻き戻さない
 - **事象**: `chore(data): update tech dashboard 2026-05-24T23:00:46.610Z` で `data/index.json` は 1419 件まで更新されていたが、その直後の UX / taxonomy merge commit で `data/index.json` が 980 件・`generatedAt=2026-05-23T05:00:49.636Z` に巻き戻り、本番表示が「記事更新停止」に見えた。`data/stats.json` はより新しい時刻のまま残り、artifact 間の generatedAt が乖離していた。
 - **根本原因**: 大きな merge conflict 解消時に UI / taxonomy 差分と data artifact 差分を同時に扱い、最新 `origin/main` の worker-generated data を構造的に保持する確認が不足した。既存 `tests/data-schema.test.ts` は schema / body coverage は見ていたが、`generatedAt` の鮮度と `index` / `stats` / `archive` 間の時刻整合性を検査していなかった。
-- **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、緊急時のみ `ALLOW_STALE_DATA=1`) と artifact generatedAt skew (6h 以内) のゲートを追加する。
+- **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、手動の緊急検査のみ `ALLOW_STALE_DATA=1`、hookは渡さない) と artifact generatedAt skew (6h 以内) のゲートを追加する。文書だけのdevelop pre-push例外はLL-495の限定条件による。
 - **教訓**: UI / taxonomy merge では data files を「ついでに解決」しない。完了前に `git log -- data/index.json` と generatedAt / count を確認し、最新 worker commit より古い data を main に載せない。data artifact は index / stats / archive の時刻整合性まで CI で守る。
 
 ### LL-073: taxonomy 修正後に Worker を deploy しないと古い分類で再汚染される
@@ -3274,3 +3275,10 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 生成器のcapによる割算は、容量制限による永続的な候補除外も実送信数の変動も考慮しない。保存済みの数値をそのまま公開ETAにすると、Queueが動いていても処理対象外の本文に完了時刻を約束する。
 - **対策**: Webは今回のprune数ではなく持ち越し済みの除外ID集合を検証・重複排除して数える。除外がある間は本文待ちと除外件数を別々に示し、Statusとmetricsの有限ETAを抑止する。未記録と空集合を区別し、Queueの停止・障害・収集再開待ちは従来の状態を保つ。生成器・Queue設定・保存済みartifactは変更しない。
 - **教訓**: throughputからの見込みは、対象の全件が実際に処理可能な場合だけreader-facingに出す。eligibilityと保存budgetはcapとは別のgateであり、持ち越し除外が1件でもあれば全件ETAを隠す。未記録を0件へ補完せず、見込みの有無、待機件数、除外件数、ARIA/機械可読値を同じsnapshotで揃える。
+
+### LL-495: developの古い生成dataは文書だけのpre-pushを止めず、変更範囲で鮮度を判定する
+- **事象**: Publisherのdata-only commitをdevelopへ複製しない方針の下、developのindexは約334時間前で、文書・規則だけのPRでもローカルpre-pushの全unit中の36時間鮮度検査が失敗した。他のdata-schema 56件は通過し、PR CIは既にimmutableな最新main dataを使っていた。
+- **根本原因**: developへ同期しない生成dataと、ローカルhookが無条件にcheckoutのindex時刻を検査する条件が矛盾した。一方、secret scan用の`origin/main..HEAD`は新規branchで過去のdevelop Web変更も含むため、そのpush rangeを文書だけのPR適格判定へ流用すると誤分類する。
+- **対策**: hookとdata-schema testは単一の共有helperで、remote `origin/develop`の実SHA、追跡ref、HEAD/remote push、祖先関係、クリーンなtracked tree、developからの累積diffとfile modeを確認する。文書・規則Markdownとpolicy自身の4ファイルだけが古いindexの**時刻検査のみ**WARNになる。未知path・data・アプリ/生成コード・main/release・ambiguous ref・Git errorはstrictに戻し、secret scanのpush range、全unitの他の検査、Web build、E2E、CI側の36時間gateは変えない。
+- **教訓**: feature→developとmainの生成data更新を分離したbranch topologyでは、ローカル鮮度検査の適用範囲もPRの実差分で限定する。例外を設ける場合はpushで増えたcommitだけでもmainとの差分でもなく、検証済みdevelop baseからの**全PR差分**を見る。baseが動いた時や判定不能時は例外を取り消し、少なくとも一つの受入条件を黙って省いた成功形にしない。
+- **追補**: 共有worktreeで`GIT_`prefixの環境変数を全削除したremote照合は、実環境がremote通信へ使う`GIT_CONFIG_*`や`GIT_ASKPASS`まで消して`ls-remote`を失敗させた。一時repoのtestではこれらを消す必要があっても、本番hookの子processは`GIT_DIR`・`GIT_WORK_TREE`・`GIT_INDEX_FILE`などrepository-pinning変数だけを除き、通信設定を維持する。推測で認証値を表示せず、sanitized subprocessのexit codeで切り分ける。

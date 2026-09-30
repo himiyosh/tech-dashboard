@@ -6,6 +6,17 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SHA_RE = /^[0-9a-f]{40}$/;
 const ZERO_SHA = "0".repeat(40);
+const REPOSITORY_PINNING_ENV = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_COMMON_DIR",
+  "GIT_INDEX_FILE",
+  "GIT_NAMESPACE",
+  "GIT_PREFIX",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_CEILING_DIRECTORIES",
+];
 const DOCUMENTATION_PREFIXES = [
   "docs/",
   ".github/agents/",
@@ -28,9 +39,7 @@ function strict(reason) {
 
 function git(root, args, operation) {
   const env = { ...process.env, GIT_TERMINAL_PROMPT: "0" };
-  for (const name of Object.keys(env)) {
-    if (name.startsWith("GIT_") && name !== "GIT_TERMINAL_PROMPT") delete env[name];
-  }
+  for (const name of REPOSITORY_PINNING_ENV) delete env[name];
   const result = spawnSync("git", args, {
     cwd: root,
     env,

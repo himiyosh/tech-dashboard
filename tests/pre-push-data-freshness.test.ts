@@ -253,6 +253,29 @@ describe("develop-only pre-push index freshness policy", () => {
     }
   });
 
+  it("preserves remote URL rewrite configuration needed to verify origin", () => {
+    const fixture = setup();
+    const input = inputFor(fixture);
+    git(fixture.root, "remote", "set-url", "origin", "fixture-origin:");
+    const names = ["GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"];
+    const originals = names.map((name) => process.env[name]);
+    try {
+      process.env.GIT_CONFIG_COUNT = "1";
+      process.env.GIT_CONFIG_KEY_0 = `url.${fixture.remote}.insteadOf`;
+      process.env.GIT_CONFIG_VALUE_0 = "fixture-origin:";
+      expect(assessDevelopDocsOnlyPush(fixture.root, {
+        remoteName: "origin",
+        remoteUrl: fixture.remote,
+        input,
+      }).eligible).toBe(true);
+    } finally {
+      names.forEach((name, index) => {
+        if (originals[index] === undefined) delete process.env[name];
+        else process.env[name] = originals[index];
+      });
+    }
+  });
+
   it("fails closed if Git cannot read the committed diff", () => {
     const fixture = setup();
     const treeSha = git(fixture.root, "rev-parse", `${fixture.developSha}^{tree}`);

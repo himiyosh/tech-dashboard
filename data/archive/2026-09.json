@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-09-30T15:01:23.234Z",
+  "generatedAt": "2026-09-30T16:01:07.914Z",
   "month": "2026-09",
-  "count": 346,
+  "count": 347,
   "entries": [
+    {
+      "id": "a1242fdf8d35f49c",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/yoossh/items/5472ea17d1199a8a8810",
+      "title": "MacにDockerをインストールしてROS 2 HumbleをVS Codeで動かす",
+      "titleJa": "MacにDockerをインストールしてROS 2 HumbleをVS Codeで動かす",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-09-30T13:13:19.000Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "MacにDocker Desktopをインストールし、ROS 2 HumbleのコンテナをVS Codeから操作するまでの手順を紹介します。最後に、ROS 2のサンプルノードであるtalkerとlistenerを起動し、メッセージが届くことを確認します。 実はWindows PC上のIsaac Simでロボットのシミュレーションを動作させてROS2によってPublishし、それを別PCでSubscribeしてRviz上に表示するまでを動作させたいと考えています。ただ、自宅にRvizを動作させるだけのパワーを持つPCがMacしかなかったので、せっかくなら、Mac上でROS2を動かすところまでまずはチャレンジしてみよう！というのがきっかけです。 今回の記事ではApple Silicon搭載Macを例にします。Docker DesktopとVS CodeはMacにインストールし、ROS 2はDockerコンテナの中で動かします。 Docker公式のインストールページ から、Macのチップに合ったDocker Desktopをダウンロードします。Apple Siliconの場合は「Mac with Apple silicon」用のインストーラーを選びます。 ダウンロードした Docker.dmg を開き、DockerアイコンをApplicationsフォルダーへドラッグします。その後、ApplicationsフォルダーからDockerを起動し、画面の案内に従って初期設定を完了します。 Docker Desktopが起動したら、ターミナルを開いて次のコマンドを実行します。 Dockerのクライアントとサーバーのバージョンが表示されれば、Dockerを利用できます。続けて、MacのCPUアーキテクチャを確認します。 Apple Silicon搭載Macでは通常 arm64 と表示されます。 この記事では、OSRFが公開している osrf/ros:humble-desktop イメージを使います。",
+      "feedSnippet": "MacにDocker Desktopをインストールし、ROS 2 HumbleのコンテナをVS Codeから操作するまでの手順を紹介します。最後に、ROS 2のサンプルノードであるtalkerとlistenerを起動し、メッセージが届くことを確認します。 実はWindows...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFjJUUzJTgxJUFCRG9ja2VyJUUzJTgyJTkyJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgzJTg4JUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgxJTk3JUUzJTgxJUE2Uk9TJTIwMiUyMEh1bWJsZSVFMyU4MiU5MlZTJTIwQ29kZSVFMyU4MSVBNyVFNSU4QiU5NSVFMyU4MSU4QiVFMyU4MSU5OSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThlMTI4ZDAwMTgwNmJkYjFkZmVhNTEyZDdkMGM1ODll&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=870f701aad21265a331b1da85b7e49c8",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFjJUUzJTgxJUFCRG9ja2VyJUUzJTgyJTkyJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgzJTg4JUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgxJTk3JUUzJTgxJUE2Uk9TJTIwMiUyMEh1bWJsZSVFMyU4MiU5MlZTJTIwQ29kZSVFMyU4MSVBNyVFNSU4QiU5NSVFMyU4MSU4QiVFMyU4MSU5OSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThlMTI4ZDAwMTgwNmJkYjFkZmVhNTEyZDdkMGM1ODll&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=870f701aad21265a331b1da85b7e49c8",
+        "alt": "MacにDockerをインストールしてROS 2 HumbleをVS Codeで動かす",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "de5a105968edf325",
       "source": "qiita-vscode",
@@ -13,7 +44,7 @@
       "titleEn": "⚡ Luna on Watch ⚡ Check Every 20 Minutes with Copilot Scheduler and Wake Opus Only When Needed 🚀",
       "lang": "ja",
       "publishedAt": "2026-09-30T09:08:10.000Z",
-      "collectedAt": "2026-09-30T10:30:47.841Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
       "tags": [
         "automation",
         "copilot-scheduler",
@@ -21,7 +52,6 @@
         "llm-agents",
         "python",
         "qiita",
-        "release",
         "vscode"
       ],
       "category": "copilot",
@@ -82,7 +112,7 @@
       "titleEn": "GitHub Copilot Auto Evolves with More Models and Selectable Tiers",
       "lang": "ja",
       "publishedAt": "2026-09-30T05:47:28.000Z",
-      "collectedAt": "2026-09-30T10:30:47.841Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
       "tags": [
         "ai-models",
         "github-copilot",
@@ -95,8 +125,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "GitHub Copilot のモデルピッカーで「Auto」を選択した際のモデルが、いつの間にか更新されていることに気づきました。 2026年9月14日に公開された記事で言及があったようです。 この記事の中では、Auto に efficiency / balance / intelligence の3段階が追加され、あわせて「利用できるモデルの選択肢も更新された」とアナウンスがありました。 今回は、最新のGithub CopilotでモデルをAutoにした場合の使い方がどう変わってきたかを簡単に説明していきます。 Autoを選ぶと、Copilot は依頼の内容に応じて利用可能なモデルから適したモデルを選択して利用します。また、Autoで選択したモデルは10%のディスカウントで利用することができるので、何かと問題になる価格面でも有利です。 ただ、少し前まではAutoで選択されるモデルは世代の古いモデルが多く、安くなると入っても普通にGPT-5.6 Lunaを選択したほうが安く、高性能なモデルが利用できるというねじれ現象が起きていました。 すでにGitHub上のドキュメントが変更されているため確認はできませんが、 インターネットアーカイブを確認 すると、以前Autoで利用できるモデルは次のモデルが対象になっていたようです。 GPT-5.3-Codex / GPT-5.4 / GPT-5.4 nano Opus 4.5 / Opus 4.6 / Opus 4.7 / Sonnet 4.5 / Sonnet 4.6 今回の変更後、Autoで利用できるモデルは次のページで確認できます。 選択するモデルが大幅に増えたのでここで列挙はしませんが、GPT-5.3 Codexなどの古いモデルは退役し、GPT-5.6 / GPT-6 / Claude 5 / Claude 5.5 の最新モデルや、これまでAutoでは選択されなかった Gemini Flash系のモデルが追加されていることがわかります。 Auto のモデル選択方針に3つの段階を選択で選択できるようになりました。",
-      "feedSnippet": "はじめに GitHub Copilot のモデルピッカーで「Auto」を選択した際のモデルが、いつの間にか更新されていることに気づきました。 2026年9月14日に公開された記事で言及があったようです。 この記事の中では、Auto に efficiency / balan...",
       "excerptOrigin": "article",
+      "feedSnippet": "はじめに GitHub Copilot のモデルピッカーで「Auto」を選択した際のモデルが、いつの間にか更新されていることに気づきました。 2026年9月14日に公開された記事で言及があったようです。 この記事の中では、Auto に efficiency / balan...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzY1MzUlMkZwcm9maWxlLWltYWdlcyUyRjE2MzA4OTYwMzE_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPThjNDRhZjE1MDAzNmFmYTliZjlmZjY0NjM0ODdlNzA5%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7eda33f7ef4bdf7cd3f35ece814faf87?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBRSUyMEF1dG8lMjAlRTMlODElQUUlRTQlQkQlQkYlRTMlODElODQlRTYlOTYlQjklRTMlODElOEMlRTUlQTQlODklRTMlODIlOEYlRTMlODElQTMlRTMlODElQTYlRTMlODElOEQlRTMlODElOUYlRUYlQkMlODglRTMlODMlQTIlRTMlODMlODclRTMlODMlQUIlRTMlODElOEMlRTUlQTIlOTclRTMlODElODglRTMlODElQTYlRTMlODAlODElRTMlODMlODYlRTMlODIlQTMlRTMlODIlQTIlRTMlODIlOTIlRTklODElQjglRTYlOEElOUUlRTMlODElQTclRTMlODElOEQlRTMlODIlOEIlRTMlODIlODglRTMlODElODYlRTMlODElQUIlRTMlODElQUElRTMlODElQTMlRTMlODElOUYlRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZWNhYjliM2QzZTFhM2U1ZGI3MmNmZmFjODk1ZjVjMg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYXJ1YWt1biZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWU1NjhiZmJhMWFjNzBkM2M5NzczMzI2NjcxODQ3YTFj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9e91ba2ddab1108c808dde4d5b4a9b4a",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMzY1MzUlMkZwcm9maWxlLWltYWdlcyUyRjE2MzA4OTYwMzE_aXhsaWI9cmItNC4xLjEmYXI9MSUzQTEmZml0PWNyb3AmbWFzaz1lbGxpcHNlJmJnPUZGRkZGRiZmbT1wbmczMiZzPThjNDRhZjE1MDAzNmFmYTliZjlmZjY0NjM0ODdlNzA5%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D7eda33f7ef4bdf7cd3f35ece814faf87?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9R2l0SHViJTIwQ29waWxvdCUyMCVFMyU4MSVBRSUyMEF1dG8lMjAlRTMlODElQUUlRTQlQkQlQkYlRTMlODElODQlRTYlOTYlQjklRTMlODElOEMlRTUlQTQlODklRTMlODIlOEYlRTMlODElQTMlRTMlODElQTYlRTMlODElOEQlRTMlODElOUYlRUYlQkMlODglRTMlODMlQTIlRTMlODMlODclRTMlODMlQUIlRTMlODElOEMlRTUlQTIlOTclRTMlODElODglRTMlODElQTYlRTMlODAlODElRTMlODMlODYlRTMlODIlQTMlRTMlODIlQTIlRTMlODIlOTIlRTklODElQjglRTYlOEElOUUlRTMlODElQTclRTMlODElOEQlRTMlODIlOEIlRTMlODIlODglRTMlODElODYlRTMlODElQUIlRTMlODElQUElRTMlODElQTMlRTMlODElOUYlRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz05ZWNhYjliM2QzZTFhM2U1ZGI3MmNmZmFjODk1ZjVjMg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBrYXJ1YWt1biZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWU1NjhiZmJhMWFjNzBkM2M5NzczMzI2NjcxODQ3YTFj&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=9e91ba2ddab1108c808dde4d5b4a9b4a",
@@ -6374,6 +6404,8 @@
       "title": "Canadian Start-up smartARM Uses AI to Create Intuitive Bionic Prosthetics",
       "titleJa": "カナダのスタートアップsmartARM、AIで直感的に操作できるバイオニック義手を開発",
       "titleEn": "Canadian Start-up smartARM Uses AI to Create Intuitive Bionic Prosthetics",
+      "summaryJa": "smartARMは、オープンソースソフトウェアを用いる視覚優先型のバイオニック義手試作機を開発し、Meta AI glassesを任意で追加できる設計にした。握り方を手動で切り替える負担を減らし、手足に違いのある人の自然な操作を目指す。",
+      "summaryEn": "smartARM is building a vision-led bionic arm prototype using open-source software and optional Meta AI glasses support to simplify grip control for people with limb differences.",
       "lang": "en",
       "publishedAt": "2026-09-16T16:00:19.000Z",
       "collectedAt": "2026-09-29T07:30:35.840Z",
@@ -6388,7 +6420,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "hot",
+      "archiveTier": "warm",
       "contentSnippet": "People and companies are using AI hardware and software to make life easier and more accessible for everyone. That’s the case with smartARM, a Toronto-based startup developing a vision-first bionic arm prototype that uses open-source software, with Meta AI glasses as an optional add-on, to explore more intuitive prosthetic control for people living with limb differences. Many traditional prosthetic hands require users to switch manually between grip patterns for different objects, making it cumbersome to move everyday items. Something as seemingly natural as picking up a glass, and then a spoon, becomes a multistep process. smartARM addressed this by developing AI hardware and software that understands the environment, and automatically selects a suitable grip for the object – so users can",
       "image": {
         "src": "https://about.fb.com/wp-content/uploads/2026/09/20260807_RT_Meta_SmartArm_ShaquemGriffin_1233.jpg?fit=1800%2C1201",
@@ -6991,7 +7023,7 @@
       "summaryEn": "Siri AI launches today as a full overhaul powered by next-generation Apple Intelligence in the 2027 software releases, giving users more personal help across everyday apps.",
       "lang": "en",
       "publishedAt": "2026-09-14T17:09:41.324Z",
-      "collectedAt": "2026-09-30T10:30:47.841Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
       "tags": [
         "apple",
         "apple-intelligence",
@@ -10882,7 +10914,7 @@
       "summaryEn": "Google DeepMind's proactive cyber defense effort targets public agencies and businesses, supporting earlier action on threats and stronger protection across both sectors.",
       "lang": "en",
       "publishedAt": "2026-09-02T16:24:24.000Z",
-      "collectedAt": "2026-09-30T10:30:47.841Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
       "tags": [
         "cybersecurity",
         "deepmind",
@@ -11711,7 +11743,7 @@
       "summaryEn": "Gemini gains agent-driven capabilities for interpreting video, adding a more active approach to visual analysis. It helps users find needed information and context in footage.",
       "lang": "en",
       "publishedAt": "2026-09-01T17:08:51.000Z",
-      "collectedAt": "2026-09-30T10:30:47.841Z",
+      "collectedAt": "2026-09-30T16:00:52.150Z",
       "tags": [
         "agent",
         "deepmind",

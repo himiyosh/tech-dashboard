@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-30T21:01:08.293Z",
-  "count": 1151,
+  "generatedAt": "2026-09-30T22:01:09.513Z",
+  "count": 1150,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -43326,7 +43326,39 @@
       "bodyJa": "## エージェント拡張\n\nVisual Studio Code 1.140では、エージェントを使った作業フローが拡張され、複数フォルダーの処理やリモートへのタスク委任、複数モデルを利用する機能が加わった。ワークツリーの再利用改善と、企業向けAIコントロールの追加も含まれる。\n\n## 複数フォルダー\n\nMulti-folder sessionsは実験機能として提供され、単一のエージェントセッション内で複数のフォルダーにまたがるタスクを扱える。フォルダーごとにセッションを分けるのではなく、一つのセッションで作業を進められる点が特徴となる。\n\nRemote delegationも実験機能で、接続済みのリモートエージェントホストへタスクを委任できる。エージェントの作業対象をローカルだけに限定せず、接続されたホストへ振り分けるための機能と位置付けられている。\n\n## Copilotハーネス\n\nCopilotハーネスを利用すると、Copilot製品間で一貫したエージェントの挙動を得られると説明されている。製品が異なる場合でも、エージェントの動作をそろえるための仕組みとなる。\n\nHydraFusionはResearch Previewとして追加された。複数のモデルにコーディングタスクの案を作成させ、批評と修正を行わせる機能で、利用者自身が各モデル間の調整を担わずに進められるとされる。\n\n## ワークツリー再利用\n\nShared worktree foldersは実験機能で、ワークツリー間で無視対象のフォルダーを再利用する。これにより、依存関係の繰り返しインストールや、生成物の重複を避けられる。\n\n配布形式として.deb、.rpm、.tar.gzが案内され、Arm向け手順とSnapも用意されている。すでに導入済みの場合は、Visual Studio Codeの「Check for Updates」を利用できる。今後提供予定の機能を試す手段としては、Insidersビルドが案内されている。",
       "bodyEn": "## Agent workflows\n\nVisual Studio Code 1.140 expands agent workflows, improves worktree reuse, and adds enterprise AI controls. The release matters for users working with AI-assisted coding tasks because it introduces ways to operate across multiple folders, delegate work to connected remote hosts, and obtain more consistent agent behavior across Copilot products.\n\nThe Copilot harness is intended to provide that consistency across Copilot products. The release also includes experimental and research-preview capabilities aimed at making AI development workflows more flexible.\n\n## Multi-folder sessions\n\nMulti-folder sessions are introduced as an experimental feature. They allow users to work on tasks across multiple folders within a single agent session, rather than limiting the session to one folder.\n\nThis capability places multiple-folder work inside the same agent context. Its experimental designation distinguishes it from the release’s standard capabilities.\n\n## Remote delegation and HydraFusion\n\nRemote delegation is also experimental. It lets users delegate tasks to connected remote agent hosts, extending an agent workflow beyond the current host.\n\nHydraFusion arrives as a Research Preview. It allows multiple models to draft, critique, and revise coding tasks without requiring the user to coordinate those models manually. Together with multi-folder sessions and remote delegation, it broadens the ways an agent session can organize and carry out coding work.\n\n## Shared worktree folders\n\nShared worktree folders are another experimental addition. The feature reuses ignored folders across worktrees, helping users avoid repeated dependency installations and duplicated artifacts.\n\nThe release is available in .deb, .rpm, and .tar.gz formats, with Arm instructions and Snap also listed. Existing installations can use Check for Updates in Visual Studio Code. Users interested in upcoming features can use the Insiders build.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-30T18:43:59.102Z"
+      "generatedAt": "2026-09-30T18:43:59.102Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でAIにコード作業を頼むとき、普段の進め方はどう変わるの？フォルダーが分かれていても頼める？",
+          "en": "When I ask AI to help with coding at work, what changes? Can one request cover separate folders?"
+        },
+        {
+          "s": "b",
+          "ja": "1つのエージェントセッションで、複数フォルダーにまたがるタスクを扱える実験機能が加わったよ。",
+          "en": "This release adds an experimental feature for handling tasks across multiple folders in one agent session."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？1つずつ別のセッションに分けていたのかな。",
+          "en": "Was that not possible before? Did each folder need its own session?"
+        },
+        {
+          "s": "b",
+          "ja": "1.140で加わった新機能だけど、以前の版で何がどこまでできなかったかは詳しく示されていないよ。",
+          "en": "It’s new in 1.140, but the release notes don’t spell out exactly what earlier versions could or couldn’t do."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、分かれたフォルダーの作業を1つの流れで頼めるようになったことなんだね。",
+          "en": "So the main takeaway is that tasks spanning separate folders can now stay in one workflow."
+        },
+        {
+          "s": "b",
+          "ja": "うん、まずは実験機能である点を押さえたいね。接続したリモートのエージェントホストへ委任する機能にも注目だよ。",
+          "en": "Yes, and it’s worth remembering that this is experimental. Remote delegation to connected agent hosts is another feature to watch."
+        }
+      ]
     },
     "4cc6f4c3dff83b61": {
       "bodyJa": "## v1.22.0の焦点\n\nZed Editor v1.22.0では、AI支援と差分レビューに関わる複数の機能が追加された。GPT-6.1 SolのBYOK対応、サブエージェントごとのモデル選択、自動圧縮、差分表示の切り替え、OpenCodeモデルの動的取得により、利用するモデルや表示方法を細かく制御できる。\n\n## モデル選択\n\nspawn_agentに任意のmodelパラメーターが追加され、サブエージェントを生成する際、そのサブエージェントだけに使うモデルを指定できるようになった。指定しない場合は、設定済みのサブエージェント用モデルを使うか、親エージェントのモデルを継承する。現在有効なモデルは、サブエージェントのカードに表示される。\n\n新しいサブエージェントを生成する時点でモデルを選べるため、全体の設定を変更せず、生成単位で使い分けられる。さらに、サブエージェントの自動圧縮も追加されている。\n\n## BYOKとプロバイダー\n\nGPT-6.1 SolではBYOKがサポートされ、OpenAI APIキーを利用できるようになった。また、Grok 4.7がSuperGrokとxAIの各プロバイダーに追加され、両プロバイダーの推奨デフォルトに設定された。\n\nOpenCodeについては、利用可能なモデルを動的に取得する方式が導入された。固定的なモデル情報だけを前提とせず、取得したモデルを扱う構成となる。\n\n## 差分表示の切替\n\nコマンドラインから開いた差分には、統合表示と分割表示を切り替えるトグルが追加された。同じ差分を一つの表示にまとめる形式と、分けて確認する形式を切り替えられるため、レビュー時の表示方法を選択できる。今回の更新は、AIモデルの指定から差分の見え方まで、作業ごとの選択肢を広げる内容となっている。",
@@ -43441,44 +43473,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T20:37:37.461Z"
-    },
-    "f67c88ba872d8347": {
-      "bodyJa": "## AI時代の指標\n\nOpenAIのCFOであるSarah Friar氏は、AI時代の進捗を評価する実用的なスコアカードを紹介した。社会・経済・安全の各側面からAIの影響を可視化して追跡し、説明責任と透明性の向上を目指す枠組みだ。\n\n## ROIの測定軸\n\nROIは、有用な仕事、成功したタスク当たりのコスト、信頼性、計算資源に対するリターンで測定する。タスクの成功に要するコストや計算資源も指標に含め、AI開発が世界に与える影響の把握につなげると説明されている。",
-      "bodyEn": "## Practical AI scorecard\n\nOpenAI introduced a framework for measuring and tracking AI progress across social, economic, and safety dimensions. The scorecard matters because it aims to improve accountability and transparency around how AI development affects the world.\n\nSarah Friar, OpenAI’s CFO, presents the approach as a practical way to measure return on investment through indicators tied to actual performance.\n\n## Useful work and dependability\n\nThe scorecard focuses on useful work, cost per successful task, dependability, and return on compute. Together, these measures provide criteria for making AI’s effects more visible and tracking progress rather than relying on a single measure of value.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "役立つ仕事、成功タスクのコスト、信頼性、計算資源のリターンの4つで測るんだね。これは大きいこと？",
-          "en": "It uses four measures: useful work, cost per successful task, dependability, and return on compute. Is that a big shift?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、AIへの投資効果を具体的に追える実用的な物差しとして示しているよ。影響の可視化と説明責任にもつながる考え方だね。",
-          "en": "The piece presents them as practical ways to track AI’s return on investment. The broader goal is to make its impact more visible and accountable."
-        },
-        {
-          "s": "a",
-          "ja": "「計算資源のリターン」って、何を見ようとしているの？",
-          "en": "What is “return on compute” trying to measure?"
-        },
-        {
-          "s": "b",
-          "ja": "使った計算資源に対して、どれだけ成果を得られたかを見る考え方だよ。投入と結果のつり合いを確かめるイメージだね。",
-          "en": "It looks at how much useful output comes from the computing resources used—the balance between what goes in and what comes out."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、AIに頼んだ作業が本当に成功したか、かかったコストと一緒に振り返ってみたいな。",
-          "en": "I’d use it to review whether an AI task actually succeeded, along with what that success cost."
-        },
-        {
-          "s": "b",
-          "ja": "いい使い方だね。ただ、コストだけでなく、役立つ仕事か、安定して任せられるか、計算資源に見合うかも合わせて見る枠組みだよ。",
-          "en": "That fits the framework. It also asks whether the work is useful, dependable, and worth the computing resources—not just whether the cost is low."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T20:36:26.151Z"
     },
     "0d3409e022389698": {
       "bodyJa": "## GPT-5.6\n\nOpenAIはGPT-5.6を発表した。多様なユースケースに合わせて知能をスケールさせ、開発者や企業による複雑なタスクの効率的な処理を支えるフロンティアモデルとされる。\n\n## 推論能力\n\nGPT-5.6は高度な推論能力を備え、難しい作業に応じて能力を引き出せる。トークンごとの知能を高め、費用当たりの性能を強化することで、幅広い用途でのタスク処理能力を向上させたと説明されている。",

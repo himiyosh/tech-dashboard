@@ -45,6 +45,7 @@ import {
   MAJOR_UPDATE_MAX_MONTH_BYTES,
   parseMajorUpdateState,
 } from "../web/src/lib/major-update-ledger.ts";
+import { assessDevelopDocsOnlyPush } from "../scripts/pre-push-data-freshness.mjs";
 
 interface RawEntry {
   id?: unknown;
@@ -222,8 +223,26 @@ describe("data/index.json トップレベル", () => {
   });
 
   it("generatedAt が古すぎない", () => {
-    if (process.env.ALLOW_STALE_DATA === "1") return;
+    if (process.env.ALLOW_STALE_DATA === "1") {
+      console.warn("[data-schema] WARN: manual emergency ALLOW_STALE_DATA bypasses only index age");
+      return;
+    }
     const ageHours = (Date.now() - Date.parse(data.generatedAt)) / 3_600_000;
+    if (ageHours > STALE_DATA_MAX_AGE_HOURS && process.env.PRE_PUSH_DEVELOP_DOCS_INPUT) {
+      const decision = assessDevelopDocsOnlyPush(process.cwd(), {
+        remoteName: "origin",
+        remoteUrl: process.env.PRE_PUSH_DEVELOP_DOCS_URL,
+        input: process.env.PRE_PUSH_DEVELOP_DOCS_INPUT,
+      });
+      if (decision.eligible) {
+        console.warn(
+          `[data-schema] WARN: develop docs/rules/policy-only push: committed index is ${ageHours.toFixed(1)}h old ` +
+          `(limit ${STALE_DATA_MAX_AGE_HOURS}h); only the local age assertion is waived`,
+        );
+        return;
+      }
+      console.warn(`[data-schema] strict <=36h index freshness: ${decision.reason}`);
+    }
     expect(ageHours).toBeLessThanOrEqual(STALE_DATA_MAX_AGE_HOURS);
   });
 

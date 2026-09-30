@@ -174,9 +174,11 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `main` / `master` / `develop` への直接 commit 拒否 → staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。develop 向けの文書・規則のみの PR は下記の鮮度警告を適用。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
+
+ローカルの `pre-push` に限り、単一の作業ブランチからの差分が**現在の `origin/develop` を祖先とする文書・規則のみ**なら、古い develop index の36時間超過を明示的な警告に留めます。対象はルートの Markdown、`docs/`・`.github/agents|instructions|knowledge/`・`.claude/knowledge|rules|skills/` の Markdown と、鮮度ポリシー自身の `scripts/git-hooks/pre-push`、`scripts/pre-push-data-freshness.mjs`、`tests/data-schema.test.ts`、`tests/pre-push-data-freshness.test.ts` だけです。hook は remote develop の実 SHA と追跡 ref、push ref、作業ツリー、**develop からの累積 PR 差分**を照合し、判定できない場合や `data/**`、Web・Publisher・Worker 等の code / unknown path が含まれる場合は通常の36時間 gate を維持します。secret scan は従来どおり push 対象 commit range で実行し、unit の他の schema 検査、Web build、該当 E2E も省きません。`ALLOW_STALE_DATA=1` は hook から unit test へ渡しません。
 
 protected branch への直接 commit / push は通常禁止です。当該セッションでユーザーが直接書き込みを明示承認した場合だけ、`ALLOW_PROTECTED_BRANCH_WRITE=1` を指定できます。作業ブランチと PR を使う通常作業では指定しません。
 

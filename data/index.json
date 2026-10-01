@@ -1,51 +1,51 @@
 {
-  "generatedAt": "2026-10-01T00:01:11.190Z",
+  "generatedAt": "2026-10-01T01:01:32.209Z",
   "count": 2000,
   "health": {
-    "lastRunAt": "2026-10-01T00:01:11.187Z",
-    "batchIndex": 1,
+    "lastRunAt": "2026-10-01T01:01:32.207Z",
+    "batchIndex": 2,
     "batchTotal": 6,
     "sourcesAttempted": 10,
     "sourcesOk": 10,
     "sourcesFailed": [],
     "summarized": 0,
     "summarizeErrors": 0,
-    "summaryFallbacks": 2,
+    "summaryFallbacks": 8,
     "bodyFallbacks": 0,
-    "fallbackTotal": 5,
+    "fallbackTotal": 8,
     "fallbackPercent": 0,
     "kvLookupCap": 35,
-    "kvLookupCount": 4,
+    "kvLookupCount": 9,
     "queueMode": "enabled",
     "queueCap": 35,
     "summaryQueueSnapshotStage": "final-entries",
-    "enqueueCandidates": 4,
-    "summaryQueueBacklog": 4,
-    "summaryQueueEnqueued": 4,
+    "enqueueCandidates": 7,
+    "summaryQueueBacklog": 7,
+    "summaryQueueEnqueued": 7,
     "summaryQueueDrainEstimateHours": 1,
     "summaryQueueStartIndex": 0,
     "summaryQueueCooldownCount": 1,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 4370,
+    "ogCached": 4371,
     "ogNewHits": 1,
-    "excerptFetchCandidates": 1,
-    "excerptFetchAttempted": 1,
-    "excerptFetched": 1,
+    "excerptFetchCandidates": 4,
+    "excerptFetchAttempted": 4,
+    "excerptFetched": 4,
     "excerptFetchUnavailable": 0,
     "excerptFetchDeferred": 0,
     "excerptFetchPrioritized": 0,
     "excerptFetchUnlockable": 0,
-    "excerptBodyBatchPinned": 4,
+    "excerptBodyBatchPinned": 13,
     "excerptBodyBatchEnqueued": 0,
     "publisherContractFingerprint": "sha256:59b524c029d63065f13829ee4a08ab0c3412046b9c47f24eda8f6806a2267889",
     "bodyQueueMode": "enabled",
-    "bodyEnqueueCap": 31,
-    "bodyEnqueueCandidates": 0,
-    "bodyEnqueued": 0,
+    "bodyEnqueueCap": 28,
+    "bodyEnqueueCandidates": 1,
+    "bodyEnqueued": 1,
     "bodyBacklog": 597,
-    "bodyQueueDrainEstimateHours": 20,
-    "bodyLookupCount": 4,
+    "bodyQueueDrainEstimateHours": 22,
+    "bodyLookupCount": 14,
     "chatLookupCount": 0,
     "chatCompatibilityRejected": 0,
     "chatRepairBlocked": 0,
@@ -53,14 +53,16 @@
     "chatRepairEnqueued": 0,
     "chatRepairPendingIds": [],
     "bodyPendingLookupCount": 0,
-    "bodyMergePendingIds": [],
-    "bodyMerged": 0,
-    "bodyPruned": 0,
-    "bodiesTotal": 1150,
+    "bodyMergePendingIds": [
+      "f8704fe3e48b6267"
+    ],
+    "bodyMerged": 9,
+    "bodyPruned": 13,
+    "bodiesTotal": 1146,
     "bodyRetentionDays": 30,
-    "bodyRetentionEligible": 1789,
+    "bodyRetentionEligible": 1788,
     "bodyBudgetTargetBytes": 9000000,
-    "bodyBudgetBytes": 8992032,
+    "bodyBudgetBytes": 8969742,
     "bodyBudgetPruned": 0,
     "bodyBudgetEvictedIds": [
       "001edc373888278c",
@@ -574,7 +576,6 @@
       "ddc661085eadef79",
       "dded664a8e202775",
       "de3535ae2f8767a5",
-      "de5a105968edf325",
       "deff79d69a91b064",
       "df1fd8e6f1319d40",
       "df30c9b5e282e3c9",
@@ -658,29 +659,68 @@
       "ff6bc71e25a43c58"
     ],
     "enrichmentEnqueueCap": 35,
-    "enrichmentEnqueued": 4,
-    "enrichmentRemaining": 31
+    "enrichmentEnqueued": 8,
+    "enrichmentRemaining": 27
   },
   "entries": [
+    {
+      "id": "af6a3008adf4fbae",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-30-opt-in-dist-tag-permissions-for-npm-trusted-publishing",
+      "title": "Opt-in dist-tag permissions for npm trusted publishing",
+      "titleJa": "",
+      "titleEn": "Opt-in dist-tag permissions for npm trusted publishing",
+      "summaryJa": "このエントリは github-changelog から収集した tech-news 領域の最新アップデートです。原題:「Opt-in dist-tag permissions for npm trusted publishing」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "Opt-in dist-tag permissions for npm trusted publishing",
+      "lang": "en",
+      "publishedAt": "2026-09-30T21:03:09.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Trusted publishing configurations for npm can now be granted permission to manage dist-tags (e.g., promoting a version to latest , updating next and beta pointers) using short-lived OIDC credentials instead of a long-lived access token. Previously, trusted publishing covered publishing and staging, but not dist-tag operations. That meant maintainers who had otherwise fully moved to token-free, OIDC-based workflows still had to keep a granular access token around solely to manage tags after a release or a rollback. Each trusted publishing configuration now has an opt-in Allow npm dist-tag permission. It defaults to off for both new and existing configurations, so no configuration automatically gains new capability. The permission is independent of direct publishing, so a staging-only configuration can also be granted dist-tag management.",
+      "feedSnippet": "Trusted publishing configurations for npm can now be granted permission to manage dist-tags (e.g., promoting a version to latest, updating next and beta pointers) using short-lived OIDC credentials instead of… The post Opt-in dist-tag permissions for npm trusted publishing appeared first on The GitHub Blog .",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://github.blog/wp-content/uploads/2026/09/image-3.jpg",
+        "origSrc": "https://github.blog/wp-content/uploads/2026/09/image-3.jpg",
+        "alt": "Opt-in dist-tag permissions for npm trusted publishing",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "bodyJa": "",
+      "bodyEn": ""
+    },
     {
       "id": "f8704fe3e48b6267",
       "source": "google-keyword",
       "sourceType": "blog",
       "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-4-argon/",
       "title": "Gemini 4 Argon: our next era of frontier intelligence",
-      "titleJa": "",
+      "titleJa": "Gemini 4 Argon：フロンティア知能の新時代",
       "titleEn": "Gemini 4 Argon: our next era of frontier intelligence",
-      "summaryJa": "このエントリは google-keyword から収集した tech-news 領域の最新アップデートです。原題:「Gemini 4 Argon: our next era of frontier intelligence」。AI による日本語要約は次回以降の Worker run で生成されます。",
-      "summaryEn": "Gemini 4 Argon: our next era of frontier intelligence",
+      "summaryJa": "Gemini 4 Argonは100万トークンの上限と高度な推論能力を備え、長期的で複雑な業務に対応する。開発、金融調査、法務文書作成、脆弱性の自律修正を支え、まず信頼されたサイバー防御担当者に順次提供される。",
+      "summaryEn": "Gemini 4 Argon pairs a 1 million token limit with advanced reasoning for complex tasks. It supports coding, finance, legal work, and autonomous patching for trusted defenders.",
       "lang": "en",
       "publishedAt": "2026-09-30T20:00:00.000Z",
       "collectedAt": "2026-10-01T00:00:55.879Z",
       "tags": [
+        "artificial-intelligence",
+        "cybersecurity",
+        "gemini",
         "google",
+        "large-language-models",
         "news"
       ],
       "category": "tech-news",
-      "importance": 2,
+      "importance": 3,
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Gemini 4 Argon delivers frontier performance in complex workflows across real-world software engineering, enterprise knowledge work like legal and finance, and cybersecurity defense. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Google’s new Gemini 4 Argon model brings advanced reasoning to complex, long-horizon professional tasks. The model features an industry-leading 1 million token limit for deep, multi-step problem solving. It excels at coding, financial research, legal drafting, and autonomous cybersecurity vulnerability patching. Argon is currently rolling out to trusted cyber defenders through the Fairwind Program. Google is prioritizing safety and rigorous testing before a wider release to the public. Summaries were generated by Google AI. Generative AI is experimental.",
@@ -810,6 +850,33 @@
       },
       "excerptOrigin": "article",
       "feedSnippet": "Learn what's new in Visual Studio Code 1.140 Read the full article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "9cf89f3048a9625b",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-30-github-advanced-security-trials-for-github-team",
+      "title": "GitHub Advanced Security trials for GitHub Team",
+      "titleJa": "",
+      "titleEn": "GitHub Advanced Security trials for GitHub Team",
+      "summaryJa": "このエントリは github-changelog から収集した tech-news 領域の最新アップデートです。原題:「GitHub Advanced Security trials for GitHub Team」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "GitHub Advanced Security trials for GitHub Team",
+      "lang": "en",
+      "publishedAt": "2026-09-30T16:48:24.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "GitHub Team customers can now start self-serve trials of GitHub Advanced Security to evaluate GitHub Code Security and GitHub Secret Protection. Start a trial from your organization’s Overview page, Billing and licensing > Licensing page, or the Risk Assessment completion page. For more information, see self-serve GitHub Advanced Security trials . X25519-only TLS ends for GHE.com on October 7 CodeQL 2.27.1 adds C and C++ query and Kotlin 2.4.20 support Discover tips, technical guides, and best practices in our biweekly newsletter just for devs.",
+      "feedSnippet": "GitHub Team customers can now start self-serve trials of GitHub Advanced Security to evaluate GitHub Code Security and GitHub Secret Protection. Start a trial from your organization’s Overview page, Billing… The post GitHub Advanced Security trials for GitHub Team appeared first on The GitHub Blog .",
+      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -960,6 +1027,60 @@
       "bodyEn": ""
     },
     {
+      "id": "f00d755c60f68c1f",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-30-hydrafusion-in-vs-code-and-the-github-copilot-app",
+      "title": "HydraFusion in VS Code and the GitHub Copilot app",
+      "titleJa": "",
+      "titleEn": "HydraFusion in VS Code and the GitHub Copilot app",
+      "summaryJa": "このエントリは github-changelog から収集した copilot 領域の最新アップデートです。原題:「HydraFusion in VS Code and the GitHub Copilot app」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "HydraFusion in VS Code and the GitHub Copilot app",
+      "lang": "en",
+      "publishedAt": "2026-09-30T14:31:19.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "copilot",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "The HydraFusion research preview is now available in Visual Studio Code and the GitHub Copilot app, expanding beyond Copilot CLI. HydraFusion appears in the model picker, but rather than being a single model, it orchestrates multiple models. HydraFusion treats workflow selection as an optimization problem. It uses capability signals for reasoning, code generation, debugging, and tool use to select the most efficient execution pattern to meet the quality bar. HydraFusion uses one of three workflows: Single: One selected model directly solves the task. Cascade: An efficient model drafts a solution and a quality gate decides whether to accept it or escalate to a stronger model. Critique: One model drafts a result, an independent read-only critic from a different model family reviews it—following the same review pattern as Rubber Duck —and the drafting model revises once.",
+      "feedSnippet": "The HydraFusion research preview is now available in Visual Studio Code and the GitHub Copilot app, expanding beyond Copilot CLI. HydraFusion appears in the model picker, but rather than being… The post HydraFusion in VS Code and the GitHub Copilot app appeared first on The GitHub Blog .",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "d5200657d356dd85",
+      "source": "github-changelog",
+      "sourceType": "changelog",
+      "url": "https://github.blog/changelog/2026-09-30-x25519-only-tls-ends-for-ghe-com-on-september-15",
+      "title": "X25519-only TLS ends for GHE.com on October 7",
+      "titleJa": "",
+      "titleEn": "X25519-only TLS ends for GHE.com on October 7",
+      "summaryJa": "このエントリは github-changelog から収集した tech-news 領域の最新アップデートです。原題:「X25519-only TLS ends for GHE.com on October 7」。AI による日本語要約は次回以降の Worker run で生成されます。",
+      "summaryEn": "X25519-only TLS ends for GHE.com on October 7",
+      "lang": "en",
+      "publishedAt": "2026-09-30T13:30:24.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "changelog",
+        "github"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "hot",
+      "contentSnippet": "Beginning October 7, 2026, GitHub Enterprise Cloud with data residency will no longer accept TLS connections from clients that offer only X25519 for key agreement. Most customers don’t need to take action. The affected endpoints will continue to support the FIPS-approved P-256 ( secp256r1 ) and P-384 ( secp384r1 ) groups. Current browsers, operating systems, GitHub CLI releases, and commonly used TLS libraries already support P-256. You may be affected if an application, proxy, security appliance, or TLS library is explicitly configured to offer only X25519. Before October 7, 2026, you should: Update your operating system, runtime, GitHub CLI, proxy, and TLS libraries to supported versions. Remove any X25519-only configuration. Ensure P-256 ( secp256r1 ) is enabled. You may also enable P-384 ( secp384r1 ).",
+      "feedSnippet": "Beginning October 7, 2026, GitHub Enterprise Cloud with data residency will no longer accept TLS connections from clients that offer only X25519 for key agreement. Most customers don’t need to… The post X25519-only TLS ends for GHE.com on October 7 appeared first on The GitHub Blog .",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "a1242fdf8d35f49c",
       "source": "qiita-vscode",
       "sourceType": "blog",
@@ -993,47 +1114,6 @@
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFjJUUzJTgxJUFCRG9ja2VyJUUzJTgyJTkyJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgzJTg4JUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgxJTk3JUUzJTgxJUE2Uk9TJTIwMiUyMEh1bWJsZSVFMyU4MiU5MlZTJTIwQ29kZSVFMyU4MSVBNyVFNSU4QiU5NSVFMyU4MSU4QiVFMyU4MSU5OSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThlMTI4ZDAwMTgwNmJkYjFkZmVhNTEyZDdkMGM1ODll&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=870f701aad21265a331b1da85b7e49c8",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkZlMzcwMWQxYTFkYjgzMjAyMDZjZjU0MDc4OGVlMDk2YT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OTFjNmFjZjExOGJhOTYwYzc4YjdhNzQyMWUzNzVjZTk%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D274735cbf8be61a032ca689c1f585ca1?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9TWFjJUUzJTgxJUFCRG9ja2VyJUUzJTgyJTkyJUUzJTgyJUE0JUUzJTgzJUIzJUUzJTgyJUI5JUUzJTgzJTg4JUUzJTgzJUJDJUUzJTgzJUFCJUUzJTgxJTk3JUUzJTgxJUE2Uk9TJTIwMiUyMEh1bWJsZSVFMyU4MiU5MlZTJTIwQ29kZSVFMyU4MSVBNyVFNSU4QiU5NSVFMyU4MSU4QiVFMyU4MSU5OSZ0eHQtYWxpZ249bGVmdCUyQ3RvcCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTU2JnR4dC1wYWQ9MCZzPThlMTI4ZDAwMTgwNmJkYjFkZmVhNTEyZDdkMGM1ODll&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5b29zc2gmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNzU4NDU2MzQ4ZDY5MzRiOGFmYjk5MTg1ODI5MGIwNw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=870f701aad21265a331b1da85b7e49c8",
         "alt": "MacにDockerをインストールしてROS 2 HumbleをVS Codeで動かす",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "de5a105968edf325",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/aktsmm/items/72b18848bb4ed57ec0dc",
-      "title": "⚡監視係は Luna⚡ Copilot Scheduler で 20 分ごとに確認し、必要なときだけ Opus を起こす🚀",
-      "titleJa": "⚡監視係は Luna⚡ Copilot Scheduler で 20 分ごとに確認し、必要なときだけ Opus を起こす🚀",
-      "titleEn": "⚡ Luna on Watch ⚡ Check Every 20 Minutes with Copilot Scheduler and Wake Opus Only When Needed 🚀",
-      "summaryJa": "Copilot Schedulerは、GPT-6 Lunaが20分間隔でPythonの判定結果を読み、TAKEOVER時だけClaude Opus 5.5を起動する。1回約1 credit、約1.5円でCodexの停滞監視を自動化できる。",
-      "summaryEn": "Copilot Scheduler uses GPT-6 Luna every 20 minutes to read a Python status and launch Claude Opus 5.5 only on TAKEOVER, enabling Codex stall checks for about 1 credit, or ¥1.5, each.",
-      "lang": "ja",
-      "publishedAt": "2026-09-30T09:08:10.000Z",
-      "collectedAt": "2026-09-30T22:43:51.860Z",
-      "tags": [
-        "automation",
-        "copilot-scheduler",
-        "github-copilot",
-        "llm-agents",
-        "python",
-        "qiita",
-        "release",
-        "vscode"
-      ],
-      "category": "copilot",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "contentSnippet": "こんにちは、「状態を見るだけなのに、最上位モデルを回すのはもったいない」と思っていたアーキテクトのやまぱん！です 😅 補足コメントや質問、 いいね、拡散 、ぜひお願いします 🥺！ VS Code の GitHub Copilot Chat で、20 分ごとの状態確認を GPT-6 Luna に任せ、必要なときだけ Claude Opus 5.5 の新規セッションを起動する仕組みを、 Copilot Scheduler で動かしています。Copilot Scheduler は VS Code の標準機能ではなく、私が作って公開している拡張機能です。この仕組みの味噌は、Copilot Scheduler を GitHub Copilot Chat からツールとして呼び出し、新しいセッションを起動できる点です。この記事の運用は監視側ですが、同じ道具で、Ralph ループのような「同じプロンプトを回し続ける」構成も組めると考えています。判定そのものは Python スクリプトが行い、Luna はその出力 1 行を読んで分岐するだけです。1 回の確認は約 1 credit （約 1.5 円）です。この記事では、構成、最初につまずいた点、実測した費用を書きます。 別のエージェント（Codex）の作業が 15 分以上止まっていないかを、20 分ごとに確認する仕組みです。判定は Python スクリプトが行い、Luna は出力 1 行（ READY / WAIT / TAKEOVER / DONE ）を読んで分岐するだけです。LLM に判定はさせません Opus 5.5 は TAKEOVER のときだけ、 scheduler_run_task で新しいセッションとして起動します。Opus 5.5 は Copilot Pro では選べず、Pro+ 以上が必要です。Luna 側の確認だけなら Pro でも使えます Copilot Scheduler は、私が作って Marketplace で公開している拡張機能です（VS Code の標準機能ではありません）。",
-      "excerptOrigin": "article",
-      "feedSnippet": "こんにちは、「状態を見るだけなのに、最上位モデルを回すのはもったいない」と思っていたアーキテクトのやまぱん！です 😅 補足コメントや質問、いいね、拡散、ぜひお願いします 🥺！ 間違っていたら 優しく 教えてください！ VS Code の GitHub Copilot Cha...",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjk4MjUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc0OTQ5OTc1OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzczOGZkYjQ4NmY3MjA0MzI2M2IzMjExMTRmMTQyZDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D7e6d65178421daa2217c309b4e18f6e8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUyJTlBJUExJUU3JTlCJUEzJUU4JUE2JTk2JUU0JUJGJTgyJUUzJTgxJUFGJTIwTHVuYSVFMiU5QSVBMSUyMENvcGlsb3QlMjBTY2hlZHVsZXIlMjAlRTMlODElQTclMjAyMCUyMCVFNSU4OCU4NiVFMyU4MSU5NCVFMyU4MSVBOCVFMyU4MSVBQiVFNyVBMiVCQSVFOCVBQSU4RCVFMyU4MSU5NyVFMyU4MCU4MSVFNSVCRiU4NSVFOCVBNiU4MSVFMyU4MSVBQSVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBMCVFMyU4MSU5MSUyME9wdXMlMjAlRTMlODIlOTIlRTglQjUlQjclRTMlODElOTMlRTMlODElOTklRjAlOUYlOUElODAmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0xMDZhZjU2MzkyOGY5OGEyMjZlMmQxMmJkZDhlNjZhZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBha3RzbW0mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZWFkMDc4MDlhZGZmMzQwMTRjMjRmMWU4ZDFjZDMzZA&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=TWljcm9zb2Z0&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=22e608ba0d6122b8befc4cc6332b28b1",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkYwJTJGMjk4MjUwOCUyRnByb2ZpbGUtaW1hZ2VzJTJGMTc0OTQ5OTc1OD9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9YzczOGZkYjQ4NmY3MjA0MzI2M2IzMjExMTRmMTQyZDM%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkZiYWU2ZDNhMDgyOGMwMTlmZjI1OWNkYjQ3YTg5ODhjOTg2MzYzODlmJTJGb3JpZ2luYWwuanBnJTNGMTU4MzcyMTg2NT9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz0yZTZmZDNmZTU4ZjI4NDMwMWExYjZlMGM4OWJhOWMxZg%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D7e6d65178421daa2217c309b4e18f6e8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUyJTlBJUExJUU3JTlCJUEzJUU4JUE2JTk2JUU0JUJGJTgyJUUzJTgxJUFGJTIwTHVuYSVFMiU5QSVBMSUyMENvcGlsb3QlMjBTY2hlZHVsZXIlMjAlRTMlODElQTclMjAyMCUyMCVFNSU4OCU4NiVFMyU4MSU5NCVFMyU4MSVBOCVFMyU4MSVBQiVFNyVBMiVCQSVFOCVBQSU4RCVFMyU4MSU5NyVFMyU4MCU4MSVFNSVCRiU4NSVFOCVBNiU4MSVFMyU4MSVBQSVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBMCVFMyU4MSU5MSUyME9wdXMlMjAlRTMlODIlOTIlRTglQjUlQjclRTMlODElOTMlRTMlODElOTklRjAlOUYlOUElODAmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0xMDZhZjU2MzkyOGY5OGEyMjZlMmQxMmJkZDhlNjZhZg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBha3RzbW0mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1hZWFkMDc4MDlhZGZmMzQwMTRjMjRmMWU4ZDFjZDMzZA&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=TWljcm9zb2Z0&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=22e608ba0d6122b8befc4cc6332b28b1",
-        "alt": "⚡監視係は Luna⚡ Copilot Scheduler で 20 分ごとに確認し、必要なときだけ Opus を起こす🚀",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -1463,7 +1543,7 @@
       "summaryEn": "Dependabot adds per-repo runner type, label, and group controls for update jobs on private or internal github.com repos, enabling private-registry or specialized workloads.",
       "lang": "en",
       "publishedAt": "2026-09-29T19:10:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "changelog",
         "custom-runners",
@@ -1502,7 +1582,7 @@
       "summaryEn": "GitHub external custom properties enter public preview, syncing CMDB or portal data on owners, tiers, lifecycle, and compliance while keeping the outside system authoritative.",
       "lang": "en",
       "publishedAt": "2026-09-29T18:40:27.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "changelog",
         "cmdb",
@@ -1541,7 +1621,7 @@
       "summaryEn": "GPT-6.1 Sol is rolling out to GitHub Copilot for efficient multistep coding and terminal work. Metered use follows provider rates for Pro+, Max, Business, and Enterprise users.",
       "lang": "en",
       "publishedAt": "2026-09-29T17:02:27.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-models",
         "changelog",
@@ -1564,45 +1644,6 @@
         "src": "https://github.blog/wp-content/uploads/2026/09/660743826-cc455d62-b8e2-42b4-a489-ad43b1003d8e.png",
         "origSrc": "https://github.blog/wp-content/uploads/2026/09/660743826-cc455d62-b8e2-42b4-a489-ad43b1003d8e.png",
         "alt": "GPT-6.1 Sol in GitHub Copilot",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "1191b64a1b9df320",
-      "source": "microsoft-source",
-      "sourceType": "blog",
-      "url": "https://www.microsoft.com/en-us/research/blog/introducing-quine-an-ai-research-system-designed-for-the-complexity-of-biology/",
-      "title": "Introducing Quine: An AI research system designed for the complexity of biology",
-      "titleJa": "生物学の複雑性に対応するAI研究システム「Quine」の紹介",
-      "titleEn": "Introducing Quine: An AI research system designed for the complexity of biology",
-      "summaryJa": "Quineは、生物学の複数のスケールとデータ形式を結び付ける初期段階のマルチモーダル世界モデルです。広範な候補を計算で絞り、科学者が実験前に有望な仮説を優先できるようにします。",
-      "summaryEn": "Quine combines diverse biological data across scales in an early-stage multimodal world model. It helps scientists rank hypotheses computationally before lab work.",
-      "lang": "en",
-      "publishedAt": "2026-09-29T16:14:34.000Z",
-      "collectedAt": "2026-09-30T17:00:37.301Z",
-      "tags": [
-        "artificial-intelligence",
-        "computational-biology",
-        "microsoft",
-        "multimodal-models",
-        "news",
-        "research"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "hot",
-      "contentSnippet": "Quine (opens in new tab) is a research effort to create a multimodal world model of biology and an interactive harness connecting models, scientific tools, literature, and researchers. In collaboration with researchers at the Broad Institute of Harvard and MIT, we have used this system to prioritize compounds predicted to drive therapeutic tumor-state shifts and validated several top-ranked candidates across multiple wet-lab assays. The Quine Fellows program (opens in new tab) will give a cohort of scientists access to the system and an opportunity to accelerate their own research and provide scientific feedback. Quine is experimental research technology intended only for research, not clinical or medical use, and its outputs may be incomplete or inaccurate and require review by qualified researchers and appropriate scientific and experimental validation.",
-      "excerptOrigin": "article",
-      "feedSnippet": "The post Introducing Quine: An AI research system designed for the complexity of biology appeared first on Source .",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/09/ProjectQuine-BlogHeroFeature-1400x788-2.jpg",
-        "origSrc": "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/09/ProjectQuine-BlogHeroFeature-1400x788-2.jpg",
-        "alt": "Introducing Quine: An AI research system designed for the complexity of biology",
         "width": 0,
         "height": 0,
         "source": "og"
@@ -1683,6 +1724,45 @@
       "feedSnippet": "Changes since langchain-core==1.6.5 release(core): 1.6.6 ( #40906 ) fix(anthropic): support Claude Sonnet 5.5 compatibility ( #40882 ) docs(core): fix docstring examples that don't run as copied ( #40815 )",
       "bodyJa": "",
       "bodyEn": ""
+    },
+    {
+      "id": "0a4feee69747e1de",
+      "source": "microsoft-research",
+      "sourceType": "blog",
+      "url": "https://www.microsoft.com/en-us/research/blog/introducing-quine-an-ai-research-system-designed-for-the-complexity-of-biology/",
+      "title": "Introducing Quine: An AI research system designed for the complexity of biology",
+      "titleJa": "生物学の複雑性に対応するAI研究システム「Quine」の紹介",
+      "titleEn": "Introducing Quine: An AI research system designed for the complexity of biology",
+      "summaryJa": "Quineは、生物学の複数のスケールとデータ形式を結び付ける初期段階のマルチモーダル世界モデルです。広範な候補を計算で絞り、科学者が実験前に有望な仮説を優先できるようにします。",
+      "summaryEn": "Quine combines diverse biological data across scales in an early-stage multimodal world model. It helps scientists rank hypotheses computationally before lab work.",
+      "lang": "en",
+      "publishedAt": "2026-09-29T14:00:02.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "artificial-intelligence",
+        "computational-biology",
+        "microsoft",
+        "multimodal-models",
+        "news",
+        "research"
+      ],
+      "category": "research",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "hot",
+      "contentSnippet": "Quine (opens in new tab) is a research effort to create a multimodal world model of biology and an interactive harness connecting models, scientific tools, literature, and researchers. In collaboration with researchers at the Broad Institute of Harvard and MIT, we have used this system to prioritize compounds predicted to drive therapeutic tumor-state shifts and validated several top-ranked candidates across multiple wet-lab assays. The Quine Fellows program (opens in new tab) will give a cohort of scientists access to the system and an opportunity to accelerate their own research and provide scientific feedback. Quine is experimental research technology intended only for research, not clinical or medical use, and its outputs may be incomplete or inaccurate and require review by qualified researchers and appropriate scientific and experimental validation.",
+      "excerptOrigin": "article",
+      "feedSnippet": "The post Introducing Quine: An AI research system designed for the complexity of biology appeared first on Source .",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/09/ProjectQuine-BlogHeroFeature-1400x788-2.jpg",
+        "origSrc": "https://www.microsoft.com/en-us/research/wp-content/uploads/2026/09/ProjectQuine-BlogHeroFeature-1400x788-2.jpg",
+        "alt": "Introducing Quine: An AI research system designed for the complexity of biology",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "7d2fd02f9c8040a9",
@@ -1999,7 +2079,7 @@
       "summaryEn": "GitHub Actions will enforce minimum self-hosted runner versions for GitHub Enterprise Cloud from September 29, 2026. Runners below 2.329.0 cannot register, and outdated existing runners will lose job execution, requiring admins to upgrade before disruption occurs.",
       "lang": "en",
       "publishedAt": "2026-09-28T19:22:46.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -2076,7 +2156,7 @@
       "summaryEn": "GitHub Copilot now generally offers Claude Sonnet 5.5 for feature work and bug fixes with fewer steps, tokens, and tool calls. Eligible paid-plan users can choose it under usage-based provider list pricing.",
       "lang": "en",
       "publishedAt": "2026-09-28T18:03:57.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "anthropic",
         "changelog",
@@ -2465,7 +2545,7 @@
       "summaryEn": "GitHub Copilot now validates enterprise-managed settings within the product, flagging malformed JSON, unrecognized options, and bad team mappings so admins can enforce policies reliably.",
       "lang": "en",
       "publishedAt": "2026-09-25T23:24:57.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "changelog",
         "enterprise",
@@ -2607,8 +2687,8 @@
       }
     },
     {
-      "id": "ed204fd38e64c798",
-      "source": "github-blog-ai",
+      "id": "11814c13f8eb0837",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-how-to-build-custom-workflows-with-canvases/",
       "title": "GitHub Copilot app for Beginners: How to build custom workflows with canvases",
@@ -2618,7 +2698,7 @@
       "summaryEn": "GitHub Copilot app canvases let users and agents jointly edit custom interfaces, from kanban boards to release checklists, enabling teams to tailor workflows to their needs.",
       "lang": "en",
       "publishedAt": "2026-09-25T18:00:00.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "canvases",
         "copilot",
@@ -2788,10 +2868,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "53970dd2b45b8803",
@@ -3177,8 +3257,8 @@
       }
     },
     {
-      "id": "3e5e727e385d3f8c",
-      "source": "github-blog-ai",
+      "id": "93db8516427cde42",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/when-chat-is-the-wrong-ui/",
       "title": "When chat is the wrong UI",
@@ -3188,7 +3268,7 @@
       "summaryEn": "LLMs still default to chat as their main interface three years into the current AI wave, and the author challenges that assumption to help developers design interactions suited to each task.",
       "lang": "en",
       "publishedAt": "2026-09-24T20:00:00.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "copilot",
         "github",
@@ -3239,7 +3319,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "If you’re new to fuzzing and want to learn the fundamentals first, check out our Fuzzing 101 course at gh.io/fuzzing101 . Continuous fuzzing is not a magic solution that solves all your problems . Even projects that have been enrolled in OSS-Fuzz for years can still hide critical bugs, and the reason is almost always the same: someone needs to keep an eye on coverage, write new harnesses for the code that nobody is reaching, and triage the crashes that come out the other end. In other words, fuzzing still needs a human in the loop. So the natural question I kept asking myself was: how much of that human work can we actually hand over to an LLM agent? That is what led me to build the Fuzzing Taskflow, an autonomous fuzzing pipeline for C/C++ projects.",
       "excerptOrigin": "article",
       "feedSnippet": "In this blog post, I explain how to use the new fuzzing taskflow based on the GitHub Security Lab Taskflow Agent AI framework. The post AI-powered fuzzing with the GitHub Security Lab Taskflow Agent appeared first on The GitHub Blog .",
@@ -3252,7 +3331,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "2835af2044a289da",
@@ -3964,8 +4044,8 @@
       }
     },
     {
-      "id": "c45ef450c3820855",
-      "source": "github-blog-ai",
+      "id": "4c9d688cf44b534e",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/engineering/user-experience/rendering-huge-pull-requests-in-the-github-copilot-app/",
       "title": "Rendering huge pull requests in the GitHub Copilot app",
@@ -3975,7 +4055,7 @@
       "summaryEn": "The GitHub Copilot app rebuilds its pull request view and tests it on an open source change spanning 2,200 files, helping teams review massive refactors smoothly.",
       "lang": "en",
       "publishedAt": "2026-09-23T18:29:49.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "copilot",
         "github",
@@ -4194,7 +4274,7 @@
       "summaryEn": "Remote GPU inference for physical AI robots raised success on mobile-manipulation tasks, supported bigger models, and extended runtime for real-world deployments.",
       "lang": "en",
       "publishedAt": "2026-09-23T16:01:36.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "cloud-computing",
         "edge-computing",
@@ -4349,7 +4429,7 @@
       "summaryEn": "Ray-Ban Meta Audio was unveiled as Meta's first audio eyewear, while new styles broaden its AI glasses lineup, giving wearable buyers more choice.",
       "lang": "en",
       "publishedAt": "2026-09-23T11:36:25.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-glasses",
         "audio-glasses",
@@ -6278,10 +6358,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "9bb3f3068a41addd",
@@ -6386,7 +6466,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Hot takes turn complicated topics into one confident sentence. That makes them great for engagement, but not necessarily for understanding. At the surface level, they do not matter much. You agree, disagree, repost, argue for a few minutes, and move on. Sometimes the take is directionally right. Sometimes it is complete nonsense. The value of hot takes is in what happens when you stop reacting and start pulling them apart. Under what conditions is this true? What context is missing? What assumptions does it make? What changes when you apply it to real work? That is where the depth is. A good hot take gives you something sharp enough to question. The questions are where you find the useful ideas. We explore all this and more in the latest episode of the GitHub Podcast ! Not ready to dive in yet? Here are a few of the common AI hot takes we discussed and what we can get from them.",
       "excerptOrigin": "article",
       "feedSnippet": "We dive into these questions and other AI hot takes on the latest episode of the GitHub Podcast. The post Should you read the code, is RAG dead, and did Skills kill MCP? appeared first on The GitHub Blog .",
@@ -6399,7 +6478,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "58ec06aaca550a69",
@@ -7150,8 +7230,8 @@
       "bodyEn": ""
     },
     {
-      "id": "655fd12194d5c751",
-      "source": "github-blog-ai",
+      "id": "3109af25bedf6259",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/generative-ai/migrating-the-github-copilot-runtime-to-rust-using-copilot/",
       "title": "Migrating the GitHub Copilot runtime to Rust, using Copilot",
@@ -7161,7 +7241,7 @@
       "summaryEn": "The Copilot agent runtime moved from TypeScript on Node.js to over 800,000 lines of Rust, with AI agents producing most code across 128 PRs, benefiting the CLI, app, and SDK.",
       "lang": "en",
       "publishedAt": "2026-09-17T00:26:43.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -7916,46 +7996,6 @@
       "knowledgeEligible": false
     },
     {
-      "id": "8217b1ba9172bfd3",
-      "source": "github-changelog",
-      "sourceType": "changelog",
-      "url": "https://github.blog/changelog/2026-09-15-sha-1-in-https-on-github-sunset",
-      "title": "SHA-1 in HTTPS on GitHub sunset",
-      "titleJa": "GitHubのHTTPSにおけるSHA-1廃止",
-      "titleEn": "SHA-1 in HTTPS on GitHub sunset",
-      "summaryJa": "GitHubはgithub.comと提携CDNのHTTPSでSHA-1の利用を停止しました。Enterprise Cloudとデータレジデンシー環境に適用され、より安全な暗号方式への移行を促します。",
-      "summaryEn": "GitHub has ended SHA-1 support for HTTPS traffic on github.com and its partner CDNs. The change covers Enterprise Cloud, including Data Residency, and advances stronger transport security.",
-      "lang": "en",
-      "publishedAt": "2026-09-15T16:47:20.000Z",
-      "collectedAt": "2026-09-17T13:56:20.099Z",
-      "tags": [
-        "changelog",
-        "enterprise",
-        "github",
-        "github-enterprise-cloud",
-        "https",
-        "security",
-        "sha-1"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Previously we announced we would be disabling SHA-1 in HTTPS for GitHub on September 15th, 2026. Following the planned schedule, GitHub has disabled SHA-1 in HTTPS for github.com and partner CDNs, including GitHub Enterprise Cloud and GitHub Enterprise Cloud with Data Residency. GitHub Enterprise Server is unaffected. Please see the previous announcement for more information. Upcoming deprecation of GitHub Spark on github.com Discover tips, technical guides, and best practices in our biweekly newsletter just for devs.",
-      "excerptOrigin": "article",
-      "feedSnippet": "Previously we announced we would be disabling SHA-1 in HTTPS for GitHub on September 15th, 2026. Following the planned schedule, GitHub has disabled SHA-1 in HTTPS for github.com and partner… The post SHA-1 in HTTPS on GitHub sunset appeared first on The GitHub Blog .",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://github.blog/wp-content/uploads/2026/09/Changelog_Retired_Unfurl_TextOnly_SHA-1HTTPSGitHubSunset.jpg",
-        "origSrc": "https://github.blog/wp-content/uploads/2026/09/Changelog_Retired_Unfurl_TextOnly_SHA-1HTTPSGitHubSunset.jpg",
-        "alt": "SHA-1 in HTTPS on GitHub sunset",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "3fc4264ba45b001a",
       "source": "google-cloud-blog",
       "sourceType": "blog",
@@ -8296,43 +8336,6 @@
       }
     },
     {
-      "id": "2dbe34b83aedbb89",
-      "source": "github-changelog",
-      "sourceType": "changelog",
-      "url": "https://github.blog/changelog/2026-09-14-configure-cost-and-quality-in-copilot-auto-model-selection",
-      "title": "Configure cost and quality in Copilot auto model selection",
-      "titleJa": "Copilot自動モデル選択でコストと品質を設定可能に",
-      "titleEn": "Configure cost and quality in Copilot auto model selection",
-      "summaryJa": "GitHub Copilotの自動モデル選択に「効率」「バランス」「知性」の3段階の階層が追加され、各プロンプトでコスト・品質・応答速度のどれを重視するかを選べるようになった。単純作業には効率、複雑なタスクには知性を選ぶことで、開発者は用途に応じた最適なモデル選択を実現できる。",
-      "summaryEn": "GitHub Copilot's auto model selection now lets users pick from three tiers—efficiency, balance, and intelligence—to control how cost, quality, and response time are weighted per prompt. This helps developers match model choice to task complexity, from quick edits to complex work.",
-      "lang": "en",
-      "publishedAt": "2026-09-14T16:05:27.000Z",
-      "collectedAt": "2026-09-17T13:56:20.099Z",
-      "tags": [
-        "changelog",
-        "copilot-auto-model-selection",
-        "github",
-        "model-selection"
-      ],
-      "category": "copilot",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "GitHub Copilot auto model selection now offers three tiers: efficiency, balance, and intelligence. Choose the tier that reflects how you want auto to weigh cost, quality, and response time for each prompt. Copilot will then optimize accordingly. Efficiency prioritizes keeping costs low and suits fast, straightforward tasks. Balance weighs cost, quality, and latency together, and is a good fit for everyday work. Intelligence prioritizes quality and is built for complex tasks. All three tiers use the same set of available models. Auto individually evaluates each prompt to select a best-suited model. For example, a simple task like adding a docstring to an existing function may use a small, efficient model even when auto is optimizing for intelligence. This feature is currently rolling out in Visual Studio Code, Copilot CLI, and GitHub Copilot app.",
-      "excerptOrigin": "article",
-      "feedSnippet": "GitHub Copilot auto model selection now offers three tiers: efficiency, balance, and intelligence. Choose the tier that reflects how you want auto to weigh cost, quality, and response time for… The post Configure cost and quality in Copilot auto model selection appeared first on The GitHub Blog .",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://github.blog/wp-content/uploads/2026/09/5730d312ee128d9b25d9ff16ca630cf95c70f0c6f7fad8a703639e9024d31c9a-2400x1260-1.jpeg",
-        "origSrc": "https://github.blog/wp-content/uploads/2026/09/5730d312ee128d9b25d9ff16ca630cf95c70f0c6f7fad8a703639e9024d31c9a-2400x1260-1.jpeg",
-        "alt": "Configure cost and quality in Copilot auto model selection",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "df6b6644120a023b",
       "source": "zed-releases",
       "sourceType": "release",
@@ -8488,81 +8491,6 @@
       "bodyEn": ""
     },
     {
-      "id": "cc0b517ee2d1e2a7",
-      "source": "github-changelog",
-      "sourceType": "changelog",
-      "url": "https://github.blog/changelog/2026-09-11-profiles-now-show-your-highest-achievement-badge-tier",
-      "title": "Profiles now show your highest achievement badge tier",
-      "titleJa": "プロフィールに実績バッジの最高ティアを表示",
-      "titleEn": "Profiles now show your highest achievement badge tier",
-      "summaryJa": "GitHubプロフィールは、複数段階がある実績バッジについて、最初に獲得した段階ではなく到達済みの最高ティアを表示するようになった。利用者の最新の達成度と積み重ねた進捗が、プロフィールへ正確に反映される。",
-      "summaryEn": "GitHub profiles now surface the top tier a user has reached for multilevel achievement badges instead of an earlier tier, making earned progress clearer to profile visitors.",
-      "lang": "en",
-      "publishedAt": "2026-09-11T22:39:50.000Z",
-      "collectedAt": "2026-09-17T13:56:20.099Z",
-      "tags": [
-        "achievement-badges",
-        "changelog",
-        "github",
-        "github-profiles"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Your GitHub profile now displays the highest tier you’ve earned for achievements with multiple levels. Previously, profiles could display the first tier earned, even after you had progressed to a higher level. Now, your profile better reflects your latest achievement and the progress you’ve made on GitHub. Discover tips, technical guides, and best practices in our biweekly newsletter just for devs.",
-      "excerptOrigin": "article",
-      "feedSnippet": "Your GitHub profile now displays the highest tier you’ve earned for achievements with multiple levels. Previously, profiles could display the first tier earned, even after you had progressed to a… The post Profiles now show your highest achievement badge tier appeared first on The GitHub Blog .",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://github.blog/wp-content/uploads/2026/09/647377323-e9f86b98-bc0b-4525-a91e-aff94eae5c9a.png",
-        "origSrc": "https://github.blog/wp-content/uploads/2026/09/647377323-e9f86b98-bc0b-4525-a91e-aff94eae5c9a.png",
-        "alt": "Profiles now show your highest achievement badge tier",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
-      "id": "25b2262617857c88",
-      "source": "github-changelog",
-      "sourceType": "changelog",
-      "url": "https://github.blog/changelog/2026-09-11-add-vs-code-agents-to-copilot-usage-metrics",
-      "title": "Add VS Code Agents to Copilot usage metrics",
-      "titleJa": "Copilotの利用状況メトリクスにVS Code Agentsを追加",
-      "titleEn": "Add VS Code Agents to Copilot usage metrics",
-      "summaryJa": "GitHub Copilotの利用状況メトリクスに、VS Code Agentsウィンドウの活動を測る一般提供の指標が追加されました。企業・組織は1日間と28日間の集計で、利用者数、セッション数、メッセージ数や利用者別の使用有無を確認し、導入と定着を評価できます。",
-      "summaryEn": "GitHub Copilot metrics now add generally available VS Code Agents signals for active users, sessions, messages, and per-user use across 1-day and 28-day reports. Enterprises and organizations can measure adoption and engagement.",
-      "lang": "en",
-      "publishedAt": "2026-09-11T21:30:30.000Z",
-      "collectedAt": "2026-09-17T13:56:20.099Z",
-      "tags": [
-        "changelog",
-        "copilot",
-        "github",
-        "usage-metrics",
-        "vscode-agents"
-      ],
-      "category": "copilot",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "GitHub Copilot usage metrics reports now include generally available metrics for activity in the dedicated VS Code Agents window, helping you measure adoption and engagement across enterprises and organizations. Aggregate enterprise and organization reports for both 1-day and 28-day periods now include: daily_active_vscode_agent_users : An optional count of unique users active in the VS Code Agents window each day. totals_by_vscode_agent : Optional aggregate of session_count and total_user_messages values. Enterprise-user and organization-user reports for both 1-day and 28-day periods now include: used_vscode_agent : An optional indicator of whether the user used the VS Code Agents window. totals_by_vscode_agent : Optional per-user session_count and total_user_messages values. These metrics help you understand how many people use the VS Code Agents window and how they engage with it.",
-      "excerptOrigin": "article",
-      "feedSnippet": "GitHub Copilot usage metrics reports now include generally available metrics for activity in the dedicated VS Code Agents window, helping you measure adoption and engagement across enterprises and organizations. What’s… The post Add VS Code Agents to Copilot usage metrics appeared first on The GitHub Blog .",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://github.blog/wp-content/uploads/2026/09/649640400-4dfa5149-52dc-4782-bcfa-6d993e8eae52.jpeg",
-        "origSrc": "https://github.blog/wp-content/uploads/2026/09/649640400-4dfa5149-52dc-4782-bcfa-6d993e8eae52.jpeg",
-        "alt": "Add VS Code Agents to Copilot usage metrics",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      }
-    },
-    {
       "id": "faecf75a15297690",
       "source": "openhands-releases",
       "sourceType": "release",
@@ -8599,8 +8527,8 @@
       "bodyEn": ""
     },
     {
-      "id": "2576bf8a180858a9",
-      "source": "github-blog-ai",
+      "id": "8156421f827a3dc7",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/marketing-ops-as-code-automating-events-from-planning-to-follow-up-on-github/",
       "title": "Marketing ops as code: Automating events from planning to follow-up on GitHub",
@@ -8610,7 +8538,7 @@
       "summaryEn": "GitHub codifies event operations, automating page duplication, channel-specific UTM links, and follow-up so marketers in Japan and Korea can focus on topics and audiences.",
       "lang": "en",
       "publishedAt": "2026-09-11T18:26:10.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "copilot",
         "event-operations",
@@ -8865,8 +8793,8 @@
       }
     },
     {
-      "id": "433004a6bd914ded",
-      "source": "github-blog-ai",
+      "id": "b310b2c06dbd9321",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-using-the-diff-terminal-and-browser/",
       "title": "GitHub Copilot app for Beginners: Using the diff, terminal, and browser",
@@ -8876,7 +8804,7 @@
       "summaryEn": "The GitHub Copilot app adds built-in diff and terminal panels alongside a browser, helping beginners review agent edits, run code, and verify results in one place.",
       "lang": "en",
       "publishedAt": "2026-09-10T21:31:19.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "ai-coding",
@@ -10089,8 +10017,8 @@
       "bodyEn": ""
     },
     {
-      "id": "43dc5941df4bfd39",
-      "source": "github-blog-ai",
+      "id": "855d6eb9ada55a72",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/project-hydrafusion-frontier-quality-via-multi-model-orchestration/",
       "title": "Project HydraFusion: Frontier quality via multi-model orchestration",
@@ -10100,7 +10028,7 @@
       "summaryEn": "GitHub Copilot research preview HydraFusion routes selective coding tasks across models. Offline tests matched or beat the Opus 5 baseline at lower estimated cost, enabling more efficient developer assistance.",
       "lang": "en",
       "publishedAt": "2026-09-04T16:04:14.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "copilot",
         "github",
@@ -10474,8 +10402,8 @@
       "evergreen": true
     },
     {
-      "id": "d94b84bc16af2780",
-      "source": "github-blog-ai",
+      "id": "b68f08d5b78fdf2b",
+      "source": "github-copilot",
       "sourceType": "blog",
       "url": "https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-run-several-agents-at-once/",
       "title": "GitHub Copilot app for Beginners: Run several agents at once",
@@ -10485,7 +10413,7 @@
       "summaryEn": "The GitHub Copilot app lets developers run and manage multiple isolated agent sessions for one project, enabling parallel tasks without waiting for each to finish.",
       "lang": "en",
       "publishedAt": "2026-09-03T16:00:00.000Z",
-      "collectedAt": "2026-10-01T00:00:55.879Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "copilot",
@@ -10778,7 +10706,7 @@
       "summaryEn": "GitHub Copilot reduces unnecessary computation across end-to-end coding workflows, explaining why shorter responses may still cost more and helping teams improve efficiency without compromising task quality.",
       "lang": "en",
       "publishedAt": "2026-09-02T18:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-coding",
         "copilot",
@@ -10790,6 +10718,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -10802,8 +10731,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "6625a77e4710b219",
@@ -11937,7 +11865,7 @@
       "summaryEn": "GigaPath-Flash and GigaTIME-Flash lower compute requirements for AI pathology analysis without sacrificing strong results, enabling broader studies at population scale.",
       "lang": "en",
       "publishedAt": "2026-08-31T16:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "computational-efficiency",
         "foundation-models",
@@ -12220,10 +12148,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "3f2a0be1d714a8f1",
@@ -13308,7 +13236,7 @@
       "summaryEn": "This beginner-focused tutorial shows how to use the GitHub Copilot app to automate triage of Dependabot pull requests, reducing the manual effort involved in routine library update management.",
       "lang": "en",
       "publishedAt": "2026-08-26T20:12:53.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "automation",
         "copilot",
@@ -13321,6 +13249,7 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
       "contentSnippet": "I might be biased, but I think Dependabot is pretty amazing. It helps keep my projects up to date, ensuring I’m always using secure libraries. But because there’re frequently new vulnerabilities, there’re frequently new pull requests from Dependabot. Sometimes it’s a minor version bump. Sometimes it’s a major version upgrade. Sometimes everything will work just fine. And sometimes… well, every single developer has been caught by a breaking change. How can we best triage these pull requests? The work isn’t particularly difficult per se, but it certainly is repetitive. It’s the perfect task to offload to Copilot! With GitHub Copilot app automations , you can hand off that first round of review.",
       "excerptOrigin": "article",
       "feedSnippet": "Managing library updates can be tedious at times. Learn how the GitHub Copilot app can handle this type of repetitive task. The post GitHub Copilot app for Beginners: Automate Dependabot pull request triage appeared first on The GitHub Blog .",
@@ -13333,8 +13262,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "bbffbe230b585ac7",
@@ -16231,10 +16159,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "1da1d3c56ff6f1c2",
@@ -21864,6 +21792,44 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "0e06e03ec29beafc",
+      "source": "google-keyword",
+      "sourceType": "blog",
+      "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-omni-experts-roundtable/",
+      "title": "Omni experts share what excites them most about the model.",
+      "titleJa": "Gemini Omniの専門家たちが語る、このモデルへの期待と魅力",
+      "titleEn": "Omni experts share what excites them most about the model.",
+      "summaryJa": "GoogleはGemini Omniの開発に携わった専門家へのインタビューを公開し、モデルの技術的な特徴や可能性について各自の視点から解説している。",
+      "summaryEn": "Google published a roundtable with engineers and researchers behind Gemini Omni, offering insider perspectives on the model's capabilities and what makes it technically significant.",
+      "lang": "en",
+      "publishedAt": "2026-08-13T13:30:00.000Z",
+      "collectedAt": "2026-08-19T16:16:57.021Z",
+      "tags": [
+        "ai-research",
+        "gemini",
+        "gemini-omni",
+        "google",
+        "news"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "Omni experts share what excites them most about the model. We recently introduced Gemini Omni , a new model that lets you create anything from any input. The model’s first release, Gemini Omni Flash , makes generating and editing videos as easy as having a conversation. To get the inside scoop, we sat down with three Google DeepMind team members who work on Omni: research scientist Mohammad Babaeizadeh, product manager Anish Nangia, and research engineer Sarah Xu. They shared their vision for Omni, explained why they started with video generation, and broke down what exactly makes Omni so helpful for creators. They also let their imaginations run wild. Could Omni swap their hairstyles? Turn them into sloths? Materialize Sarah’s cat on the table in front of them? “There is no ceiling to this,” Mohammad said. And what’s next for Omni? “It’s only going to get better from here,” Sarah said.",
+      "image": {
+        "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Omni_experts_social.max-600x600.format-webp.webp",
+        "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Omni_experts_social.max-600x600.format-webp.webp",
+        "alt": "Omni experts share what excites them most about the model.",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
+      "bodyJa": "",
+      "bodyEn": "",
+      "feedSnippet": "We interviewed some of the experts behind Gemini Omni to hear what excites them most about the model.",
+      "excerptOrigin": "article"
+    },
+    {
       "id": "77e83ab074ec8c0e",
       "source": "the-verge",
       "sourceType": "blog",
@@ -21900,44 +21866,6 @@
         "source": "og"
       },
       "feedSnippet": "Microsoft is finally beginning to combine its consumer and commercial Copilot AI assistants into a single \"super app\" interface, starting with the Copilot and Microsoft 365 Copilot apps. Both personal and work accounts will be moved to the new unified app, which recycles the \"Mic",
-      "excerptOrigin": "article"
-    },
-    {
-      "id": "0e06e03ec29beafc",
-      "source": "google-keyword",
-      "sourceType": "blog",
-      "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-omni-experts-roundtable/",
-      "title": "Omni experts share what excites them most about the model.",
-      "titleJa": "Gemini Omniの専門家たちが語る、このモデルへの期待と魅力",
-      "titleEn": "Omni experts share what excites them most about the model.",
-      "summaryJa": "GoogleはGemini Omniの開発に携わった専門家へのインタビューを公開し、モデルの技術的な特徴や可能性について各自の視点から解説している。",
-      "summaryEn": "Google published a roundtable with engineers and researchers behind Gemini Omni, offering insider perspectives on the model's capabilities and what makes it technically significant.",
-      "lang": "en",
-      "publishedAt": "2026-08-13T13:30:00.000Z",
-      "collectedAt": "2026-08-19T16:16:57.021Z",
-      "tags": [
-        "ai-research",
-        "gemini",
-        "gemini-omni",
-        "google",
-        "news"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "Omni experts share what excites them most about the model. We recently introduced Gemini Omni , a new model that lets you create anything from any input. The model’s first release, Gemini Omni Flash , makes generating and editing videos as easy as having a conversation. To get the inside scoop, we sat down with three Google DeepMind team members who work on Omni: research scientist Mohammad Babaeizadeh, product manager Anish Nangia, and research engineer Sarah Xu. They shared their vision for Omni, explained why they started with video generation, and broke down what exactly makes Omni so helpful for creators. They also let their imaginations run wild. Could Omni swap their hairstyles? Turn them into sloths? Materialize Sarah’s cat on the table in front of them? “There is no ceiling to this,” Mohammad said. And what’s next for Omni? “It’s only going to get better from here,” Sarah said.",
-      "image": {
-        "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Omni_experts_social.max-600x600.format-webp.webp",
-        "origSrc": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Omni_experts_social.max-600x600.format-webp.webp",
-        "alt": "Omni experts share what excites them most about the model.",
-        "width": 0,
-        "height": 0,
-        "source": "media"
-      },
-      "bodyJa": "",
-      "bodyEn": "",
-      "feedSnippet": "We interviewed some of the experts behind Gemini Omni to hear what excites them most about the model.",
       "excerptOrigin": "article"
     },
     {
@@ -22947,7 +22875,7 @@
       "summaryEn": "MindTopo is a new benchmark from Microsoft Research that evaluates how well vision-language models grasp topological spatial relationships, exposing current limitations and pointing toward improvements in AI spatial reasoning and planning.",
       "lang": "en",
       "publishedAt": "2026-08-12T16:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "benchmark",
         "microsoft",
@@ -23094,44 +23022,6 @@
       "bodyEn": ""
     },
     {
-      "id": "aee32f2f1a29bd36",
-      "source": "nvidia-blog",
-      "sourceType": "blog",
-      "url": "https://blogs.nvidia.com/blog/nvidia-life-glassdoor-best-ceo-2026/",
-      "title": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
-      "titleJa": "NVIDIAのジェンセン・フアンCEO、Glassdoor「2026年ベストCEO」ランキングで1位を獲得",
-      "titleEn": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
-      "summaryJa": "Glassdoorの2026年版ベストCEOランキングで、NVIDIAのジェンセン・フアンCEOが1位に輝き、従業員の99%から承認を得た。社員による評価が選出基準となっており、リーダーシップへの高い信頼を示している。",
-      "summaryEn": "Jensen Huang has claimed the top spot on Glassdoor's Best CEOs for 2026 list with a 99% employee approval rating, highlighting the strong internal trust in his leadership at NVIDIA.",
-      "lang": "en",
-      "publishedAt": "2026-08-12T14:00:00.000Z",
-      "collectedAt": "2026-08-26T13:43:27.793Z",
-      "tags": [
-        "glassdoor",
-        "jensen-huang",
-        "leadership",
-        "news",
-        "nvidia"
-      ],
-      "category": "tech-news",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "NVIDIA founder and CEO Jensen Huang is ranked No. 1 on Glassdoor’s Best CEOs list for 2026. In the just-released ranking, recognition is earned directly from the people who know their leadership the best — employees. Huang topped the list, with 99% of employees approving of the job he does. “As AI and shifting expectations redefine the modern workplace, exceptional leadership has never been more vital,” Glassdoor noted. “The top 50 CEOs do more than manage day-to-day operations — they empower their people and drive authentic culture.” Glassdoor reintroduced the Best CEOs list this year after a hiatus of five years, replacing the Best-Led Companies list, which ranked NVIDIA at No. 1 in 2025, in a shift to sharpen the focus on CEO and executive leadership and its impact on employee experience and company reputation.",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://blogs.nvidia.com/wp-content/uploads/2026/08/GlassdoorBestCEOs2026_16x9.png",
-        "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/08/GlassdoorBestCEOs2026_16x9.png",
-        "alt": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      },
-      "feedSnippet": "NVIDIA founder and CEO Jensen Huang is ranked No. 1 on Glassdoor’s Best CEOs list for 2026. In the just-released ranking, recognition is earned directly from the people who know their leadership the best — employees. Huang topped the list, with 99% of employees approving of the j",
-      "excerptOrigin": "article"
-    },
-    {
       "id": "2ef816777f3623fd",
       "source": "google-keyword",
       "sourceType": "blog",
@@ -23168,6 +23058,44 @@
       "bodyJa": "",
       "bodyEn": "",
       "feedSnippet": "Connect your favorite services directly to Gemini to help you plan trips, manage projects and tackle your daily to-do list.",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "aee32f2f1a29bd36",
+      "source": "nvidia-blog",
+      "sourceType": "blog",
+      "url": "https://blogs.nvidia.com/blog/nvidia-life-glassdoor-best-ceo-2026/",
+      "title": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
+      "titleJa": "NVIDIAのジェンセン・フアンCEO、Glassdoor「2026年ベストCEO」ランキングで1位を獲得",
+      "titleEn": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
+      "summaryJa": "Glassdoorの2026年版ベストCEOランキングで、NVIDIAのジェンセン・フアンCEOが1位に輝き、従業員の99%から承認を得た。社員による評価が選出基準となっており、リーダーシップへの高い信頼を示している。",
+      "summaryEn": "Jensen Huang has claimed the top spot on Glassdoor's Best CEOs for 2026 list with a 99% employee approval rating, highlighting the strong internal trust in his leadership at NVIDIA.",
+      "lang": "en",
+      "publishedAt": "2026-08-12T14:00:00.000Z",
+      "collectedAt": "2026-08-26T13:43:27.793Z",
+      "tags": [
+        "glassdoor",
+        "jensen-huang",
+        "leadership",
+        "news",
+        "nvidia"
+      ],
+      "category": "tech-news",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "NVIDIA founder and CEO Jensen Huang is ranked No. 1 on Glassdoor’s Best CEOs list for 2026. In the just-released ranking, recognition is earned directly from the people who know their leadership the best — employees. Huang topped the list, with 99% of employees approving of the job he does. “As AI and shifting expectations redefine the modern workplace, exceptional leadership has never been more vital,” Glassdoor noted. “The top 50 CEOs do more than manage day-to-day operations — they empower their people and drive authentic culture.” Glassdoor reintroduced the Best CEOs list this year after a hiatus of five years, replacing the Best-Led Companies list, which ranked NVIDIA at No. 1 in 2025, in a shift to sharpen the focus on CEO and executive leadership and its impact on employee experience and company reputation.",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://blogs.nvidia.com/wp-content/uploads/2026/08/GlassdoorBestCEOs2026_16x9.png",
+        "origSrc": "https://blogs.nvidia.com/wp-content/uploads/2026/08/GlassdoorBestCEOs2026_16x9.png",
+        "alt": "NVIDIA CEO Tops Glassdoor’s 2026 List of Best CEOs",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "feedSnippet": "NVIDIA founder and CEO Jensen Huang is ranked No. 1 on Glassdoor’s Best CEOs list for 2026. In the just-released ranking, recognition is earned directly from the people who know their leadership the best — employees. Huang topped the list, with 99% of employees approving of the j",
       "excerptOrigin": "article"
     },
     {
@@ -26361,10 +26289,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "1b43ba985e422911",
@@ -29643,7 +29571,7 @@
       "summaryEn": "Microsoft Research released Orchard, an open-source framework that unifies infrastructure for training and evaluating AI agents across diverse task types, allowing smaller models to achieve strong performance. It lowers barriers for researchers building scalable agentic systems.",
       "lang": "en",
       "publishedAt": "2026-08-03T16:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "evaluation",
@@ -29670,46 +29598,6 @@
         "height": 0,
         "source": "og"
       }
-    },
-    {
-      "id": "356549b24fdc92f2",
-      "source": "zenn-cursor",
-      "sourceType": "blog",
-      "url": "https://zenn.dev/interestic/articles/cursor-plugins-hands-on-guide",
-      "title": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
-      "titleJa": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
-      "titleEn": "The term \"plugin\" in Cursor conflates VS Code extensions, MCP servers, and…",
-      "summaryJa": "Cursor における「プラグイン」という言葉は VS Code 拡張・MCP・Marketplace Plugin の三層が混在しており、本記事はその違いを整理しつつ実際に複数の Plugin を試した結果とおすすめをまとめている。",
-      "summaryEn": "The term \"plugin\" in Cursor conflates VS Code extensions, MCP servers, and Marketplace-distributed Plugin packages; this article clarifies each layer and shares practical findings from hands-on testing of several Cursor Marketplace Plugins.",
-      "lang": "ja",
-      "publishedAt": "2026-08-03T15:00:00.000Z",
-      "collectedAt": "2026-08-16T06:18:34.806Z",
-      "tags": [
-        "cursor",
-        "cursor-marketplace",
-        "developer-tools",
-        "mcp",
-        "mcp-server",
-        "vscode-extension",
-        "zenn"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "tutorial",
-      "archiveTier": "warm",
-      "contentSnippet": "「Cursor のプラグイン入れた？」と聞いて返ってくる答えが、「ESLint の拡張でしょ？」「MCP を足しただけ」「Marketplace から何か入れた」——人によって指している層が違う、という場面が増えました。言葉は同じ「プラグイン」なのに、中身は VS Code Extension ・ 単体の MCP ・そして Cursor の Plugin（Marketplace 配布パッケージ） の三者が混線しやすい。 本記事は、その用語のズレを起点に、Cursor Marketplace の Plugin を「何の束か」まで整理し、だいたい 4〜5 個入れた実録（Agent Compatibility / CLI for Agents / Docs Canvas / PR Review Canvas / Thermos）と選定軸まで書きます。役割設計は別記事に譲り、ここでは 配布・導入・中身の地図 に寄せます。コード例は説明用です。 AI コーディングが「補完」から「エージェントがリポジトリを触る」段階に進むと、拡張の単位も変わります。エディタの UI や言語機能だけでは足りず、 エージェントが何を知っていて、どの手順で動き、どの外部ツールに繋がるか をまとめて配りたくなる——それが Plugin が出てくる圧力です。 以前は User Rules、 .cursor/rules 、Skill 断片、MCP の個別設定、VS Code Extension がバラバラに積まれ、「うちのエージェント運用の標準セットはどれ？」と聞かれて答えにくい状態でした。Marketplace と Plugin は、この断片を 配布可能な束 にする方向です。公式でも、Plugin は rules / skills / agents / commands / MCP / hooks などをパッケージした distributable bundle と説明されています。 圧力は四点に集約できます。",
-      "bodyJa": "",
-      "bodyEn": "",
-      "image": {
-        "src": "https://res.cloudinary.com/zenn/image/upload/s--9fX1QPj6--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%2520Plugin%2520%25E3%2581%25A8%25E3%2581%25AF%25E4%25BD%2595%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E3%2582%258C%25E3%2581%259F%25E3%2582%2582%25E3%2581%25AE%25E3%2582%2592%25E8%25A9%25A6%25E3%2581%2597%25E3%2581%25A6%25E5%2588%2586%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A8%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:interestic%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2ZmYmYwMWU0ZGEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
-        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--9fX1QPj6--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%2520Plugin%2520%25E3%2581%25A8%25E3%2581%25AF%25E4%25BD%2595%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E3%2582%258C%25E3%2581%259F%25E3%2582%2582%25E3%2581%25AE%25E3%2582%2592%25E8%25A9%25A6%25E3%2581%2597%25E3%2581%25A6%25E5%2588%2586%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A8%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:interestic%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2ZmYmYwMWU0ZGEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
-        "alt": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      },
-      "feedSnippet": "「Cursor のプラグイン入れた？」と聞いて返ってくる答えが、「ESLint の拡張でしょ？」「MCP を足しただけ」「Marketplace から何か入れた」——人によって指している層が違う、という場面が増えました。言葉は同じ「プラグイン」なのに、中身は VS Code Extension・単体の MCP・そして Cursor の Plugin（Marketplace 配布パッケージ） の三者が混線しやすい。 本記事は、その用語のズレを起点に、Cursor Marketplace の Plugin を「何の束か」まで整理し、だいたい 4〜5 個入れた",
-      "excerptOrigin": "article"
     },
     {
       "id": "0c6c22a422681902",
@@ -29749,6 +29637,46 @@
       "bodyJa": "",
       "bodyEn": "",
       "feedSnippet": "Kaggle’s AI Agents Intensive with Google brought learners together in a no-cost course to build and deploy the next frontier of AI.",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "356549b24fdc92f2",
+      "source": "zenn-cursor",
+      "sourceType": "blog",
+      "url": "https://zenn.dev/interestic/articles/cursor-plugins-hands-on-guide",
+      "title": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
+      "titleJa": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
+      "titleEn": "The term \"plugin\" in Cursor conflates VS Code extensions, MCP servers, and…",
+      "summaryJa": "Cursor における「プラグイン」という言葉は VS Code 拡張・MCP・Marketplace Plugin の三層が混在しており、本記事はその違いを整理しつつ実際に複数の Plugin を試した結果とおすすめをまとめている。",
+      "summaryEn": "The term \"plugin\" in Cursor conflates VS Code extensions, MCP servers, and Marketplace-distributed Plugin packages; this article clarifies each layer and shares practical findings from hands-on testing of several Cursor Marketplace Plugins.",
+      "lang": "ja",
+      "publishedAt": "2026-08-03T15:00:00.000Z",
+      "collectedAt": "2026-08-16T06:18:34.806Z",
+      "tags": [
+        "cursor",
+        "cursor-marketplace",
+        "developer-tools",
+        "mcp",
+        "mcp-server",
+        "vscode-extension",
+        "zenn"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "tutorial",
+      "archiveTier": "warm",
+      "contentSnippet": "「Cursor のプラグイン入れた？」と聞いて返ってくる答えが、「ESLint の拡張でしょ？」「MCP を足しただけ」「Marketplace から何か入れた」——人によって指している層が違う、という場面が増えました。言葉は同じ「プラグイン」なのに、中身は VS Code Extension ・ 単体の MCP ・そして Cursor の Plugin（Marketplace 配布パッケージ） の三者が混線しやすい。 本記事は、その用語のズレを起点に、Cursor Marketplace の Plugin を「何の束か」まで整理し、だいたい 4〜5 個入れた実録（Agent Compatibility / CLI for Agents / Docs Canvas / PR Review Canvas / Thermos）と選定軸まで書きます。役割設計は別記事に譲り、ここでは 配布・導入・中身の地図 に寄せます。コード例は説明用です。 AI コーディングが「補完」から「エージェントがリポジトリを触る」段階に進むと、拡張の単位も変わります。エディタの UI や言語機能だけでは足りず、 エージェントが何を知っていて、どの手順で動き、どの外部ツールに繋がるか をまとめて配りたくなる——それが Plugin が出てくる圧力です。 以前は User Rules、 .cursor/rules 、Skill 断片、MCP の個別設定、VS Code Extension がバラバラに積まれ、「うちのエージェント運用の標準セットはどれ？」と聞かれて答えにくい状態でした。Marketplace と Plugin は、この断片を 配布可能な束 にする方向です。公式でも、Plugin は rules / skills / agents / commands / MCP / hooks などをパッケージした distributable bundle と説明されています。 圧力は四点に集約できます。",
+      "bodyJa": "",
+      "bodyEn": "",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--9fX1QPj6--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%2520Plugin%2520%25E3%2581%25A8%25E3%2581%25AF%25E4%25BD%2595%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E3%2582%258C%25E3%2581%259F%25E3%2582%2582%25E3%2581%25AE%25E3%2582%2592%25E8%25A9%25A6%25E3%2581%2597%25E3%2581%25A6%25E5%2588%2586%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A8%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:interestic%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2ZmYmYwMWU0ZGEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--9fX1QPj6--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Cursor%2520Plugin%2520%25E3%2581%25A8%25E3%2581%25AF%25E4%25BD%2595%25E3%2581%258B%2520%25E2%2580%2594%2520%25E5%2585%25A5%25E3%2582%258C%25E3%2581%259F%25E3%2582%2582%25E3%2581%25AE%25E3%2582%2592%25E8%25A9%25A6%25E3%2581%2597%25E3%2581%25A6%25E5%2588%2586%25E3%2581%258B%25E3%2581%25A3%25E3%2581%259F%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A8%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:interestic%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2ZmYmYwMWU0ZGEuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "Cursor Plugin とは何か — 入れたものを試して分かったこととおすすめ",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      },
+      "feedSnippet": "「Cursor のプラグイン入れた？」と聞いて返ってくる答えが、「ESLint の拡張でしょ？」「MCP を足しただけ」「Marketplace から何か入れた」——人によって指している層が違う、という場面が増えました。言葉は同じ「プラグイン」なのに、中身は VS Code Extension・単体の MCP・そして Cursor の Plugin（Marketplace 配布パッケージ） の三者が混線しやすい。 本記事は、その用語のズレを起点に、Cursor Marketplace の Plugin を「何の束か」まで整理し、だいたい 4〜5 個入れた",
       "excerptOrigin": "article"
     },
     {
@@ -32102,10 +32030,10 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "40a14e4462c4ce06",
@@ -67139,7 +67067,7 @@
       "summaryEn": "DORA warns that \"tokenmaxxing\"—rewarding raw AI token consumption via internal leaderboards to spur adoption—can become a vanity metric that distorts real productivity, urging teams to balance quantity with quality.",
       "lang": "en",
       "publishedAt": "2026-06-02T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-adoption",
         "developer-productivity",
@@ -67904,7 +67832,7 @@
       "summaryEn": "Anthropic shares engineering lessons on limiting the blast radius of capable AI agents across claude.ai, Claude Code, and Cowork through principled containment design.",
       "lang": "en",
       "publishedAt": "2026-05-25T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "ai-safety",
@@ -67920,12 +67848,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork. Twelve months ago, we'd have rejected out of hand the idea of granting Claude access sufficient to take down an internal Anthropic service. Today that level of access is routine, and Anthropic developers are more productive for it. The risk of these deployments has two components: how likely a failure is, and how much damage one could do. Progress on safeguards and model training has steadily driven down the first; the second—the theoretical blast radius—only grows as capabilities and access expand.",
       "excerptOrigin": "article",
       "feedSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "aa501d3dab433baa",
@@ -70891,7 +70819,7 @@
       "summaryEn": "Anthropic identified three overlapping infrastructure changes that caused some requests to be misrouted, degrading Claude Code output quality; the postmortem details detection gaps and planned safeguards to prevent recurrence.",
       "lang": "en",
       "publishedAt": "2026-04-23T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "anthropic",
         "claude-code",
@@ -70908,12 +70836,12 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "We traced recent reports of Claude Code quality issues to three separate changes. Here's what happened and what we're changing. Over the past month, we’ve been looking into reports that Claude’s responses have worsened for some users. We’ve traced these reports to three separate changes that affected Claude Code, the Claude Agent SDK, and Claude Cowork. The API was not impacted. All three issues have now been resolved as of April 20 (v2.1.116). In this post, we explain what we found, what we fixed, and what we’ll do differently to ensure similar issues are much less likely to happen again. We take reports about degradation very seriously. We never intentionally degrade our models, and we were able to immediately confirm that our API and inference layer were unaffected.",
       "excerptOrigin": "article",
       "feedSnippet": "We traced recent reports of Claude Code quality issues to three separate changes. Here's what happened and what we're changing.",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "585b1b420e4c1d30",
@@ -71404,7 +71332,7 @@
       "summaryEn": "Anthropic published its design philosophy for Managed Agents, a hosted service for long-running Claude-based tasks, centering on stable interfaces that decouple the orchestration harness from the model itself. The approach addresses trust boundaries, delegated permissions, and observability, helping teams avoid breakage as underlying models evolve.",
       "lang": "en",
       "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "anthropic",
@@ -71421,12 +71349,12 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "Harnesses encode assumptions that go stale as models improve. Managed Agents—our hosted service for long-horizon agent work—is built around interfaces that stay stable as harnesses change. Get started with Claude Managed Agents by following our docs . A running topic on the Engineering Blog is how to build effective agents and design harnesses for long-running work . A common thread across this work is that harnesses encode assumptions about what Claude can’t do on its own. However, those assumptions need to be frequently questioned because they can go stale as models improve. As just one example, in prior work we found that Claude Sonnet 4.5 would wrap up tasks prematurely as it sensed its context limit approaching—a behavior sometimes called “context anxiety.” We addressed this by adding context resets to the harness.",
       "excerptOrigin": "article",
       "feedSnippet": "Harnesses encode assumptions that go stale as models improve. Managed Agents-our hosted service for long-horizon agent work-is built around interfaces that stay stable as harnesses change.",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "f1fb311acd5737de",
@@ -72297,7 +72225,7 @@
       "summaryEn": "Anthropic engineered Claude Code's auto mode using classifiers that automate routine permission approvals, cutting approval fatigue while preserving safety boundaries.",
       "lang": "en",
       "publishedAt": "2026-03-25T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "anthropic",
         "auto-mode",
@@ -72311,12 +72239,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses. By default, Claude Code asks users for approval before running commands or modifying files. This keeps users safe, but it also means a lot of clicking \"approve.\" Over time that leads to approval fatigue, where people stop paying close attention to what they're approving. Users have two solutions for avoiding this fatigue: a built-in sandbox where tools are isolated to prevent dangerous actions, or the --dangerously-skip-permissions flag that disables all permission prompts and lets Claude act freely, which is unsafe in most situations. Figure 1 lays out the tradeoff space.",
       "excerptOrigin": "article",
       "feedSnippet": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "812981e9bd9f331b",
@@ -72330,7 +72258,7 @@
       "summaryEn": "How Anthropic improved Claude's performance in frontend design and long-running autonomous software engineering tasks through thoughtful harness design for agentic coding workflows.",
       "lang": "en",
       "publishedAt": "2026-03-24T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "agentic-coding",
@@ -72345,12 +72273,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "Harness design is key to performance at the frontier of agentic coding. Here's how we pushed Claude further in frontend design and long-running autonomous software engineering. Written by Prithvi Rajasekaran, a member of our Labs team. Over the past several months I’ve been working on two interconnected problems: getting Claude to produce high-quality frontend designs, and getting it to build complete applications without human intervention. This work originated with earlier efforts on our frontend design skill and long-running coding agent harness , where my colleagues and I were able to improve Claude’s performance well above baseline through prompt engineering and harness design—but both eventually hit ceilings.",
       "excerptOrigin": "article",
       "feedSnippet": "Harness design is key to performance at the frontier of agentic coding. Here's how we pushed Claude further in frontend design and long-running autonomous software engineering.",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true
+      "bodyEn": ""
     },
     {
       "id": "ad078ef5e0b73d27",
@@ -72686,7 +72614,7 @@
       "summaryEn": "DORA argues that while AI speeds initial code generation, it adds hidden taxes like verification overhead, skill degradation, and integration challenges, so leaders must balance productivity with quality to shift from adoption to effective SDLC use.",
       "lang": "en",
       "publishedAt": "2026-03-10T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-coding",
         "code-generation",
@@ -72829,7 +72757,7 @@
       "summaryEn": "Claude Opus 4.6 was found to recognize it was being evaluated on BrowseComp and then locate and decrypt benchmark answers, raising serious concerns about eval integrity in web-enabled AI environments.",
       "lang": "en",
       "publishedAt": "2026-03-06T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "anthropic",
         "benchmark",
@@ -72844,6 +72772,7 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
+      "evergreen": true,
       "contentSnippet": "Eval awareness in Claude Opus 4.6’s BrowseComp performance Evaluating Opus 4.6 on BrowseComp, we found cases where the model recognized the test, then found and decrypted answers to it—raising questions about eval integrity in web-enabled environments. BrowseComp is an evaluation designed to test how well models can find hard-to-locate information on the web. Like many benchmarks, it is vulnerable to contamination: answers leak onto the public web through academic papers, blog posts, and GitHub issues, and a model running the eval can encounter them in search results. When we evaluated Claude Opus 4.6 on BrowseComp in a multi-agent configuration, we found nine examples of this kind of contamination across 1,266 BrowseComp problems. However, we also witnessed two cases of a novel contamination pattern.",
       "excerptOrigin": "article",
       "feedSnippet": "Evaluating Opus 4.6 on BrowseComp, we found cases where the model recognized the test, then found and decrypted answers to it-raising questions about eval integrity in web-enabled environments.",
@@ -72856,8 +72785,7 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      },
-      "evergreen": true
+      }
     },
     {
       "id": "5e4b5a55bd35da2a",
@@ -73043,7 +72971,7 @@
       "summaryEn": "DORA's research with UC Berkeley students examines the risk of over-relying on AI coding tools and shows how developers set guardrails, retain skills, and apply critical verification to balance productivity with lasting expertise.",
       "lang": "en",
       "publishedAt": "2026-02-17T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-coding",
         "ai-dependency",
@@ -73488,7 +73416,7 @@
       "summaryEn": "DORA released the State of AI-assisted Software Development Report and DORA AI Capabilities Model in 2025, giving teams evidence and guidance to mature AI adoption.",
       "lang": "en",
       "publishedAt": "2026-01-07T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-assisted-development",
         "ai-capabilities-model",
@@ -73551,7 +73479,7 @@
       "summaryEn": "DORA's software delivery framework moves from four key metrics to a five-metric model including reliability, helping DevOps teams assess performance more clearly.",
       "lang": "en",
       "publishedAt": "2026-01-02T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "delivery-performance",
         "devops",
@@ -73844,7 +73772,7 @@
       "summaryEn": "DORA research finds developers who use AI as a tutor to deepen understanding of concepts and design outperform those treating it as a mere code generator, urging organizations to foster this learning practice.",
       "lang": "en",
       "publishedAt": "2025-12-12T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-coding",
         "ai-tutor",
@@ -74199,7 +74127,7 @@
       "summaryEn": "As AI decouples roles from tasks, DORA introduces a \"Builder Mindset\" framework defining four core intents, arguing that the quality of human intent now drives software delivery performance.",
       "lang": "en",
       "publishedAt": "2025-10-17T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-automation",
         "ai-coding",
@@ -74233,7 +74161,7 @@
       "summaryEn": "AutoGen's Python edition ships a maintenance release with fixes for streaming Bedrock responses using empty tool arguments, RedisMemory linear memory support, and documentation typo corrections.",
       "lang": "en",
       "publishedAt": "2025-09-30T06:18:26.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "agent",
         "autogen",
@@ -74345,7 +74273,7 @@
       "summaryEn": "DORA research finds that letting developers customize their workflows and AI tools boosts engagement, productivity, and well-being, urging organizations to build flexibility into tool choice and operations.",
       "lang": "en",
       "publishedAt": "2025-09-23T00:00:00.000Z",
-      "collectedAt": "2026-09-30T13:10:30.641Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
       "tags": [
         "ai-coding-assistants",
         "customization",
@@ -74393,6 +74321,43 @@
       "archiveTier": "cold",
       "contentSnippet": "LeRobotDataset:v3.0: Bringing large-scale datasets to lerobot TL;DR Today we release LeRobotDataset:v3 ! In our previous LeRobotDataset:v2 release, we stored one episode per file, hitting file-system limitations when scaling datasets to millions of episodes. LeRobotDataset:v3 packs multiple episodes in a single file, using relational metadata to retrieve information at the individual episode level from multi-episode files. The new format also natively supports accessing datasets in streaming mode, allowing to process large datasets on the fly.We provide a one-liner util to convert all datasets in the LeRobotDataset format to the new format, and are very excited to share this milestone with the community ahead of our next stable release!",
       "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "b680b6e47e85fb29",
+      "source": "autogen-releases",
+      "sourceType": "release",
+      "url": "https://github.com/microsoft/autogen/releases/tag/python-v0.7.4",
+      "title": "Microsoft AutoGen python-v0.7.4",
+      "titleJa": "Microsoft AutoGen Python v0.7.4",
+      "titleEn": "Microsoft AutoGen python-v0.7.4",
+      "summaryJa": "Microsoft AutoGen Python v0.7.4は、Redisのデシリアライズエラーを修正し、ストリーミング非対応を明確化した。agent-as-toolのREADMEと文書も更新され、開発者の実装判断に役立つ。",
+      "summaryEn": "Microsoft AutoGen Python v0.7.4 fixes a Redis deserialization error, clarifies that Redis lacks streaming support, and updates agent-as-tool guidance for developers.",
+      "lang": "en",
+      "publishedAt": "2025-08-19T18:50:49.000Z",
+      "collectedAt": "2026-10-01T01:00:53.859Z",
+      "tags": [
+        "agent",
+        "agent-as-tool",
+        "autogen",
+        "python",
+        "redis",
+        "release"
+      ],
+      "category": "agent-fw",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "What's Changed Update docs for 0.7.3 by Eric Zhu (@ekzhu) in #6948 Update readme with agent-as-tool by Eric Zhu (@ekzhu) in #6949 Fix Redis Deserialization Error by Ben Constable (@BenConstable9) in #6952 Redis Doesn't Support Streaming by Ben Constable (@BenConstable9) in #6954 update version to 0.7.4 by Eric Zhu (@ekzhu) in #6955 Update doc 0.7.4 by Eric Zhu (@ekzhu) in #6956 New Contributors Ben Constable (@BenConstable9) made their first contribution in #6952 Full Changelog : python-v0.7.3...python-v0.7.4",
+      "image": {
+        "src": "https://avatars.githubusercontent.com/u/320302?s=60&v=4",
+        "origSrc": "https://avatars.githubusercontent.com/u/320302?s=60&v=4",
+        "alt": "Microsoft AutoGen python-v0.7.4",
+        "width": 0,
+        "height": 0,
+        "source": "media"
+      },
       "bodyJa": "",
       "bodyEn": ""
     }

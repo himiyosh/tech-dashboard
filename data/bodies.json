@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-01T01:41:41.503Z",
-  "count": 1147,
+  "generatedAt": "2026-10-01T03:01:09.635Z",
+  "count": 1151,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -43587,6 +43587,158 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-01T01:07:40.822Z"
+    },
+    "af6a3008adf4fbae": {
+      "bodyJa": "npmのtrusted publishingに、dist-tag操作を許可する任意設定「Allow npm dist-tag」が加わった。OIDCの短期認証情報を使い、長期アクセストークンを保持せずにリリース後やロールバック後のタグを管理できる点が重要だ。\n\n## dist-tag操作\n\n新しい権限を有効にすると、バージョンをlatestへ昇格させたり、nextやbetaの参照先を更新したりできる。これらの操作には、長期アクセストークンではなく、trusted publishingで用いる短期のOIDC認証情報を利用する。\n\n従来のtrusted publishingが対象としていたのは、公開とステージングまでだった。dist-tag操作は対象外だったため、公開処理をトークン不要のOIDCベースへ移行したメンテナーも、タグ管理のためだけに細かな権限を持つアクセストークンを残す必要があった。\n\n## 既定は無効\n\n「Allow npm dist-tag」はオプトイン方式で、新規と既存のどちらのtrusted publishing設定でも既定では無効となる。このため、設定に新しい操作能力が自動的に追加されることはない。dist-tagを管理したい場合に限り、設定ごとに明示的に許可する形だ。\n\n## 公開権限と独立\n\ndist-tag権限は、直接公開するための権限とは独立している。したがって、公開を直接行わずステージングだけに使う設定であっても、必要に応じてdist-tag管理を許可できる。公開やステージングの構成を変えず、タグ操作だけをOIDCの短期認証情報へ移せるようになった。",
+      "bodyEn": "## Trusted publishing configurations\n\nnpm trusted publishing configurations can now receive permission to manage dist-tags. This matters because maintainers can perform operations such as promoting a version to latest or updating next and beta pointers with short-lived OIDC credentials rather than retaining a long-lived access token for those tasks.\n\n## Short-lived OIDC credentials\n\nBefore this change, trusted publishing covered publishing and staging but did not cover dist-tag operations. Maintainers who had otherwise moved fully to token-free, OIDC-based workflows therefore still needed to keep a granular access token specifically for managing tags after a release or rollback.\n\nWith dist-tag management available through trusted publishing, those workflows can now update latest, next, or beta using their short-lived OIDC credentials. The change removes the stated need to retain a long-lived token solely for those post-release or rollback tag operations.\n\n## Allow npm dist-tag\n\nThe capability is controlled through an optional setting named Allow npm dist-tag. It is disabled by default for both newly created and existing trusted publishing configurations.\n\nAs a result, no configuration automatically receives permission to manage dist-tags. The setting must be explicitly enabled for each trusted publishing configuration that should have that capability. Configurations left unchanged continue without the new dist-tag permission.\n\n## Publishing and staging\n\nPermission to manage dist-tags is independent of permission for direct publishing. A trusted publishing configuration does not need direct publishing capability in order to receive dist-tag management permission.\n\nThat separation means a staging-only configuration can also be granted the Allow npm dist-tag permission. Maintainers can therefore choose which trusted publishing configurations may update dist-tags without automatically expanding their direct publishing capabilities.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "npmのパッケージを出す仕事では、普段のリリースやロールバックがどう変わるの？",
+          "en": "For people releasing npm packages, what changes in the usual release or rollback workflow?"
+        },
+        {
+          "s": "b",
+          "ja": "設定を有効にすれば、短期のOIDC認証情報でlatestやnext、betaを更新できるよ。長期トークンへの依存を減らせるんだ。",
+          "en": "With the setting enabled, workflows can update latest, next, or beta using short-lived OIDC credentials, reducing reliance on a long-lived token."
+        },
+        {
+          "s": "a",
+          "ja": "前はOIDCだけではできなかったの？ タグの更新用に別のものが必要だった？",
+          "en": "Couldn’t OIDC handle that before? Did maintainers need something separate just to update tags?"
+        },
+        {
+          "s": "b",
+          "ja": "以前のtrusted publishingは公開とステージングまでで、dist-tag操作は対象外だったよ。そのためタグ管理には個別のアクセストークンが必要だったんだ。",
+          "en": "Previously, trusted publishing covered publishing and staging, but not dist-tag operations. Maintainers still needed a granular access token for tag management."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、設定すればタグ更新のためだけに長期トークンを残さなくてよくなることだね。",
+          "en": "So the big takeaway is that enabling it can remove the need to keep a long-lived token solely for tag updates."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。既定では無効だから、必要な構成だけで許可する点に注目したいね。ステージング専用の構成にも付けられるよ。",
+          "en": "Right. It’s off by default, so watch which configurations explicitly receive permission. Even a staging-only configuration can be granted dist-tag management."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T01:42:35.186Z"
+    },
+    "9cf89f3048a9625b": {
+      "bodyJa": "## セルフサービス試用\n\nGitHub Team組織向けに、GitHub Advanced Securityのセルフサービス試用が始まった。GitHub Teamの顧客は、GitHub Code SecurityとGitHub Secret Protectionを導入前に評価できる。管理者が両者の採用を判断するための検証を、自ら開始できる仕組みとなる。\n\n## 導入前の検証\n\n試用の対象はGitHub Advanced Securityで、評価できる内容としてGitHub Code SecurityとGitHub Secret Protectionが示されている。正式な採用に先立ち、組織内でこれらを検証するための試用として位置付けられる。製品の名称だけでなく、評価対象が明確に分けて示されているため、管理者はCode SecurityとSecret Protectionのそれぞれを確認したうえで採用判断に利用できる。\n\n## 開始ページ\n\n試用を始める導線は3つ用意されている。組織のOverviewページ、Billing and licensing内のLicensingページ、またはRisk Assessmentの完了ページから開始できる。組織の概要を確認する画面、ライセンスを扱う画面、Risk Assessmentを終えた後の画面のいずれからでも、GitHub Advanced Securityのセルフサービス試用へ進める形だ。詳しい情報は、self-serve GitHub Advanced Security trialsで案内されている。",
+      "bodyEn": "## GitHub Advanced Security\n\nGitHub Team organizations can now start self-service trials of GitHub Advanced Security. The option matters because it allows teams to evaluate the available security capabilities before deciding whether to adopt them.\n\nThe trial covers GitHub Code Security and GitHub Secret Protection. Teams can use the trial period to assess both offerings before introducing GitHub Advanced Security to their organization. This gives administrators a way to inform their adoption decision through direct evaluation rather than committing before examining the capabilities.\n\n## Self-service trials\n\nThe trial is self-service for GitHub Team customers. Organizations can initiate the process themselves through designated pages within GitHub, rather than relying on a separately described trial-request process.\n\nThe announcement specifically presents the trial as a way to evaluate GitHub Code Security and GitHub Secret Protection. It does not describe the two as separate trials; both are named as capabilities that GitHub Team customers can assess through a GitHub Advanced Security trial.\n\n## Start a trial\n\nGitHub identifies three places where eligible customers can begin. A trial can be started from the organization’s Overview page or from the Licensing page under Billing and licensing.\n\nThe Risk Assessment completion page provides another starting point. These entry points place the trial option within organization, licensing, and risk-assessment workflows.\n\nGitHub also provides additional information through its documentation for self-serve GitHub Advanced Security trials. The central change is that GitHub Team organizations now have a direct route to test Code Security and Secret Protection before adoption, with trial access available from several relevant pages.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「セルフサービス試用」って、GitHub Teamの組織が自分で始められるの？",
+          "en": "Does “self-service trial” mean a GitHub Team organization can start one on its own?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。この記事では、GitHub Advanced Securityを自分で試し、Code SecurityとSecret Protectionを評価できるとしているよ。",
+          "en": "Yes. The post says GitHub Team customers can launch a GitHub Advanced Security trial themselves to evaluate Code Security and Secret Protection."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、導入を決める管理者やチームが、先に2つの機能を確かめるのに役立つんだね？",
+          "en": "So it helps admins and teams check those two features before deciding whether to adopt them?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。組織のOverview、Billing and licensingのLicensing、Risk Assessment完了ページから始められるよ。",
+          "en": "Right. They can start from the organization Overview, Billing and licensing > Licensing, or the Risk Assessment completion page."
+        },
+        {
+          "s": "a",
+          "ja": "わかった。GitHub Teamなら、導入前の判断材料を自分たちで集められるんだ。",
+          "en": "Got it. A GitHub Team organization can gather its own evidence before choosing whether to adopt it."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、対象はGitHub Teamの組織で、試用はCode SecurityとSecret Protectionを評価するためのものだよ。",
+          "en": "One caveat: this is for GitHub Team organizations, and the trial is specifically for evaluating Code Security and Secret Protection."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T01:43:24.621Z"
+    },
+    "f00d755c60f68c1f": {
+      "bodyJa": "## HydraFusion\n\nHydraFusionの研究プレビューが、Copilot CLIに加えてVisual Studio CodeとGitHub Copilotアプリで利用可能になった。品質と効率の両立を目指し、複数のモデルを使い分けてタスクを処理する仕組みだ。\n\n## モデル選択\n\nHydraFusionはモデル選択画面に表示されるが、それ自体が単一のモデルというわけではない。ワークフローの選択を最適化問題として扱い、推論、コード生成、デバッグ、ツール利用に関する能力シグナルを用いて、求められる品質基準を満たすために最も効率的な実行パターンを選ぶ。\n\n## 単一とカスケード\n\n利用するワークフローは3種類ある。「単一」では、選択された1つのモデルがタスクを直接解決する。「カスケード」では、まず効率的なモデルが解決案を作成し、品質ゲートがその結果を受け入れるか、より強力なモデルへ引き上げるかを判断する。最初から常に複数モデルを動かすのではなく、品質判定に応じて処理方法を変える構成となっている。\n\n## 批評\n\n「批評」では、1つのモデルが結果の草案を作り、別のモデルファミリーに属する独立した読み取り専用の批評役がレビューする。これはRubber Duckと同じレビューパターンに従う。その後、最初に草案を作ったモデルがレビューを踏まえて1回だけ修正する。HydraFusionは、これら3方式から実行パターンを選択することで、品質基準と効率の双方に対応する。",
+      "bodyEn": "## Research preview\n\nHydraFusion’s research preview is now available in Visual Studio Code and the GitHub Copilot app, expanding its availability beyond Copilot CLI. The addition matters for developers seeking to balance quality and efficiency when working on tasks involving reasoning, code generation, debugging, and tool use.\n\nHydraFusion appears in the model picker, but it is not a single model. Instead, it orchestrates multiple models and selects among different execution patterns.\n\n## Workflow selection\n\nHydraFusion treats workflow selection as an optimization problem. It evaluates capability signals for reasoning, code generation, debugging, and tool use, then chooses what it determines is the most efficient execution pattern that can still meet the quality bar.\n\nThe system uses one of three workflows: Single, Cascade, or Critique. Each workflow defines a different way for one or more models to produce and assess a result.\n\n## Single and Cascade\n\nIn the Single workflow, one selected model directly solves the task. This is the most direct of the three available execution patterns, with the selected model responsible for producing the result.\n\nCascade begins with an efficient model drafting a solution. A quality gate then determines whether to accept that draft or escalate the task to a stronger model. This creates an additional decision point between the initial draft and a possible second attempt by a different model.\n\n## Critique\n\nThe Critique workflow separates drafting from review. One model produces an initial result, while an independent, read-only critic from a different model family reviews it.\n\nThis follows the same review pattern as Rubber Duck. After the independent review, the original drafting model revises its result once. Across Single, Cascade, and Critique, HydraFusion selects how models participate according to the task’s capability signals, efficiency, and required quality bar.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "VS Codeでコードを書くとき、普段の作業はどう変わるの？自分でモデルを選び分けなくてもいいのかな。",
+          "en": "How does this change everyday coding in VS Code? Does it mean I don’t have to choose between models myself?"
+        },
+        {
+          "s": "b",
+          "ja": "モデル選択画面でHydraFusionを選べます。複数モデルを使い分け、品質基準を満たす効率的な進め方を選びます。",
+          "en": "You can select HydraFusion from the model picker. It coordinates multiple models and chooses an efficient workflow aimed at meeting the quality bar."
+        },
+        {
+          "s": "a",
+          "ja": "前はVS Codeではできなかったの？Copilot CLIだけで使えたってことかな。",
+          "en": "Wasn’t this available in VS Code before? Was it limited to Copilot CLI?"
+        },
+        {
+          "s": "b",
+          "ja": "これまではCopilot CLIで提供されていました。今回、研究プレビューがVS CodeとGitHub Copilotアプリにも広がりました。",
+          "en": "It was previously available in Copilot CLI. The research preview has now expanded to VS Code and the GitHub Copilot app."
+        },
+        {
+          "s": "a",
+          "ja": "新しい1モデルじゃなくて、課題に合わせて複数モデルの進め方を選ぶ仕組みなんだね。品質と効率の両方を狙う、と。",
+          "en": "So it isn’t one new model—it chooses how multiple models should handle the task. The goal is to balance quality and efficiency."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、1モデルで解くSingle、必要なら強いモデルへ回すCascade、別系統のモデルが確認するCritiqueの違いに注目だね。",
+          "en": "Right. Next, note the three workflows: Single uses one model, Cascade escalates when needed, and Critique has a model from another family review the draft."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T01:43:26.239Z"
+    },
+    "d5200657d356dd85": {
+      "bodyJa": "GHE.comのデータレジデンシー対応環境では、2026年10月7日から、鍵合意にX25519だけを提示するクライアントのTLS接続を受け入れなくなる。対象となる設定を利用している場合は、同日までに更新や構成変更が必要だ。\n\n## 対象となる接続\n\n変更の対象は、TLS接続時の鍵合意でX25519のみを提示するクライアントだ。X25519を利用するすべての接続が対象になるのではなく、提示する方式をX25519だけに限定している場合に影響する。\n\n対象エンドポイントでは、FIPS承認済みのP-256（secp256r1）とP-384（secp384r1）のサポートが継続される。このため、クライアント側でP-256を利用できるようにしておけば、変更後も対応可能とされている。\n\n## 影響を受ける設定\n\n多くの利用者は対応する必要がない。現在のブラウザ、オペレーティングシステム、GitHub CLIのリリース、一般的に使われているTLSライブラリは、すでにP-256をサポートしていると説明されている。\n\n一方、アプリケーション、プロキシ、セキュリティアプライアンス、TLSライブラリのいずれかで、X25519だけを提示するよう明示的に設定している場合は影響を受ける可能性がある。接続経路にある各要素のTLS設定を確認する必要がある。\n\n## 10月7日までの対応\n\n対象となる環境では、オペレーティングシステム、ランタイム、GitHub CLI、プロキシ、TLSライブラリをサポート対象のバージョンへ更新する。あわせてX25519限定の構成を削除し、P-256（secp256r1）が有効になっていることを確認する必要がある。P-384（secp384r1）も追加で有効化できる。",
+      "bodyEn": "## X25519-only TLS connections\n\nBeginning October 7, 2026, GitHub Enterprise Cloud with data residency will no longer accept TLS connections from clients that offer only X25519 for key agreement. This matters for applications, proxies, security appliances, or TLS libraries that have been explicitly configured to offer only X25519, because those connections will no longer be accepted after that date.\n\n## P-256 and P-384 support\n\nThe affected endpoints will continue to support the FIPS-approved P-256, also identified as secp256r1, and P-384, also identified as secp384r1, groups. Clients therefore need to have P-256 enabled rather than restricting key agreement to X25519 alone. P-384 may also be enabled.\n\nThe change does not mean that all customers need to modify their systems. Most customers do not need to take action because current browsers, operating systems, GitHub CLI releases, and commonly used TLS libraries already support P-256.\n\n## You may be affected\n\nCustomers may be affected when an application, proxy, security appliance, or TLS library is specifically configured to offer only X25519. Those restricted configurations are the focus of the change.\n\nThe relevant check is whether a client offers P-256 for key agreement. A client that remains configured to offer only X25519 will not be accepted by GitHub Enterprise Cloud with data residency beginning on October 7, 2026.\n\n## Before October 7, 2026\n\nBefore the change takes effect, users with affected configurations should update their operating system, runtime, GitHub CLI, proxy, and TLS libraries to supported versions. They should also remove any X25519-only configuration and ensure that P-256, or secp256r1, is enabled.\n\nP-384, or secp384r1, can be enabled as an additional supported group. The essential requirement is to avoid offering only X25519 when connecting to the affected endpoints.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "X25519だけのTLS接続が受け入れられなくなるのは、いつから？ ほかの方式は残るのかな。",
+          "en": "When will X25519-only TLS connections stop being accepted? Will other options still work?"
+        },
+        {
+          "s": "b",
+          "ja": "2026年10月7日からだよ。GHE.comのデータレジデンシー対応環境では、P-256とP-384は引き続き使えるよ。",
+          "en": "Starting October 7, 2026. GHE.com data residency will continue supporting P-256 and P-384."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、対応が必要なのはX25519だけに絞ったアプリやプロキシを使う人、ということ？",
+          "en": "So the people who need to act are those using apps or proxies restricted to X25519?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。対象にはセキュリティ機器やTLSライブラリも含まれ、多くの利用者は対応不要とされているよ。",
+          "en": "Yes. Security appliances and TLS libraries can also be affected, while most customers won’t need to take action."
+        },
+        {
+          "s": "a",
+          "ja": "X25519限定の設定を外して、P-256を使えるようにすればいいんだね。",
+          "en": "Got it—remove the X25519-only setting and make sure P-256 is enabled."
+        },
+        {
+          "s": "b",
+          "ja": "うん。期限前にOSやランタイム、GitHub CLI、プロキシ、TLSライブラリを対応版へ更新する点にも注意してね。",
+          "en": "Right. Before the deadline, also update the OS, runtime, GitHub CLI, proxy, and TLS libraries to supported versions."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T01:44:01.326Z"
     }
   }
 }

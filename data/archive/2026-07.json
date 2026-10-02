@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T16:31:27.603Z",
+  "generatedAt": "2026-10-02T17:31:10.850Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -16228,7 +16228,15 @@
       "archiveTier": "warm",
       "contentSnippet": "AIコーディングで、動く個人アプリは本当に1時間で作れます。今回もそうでした。フォームに入力すると、サーバーレス関数がLLMを呼んで、結果ページを返す。ちゃんと動くし、UIもそれっぽい。 でも、そこで「よし公開」とはしませんでした。「動く」と「公開していい」は別だからです。IT実務を13〜14年やってきて、今はサポートエンジニアとして「動いていたものが壊れる現場」を毎日見ているので、その感覚が抜けません。 そこで公開前に、AIが書いた全ソースコードを、自分でセキュリティ監査してみましたら、Critical（致命的）が2件、Highが1件、Medium・Lowを合わせて8件出てきました。放置していたら、第三者がループを回すだけでAPIコストが青天井になる穴と、プロンプトインジェクションで任意のトークンを増幅できる穴がありました。 この記事は、その監査で実際に確認した内容と、どう塞いだかの記録です。特定のアプリの話というより、「AIに書かせたコードに共通して空きやすい穴」の話として読んでもらえればと思います。スタックは Next.js（App Router）+ Vercel + LLM API という、いま一番よくある構成です。 先に結論だけ言うと、AIは「機能」は作りますが「守り」はほぼ書きません。レート制限も、入力検証も、セキュリティヘッダも、頼まなければ付きません。そしてそこが、まさに人間が見るべき場所でした。 一番わかりやすい穴でした。LLMを叩くエンドポイントに、レート制限もオリジン検証も入力サイズ上限もありません。実際に叩いて確認した結果がこれです。 つまり、URLさえ分かれば誰でも、好きなだけ、外部からLLM呼び出しを回せる状態でした。LLM APIは1リクエストが実際にお金になります。しかもサーバーレス関数の maxDuration を長めにしていたので、1リクエストで関数を長時間占有でき、無料枠の同時実行数も枯らせます。 AIに「LLMを呼ぶAPIを作って」と頼むと、呼ぶ部分は完璧に書いてくれます。でも「その入口を守る」コードは書きません。",
       "feedSnippet": "きっかけ AIコーディングで、動く個人アプリは本当に1時間で作れます。今回もそうでした。フォームに入力すると、サーバーレス関数がLLMを呼んで、結果ページを返す。ちゃんと動くし、UIもそれっぽい。 でも、そこで「よし公開」とはしませんでした。「動く」と「公開していい」は別だからです。IT実務を13〜14年やってきて、今はサポートエンジニアとして「動いていたものが壊れる現場」を毎日見ているので、その感覚が抜けません。 そこで公開前に、AIが書いた全ソースコードを、自分でセキュリティ監査してみましたら、Critical（致命的）が2件、Highが1件、Med",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--FQFDcy0Y--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AB1%25E6%2599%2582%25E9%2596%2593%25E3%2581%25A7%25E4%25BD%259C%25E3%2582%2589%25E3%2581%259B%25E3%2581%259F%25E3%2582%25A2%25E3%2583%2597%25E3%2583%25AA%25E3%2582%2592%25E3%2580%2581%25E5%2585%25AC%25E9%2596%258B%25E5%2589%258D%25E3%2581%25AB%25E5%2585%25A8%25E3%2582%25BD%25E3%2583%25BC%25E3%2582%25B9%25E7%259B%25A3%25E6%259F%25BB%25E3%2581%2597%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%25EF%25BC%2588Critical%25202%25E4%25BB%25B6%25EF%25BC%2589%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:gyugyu86%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTER1ZGY2ZHJZT0J3R2dvUzV2SlAtSkJCQTZ0RF9DUEdiZTFteE9OeE1QX1ZjTVlnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--FQFDcy0Y--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AB1%25E6%2599%2582%25E9%2596%2593%25E3%2581%25A7%25E4%25BD%259C%25E3%2582%2589%25E3%2581%259B%25E3%2581%259F%25E3%2582%25A2%25E3%2583%2597%25E3%2583%25AA%25E3%2582%2592%25E3%2580%2581%25E5%2585%25AC%25E9%2596%258B%25E5%2589%258D%25E3%2581%25AB%25E5%2585%25A8%25E3%2582%25BD%25E3%2583%25BC%25E3%2582%25B9%25E7%259B%25A3%25E6%259F%25BB%25E3%2581%2597%25E3%2581%25A6%25E3%2581%25BF%25E3%2581%259F%25EF%25BC%2588Critical%25202%25E4%25BB%25B6%25EF%25BC%2589%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:gyugyu86%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jTER1ZGY2ZHJZT0J3R2dvUzV2SlAtSkJCQTZ0RF9DUEdiZTFteE9OeE1QX1ZjTVlnPXMyNTAtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "AIに1時間で作らせたアプリを、公開前に全ソース監査してみた（Critical 2件）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "21ad3deb13f4672e",
@@ -34129,7 +34137,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-10-02T11:31:16.147Z",
+      "collectedAt": "2026-10-02T17:30:53.103Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -40460,7 +40468,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-10-02T11:31:16.147Z",
+      "collectedAt": "2026-10-02T17:30:53.103Z",
       "tags": [
         "mcp",
         "mcp-server",

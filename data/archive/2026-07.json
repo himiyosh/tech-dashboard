@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T22:30:55.145Z",
+  "generatedAt": "2026-10-03T23:30:49.814Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -17106,7 +17106,15 @@
       "archiveTier": "warm",
       "contentSnippet": "ollama に num_ctx を超える入力を渡すと、超えた分が削られる——のではありません。 先頭のわずかなトークンと末尾を残して、真ん中がまとめて捨てられます。 残る量はコンテキストのおよそ半分までで、元の入力が長いほど失う量は大きくなります。 そして捨てられても HTTP 200 が返り、 done_reason は stop 、出力の体裁も整っています。 この記事では、切り捨てが起きる条件・捨てられる場所と量・レスポンスに何が残るかを、実測とollama本体の実装で確かめます。最後に、入力側で打てる手も見ます。読者として想定しているのは、ollama に文字起こしやログのような長い入力を渡していて、超過分がどう捨てられるのかを実装まで確かめたことがない人です。 検証環境は ollama v0.32.1 / Windows / Python 3.10 以上です。再現には qwen3:0.6b (約0.5GB)を使うので、GPUの有無にかかわらず追試できます。 切り捨てを 検知するコードの書き方 は、この記事では扱いません。レスポンスから判定する方法はありますが、成否が num_keep の値とエンドポイントで変わります。ここでは、その判定の材料になる事実——どの条件で、どこが、どれだけ捨てられるか——までを揃えます。 プロンプトの先頭に合言葉を置き、末尾でその合言葉を答えさせます。 num_ctx に収まる場合と超える場合を比べれば、入力が失われたかどうかが出力から分かります。 repro.py を作成します。標準ライブラリだけで動きます。 head = f \"重要: この文書の合言葉は「 {PASSPHRASE} 」です。最後に必ずこれを答えてください。 \\n\\n \" body = \"これは文字数を稼ぐための記録用の行です。内容に意味はありません。 \\n \" * ( tail = \" \\n\\n 質問: この文書の冒頭に書かれた合言葉をそのまま答えてください。合言葉だけを出力してください。",
       "feedSnippet": "ollama に num_ctx を超える入力を渡すと、超えた分が削られる——のではない。先頭のわずかなトークンと末尾を残して、真ん中がまとめて捨てられる。 残る量はコンテキストのおよそ半分までで、元の入力が長いほど失う量は大きくなる。 そして捨てられても HTTP 200 が返り、done_reason は stop、出力の体裁も整っている。 この記事では、切り捨てが起きる条件・捨てられる場所と量・レスポンスに何が残るかを、実測とollama本体の実装で確かめる。最後に、入力側で打てる手も見る。読者として想定しているのは、ollama に文字起こしやロ",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--cLmxLxWe--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ollama%2520%25E3%2581%25AF%25E9%2595%25B7%25E3%2581%2584%25E5%2585%25A5%25E5%258A%259B%25E3%2581%25AE%25E7%259C%259F%25E3%2582%2593%25E4%25B8%25AD%25E3%2582%2592%25E6%258D%25A8%25E3%2581%25A6%25E3%2582%258B%2520%25E2%2580%2594%2520%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2599%25E3%2582%258B%25E3%2581%25A8%25E5%258D%258A%25E5%2588%2586%25E3%2581%2597%25E3%2581%258B%25E6%25AE%258B%25E3%2582%2589%25E3%2581%25AA%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:itdevnote%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzY5YWQ2ZDhiZjcuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--cLmxLxWe--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:ollama%2520%25E3%2581%25AF%25E9%2595%25B7%25E3%2581%2584%25E5%2585%25A5%25E5%258A%259B%25E3%2581%25AE%25E7%259C%259F%25E3%2582%2593%25E4%25B8%25AD%25E3%2582%2592%25E6%258D%25A8%25E3%2581%25A6%25E3%2582%258B%2520%25E2%2580%2594%2520%25E5%25AE%259F%25E6%25B8%25AC%25E3%2581%2599%25E3%2582%258B%25E3%2581%25A8%25E5%258D%258A%25E5%2588%2586%25E3%2581%2597%25E3%2581%258B%25E6%25AE%258B%25E3%2582%2589%25E3%2581%25AA%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:itdevnote%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzY5YWQ2ZDhiZjcuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "ollama は長い入力の真ん中を捨てる — 実測すると半分しか残らない",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "dccae3af03ccdfe0",
@@ -34273,7 +34281,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-10-03T11:01:51.870Z",
+      "collectedAt": "2026-10-03T23:30:32.632Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -40604,7 +40612,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-10-03T11:01:51.870Z",
+      "collectedAt": "2026-10-03T23:30:32.632Z",
       "tags": [
         "mcp",
         "mcp-server",

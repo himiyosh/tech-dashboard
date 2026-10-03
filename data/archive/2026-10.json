@@ -1,8 +1,40 @@
 {
-  "generatedAt": "2026-10-03T09:01:43.008Z",
+  "generatedAt": "2026-10-03T10:01:10.266Z",
   "month": "2026-10",
-  "count": 42,
+  "count": 43,
   "entries": [
+    {
+      "id": "335e5e4d27ef1ac8",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/locolisu/items/81cf8f1140fe58f36e66",
+      "title": "ChatGPTからVS CodeのCodexへコピペせずに指示を渡す――MCPで保存し、人間が確認して送信する構成",
+      "titleJa": "ChatGPTからVS CodeのCodexへコピペせずに指示を渡す――MCPで保存し、人間が確認して送信する構成",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-10-03T07:11:52.000Z",
+      "collectedAt": "2026-10-03T10:00:55.771Z",
+      "tags": [
+        "mcp-server",
+        "qiita",
+        "vscode"
+      ],
+      "category": "codex",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "ブラウザーのChatGPTで固めた指示を、作業中のVS CodeのCodex会話へ、本文をコピー＆ペーストせずに渡せるか検証しました。架空の短い本文では、PC内への保存、VS Codeでの添付、人間の送信操作を経たCodexでの読取まで成功しました。対象会話と内容の確認、依頼文の入力、送信は人間に残す構成です。 別経路として試したDotでは、Dot自身が作成したタスクの継続は成功しました。一方、人間が作成した既存VS Code会話はAPI読取でエラーとなり、その会話への受渡しは成立を確認できませんでした。 この記事では、保存・添付・送信をどう分けたか、接続ができても受渡し成功とは判断できなかった場面を説明します。環境構築を一から再現する導入マニュアルではなく、同様の連携を検証する際の成功条件を整理した記事です。 ブラウザーで設計や修正方針を相談する側。本文ではWorkと略記する VS Code上で調査・実装を依頼する側。受渡し先は作業中の既存会話 PC内で動かす自作サーバー。Workから受け取った指示本文を保存する 自作のVS Code拡張機能。保存ファイルを検証・コピーし、Codex入力欄へ添付する 今回、PC接続と調査タスクの作成・継続を試したAI機能。既存会話への別の受渡し経路として検証した WorkとDotの名称は、検証時に利用した画面・機能に合わせています。以下の製品挙動は、この検証環境で確認した範囲です。 対象はWindows上のVS CodeとCodex、ブラウザー側のWorkです。Workで方針を整理し、人間が内容を確認してから、Codexへ実装や調査を依頼する役割分担を使っています。 減らしたいのは、長い指示本文を選択してコピーし、別の画面へ貼り付ける操作です。実装先の会話を選び、内容を確認し、送信する操作は人間に残します。 既存の会話には、それまでの調査結果や確定済みの判断があります。新しいタスクを実行できたとしても、それだけで作業中の会話へ追加指示を渡せたことにはなりません。",
+      "feedSnippet": "ブラウザーのChatGPTで固めた指示を、作業中のVS CodeのCodex会話へ、本文をコピー＆ペーストせずに渡せるか検証しました。架空の短い本文では、PC内への保存、VS Codeでの添付、人間の送信操作を経たCodexでの読取まで成功しました。対象会話と内容の確認、依...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2hhdEdQVCVFMyU4MSU4QiVFMyU4MiU4OVZTJTIwQ29kZSVFMyU4MSVBRUNvZGV4JUUzJTgxJUI4JUUzJTgyJUIzJUUzJTgzJTk0JUUzJTgzJTlBJUUzJTgxJTlCJUUzJTgxJTlBJUUzJTgxJUFCJUU2JThDJTg3JUU3JUE0JUJBJUUzJTgyJTkyJUU2JUI4JUExJUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE3JUU0JUJGJTlEJUU1JUFEJTk4JUUzJTgxJTk3JUUzJTgwJTgxJUU0JUJBJUJBJUU5JTk2JTkzJUUzJTgxJThDJUU3JUEyJUJBJUU4JUFBJThEJUUzJTgxJTk3JUUzJTgxJUE2JUU5JTgwJTgxJUU0JUJGJUExJUUzJTgxJTk5JUUzJTgyJThCJUU2JUE3JThCJUU2JTg4JTkwJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9M2MwNzMwMDUxZDEwNGQ5ZDY4NzRmMjNlZWZlZDhlYjg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=0408a9609077c7c148d6964531151714",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q2hhdEdQVCVFMyU4MSU4QiVFMyU4MiU4OVZTJTIwQ29kZSVFMyU4MSVBRUNvZGV4JUUzJTgxJUI4JUUzJTgyJUIzJUUzJTgzJTk0JUUzJTgzJTlBJUUzJTgxJTlCJUUzJTgxJTlBJUUzJTgxJUFCJUU2JThDJTg3JUU3JUE0JUJBJUUzJTgyJTkyJUU2JUI4JUExJUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE3JUU0JUJGJTlEJUU1JUFEJTk4JUUzJTgxJTk3JUUzJTgwJTgxJUU0JUJBJUJBJUU5JTk2JTkzJUUzJTgxJThDJUU3JUEyJUJBJUU4JUFBJThEJUUzJTgxJTk3JUUzJTgxJUE2JUU5JTgwJTgxJUU0JUJGJUExJUUzJTgxJTk5JUUzJTgyJThCJUU2JUE3JThCJUU2JTg4JTkwJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9M2MwNzMwMDUxZDEwNGQ5ZDY4NzRmMjNlZWZlZDhlYjg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=0408a9609077c7c148d6964531151714",
+        "alt": "ChatGPTからVS CodeのCodexへコピペせずに指示を渡す――MCPで保存し、人間が確認して送信する構成",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "6220d53803f4d6ce",
       "source": "anthropic-news",
@@ -265,9 +297,9 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "contentSnippet": "AI agents don't just answer queries — they can autonomously issue refunds, manage inventory, execute multi-step handoffs, and orchestrate sub-agents, to name but a few complex agentic workflows. That frequently requires the agents to maintain internal state in an operational database while dispatching asynchronous actions through a separate messaging or event queue system. And unfortunately for the teams building these applications, managing two systems with disjointed commit points destroys transactional consistency in agentic systems. Today, we are excited to announce the general availability of Spanner queues : native transactional messaging embedded directly within Spanner. Designed specifically for reliable agentic execution, with Spanner queues, creating a message is simply another w",
       "evergreen": true,
-      "knowledgeEligible": false,
-      "contentSnippet": "AI agents don't just answer queries — they can autonomously issue refunds, manage inventory, execute multi-step handoffs, and orchestrate sub-agents, to name but a few complex agentic workflows. That frequently requires the agents to maintain internal state in an operational database while dispatching asynchronous actions through a separate messaging or event queue system. And unfortunately for the teams building these applications, managing two systems with disjointed commit points destroys transactional consistency in agentic systems. Today, we are excited to announce the general availability of Spanner queues : native transactional messaging embedded directly within Spanner. Designed specifically for reliable agentic execution, with Spanner queues, creating a message is simply another w"
+      "knowledgeEligible": false
     },
     {
       "id": "532e62c3ca749eed",
@@ -545,7 +577,7 @@
       "titleEn": "Standardizing the Initial Turn After Worktree Creation in VS Code Agents Window",
       "lang": "ja",
       "publishedAt": "2026-10-02T05:16:12.000Z",
-      "collectedAt": "2026-10-03T04:30:41.850Z",
+      "collectedAt": "2026-10-03T10:00:55.771Z",
       "tags": [
         "automation",
         "git-worktree",
@@ -1233,7 +1265,7 @@
       "titleEn": "Separating VS Code Codex History by Workspace",
       "lang": "ja",
       "publishedAt": "2026-10-01T14:38:23.000Z",
-      "collectedAt": "2026-10-03T04:30:41.850Z",
+      "collectedAt": "2026-10-03T10:00:55.771Z",
       "tags": [
         "configuration",
         "qiita",
@@ -1366,7 +1398,7 @@
       "titleEn": "VSCode Error: command 'python.execInTerminal-icon' not found",
       "lang": "ja",
       "publishedAt": "2026-10-01T08:28:05.000Z",
-      "collectedAt": "2026-10-03T04:30:41.850Z",
+      "collectedAt": "2026-10-03T10:00:55.771Z",
       "tags": [
         "python",
         "qiita",

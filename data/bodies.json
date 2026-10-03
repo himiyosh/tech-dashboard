@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-03T00:01:24.874Z",
-  "count": 1155,
+  "generatedAt": "2026-10-03T01:01:06.347Z",
+  "count": 1149,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -38800,82 +38800,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-19T07:27:20.920Z"
     },
-    "a46462053938590d": {
-      "bodyJa": "## 一般提供\n\nCopilotコードレビューのレビュー体験が改善され、一般提供が始まった。レビューの時間的な変化や未対応の指摘を把握しやすくし、指摘への対応後に作られるコミットの内容も理解しやすくする更新となっている。\n\n## 概要コメント\n\n刷新された概要コメントには、プルリクエストに対するCopilotの現在の評価、レビューで用いた作業量のレベル、レビューで特定した指摘の要約が表示される。現在の評価だけでなく、どの程度の作業量でレビューしたかも一つのコメント内で確認でき、レビュー結果の全体像をつかみやすくなった。\n\n## 指摘の状態別整理\n\n指摘は「Open」と「Resolved since last review」に分けて整理される。「Open」は、まだ対処されていない問題を示す。新しいコミットによって追加された問題には、新規であることを示すラベルが付く場合がある。\n\n「Resolved since last review」には、Copilotが以前に見つけ、その後修正されたと検証した問題が含まれる。これにより、まだ注意が必要な指摘と、前回のレビュー以降に解決された指摘を区別して確認できる。\n\n## 自動解決とコミット\n\nCopilot自身の提案を自動的に解決済みとする処理も、より高い精度で行われるようになった。また、対象となる提案をまとめて受け入れた場合には、有用なコミットメッセージが生成される。レビュー上の指摘への対応と、その結果として作成されるコミットの内容を結び付けて理解しやすくする改善とされている。",
-      "bodyEn": "## Copilot Code Review\n\nCopilot code review now provides a clearer view of how a review changes over time. The updates are generally available and are intended to help developers focus on findings that still require attention while making resulting commits easier to understand.\n\nThe improved experience includes a refreshed overview, findings organized by status, more intelligent automatic resolution of Copilot’s own suggestions, and commit-message generation when eligible suggestions are accepted in a batch.\n\n## Refreshed Overview Comment\n\nThe refreshed overview comment presents Copilot’s current assessment of a pull request. It also shows the review effort level Copilot used and provides a summary of the findings identified during the review.\n\nTogether, these details give developers a current view of the review rather than leaving its findings without context. The overview also makes it easier to see what Copilot identified and how its assessment relates to the pull request’s current state.\n\n## Open Findings\n\nFindings are grouped according to whether they still need attention. The Open group contains issues that have not yet been addressed.\n\nAn open issue may carry a new label. This label indicates that the issue was introduced by a new commit, helping distinguish newly identified findings as the pull request changes over time.\n\n## Resolved Since Last Review\n\nThe Resolved since last review group contains issues that Copilot found earlier and has since validated as fixed. This grouping separates completed work from findings that remain open, making the progression of a review clearer.\n\nCopilot also more intelligently auto-resolves its own suggestions. When eligible suggestions are accepted together in a batch, it generates a useful commit message. This connects the review workflow with a clearer description of the resulting commit while keeping attention on unresolved findings.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "コードのレビューを頼む仕事では、普段の確認作業がどう変わるの？ 未対応の指摘を探しやすくなるってこと？",
-          "en": "How does this change everyday code reviews? Does it make the feedback I still need to address easier to find?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、概要に現在の評価・レビュー労力・指摘の要約が出て、未対応と解決済みが分かれて見えるんじゃ。自動解決や一括適用時のコミット文も改善されたぞ。",
-          "en": "The article says the overview now shows Copilot’s assessment, review effort, and findings, grouped into open and resolved items. Auto-resolution is smarter, and batch-accepted suggestions get useful commit messages."
-        },
-        {
-          "s": "a",
-          "ja": "前は、未対応と解決済みを分けたり、一括適用のコミットメッセージを作ったりできなかったの？",
-          "en": "Couldn’t it separate open and resolved findings or create commit messages for batch changes before?"
-        },
-        {
-          "s": "b",
-          "ja": "以前にまったくできなかったかは、本文から断定できんのう。今回の変更点として、状態別の整理、自動解決の精度向上、メッセージ生成が示されておるんじゃ。",
-          "en": "We can’t conclude that none of this was possible before. The stated changes are state-based grouping, smarter auto-resolution, and commit-message generation for batch acceptance."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、一番の収穫は、直すべき指摘だけに集中しつつ、何を直したコミットかも追いやすくなることだね！",
-          "en": "Nice! The biggest win is focusing on what still needs fixing while making each resulting commit easier to understand."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。記事だと更新は一般提供済みで、新しいコミット由来の指摘に付く場合がある「new」ラベルも、変更経緯を追う手がかりじゃよ。",
-          "en": "Exactly. The update is generally available, and the article notes that open findings may get a “new” label when introduced by a new commit—a useful clue for tracing changes."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-19T13:39:09.952Z"
-    },
-    "43e049d3f69fe368": {
-      "bodyJa": "## REST API\n\nGitHubの一般提供されているREST APIが、「Restrict code coverage」リポジトリルールセットオプションの管理に対応した。従来のUIに加え、コードカバレッジ要件をプログラムから作成、更新、取得できるため、多数のリポジトリで基準を一貫して管理しやすくなる。\n\n## ルールセット条件\n\nこのルールセットでは、行カバレッジを基準とした最小コードカバレッジ率を設定できる。また、プルリクエストによってカバレッジが低下する場合に、許容できる最大の低下幅を指定することも可能だ。コード変更に対して、満たすべきカバレッジの下限、または許容する低下幅をルールとして適用できる。\n\n## IaC運用\n\nこれまで、このルールの設定にはWebインターフェースを使用する必要があった。REST APIで扱えるようになったことで、複数のリポジトリにおけるコードカバレッジ要件の管理や、既存のInfrastructure as Codeワークフローへの組み込みがしやすくなる。APIが対応する操作は、ルールセットオプションの作成、更新、取得となる。\n\n## GitHub Team\n\n利用するには、対象リポジトリでGitHub Code Qualityを有効にし、コードカバレッジのアップロードを設定しておく必要がある。提供対象はGitHub Enterprise CloudとGitHub Teamで、データレジデンシー対応のGitHub Enterprise Cloudも含まれる。一方、GitHub Enterprise Serverでは利用できない。",
-      "bodyEn": "## REST API\n\nThe generally available REST API can now manage the Restrict code coverage repository ruleset option, extending support beyond the existing web interface. This matters for teams that need to apply code coverage requirements consistently across many repositories or incorporate those requirements into existing infrastructure-as-code workflows.\n\nPreviously, configuring this rule required the web interface. The REST API now supports creating, updating, and reading the ruleset option programmatically.\n\n## Minimum code coverage percentage\n\nThe Restrict code coverage ruleset provides two ways to enforce code coverage requirements. It can require a minimum code coverage percentage based on line coverage, establishing a coverage floor for the repository.\n\nAlternatively, the rule can define the maximum tolerable coverage drop for a pull request. This allows the ruleset to restrict how much coverage may decline when proposed changes are evaluated.\n\nThese conditions are part of the same repository ruleset option and can now be managed through the REST API rather than only through the user interface.\n\n## Infrastructure-as-code workflows\n\nProgrammatic access makes it easier to manage the ruleset across many repositories. Teams can create the option where it is needed, update its conditions, and read its current configuration through the API.\n\nThe same capabilities can also be incorporated into existing infrastructure-as-code workflows. This provides a programmatic way to maintain consistent line-coverage floors or pull-request coverage-drop limits across repositories.\n\n## GitHub Enterprise Cloud\n\nTo use the rule, a repository must have GitHub Code Quality enabled and code coverage uploads configured.\n\nThe capability is available on GitHub Enterprise Cloud and GitHub Team. That availability includes GitHub Enterprise Cloud with data residency. It is not available on GitHub Enterprise Server.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "これまで画面操作だけだったのに、REST APIで作成・更新・取得までできるようになったんだね。これって大きいこと？",
-          "en": "Until now this needed the web UI, but the REST API can create, update, and read the rule. Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、多数のリポジトリで同じ基準を一貫して管理しやすくなる変化とされておる。手作業を減らせるのが大きいのう。",
-          "en": "The article frames it as a way to apply consistent standards across many repositories. The big benefit is reducing manual setup."
-        },
-        {
-          "s": "a",
-          "ja": "「IaC運用に組み込める」って、つまりどういうこと？コードカバレッジの設定もコードにするの？",
-          "en": "What does “adding it to an IaC workflow” mean? Do code-coverage settings become code too?"
-        },
-        {
-          "s": "b",
-          "ja": "IaCは、環境や設定をコードで管理する考え方じゃ。ここでは、カバレッジ基準の設定を既存の自動管理へ組み込める、という話じゃよ。",
-          "en": "IaC means managing environments and settings through code. Here, it means coverage requirements can join an existing automated management workflow."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ僕なら、複数のリポジトリに行カバレッジの下限をまとめて設定して、基準をそろえてみたいな！",
-          "en": "Then I’d use it to set the same line-coverage floor across several repositories and keep their standards aligned!"
-        },
-        {
-          "s": "b",
-          "ja": "よい使い方じゃ。ただし本文上は、GitHub Code Qualityとカバレッジ送信の設定が必要で、Enterprise Serverでは使えない点に注意じゃ。",
-          "en": "That fits the described use case. But it requires GitHub Code Quality and coverage uploads to be configured, and the article says it isn’t available on Enterprise Server."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-19T13:39:36.315Z"
-    },
     "1ffdc6fff5d0c200": {
       "bodyJa": "OpenAIで「No.2」と位置付けられていたFidji Simoが、常勤の役職を退くことになった。経営体制に関わる人事として、AI業界全体から注目を集める動きとなる。\n\n## 常勤職を退任\n\nThe Wall Street Journalの報道によると、SimoはOpenAIで担ってきた常勤の役職から退き、非常勤のアドバイザーへ移行する。Simoは木曜日に社員向けの文書を出し、継続中の医療休暇が想定より長く、困難なものになったと説明した。OpenAIとの関係を完全に終えるのではなく、勤務形態と役割を変更する形となる。\n\n## 医療休暇と移行\n\n今回の決定は、Simoが取得している医療休暇の状況を受けたものとされる。常勤から非常勤へ変わることで、これまでの経営上の立場から、助言を行う役割へ移る。具体的な担当範囲や勤務のあり方については示されていないが、常勤のNo.2ポジションから退く点が人事上の大きな変更となる。\n\n## Applications\n\nSimoは2024年にOpenAIの取締役会へ加わり、2025年5月にはOpenAIに入社した。就任したのは新設されたCEO of Applicationsで、Sam Altmanへ直接報告する役職だった。この役職には、同社の事業運営と製品運営を集約する役割が持たされた。\n\n就任に伴い報告体制も変更され、COOのBrad Lightcap、CFOのSarah Friar、CPOのKevin WeilがSimoへ報告する形になった。一方、Altmanは研究、コンピュート、安全性に注力する体制へ移っていた。",
       "bodyEn": "## Steps Down\n\nFidji Simo is stepping down from her full-time role as OpenAI’s second-in-command and will move into a part-time advisory position. The change is significant because it alters the leadership structure of an influential AI company and follows a previous reorganization that placed several senior executives under Simo’s supervision.\n\nThe Wall Street Journal reported the move, citing a staff note sent Thursday.\n\n## Ongoing Medical Leave\n\nIn the staff note, Simo said her ongoing medical leave had proved longer and harder than expected. She said she would therefore transition from her full-time position to a part-time advisory role.\n\nSimo joined OpenAI’s board of directors in 2024. She then joined the company in May 2025 as CEO of Applications, which was a newly created position at the time. In that role, she reported directly to Sam Altman and consolidated OpenAI’s business and product operations.\n\n## Broader Reporting Shift\n\nSimo’s appointment was accompanied by a broader change to executive reporting lines. COO Brad Lightcap, CFO Sarah Friar, and CPO Kevin Weil all began reporting to her.\n\nAt the same time, Altman stepped back from those areas to focus on research, compute, and safety. That structure made Simo OpenAI’s No. 2 executive and gave her responsibility across the company’s business and product operations.\n\nHer move to a part-time advisory role therefore represents more than a change in working hours. It marks a leadership transition involving a position that had been created to consolidate major operating functions and oversee multiple members of OpenAI’s senior management team.",
@@ -39484,82 +39408,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-21T18:37:32.885Z"
     },
-    "7b43a9deb2ee0462": {
-      "bodyJa": "GitHub Copilotで、xAIの最新推論モデル「Grok 4.7」の段階的な提供が始まった。エージェント型コーディングや、複数の工程を伴う複雑なワークフローを支援するモデルとして位置付けられている。\n\n## Grok 4.7\n\nGrok 4.7は、Grok 4.6を基盤として発展させた推論モデルと説明されている。単一の処理だけでなく、複数段階にわたるタスクを扱うことを想定して設計されており、GitHub Copilot上でエージェント型のコーディングに利用できる。\n\n## 対象プラン\n\n利用対象は、Copilot Pro、Pro+、Max、Business、Enterpriseの各SKU。提供は一斉ではなく段階的に進められるため、現時点でGrok 4.7が表示されていない場合もある。利用可能になる時期は、ユーザーごとに異なる形となる。\n\n## 従量課金\n\nGrok 4.7の利用分は、従量課金の仕組みにおいて提供元の定価で請求される。具体的なモデルや料金に関する情報は、GitHub Copilotの「Models and pricing」で確認できる。\n\n## モデルポリシー\n\nCopilot EnterpriseとCopilot Businessでは、プラン管理者がCopilot設定内のモデルポリシーを通じてGrok 4.7へのアクセスを管理できる。モデルの既定有効化が適用されている場合、新しいモデルは自動的に有効になる。ただし、管理者がグローバル既定設定を無効にしている場合や、Grok 4.7を明示的に無効化した場合は自動で有効にならない。",
-      "bodyEn": "## Grok 4.7\n\nGrok 4.7, xAI’s latest reasoning model, is gradually rolling out in GitHub Copilot. The addition matters for users working on agentic coding and complex, multistep workflows, which the model is designed to support.\n\nAvailability will expand gradually, so some eligible users may not see the model immediately. GitHub advises users to check back if Grok 4.7 is not yet available in their Copilot experience.\n\n## Agentic coding\n\nGrok 4.7 builds on Grok 4.6 and focuses on reasoning for coding tasks. Its stated use cases include agentic coding and workflows that require multiple steps.\n\nThe model will be available through Copilot Pro, Pro+, Max, Business, and Enterprise SKUs. Users can consult GitHub Copilot’s model documentation to explore the models available through the service and get started with Copilot.\n\n## Usage-based billing\n\nUse of Grok 4.7 is billed under GitHub Copilot’s usage-based billing system. The model is charged at the provider’s list pricing.\n\nGitHub directs users to its Models and pricing information for GitHub Copilot for the relevant billing details. The announcement does not describe a separate pricing structure for Grok 4.7 beyond provider list pricing under usage-based billing.\n\n## Model policy\n\nAdministrators for Copilot Enterprise and Copilot Business plans can manage access to Grok 4.7 through the model policy in Copilot settings.\n\nUnder default model enablement, newly added models are automatically enabled. That automatic enablement does not apply when an administrator has turned off the global default or has explicitly disabled Grok 4.7.\n\nThis gives Business and Enterprise administrators control over whether the model is accessible within their Copilot plan while the gradual rollout continues.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "普段の開発では何が変わるの？ 複雑な作業もCopilotに頼みやすくなる？",
-          "en": "What changes in everyday development? Does this make it easier to hand complex work to Copilot?"
-        },
-        {
-          "s": "b",
-          "ja": "Grok 4.7が、複数段階の作業やエージェント型開発を支援するそうじゃ。AIが工程を進めるような開発を指す言葉じゃよ。",
-          "en": "The post says Grok 4.7 supports multi-step work and agentic coding—development where AI helps move a task through its stages."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ でも前のGrok 4.6ではできなかったの？",
-          "en": "Wow, that sounds useful! But couldn’t Grok 4.6 do that before?"
-        },
-        {
-          "s": "b",
-          "ja": "Grok 4.6を土台にした最新モデルとは書かれておるが、具体的に何ができなかったかまでは示されておらんのう。",
-          "en": "It’s described as the latest model building on Grok 4.6, but the announcement doesn’t specify exactly what the earlier model couldn’t do."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、複数段階の開発作業をGrok 4.7に支えてもらえる選択肢がCopilotに増えるんだね。",
-          "en": "So the big takeaway is that Copilot users get another option for help with multi-step development work."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。段階導入なので、次は自分のプランで表示されるかと、管理者のモデル設定を確認するとよいぞ。",
-          "en": "Exactly. Since rollout is gradual, watch for availability on your eligible plan and, for managed plans, check the administrator’s model settings."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-21T21:25:06.757Z"
-    },
-    "dd0dd16040fff3da": {
-      "bodyJa": "## 認証情報一覧\n\nGitHub Enterpriseに、企業へアクセスできる認証情報の完全なインベントリをエクスポートする機能が追加された。企業全体でメンバーやアプリが所有する認証情報を一元的に把握し、セキュリティインシデント時の確認と対応計画に利用できる。\n\n## 対象の認証情報\n\nインベントリには、SSH鍵、classicおよびfine-grainedの個人アクセストークン、OAuth Appのアクセストークンが含まれる。さらに、GitHub Appのuser-to-serverトークンとinstallationトークンも対象となり、企業にアクセス可能な各種認証情報をまとめて確認できる。\n\n## CSVとREST API\n\n企業所有者と、fine-grained permissionの「View enterprise credentials」を持つメンバーが利用できる。企業設定からインベントリを書き出せるほか、ページネーションされたREST APIを通じてプログラムから取得することも可能だ。完全な認証情報インベントリはCSVで閲覧でき、ユーザー、アプリ、認証情報の種類、Organizationを条件に絞り込める。\n\n## 侵害時の確認\n\n認証情報が侵害された場合、セキュリティチームは特定されたトークンの集合を基に、リスクの及ぶ範囲を迅速に評価できると説明されている。その結果を使い、必要な修復対応とコミュニケーションを計画できる。企業内に分散する認証情報を単一の視点で確認できることが、影響範囲を見極めるための基盤となる。",
-      "bodyEn": "## Complete credential inventory\n\nGitHub Enterprise now allows enterprise owners to export a complete inventory of every credential that can access their enterprise. The unified view matters during a security incident because teams can identify potentially compromised tokens, assess the risk surface area, and plan remediation and communications.\n\nThe inventory covers credentials owned by members and apps across the enterprise. Examples include SSH keys, classic personal access tokens, fine-grained personal access tokens, OAuth App access tokens, GitHub App user-to-server tokens, and GitHub App installation tokens. Bringing these credential types together gives enterprise owners a single-plane view rather than separate views of credentials associated with different users, apps, or organizations.\n\n## Export and retrieval\n\nEnterprise owners can export the credential inventory through enterprise settings. Members can also use the feature when they have the fine-grained permission View enterprise credentials.\n\nThe same inventory is available programmatically through a paginated REST API. This provides two retrieval methods: an export initiated from enterprise settings and API-based access for obtaining the inventory programmatically.\n\nThe exported inventory can be viewed as a full CSV. Users can also filter the credential inventory by user, app, credential type, or organization. These filters allow the exported information to be narrowed to the part of the enterprise relevant to a particular review.\n\n## Security incident response\n\nDuring a security incident, the inventory gives security teams an identified set of credentials and tokens that may need attention. Teams can use that set to assess the scope of exposure across members and apps.\n\nThe resulting view supports planning for remediation based on the credentials identified as compromised. It also supports communications planning by showing which users, apps, credential types, or organizations are associated with the affected set.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "SSH鍵やいろんなトークンを、まとめて書き出せるようになったの？ バラバラだった認証情報が一覧になるってこと？",
-          "en": "Can it now export SSH keys and all those different tokens together? Does that mean credentials are finally shown in one inventory?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、企業内のメンバーやアプリが持つ認証情報を一元的に確認し、CSVなどで出せるようになったのじゃ。",
-          "en": "That’s right. The article says owners can see credentials held by members and apps in one place, then export the inventory, including as a CSV."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、会社の鍵束リストみたいなものか。何か漏れたとき、セキュリティ担当が影響を受ける範囲を探しやすいんだね？",
-          "en": "So it’s like a company keyring list. If something leaks, does it help the security team quickly find what might be affected?"
-        },
-        {
-          "s": "b",
-          "ja": "説明ではその用途が中心じゃ。侵害されたトークンを基にリスク範囲を見極め、修復や連絡の計画を立てやすくなるのう。",
-          "en": "That’s the main use described here. Teams can identify the risk surface from compromised tokens, then plan remediation and communications."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、認証情報を一か所で把握できれば、事故対応の最初の確認が早くなるかもしれないんだ！",
-          "en": "Oh, I get it! Keeping credentials visible in one place could make those first incident-response checks much faster."
-        },
-        {
-          "s": "b",
-          "ja": "ただし使えるのは企業所有者か所定の権限を持つメンバーじゃ。設定画面やREST APIから取得でき、利用者や種類などで絞り込めるぞ。",
-          "en": "One caveat: it’s limited to enterprise owners and members with the required permission. The release supports retrieval through settings or a REST API, plus filtering by user, app, type, or organization."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-22T03:36:37.334Z"
-    },
     "b5c0ed0ba046e7e4": {
       "bodyJa": "## PsyAgentBench\n\nPsyAgentBenchは、LLMエージェントが人間の心理効果に結び付く反応パターンを示すことと、その心理的偏りを実際に持つことを区別するためのベンチマークである。この区別を踏まえ、古典的な心理実験をLLMエージェントで再実行し、反応の模倣や学習データの影響を慎重に評価する。\n\n## 古典的心理実験\n\n評価では、完了した5つの心理学パラダイムを用いる。各パラダイムは、効果名をプロンプト内で明示する「named」条件と、日常的な課題として提示する「blind」条件で実施される。効果名を示した場合の応答だけでなく、名称を伏せた場合の振る舞いも比較できるようにした設計である。\n\n## 反実仮想版\n\n課題は、文字どおりの教科書版である「canonical」と、反実仮想版である「counterfactual」の両方で扱う。反実仮想版は、学習データに含まれている可能性がある表現や場面との重なりを減らすため、課題の構造を対応させながら語彙やシナリオを変更したものとされる。これらの条件は、ペルソナ操作とも組み合わせられる。\n\n## 41,904試行\n\nPsyAgentBenchの要因設計は、効果名の明示有無、教科書版と反実仮想版、ペルソナ操作を交差させる。最大3つのオープンウェイトモデルファミリーを対象に評価し、41,904件の試行を公開する。こうした比較により、表面的に人間らしい反応が現れた場合にも、それを心理的偏りそのものと直結させずに検討できる。",
       "bodyEn": "## Response Pattern\n\nPsyAgentBench is a benchmark for re-running classic psychology experiments on LLM agents. Its central distinction is that producing a response pattern associated with a human psychological effect is not the same as demonstrating that an LLM possesses the corresponding bias.\n\nThat distinction matters because the benchmark is designed to separate apparent psychological effects from responses that may reflect recognition or imitation of familiar experiment patterns. Rather than treating a matching answer pattern as sufficient evidence of bias, the work evaluates how that pattern changes under controlled variations of the task and prompt.\n\n## Factorial Design\n\nEach psychology paradigm is run under a factorial design with several crossed conditions. Prompts either explicitly label the paradigm, described as the named condition, or present it as a routine task, described as the blind condition.\n\nThe benchmark also compares the literal textbook form of a task, called canonical, with a structurally matched counterfactual variant. The counterfactual versions are written to reduce lexical and scenario overlap with likely training data while retaining the task’s structure. This comparison is intended to distinguish responses tied to recognizable wording or scenarios from responses that persist when those cues are changed.\n\nA persona manipulation is also crossed with these conditions. Together, the named or blind framing, canonical or counterfactual task version, and persona condition provide multiple ways to examine whether an observed response pattern depends on explicit recognition, familiar task language, scenario overlap, or prompting context.\n\n## Five Completed Paradigms\n\nThe reported benchmark includes five completed psychology paradigms. It was evaluated on up to three open-weight model families, and 41,904 trials were released.\n\nBy rerunning the paradigms across these conditions, PsyAgentBench frames psychological-bias evaluation as a question requiring careful controls. The benchmark’s approach is aimed at separating pattern imitation from bias, rather than equating a human-like experimental response with possession of a human psychological effect.",
@@ -39635,44 +39483,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-22T07:36:59.836Z"
-    },
-    "3e05b814eca2ee42": {
-      "bodyJa": "## 一般提供開始\n\nGitHubの刷新されたリポジトリ向けプルリクエストページが、全ユーザーに一般提供された。目的のプルリクエストを見つけやすくし、そのまま対応しやすくするため、検索や絞り込み、表示方法、追加情報が拡充されている。\n\n## 検索とフィルター\n\n新ページでは、フィルターの発見と適用を支援するコンテンツアシストを利用できる。適切なフィルターを探しやすくすることで、求めるプルリクエストへの絞り込みを助ける仕組みだ。高度な検索はANDとORのキーワードに対応し、さらに検索条件を入れ子にできる。複数の条件を組み合わせて、対象をより細かく指定できる構成となっている。\n\n## サイドバー\n\n折りたたみ式のサイドバーからは、よく使うフィルターへすばやくアクセスできる。「自分が作成」と「自分が関与」などが例として挙げられており、自身に関係するプルリクエストを確認しやすい。公開プレビュー以降のフィードバックを受けた改善として、サイドバー自体を折りたたみ、一覧のための表示領域を広げられるようになった。\n\n## コンパクト表示\n\nコンパクト表示モードでは、1ページ内により多くのプルリクエストを収められる。各項目には追加の文脈も示され、ステータスチェックの件数、スタックを示すインジケーター、未読の更新を示す印を確認できる。検索結果を絞り込むだけでなく、一覧上で状態や更新の有無を把握し、対応する対象を選びやすくするページになっている。",
-      "bodyEn": "## Generally available to all users\n\nGitHub’s redesigned repository pull requests page is now generally available to all users. The update matters because it is designed to make pull requests easier to find and act on within a repository, supporting faster triage through improved search, filtering, presentation, and status information.\n\nThe page combines several ways to narrow the pull request list and identify relevant changes. It also adds controls for fitting more entries on the page and making additional room for the list.\n\n## Filtering and search options\n\nContent assist helps users find and apply the correct filters. For more complex queries, advanced search supports the AND and OR keywords, along with nested searches.\n\nThese capabilities provide more precise ways to locate specific pull requests. Rather than relying on a single filter, users can combine search conditions and organize them through nesting to target exactly what they are looking for.\n\n## Collapsible sidebar\n\nA collapsible sidebar offers quick access to common filters, including “Authored by me” and “Involves me.” Following feedback received during the public preview, GitHub also made it possible to collapse the sidebar, leaving more room for the pull request list.\n\nA compact presentation mode provides another way to use the available space. It fits more pull requests onto the page, allowing a larger portion of the repository’s pull request list to remain visible at once.\n\n## More context\n\nThe updated page presents additional context directly in the pull request list. This includes status check counts, a stack indicator, and indicators showing unread updates.\n\nTogether, these elements help users distinguish pull requests based on their current information without removing the filtering and search controls that narrow the list. The generally available page therefore brings nested Boolean search, common filters, a compact view, and unread markers into a single repository pull request experience.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "ANDやORを使う「入れ子検索」って何？プルリクエストをどう探しやすくするの？",
-          "en": "What’s a “nested search” using AND and OR? How does it make pull requests easier to find?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、条件をANDやORで組み合わせ、さらに条件をまとめて絞り込めるんじゃ。入力支援で適切なフィルターも選びやすいそうじゃよ。",
-          "en": "The article says you can combine and group conditions with AND and OR to narrow results. Content assist also helps you find and apply the right filters."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、プルリクエストが並ぶ棚から「自分が関わる未読のもの」を探す人に役立つ感じ？",
-          "en": "So it’s like searching a shelf of pull requests for unread ones that involve me? That sounds useful for anyone sorting through them."
-        },
-        {
-          "s": "b",
-          "ja": "そういう使い方ができそうじゃ。紹介では、自分が作成・関与したものをサイドバーで絞り、未読印やステータス確認数も見られるんじゃよ。",
-          "en": "That’s a fair use case. The page offers sidebar filters for requests you authored or are involved in, plus unread markers and status-check counts."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、検索と表示を整えて、対応すべきプルリクエストを早く見つけるページになったんだね！",
-          "en": "Oh, I get it! Better search and display options help people find the pull requests they need to handle faster."
-        },
-        {
-          "s": "b",
-          "ja": "全GitHubユーザー向けになったのが要点じゃ。説明されている範囲では、一覧の広さならサイドバーを畳み、表示数ならコンパクト表示を選べるのう。",
-          "en": "The key point is that it’s now available to all GitHub users. You can collapse the sidebar for more list space or use compact mode to fit more pull requests on screen."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-22T09:08:23.852Z"
     },
     "19eb487ba542ac74": {
       "bodyJa": "NVIDIA Isaac ROS 5.0が、カナダ・トロントで開かれたROSConで公開された。ROS上に構築されたGPU高速化パッケージ群として、エージェント型ワークフローと新たなプラットフォーム対応を導入し、人とAIエージェントによるロボット開発を支援する。\n\n## GPU高速化\n\nIsaac ROS 5.0は、ROSを基盤とするGPU高速化パッケージのコレクションだ。ロボットアプリケーションの構築、カスタマイズ、展開を迅速化するためのモデルやツールを提供し、開発者の作業を支える。知覚、推論、行動を組み合わせた高度なロボットアプリケーションを、動的な環境で構築し展開する用途が想定されている。\n\n## エージェント型\n\n今回のリリースでは、新しいエージェント型ワークフローが加わった。これにより、人だけでなくAIエージェントもロボット構築に関与し、両者が共同で開発を進められると説明されている。新たなプラットフォーム対応も導入され、ロボットアプリケーションの作成から展開までを速める狙いがある。\n\n## ROSの基盤\n\nROSはOpen Roboticsのプロジェクトで、人がロボットを構築するためのオープンなフレームワークだ。ロボットアプリケーションを構築し、相互に接続するための共通ツール、ライブラリ、標準を開発者に提供する。Isaac ROS 5.0は、このオープンソースの基盤にGPU高速化パッケージとエージェント型ワークフローを組み合わせたものとなる。",
@@ -40585,44 +40395,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-23T19:37:52.770Z"
-    },
-    "7a0655d9164546a1": {
-      "bodyJa": "## CodeQL CLI\n\nCodeQL CLI 2.27.0から、全対応プラットフォーム向けのCodeQLバンドルが非推奨となった。2027年3月中旬には、この全プラットフォーム対応バンドルが削除される予定であり、利用者は環境別パッケージへ移行する必要がある。\n\n## 全対応バンドル\n\n非推奨の対象は、codeql-bundle.tar.gzとcodeql-bundle.tar.zstである。これらはCodeQL CLI 2.27.0まで、サポートされているすべてのプラットフォーム向けバイナリをまとめて含む配布物として提供されている。\n\n非推奨化の時点では直ちに削除されるわけではないが、削除時期は2027年3月中旬とされている。以後は、サポート対象のオペレーティングシステムとアーキテクチャに対応した、プラットフォーム固有のバンドルをダウンロードする形になる。\n\n## Linux ARM64\n\nCodeQL 2.27.0では、Linux ARM64のサポートが追加された。ただし、Linux ARM64向けバイナリはプラットフォーム固有のダウンロードでのみ提供され、全プラットフォーム対応バンドルには含まれない。\n\nこのため、Linux ARM64の利用者は専用の配布物を選ぶ必要がある。ほかの対応環境についても、使用するOSとアーキテクチャに合ったバンドルへの切り替えが求められる。対応プラットフォームの詳細は、サポート対象プラットフォームに関するドキュメントで案内されている。",
-      "bodyEn": "## All-platform CodeQL bundle\n\nStarting with CodeQL CLI 2.27.0, the all-platform CodeQL bundle is marked as deprecated. This matters because teams using the combined download need to move to packages built for their supported operating system and architecture before the bundle is removed.\n\nThe deprecation applies to codeql-bundle.tar.gz and codeql-bundle.tar.zst. These archives contain binaries for all platforms supported up to this release. The change affects the combined bundle rather than the availability of platform-specific downloads.\n\n## Platform-specific bundle\n\nUsers should download the platform-specific bundle that matches their supported operating system and architecture. This replaces the approach of obtaining binaries for all supported platforms through a single combined archive.\n\nThe required package therefore depends on the environment where CodeQL will run. Teams using the all-platform archive will need to adopt the corresponding platform-specific packages as part of the transition away from codeql-bundle.tar.gz or codeql-bundle.tar.zst.\n\nThe documentation about supported platforms provides further information about the operating systems and architectures covered by these downloads.\n\n## Linux ARM64 support\n\nCodeQL 2.27.0 adds support for Linux ARM64. Its binaries are available only through platform-specific downloads, so Linux ARM64 users must select the dedicated package for that operating system and architecture.\n\nLinux ARM64 binaries will not be included in the all-platform bundle. As a result, the combined archive is not an option for obtaining the Linux ARM64 binaries, even before the all-platform bundle’s planned removal.\n\n## Mid-March 2027\n\nThe all-platform CodeQL bundle is planned for removal in mid-March 2027. Until that removal point, it is marked as deprecated beginning with CodeQL CLI 2.27.0.\n\nTeams currently relying on the combined bundle should transition to platform-specific packages. The same distribution approach covers Linux ARM64 users through its dedicated download while preparing other supported environments for the removal of the all-platform archive.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "CodeQL CLI 2.27.0で「全部入り」のバンドルが非推奨って、すぐ使えなくなるの？何に替えるの？",
-          "en": "The all-platform bundle is deprecated in CodeQL CLI 2.27.0. Does that mean it stops working right away, and what replaces it?"
-        },
-        {
-          "s": "b",
-          "ja": "非推奨は今すぐ停止という意味ではないぞ。この記事では2027年3月中旬に廃止し、OSとアーキテクチャ別のバンドルへ移すとしておる。",
-          "en": "Deprecated doesn’t mean gone immediately. The post says removal is planned for mid-March 2027, and users should switch to bundles for their operating system and architecture."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、道具箱を丸ごともらうより、自分の環境用だけ選ぶ感じ？Linux ARM64の人も対応できるの？",
-          "en": "So it’s like choosing the tool kit for your own setup instead of taking every kit at once? What about Linux ARM64 users?"
-        },
-        {
-          "s": "b",
-          "ja": "そんなイメージじゃ。案内上はLinux ARM64にも対応し、そのバイナリは環境別ダウンロードだけで提供されるのう。",
-          "en": "That’s the idea. The notice says Linux ARM64 is supported, with its binaries available only through the platform-specific download."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、2027年3月中旬までに、自分のOSとアーキテクチャに合う配布物へ移ればいいんだね。",
-          "en": "Got it—we need to move to the package matching our OS and architecture before mid-March 2027."
-        },
-        {
-          "s": "b",
-          "ja": "そういう移行が必要じゃよ。記載ではLinux ARM64版は全部入りに含まれないので、環境別の配布物を選ぶ点に注意じゃ。",
-          "en": "Yes, that migration is required. One stated caveat is that Linux ARM64 binaries won’t be included in the all-platform bundle, so users must choose the platform-specific package."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-22T15:16:53.673Z"
     },
     "0bdd573e7a88ab19": {
       "bodyJa": "Meta AIグラスに、端末内では動かせない大規模AIモデルを必要とする高度な機能向けの「Private Processing」が導入される。プライバシーに配慮しながら、翻訳や会話の要約を利用しやすくするための仕組みだ。\n\n## AIグラス\n\nMetaは、日常を通じてAIの支援を受ける形態として、グラスが適しているとの考えを示している。他の種類の端末より利用者個人の状況を理解しやすく、モバイル端末を手に取らなくても、その場に意識を向けたまま使えると説明する。\n\n通常、グラスは見え方を助け、目を保護し、外見を引き立てる役割を担う。AIグラスではそれに加え、会話の翻訳、メモや会話の要約といった機能を提供できるとされる。\n\n## 端末内の処理\n\n現在グラスに与えられる指示の多くは、端末内だけで処理される。例として挙げられているのは、通話の発信やテキストへの返信だ。いずれも手を使わずに実行でき、外部の大規模なAIモデルを必要としない操作として位置づけられている。\n\n## 大規模AIモデル\n\n一方、より高度な機能には、さらに大きく高性能なAIモデルが必要になる。そうしたモデルは、グラス本体に収められる規模を大きく超える。この制約に対応し、翻訳や会話の要約をよりプライベートに扱えるようにするのがPrivate Processingである。\n\nただし、課題は計算処理だけではなく、それは問題の半分にすぎないとも説明されている。Private Processingは、端末内処理だけでは実現が難しい機能と、プライバシーへの配慮を両立させるために導入される。",
@@ -43056,310 +42828,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T19:41:03.132Z"
     },
-    "1191b64a1b9df320": {
-      "bodyJa": "## Quine\n\nQuineは、生物学の複雑性に対応するためのAI研究システムであり、初期段階のマルチモーダル世界モデルとして開発されている。生物学に関する複数のスケールとデータ形式を結び付け、科学者が実験室で作業を始める前に、検討すべき仮説を計算によって絞り込めるようにする研究の取り組みだ。\n\n## 複数スケール\n\n生物学は、互いに切り離された領域として機能するものではなく、そのAI表現も分断されるべきではないという考えがQuineの基礎にある。異なる生物学的スケールやモダリティから得られる知見を接続し、一つの世界モデルとして扱うことを目指している。多様な生物学的データを横断的に結び付ける点が、システムの中心的な特徴となる。\n\n## 仮説の優先\n\nQuineは、人間の直感だけで扱える範囲よりもはるかに広い候補空間を、計算によって探索できるよう科学者を支援する。広範な候補の中から仮説を順位付けし、実験へ進める前に有望なものを優先できるようにする仕組みである。これにより、仮説の候補を無差別に扱うのではなく、計算上の探索を通じて検討対象を絞り込めると説明されている。\n\n## 実験結果\n\n実験室で得られた結果は、Quineを用いる研究の重要なフィードバックになる。計算による探索と仮説の優先付けだけで完結するのではなく、実験結果を受け取ることで、研究者がその後の研究方向をさらに明確にしていく構成とされる。Quineは、この探索、優先付け、実験からのフィードバックを結び付ける初期段階の研究として位置付けられている。",
-      "bodyEn": "## Complexity of biology\n\nQuine is an early-stage AI research system designed to address the complexity of biology. It matters because biology does not operate in silos, and the AI representation of biology should likewise connect information rather than treat it as isolated.\n\nThe research effort aims to create a multimodal world model of biology. Its central purpose is to represent biological complexity by combining diverse biological data and connecting insights that span different scales and modalities.\n\n## Across biological scales\n\nQuine links information across biological scales and data formats. This multimodal approach allows scientists to computationally search a space of possibilities that is far larger than intuition alone allows.\n\nThe system is intended to support research by bringing these different forms of biological information into a connected model. Rather than limiting the search to one scale or modality, Quine uses their connections to examine a broader set of possible research directions.\n\n## Prioritize hypotheses\n\nA key function of Quine is helping scientists narrow a wide range of candidates through computation. The system can rank and prioritize hypotheses before those hypotheses reach the laboratory.\n\nThis does not replace laboratory work. Instead, Quine helps researchers identify promising hypotheses in advance, giving them a way to focus experimental attention after searching a larger space computationally. The emphasis is on prioritization: scientists can use the model to decide which possibilities should move forward to experimental investigation.\n\n## Experimental results\n\nExperimental results provide feedback to the research process. That feedback can help researchers sharpen future research directions, creating a connection between computational hypothesis prioritization and subsequent experiments.\n\nQuine remains an early-stage research effort. Its described role is to connect biological insights across scales and modalities, search broadly through possible hypotheses, prioritize candidates before laboratory work, and use experimental feedback to refine where research goes next.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "生物学の研究で、普段の仕事は何が変わるの？ 実験の前にできることが増えるのかな。",
-          "en": "What changes in day-to-day biology research? Does this give scientists more they can do before running experiments?"
-        },
-        {
-          "s": "b",
-          "ja": "Quineは多様な生物データを結び付け、広い候補から有望な仮説を計算で優先できるようにするんだ。実験前の絞り込みを助ける仕組みだね。",
-          "en": "Quine connects diverse biological data and computationally ranks promising hypotheses from a broad search space. It’s designed to help narrow the options before lab work."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ 人の直感だけで仮説を選んでいた、ということ？",
-          "en": "Was that impossible before? Were researchers choosing hypotheses based only on intuition?"
-        },
-        {
-          "s": "b",
-          "ja": "そこまでは断定されていないよ。この記事では、Quineが直感では探しきれないほど広い範囲を計算で検索できる、と説明しているんだ。",
-          "en": "The post doesn’t go that far. It says Quine can computationally search a space much larger than intuition alone can cover."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど。いちばんの収穫は、実験を始める前に有望そうな仮説へ順番を付けられることなんだね。",
-          "en": "Got it. The key takeaway is that scientists can rank the most promising hypotheses before starting lab work."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。まだ初期段階だから、実験結果のフィードバックで次の研究方向をどう磨いていくかに注目だね。",
-          "en": "Right. Since it’s still early-stage, the next thing to watch is how experimental feedback helps refine future research directions."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-29T21:12:02.279Z"
-    },
-    "ed204fd38e64c798": {
-      "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
-      "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "決まった画面に仕事を合わせるんじゃなくて、仕事の流れに合わせて画面を作れるの？ これって大きい変化？",
-          "en": "Instead of fitting work into fixed screens, the screen can fit the workflow? Is that a big shift?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、カンバンやリリース確認表などを用途に合わせて構成できます。チーム独自の手順を画面にしやすくなる変化だね。",
-          "en": "The article shows canvases tailored as kanban boards, release checklists, and more. That could make a team’s own workflow easier to represent."
-        },
-        {
-          "s": "a",
-          "ja": "「双方向のキャンバス」って、ぼくとエージェントの両方が触れるってこと？",
-          "en": "Does “bidirectional canvas” mean both the agent and I can work with it?"
-        },
-        {
-          "s": "b",
-          "ja": "うん。共有ホワイトボードのように、エージェントが更新し、利用者もボタンやカード、フィルターで変更できる仕組みだよ。",
-          "en": "Yes. It works like a shared whiteboard: the agent can update it, while you make changes with buttons, cards, filters, and other controls."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、やることをカードで並べる画面を作って、エージェントと一緒に整理してみたいな。",
-          "en": "I’d make a board with task cards and try organizing them together with the agent."
-        },
-        {
-          "s": "b",
-          "ja": "作るなら、エージェントのセッションで「/create-canvas」を入力し、欲しい画面を平易な英語で伝える形だね。手作業のコーディングやデザインは不要とされています。",
-          "en": "To build it, open an agent session, enter “/create-canvas,” and describe the interface in plain English. The post says no manual coding or design is required."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:36:46.380Z"
-    },
-    "3e5e727e385d3f8c": {
-      "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
-      "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でAIを使うとき、チャットじゃない画面になると、普段の操作はどう変わるの？",
-          "en": "When I use AI for work, how would things change if the interface weren’t a chat box?"
-        },
-        {
-          "s": "b",
-          "ja": "用途に合うUIなら、会話を続けるより、やりたい作業を中心に操作できるかもしれない。この記事はそんな設計を提案しているよ。",
-          "en": "A task-specific UI could center the interaction on the work itself instead of an ongoing conversation. That’s the design direction the piece proposes."
-        },
-        {
-          "s": "a",
-          "ja": "前は、作業向けのUIにできなかったの？ずっとチャットだったってこと？",
-          "en": "Couldn’t AI have task-focused interfaces before? Has it all just been chat?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれていないよ。現在のAIの波から3年たっても、LLMの主要な操作画面がチャットのまま、という前提を問い直しているんだ。",
-          "en": "It doesn’t say that was impossible. It questions why chat remains the main interface for LLMs three years into the current AI wave."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ一番の収穫は、AIだからチャット、と決めつけず、作業に合う入口を考えることなんだね。",
-          "en": "So my main takeaway is: don’t assume AI must mean chat. Start by choosing an interface that fits the task."
-        },
-        {
-          "s": "b",
-          "ja": "うん。次は、開発者がどの作業で対話欄を外し、タスク中心の体験にするかという判断に注目したいね。",
-          "en": "Right. Next, watch how developers decide which tasks should move beyond a text box toward a task-oriented experience."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:37:19.430Z"
-    },
-    "c45ef450c3820855": {
-      "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
-      "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "大きな移行やリファクタリングをレビューする仕事で、普段の何が変わるの？",
-          "en": "What changes day to day when a team reviews a big migration or refactor?"
-        },
-        {
-          "s": "b",
-          "ja": "GitHub Copilotアプリのプルリクエスト画面が刷新され、大規模な差分や長い議論も速く滑らかに確認できるとされています。",
-          "en": "The GitHub Copilot app rebuilt its pull request view so large diffs and long review discussions can stay fast and smooth."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ 小さく分ければ済む話じゃないのかな。",
-          "en": "Was that not possible before? Couldn’t teams just split the change into smaller pieces?"
-        },
-        {
-          "s": "b",
-          "ja": "以前は不可能だった、とは断定できません。小さく分ける方法はあるものの、分けにくい変更に備えて画面を作り直した、という違いです。",
-          "en": "We can’t say it was impossible before. Splitting changes helps, but some don’t divide cleanly, so the view was rebuilt to handle one enormous pull request."
-        },
-        {
-          "s": "a",
-          "ja": "そっか。分けにくい変更でも、差分とコメントをまとめて追いやすくなるのが収穫なんだね。",
-          "en": "Got it. The key benefit is being able to follow the diff and comments even when a huge change can’t be split up."
-        },
-        {
-          "s": "b",
-          "ja": "次に注目したいのは、2,200ファイル、100万行超の変更、400件超のインラインコメントを含むプルリクエストでの検証だね。",
-          "en": "Next, watch the test itself: a pull request with 2,200 files, over a million changed lines, and more than 400 inline review comments."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:37:32.042Z"
-    },
-    "655fd12194d5c751": {
-      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
-      "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "80万行超のRustを、AIエージェントが大半書いたの？ 128件のPRってどう進めたんだろう。",
-          "en": "AI agents wrote most of over 800,000 lines of Rust? How did that work across 128 PRs?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、CopilotアプリとCLIを使い、128件のPRを順にmainへ入れて段階的に公開したとあるよ。",
-          "en": "The piece says they used the Copilot app and CLI, merging 128 PRs into main and shipping incrementally instead of switching everything at once."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、同じランタイムを使うCLIやアプリ、SDKの利用者に、性能面の変化が届くってこと？",
-          "en": "So users of the CLI, app, and SDK all benefit from the runtime’s performance changes?"
-        },
-        {
-          "s": "b",
-          "ja": "うん。3つを支える共通のランタイムで、性能は桁違いに改善したと説明されているよ。",
-          "en": "Yes. They all rely on the same runtime, whose performance is described as improving by orders of magnitude."
-        },
-        {
-          "s": "a",
-          "ja": "TypeScriptとNode.jsの土台をRustへ移し、AIと小分けのPRで少しずつ進めたんだね。",
-          "en": "Got it: they moved the TypeScript and Node.js foundation to Rust, using AI and smaller PRs to roll it out gradually."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。ただ、後退がゼロだったわけではなく、少数の不具合は途中で見つけて素早く直したとしているよ。",
-          "en": "Right. It wasn’t regression-free, though; a few issues appeared along the way and were found and fixed quickly."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:37:50.296Z"
-    },
-    "2576bf8a180858a9": {
-      "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
-      "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "イベント担当の毎日は、これで何が変わるの？企画以外のこまごました作業が減るのかな。",
-          "en": "How does this change an event marketer’s day? Does it cut down the little tasks that pile up after planning?"
-        },
-        {
-          "s": "b",
-          "ja": "GitHub上で定型工程をコード化し、ページ複製やチャネル別UTMリンク作成、招待メール依頼、フォローアップを自動化します。企画と参加者理解に集中しやすくなります。",
-          "en": "It codifies routine work on GitHub, automating page duplication, channel-specific UTM links, invitation email requests, and follow-up. That gives marketers more room to focus on topics and audiences."
-        },
-        {
-          "s": "a",
-          "ja": "前はGitHubではできなかったの？それとも、できたけど人が毎回やっていたの？",
-          "en": "Was this impossible on GitHub before, or were people just doing the same steps manually each time?"
-        },
-        {
-          "s": "b",
-          "ja": "できなかったとは書かれていません。イベント承認後に始まるページ複製やリンク作成などの決まった工程を、コード化して自動化するのが今回の違いです。",
-          "en": "The piece doesn’t say it was impossible before. The change is turning the fixed post-approval sequence—like duplicating pages and creating links—into coded, automated workflows."
-        },
-        {
-          "s": "a",
-          "ja": "いちばんの収穫は、定型作業を自動化して、人が「誰に何を届けるか」を考える時間を増やせることなんだね。",
-          "en": "So the biggest gain is automating routine work and giving people more time to think about who they’re reaching and what to offer them."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。次は、チャネル別UTMリンク作成やフォローアップまで、定型工程がどう一つの流れになるかに注目したいね。",
-          "en": "Right. Next, it’s worth watching how steps such as channel-specific UTM links and follow-up fit into one automated flow."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:38:10.006Z"
-    },
-    "433004a6bd914ded": {
-      "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
-      "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "確認・実行・結果チェックの3つが、アプリを出ずにできるようになったんだ。これって大きいこと？",
-          "en": "Now you can review, run, and check results without leaving the app. Is that a big change?"
-        },
-        {
-          "s": "b",
-          "ja": "前はエディター、ターミナル、ブラウザーを行き来していたんだ。3つが並ぶので、エージェントの作業を確かめやすくなるね。",
-          "en": "Before, you had to jump among an editor, terminal, and browser. Having all three side by side makes the agent’s work easier to check."
-        },
-        {
-          "s": "a",
-          "ja": "「diff」って何を見るもの？ 変更後のコードだけじゃないの？",
-          "en": "What does a “diff” show? Is it more than just the updated code?"
-        },
-        {
-          "s": "b",
-          "ja": "変更前と変更後を比べる画面だよ。追加は緑、削除は赤で、変わった行を確認できるんだ。",
-          "en": "It compares the code before and after a change. Added lines appear in green, deleted ones in red, so you can see exactly what changed."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら差分を見て、ターミナルで動かして、ブラウザーで結果を確かめてから決めたいな。",
-          "en": "I’d review the diff, run the code in the terminal, then check the result in the browser before deciding."
-        },
-        {
-          "s": "b",
-          "ja": "その流れで使えるね。最後は自分で変更を受け入れるか、コメントするか、Copilotに修正を頼むか選べるよ。",
-          "en": "That workflow fits the app. You still make the final call: accept the changes, leave comments, or ask Copilot to revise them."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T18:38:19.736Z"
-    },
-    "43dc5941df4bfd39": {
-      "bodyJa": "## HydraFusion\n\nGitHub Copilotの「HydraFusion」が、研究プレビューとして利用可能になった。複数モデルの連携によって、フロンティア級の品質と推定ワークフローコストの削減を両立させる選択的コーディング機能が中心となる。\n\nHydraFusionは、選択されたコーディングタスクを複数のモデルへ振り分ける。すべてを一つのモデルで扱うのではなく、タスクに応じてモデルを使い分ける構成により、開発者を効率的に支援することを目指している。\n\n## オフライン評価\n\n管理されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示した。あわせて、推定されるワークフローコストも低減したとされる。\n\nこの結果は、複数モデルを連携させる仕組みについて、品質だけでなく推定コストも含めて比較したものだ。現時点での提供形態は、GitHub Copilotにおける研究プレビューとなっている。",
-      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview that uses multi-model orchestration for selective coding workflows. It matters because the approach is intended to provide efficient developer assistance while balancing coding quality with estimated workflow cost.\n\nHydraFusion routes selected coding tasks across multiple models. This selective approach allows the workflow to use different models as part of the same coding process, rather than treating every task identically.\n\n## Controlled offline evaluations\n\nIn controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline. The same evaluations also showed a reduction in estimated workflow cost.\n\nThese results specifically concern the evaluated baseline, controlled offline conditions, and estimated cost. Together, they are the basis for presenting HydraFusion as a way to achieve frontier-level quality through coordination across models.\n\n## Research preview\n\nHydraFusion is now available as a research preview in GitHub Copilot. Its current release introduces the multi-model, selective coding workflow described in the announcement, giving developers access to the approach within Copilot while it remains in research preview.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Opus 5相当以上の品質で、推定コストは低くなったんだね。これって大きいこと？",
-          "en": "It matched or beat Opus 5 quality while lowering estimated cost. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "管理されたオフライン評価で、品質とコストの両方に良い結果が出た変化だね。ただし、実利用での結果ではないよ。",
-          "en": "In controlled offline tests, it showed a promising balance of quality and cost. But those weren’t results from real-world use."
-        },
-        {
-          "s": "a",
-          "ja": "「マルチモデル連携」って、モデル同士で相談するの？",
-          "en": "Does “multi-model orchestration” mean the models talk things over together?"
-        },
-        {
-          "s": "b",
-          "ja": "ここでは、選択的なコーディング作業を複数のモデルへ振り分ける仕組みだよ。相談というより、使い分けに近いね。",
-          "en": "Here, it means routing selected coding tasks across multiple models. It’s closer to choosing which model handles what than having them confer."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、コーディングを手伝ってもらうとき、作業ごとに合うモデルを選んでほしいな。",
-          "en": "If I used it for coding help, I’d want it to pick a suitable model for each task."
-        },
-        {
-          "s": "b",
-          "ja": "そう使えたら便利そうだね。いまはGitHub Copilotの研究プレビューで、示された成果もオフライン評価と推定コストの範囲だよ。",
-          "en": "That could be useful. For now, it’s a GitHub Copilot research preview, and the reported results are limited to offline evaluations and estimated cost."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T19:40:58.782Z"
-    },
     "6220d53803f4d6ce": {
       "bodyJa": "## AI人材不足への対応\n\nAnthropicは、企業のAI実装で深刻な課題の一つとされる人材不足に対応するため、Claude Frontier Academyを立ち上げた。企業がAI実装の専門性を持つエンジニアを確保できるようにすることが、この取り組みの中心となる。\n\n## 1億ドルの拠出\n\nClaude Frontier Academyには1億ドルが拠出され、2027年末までに1万人のFrontier Deployed Engineer、FDEを育成することを目指す。企業内でAIを実装する人材を大規模に準備する計画であり、Anthropicは同種で初のAcademyと説明している。\n\n育成対象となるFDEには、Anthropic自身のエンジニアと同じ基準のスキルが用いられる。単に参加人数を増やすだけでなく、Anthropicが自社エンジニアに適用する基準に沿って、AI実装を担う人材を育てる構成だ。\n\n## 初期参加企業\n\n最初の参加企業には、Accenture、Bain、Capgemini、Commonwealth Bank of Australia、Deloitte、McKinsey、Morgan Stanley、Novo Nordiskなどが含まれる。これらの企業のエンジニアが初期コホートを構成し、FDEとしての育成を受ける。\n\nClaude Frontier Academyは、1億ドルの投資、1万人という育成人数、2027年末という目標時期を明確に設定している。初期段階から複数の企業が参加し、Anthropic基準の実装スキルを持つ人材の確保につなげる取り組みとなる。",
       "bodyEn": "## Claude Frontier Academy\n\nAnthropic is launching Claude Frontier Academy to address what the announcement describes as one of the most pressing issues in AI implementation: talent. Backed by a $100 million commitment, the Academy is intended to help enterprises develop engineers with AI implementation expertise.\n\nThe initiative focuses specifically on training Frontier Deployed Engineers, or FDEs. Anthropic aims to prepare 10,000 of these engineers by the end of 2027.\n\n## Frontier Deployed Engineers\n\nClaude Frontier Academy will train Frontier Deployed Engineers using the same standard of skills as Anthropic’s own engineers. The stated goal is to give participating enterprises access to people equipped with implementation skills that meet Anthropic’s standard.\n\nThe Academy is described as a first-of-its-kind effort. Its scope combines a defined financial commitment, a specific engineering role and a target for the number of people trained. Rather than describing talent as a general concern, the initiative centers on preparing engineers for AI implementation work.\n\n## First Cohorts\n\nEngineers from Accenture, Bain, Capgemini, Commonwealth Bank of Australia, Deloitte, McKinsey, Morgan Stanley and Novo Nordisk are included in the first cohorts. The announcement also indicates that other participants are involved, without naming them.\n\nThese early cohorts establish the initial group of engineers being trained through the Academy. Accenture and Deloitte are among the early participating organizations highlighted in the announcement, alongside the other named enterprises.\n\n## End of 2027\n\nAnthropic’s target is to train 10,000 Frontier Deployed Engineers by the end of 2027. The $100 million commitment supports that training objective and the Academy’s focus on enterprise AI implementation talent.\n\nTogether, the funding, training standard and initial cohorts define the initiative: Claude Frontier Academy is intended to expand the number of engineers prepared for AI implementation while giving participating enterprises access to talent trained to Anthropic’s stated skills standard.",
@@ -43891,6 +43359,310 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-02T22:42:31.076Z"
+    },
+    "0a4feee69747e1de": {
+      "bodyJa": "## Quine\n\nQuineは、生物学の複雑性に対応するためのAI研究システムであり、初期段階のマルチモーダル世界モデルとして開発されている。生物学に関する複数のスケールとデータ形式を結び付け、科学者が実験室で作業を始める前に、検討すべき仮説を計算によって絞り込めるようにする研究の取り組みだ。\n\n## 複数スケール\n\n生物学は、互いに切り離された領域として機能するものではなく、そのAI表現も分断されるべきではないという考えがQuineの基礎にある。異なる生物学的スケールやモダリティから得られる知見を接続し、一つの世界モデルとして扱うことを目指している。多様な生物学的データを横断的に結び付ける点が、システムの中心的な特徴となる。\n\n## 仮説の優先\n\nQuineは、人間の直感だけで扱える範囲よりもはるかに広い候補空間を、計算によって探索できるよう科学者を支援する。広範な候補の中から仮説を順位付けし、実験へ進める前に有望なものを優先できるようにする仕組みである。これにより、仮説の候補を無差別に扱うのではなく、計算上の探索を通じて検討対象を絞り込めると説明されている。\n\n## 実験結果\n\n実験室で得られた結果は、Quineを用いる研究の重要なフィードバックになる。計算による探索と仮説の優先付けだけで完結するのではなく、実験結果を受け取ることで、研究者がその後の研究方向をさらに明確にしていく構成とされる。Quineは、この探索、優先付け、実験からのフィードバックを結び付ける初期段階の研究として位置付けられている。",
+      "bodyEn": "## Complexity of biology\n\nQuine is an early-stage AI research system designed to address the complexity of biology. It matters because biology does not operate in silos, and the AI representation of biology should likewise connect information rather than treat it as isolated.\n\nThe research effort aims to create a multimodal world model of biology. Its central purpose is to represent biological complexity by combining diverse biological data and connecting insights that span different scales and modalities.\n\n## Across biological scales\n\nQuine links information across biological scales and data formats. This multimodal approach allows scientists to computationally search a space of possibilities that is far larger than intuition alone allows.\n\nThe system is intended to support research by bringing these different forms of biological information into a connected model. Rather than limiting the search to one scale or modality, Quine uses their connections to examine a broader set of possible research directions.\n\n## Prioritize hypotheses\n\nA key function of Quine is helping scientists narrow a wide range of candidates through computation. The system can rank and prioritize hypotheses before those hypotheses reach the laboratory.\n\nThis does not replace laboratory work. Instead, Quine helps researchers identify promising hypotheses in advance, giving them a way to focus experimental attention after searching a larger space computationally. The emphasis is on prioritization: scientists can use the model to decide which possibilities should move forward to experimental investigation.\n\n## Experimental results\n\nExperimental results provide feedback to the research process. That feedback can help researchers sharpen future research directions, creating a connection between computational hypothesis prioritization and subsequent experiments.\n\nQuine remains an early-stage research effort. Its described role is to connect biological insights across scales and modalities, search broadly through possible hypotheses, prioritize candidates before laboratory work, and use experimental feedback to refine where research goes next.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "生物学の研究で、普段の仕事は何が変わるの？ 実験の前にできることが増えるのかな。",
+          "en": "What changes in day-to-day biology research? Does this give scientists more they can do before running experiments?"
+        },
+        {
+          "s": "b",
+          "ja": "Quineは多様な生物データを結び付け、広い候補から有望な仮説を計算で優先できるようにするんだ。実験前の絞り込みを助ける仕組みだね。",
+          "en": "Quine connects diverse biological data and computationally ranks promising hypotheses from a broad search space. It’s designed to help narrow the options before lab work."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ 人の直感だけで仮説を選んでいた、ということ？",
+          "en": "Was that impossible before? Were researchers choosing hypotheses based only on intuition?"
+        },
+        {
+          "s": "b",
+          "ja": "そこまでは断定されていないよ。この記事では、Quineが直感では探しきれないほど広い範囲を計算で検索できる、と説明しているんだ。",
+          "en": "The post doesn’t go that far. It says Quine can computationally search a space much larger than intuition alone can cover."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。いちばんの収穫は、実験を始める前に有望そうな仮説へ順番を付けられることなんだね。",
+          "en": "Got it. The key takeaway is that scientists can rank the most promising hypotheses before starting lab work."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。まだ初期段階だから、実験結果のフィードバックで次の研究方向をどう磨いていくかに注目だね。",
+          "en": "Right. Since it’s still early-stage, the next thing to watch is how experimental feedback helps refine future research directions."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-29T21:12:02.279Z"
+    },
+    "11814c13f8eb0837": {
+      "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
+      "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "決まった画面に仕事を合わせるんじゃなくて、仕事の流れに合わせて画面を作れるの？ これって大きい変化？",
+          "en": "Instead of fitting work into fixed screens, the screen can fit the workflow? Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、カンバンやリリース確認表などを用途に合わせて構成できます。チーム独自の手順を画面にしやすくなる変化だね。",
+          "en": "The article shows canvases tailored as kanban boards, release checklists, and more. That could make a team’s own workflow easier to represent."
+        },
+        {
+          "s": "a",
+          "ja": "「双方向のキャンバス」って、ぼくとエージェントの両方が触れるってこと？",
+          "en": "Does “bidirectional canvas” mean both the agent and I can work with it?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。共有ホワイトボードのように、エージェントが更新し、利用者もボタンやカード、フィルターで変更できる仕組みだよ。",
+          "en": "Yes. It works like a shared whiteboard: the agent can update it, while you make changes with buttons, cards, filters, and other controls."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、やることをカードで並べる画面を作って、エージェントと一緒に整理してみたいな。",
+          "en": "I’d make a board with task cards and try organizing them together with the agent."
+        },
+        {
+          "s": "b",
+          "ja": "作るなら、エージェントのセッションで「/create-canvas」を入力し、欲しい画面を平易な英語で伝える形だね。手作業のコーディングやデザインは不要とされています。",
+          "en": "To build it, open an agent session, enter “/create-canvas,” and describe the interface in plain English. The post says no manual coding or design is required."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:36:46.380Z"
+    },
+    "93db8516427cde42": {
+      "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
+      "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でAIを使うとき、チャットじゃない画面になると、普段の操作はどう変わるの？",
+          "en": "When I use AI for work, how would things change if the interface weren’t a chat box?"
+        },
+        {
+          "s": "b",
+          "ja": "用途に合うUIなら、会話を続けるより、やりたい作業を中心に操作できるかもしれない。この記事はそんな設計を提案しているよ。",
+          "en": "A task-specific UI could center the interaction on the work itself instead of an ongoing conversation. That’s the design direction the piece proposes."
+        },
+        {
+          "s": "a",
+          "ja": "前は、作業向けのUIにできなかったの？ずっとチャットだったってこと？",
+          "en": "Couldn’t AI have task-focused interfaces before? Has it all just been chat?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていないよ。現在のAIの波から3年たっても、LLMの主要な操作画面がチャットのまま、という前提を問い直しているんだ。",
+          "en": "It doesn’t say that was impossible. It questions why chat remains the main interface for LLMs three years into the current AI wave."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ一番の収穫は、AIだからチャット、と決めつけず、作業に合う入口を考えることなんだね。",
+          "en": "So my main takeaway is: don’t assume AI must mean chat. Start by choosing an interface that fits the task."
+        },
+        {
+          "s": "b",
+          "ja": "うん。次は、開発者がどの作業で対話欄を外し、タスク中心の体験にするかという判断に注目したいね。",
+          "en": "Right. Next, watch how developers decide which tasks should move beyond a text box toward a task-oriented experience."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:19.430Z"
+    },
+    "4c9d688cf44b534e": {
+      "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
+      "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "大きな移行やリファクタリングをレビューする仕事で、普段の何が変わるの？",
+          "en": "What changes day to day when a team reviews a big migration or refactor?"
+        },
+        {
+          "s": "b",
+          "ja": "GitHub Copilotアプリのプルリクエスト画面が刷新され、大規模な差分や長い議論も速く滑らかに確認できるとされています。",
+          "en": "The GitHub Copilot app rebuilt its pull request view so large diffs and long review discussions can stay fast and smooth."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ 小さく分ければ済む話じゃないのかな。",
+          "en": "Was that not possible before? Couldn’t teams just split the change into smaller pieces?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は不可能だった、とは断定できません。小さく分ける方法はあるものの、分けにくい変更に備えて画面を作り直した、という違いです。",
+          "en": "We can’t say it was impossible before. Splitting changes helps, but some don’t divide cleanly, so the view was rebuilt to handle one enormous pull request."
+        },
+        {
+          "s": "a",
+          "ja": "そっか。分けにくい変更でも、差分とコメントをまとめて追いやすくなるのが収穫なんだね。",
+          "en": "Got it. The key benefit is being able to follow the diff and comments even when a huge change can’t be split up."
+        },
+        {
+          "s": "b",
+          "ja": "次に注目したいのは、2,200ファイル、100万行超の変更、400件超のインラインコメントを含むプルリクエストでの検証だね。",
+          "en": "Next, watch the test itself: a pull request with 2,200 files, over a million changed lines, and more than 400 inline review comments."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:32.042Z"
+    },
+    "3109af25bedf6259": {
+      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
+      "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "80万行超のRustを、AIエージェントが大半書いたの？ 128件のPRってどう進めたんだろう。",
+          "en": "AI agents wrote most of over 800,000 lines of Rust? How did that work across 128 PRs?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、CopilotアプリとCLIを使い、128件のPRを順にmainへ入れて段階的に公開したとあるよ。",
+          "en": "The piece says they used the Copilot app and CLI, merging 128 PRs into main and shipping incrementally instead of switching everything at once."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、同じランタイムを使うCLIやアプリ、SDKの利用者に、性能面の変化が届くってこと？",
+          "en": "So users of the CLI, app, and SDK all benefit from the runtime’s performance changes?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。3つを支える共通のランタイムで、性能は桁違いに改善したと説明されているよ。",
+          "en": "Yes. They all rely on the same runtime, whose performance is described as improving by orders of magnitude."
+        },
+        {
+          "s": "a",
+          "ja": "TypeScriptとNode.jsの土台をRustへ移し、AIと小分けのPRで少しずつ進めたんだね。",
+          "en": "Got it: they moved the TypeScript and Node.js foundation to Rust, using AI and smaller PRs to roll it out gradually."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただ、後退がゼロだったわけではなく、少数の不具合は途中で見つけて素早く直したとしているよ。",
+          "en": "Right. It wasn’t regression-free, though; a few issues appeared along the way and were found and fixed quickly."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:37:50.296Z"
+    },
+    "8156421f827a3dc7": {
+      "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
+      "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "イベント担当の毎日は、これで何が変わるの？企画以外のこまごました作業が減るのかな。",
+          "en": "How does this change an event marketer’s day? Does it cut down the little tasks that pile up after planning?"
+        },
+        {
+          "s": "b",
+          "ja": "GitHub上で定型工程をコード化し、ページ複製やチャネル別UTMリンク作成、招待メール依頼、フォローアップを自動化します。企画と参加者理解に集中しやすくなります。",
+          "en": "It codifies routine work on GitHub, automating page duplication, channel-specific UTM links, invitation email requests, and follow-up. That gives marketers more room to focus on topics and audiences."
+        },
+        {
+          "s": "a",
+          "ja": "前はGitHubではできなかったの？それとも、できたけど人が毎回やっていたの？",
+          "en": "Was this impossible on GitHub before, or were people just doing the same steps manually each time?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていません。イベント承認後に始まるページ複製やリンク作成などの決まった工程を、コード化して自動化するのが今回の違いです。",
+          "en": "The piece doesn’t say it was impossible before. The change is turning the fixed post-approval sequence—like duplicating pages and creating links—into coded, automated workflows."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、定型作業を自動化して、人が「誰に何を届けるか」を考える時間を増やせることなんだね。",
+          "en": "So the biggest gain is automating routine work and giving people more time to think about who they’re reaching and what to offer them."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、チャネル別UTMリンク作成やフォローアップまで、定型工程がどう一つの流れになるかに注目したいね。",
+          "en": "Right. Next, it’s worth watching how steps such as channel-specific UTM links and follow-up fit into one automated flow."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:38:10.006Z"
+    },
+    "b310b2c06dbd9321": {
+      "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
+      "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "確認・実行・結果チェックの3つが、アプリを出ずにできるようになったんだ。これって大きいこと？",
+          "en": "Now you can review, run, and check results without leaving the app. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "前はエディター、ターミナル、ブラウザーを行き来していたんだ。3つが並ぶので、エージェントの作業を確かめやすくなるね。",
+          "en": "Before, you had to jump among an editor, terminal, and browser. Having all three side by side makes the agent’s work easier to check."
+        },
+        {
+          "s": "a",
+          "ja": "「diff」って何を見るもの？ 変更後のコードだけじゃないの？",
+          "en": "What does a “diff” show? Is it more than just the updated code?"
+        },
+        {
+          "s": "b",
+          "ja": "変更前と変更後を比べる画面だよ。追加は緑、削除は赤で、変わった行を確認できるんだ。",
+          "en": "It compares the code before and after a change. Added lines appear in green, deleted ones in red, so you can see exactly what changed."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら差分を見て、ターミナルで動かして、ブラウザーで結果を確かめてから決めたいな。",
+          "en": "I’d review the diff, run the code in the terminal, then check the result in the browser before deciding."
+        },
+        {
+          "s": "b",
+          "ja": "その流れで使えるね。最後は自分で変更を受け入れるか、コメントするか、Copilotに修正を頼むか選べるよ。",
+          "en": "That workflow fits the app. You still make the final call: accept the changes, leave comments, or ask Copilot to revise them."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T18:38:19.736Z"
+    },
+    "855d6eb9ada55a72": {
+      "bodyJa": "## HydraFusion\n\nGitHub Copilotの「HydraFusion」が、研究プレビューとして利用可能になった。複数モデルの連携によって、フロンティア級の品質と推定ワークフローコストの削減を両立させる選択的コーディング機能が中心となる。\n\nHydraFusionは、選択されたコーディングタスクを複数のモデルへ振り分ける。すべてを一つのモデルで扱うのではなく、タスクに応じてモデルを使い分ける構成により、開発者を効率的に支援することを目指している。\n\n## オフライン評価\n\n管理されたオフライン評価では、HydraFusionの選択的コーディングワークフローが、評価対象となったOpus 5のベースラインと同等以上の品質を示した。あわせて、推定されるワークフローコストも低減したとされる。\n\nこの結果は、複数モデルを連携させる仕組みについて、品質だけでなく推定コストも含めて比較したものだ。現時点での提供形態は、GitHub Copilotにおける研究プレビューとなっている。",
+      "bodyEn": "## Project HydraFusion\n\nProject HydraFusion is a GitHub Copilot research preview that uses multi-model orchestration for selective coding workflows. It matters because the approach is intended to provide efficient developer assistance while balancing coding quality with estimated workflow cost.\n\nHydraFusion routes selected coding tasks across multiple models. This selective approach allows the workflow to use different models as part of the same coding process, rather than treating every task identically.\n\n## Controlled offline evaluations\n\nIn controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline. The same evaluations also showed a reduction in estimated workflow cost.\n\nThese results specifically concern the evaluated baseline, controlled offline conditions, and estimated cost. Together, they are the basis for presenting HydraFusion as a way to achieve frontier-level quality through coordination across models.\n\n## Research preview\n\nHydraFusion is now available as a research preview in GitHub Copilot. Its current release introduces the multi-model, selective coding workflow described in the announcement, giving developers access to the approach within Copilot while it remains in research preview.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Opus 5相当以上の品質で、推定コストは低くなったんだね。これって大きいこと？",
+          "en": "It matched or beat Opus 5 quality while lowering estimated cost. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "管理されたオフライン評価で、品質とコストの両方に良い結果が出た変化だね。ただし、実利用での結果ではないよ。",
+          "en": "In controlled offline tests, it showed a promising balance of quality and cost. But those weren’t results from real-world use."
+        },
+        {
+          "s": "a",
+          "ja": "「マルチモデル連携」って、モデル同士で相談するの？",
+          "en": "Does “multi-model orchestration” mean the models talk things over together?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、選択的なコーディング作業を複数のモデルへ振り分ける仕組みだよ。相談というより、使い分けに近いね。",
+          "en": "Here, it means routing selected coding tasks across multiple models. It’s closer to choosing which model handles what than having them confer."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、コーディングを手伝ってもらうとき、作業ごとに合うモデルを選んでほしいな。",
+          "en": "If I used it for coding help, I’d want it to pick a suitable model for each task."
+        },
+        {
+          "s": "b",
+          "ja": "そう使えたら便利そうだね。いまはGitHub Copilotの研究プレビューで、示された成果もオフライン評価と推定コストの範囲だよ。",
+          "en": "That could be useful. For now, it’s a GitHub Copilot research preview, and the reported results are limited to offline evaluations and estimated cost."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-28T19:40:58.782Z"
     }
   }
 }

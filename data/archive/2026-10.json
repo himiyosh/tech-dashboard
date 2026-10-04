@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T04:30:48.253Z",
+  "generatedAt": "2026-10-04T05:31:00.938Z",
   "month": "2026-10",
   "count": 46,
   "entries": [
@@ -10,12 +10,15 @@
       "url": "https://qiita.com/watanabe_trtr/items/c622860ff50e0d7d0b65",
       "title": "エイリアスを設定したのにVS Codeでジャンプできなかった原因",
       "titleJa": "エイリアスを設定したのにVS Codeでジャンプできなかった原因",
-      "titleEn": "",
+      "titleEn": "Why VS Code Could Not Navigate Despite Path Aliases Being Configured",
       "lang": "ja",
       "publishedAt": "2026-10-04T03:03:57.000Z",
       "collectedAt": "2026-10-04T04:30:34.438Z",
       "tags": [
+        "jsconfig",
+        "path-alias",
         "qiita",
+        "vite",
         "vscode"
       ],
       "category": "vscode",
@@ -41,21 +44,34 @@
       "url": "https://qiita.com/sugiyama404/items/4f48662cbe59fc6badeb",
       "title": "VS Code GitHub Copilot Chatの裏側：ステートレスLLMを操るコンテキスト＆エージェント・オーケストレーションの全貌",
       "titleJa": "VS Code GitHub Copilot Chatの裏側：ステートレスLLMを操るコンテキスト＆エージェント・オーケストレーションの全貌",
-      "titleEn": "",
+      "titleEn": "Inside VS Code GitHub Copilot Chat: Context and Agent Orchestration for Stateless LLMs",
       "lang": "ja",
       "publishedAt": "2026-10-03T23:21:16.000Z",
       "collectedAt": "2026-10-04T04:30:34.438Z",
       "tags": [
+        "agent-orchestration",
+        "context-management",
+        "github-copilot",
+        "llm",
+        "prompt-caching",
         "qiita",
         "vscode"
       ],
       "category": "copilot",
-      "importance": 1,
+      "importance": 2,
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "LLM APIは基本的に ステートレス です。リクエストごとに「システム指示・ツール定義・会話履歴・今回の入力」をすべて送り直さない限り、モデルは直前のやり取りすら知りません。 にもかかわらず、エディタ上のチャットは「さっきのファイルの続き」「この変更を取り消して」に自然に応答し、Agent modeでは数十ステップのタスクを自走します。この体験の正体は モデルの記憶ではなく、クライアント側のオーケストレーション です。 本記事では、VS Code GitHub Copilot Chatを題材に、次の問いを設計思想とトレードオフの観点から解剖します。 ポイントは ステートの置き場所の非対称性 です。状態をクライアントに寄せることで、プロキシとLLMは水平スケールしやすく、モデル差し替えも容易になります。代償として、毎ターン全文脈を送信する帯域・トークンコストが発生し、それを緩和するのが§5のPrompt Cachingです。 .github/copilot-instructions.md 、 *.instructions.md 、 AGENTS.md 公式ドキュメントによれば、 .github/copilot-instructions.md はワークスペースルートで自動検出され、 そのワークスペースの全チャットリクエストに適用 されます。 *.instructions.md は対象ファイルパターンに応じた条件付き適用、 AGENTS.md も常時有効な指示として扱えます。 LLMは記憶しないため、規約を一度伝えても次のリクエストには存在しません。毎ターンの注入は、 ステートレス性に対する最もシンプルで確実な解 です。 → 対策は「プロジェクト共通は短く」「領域別は applyTo で条件付き」という 指示の階層化 です。 3.3 プロンプト組み立ての擬似コード【一般論／擬似コード】 instructions : string []; // copilot-instructions.md 等 // 1.",
       "feedSnippet": "1. はじめに：LLMは記憶を持たない LLM APIは基本的にステートレスです。リクエストごとに「システム指示・ツール定義・会話履歴・今回の入力」をすべて送り直さない限り、モデルは直前のやり取りすら知りません。 にもかかわらず、エディタ上のチャットは「さっきのファイルの...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY1OTQ5NTgwOCUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1lNDA4OTMwNjU5ZjRhYjJiNTYzODhmOTdhMjNhZGJhNA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D9c52295f222c6deffa74c36ee5fb9cb2?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwR2l0SHViJTIwQ29waWxvdCUyMENoYXQlRTMlODElQUUlRTglQTMlOEYlRTUlODElQjQlRUYlQkMlOUElRTMlODIlQjklRTMlODMlODYlRTMlODMlQkMlRTMlODMlODglRTMlODMlQUMlRTMlODIlQjlMTE0lRTMlODIlOTIlRTYlOTMlOEQlRTMlODIlOEIlRTMlODIlQjMlRTMlODMlQjMlRTMlODMlODYlRTMlODIlQUQlRTMlODIlQjklRTMlODMlODglRUYlQkMlODYlRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODMlQkIlRTMlODIlQUElRTMlODMlQkMlRTMlODIlQjElRTMlODIlQjklRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1mNjNhNDJmOTI2ZWFlOWZkNzcxODkwYzRlYzkwZmZiNg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzdWdpeWFtYTQwNCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJjZThkODc3MjQ2Zjk0ZjU2ZDQzYjZkMGYwZGY3ZDAz&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=08db68aadf2c5f66ac6821514f0980d0",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY1OTQ5NTgwOCUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz1lNDA4OTMwNjU5ZjRhYjJiNTYzODhmOTdhMjNhZGJhNA%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D9c52295f222c6deffa74c36ee5fb9cb2?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9VlMlMjBDb2RlJTIwR2l0SHViJTIwQ29waWxvdCUyMENoYXQlRTMlODElQUUlRTglQTMlOEYlRTUlODElQjQlRUYlQkMlOUElRTMlODIlQjklRTMlODMlODYlRTMlODMlQkMlRTMlODMlODglRTMlODMlQUMlRTMlODIlQjlMTE0lRTMlODIlOTIlRTYlOTMlOEQlRTMlODIlOEIlRTMlODIlQjMlRTMlODMlQjMlRTMlODMlODYlRTMlODIlQUQlRTMlODIlQjklRTMlODMlODglRUYlQkMlODYlRTMlODIlQTglRTMlODMlQkMlRTMlODIlQjglRTMlODIlQTclRTMlODMlQjMlRTMlODMlODglRTMlODMlQkIlRTMlODIlQUElRTMlODMlQkMlRTMlODIlQjElRTMlODIlQjklRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz1mNjNhNDJmOTI2ZWFlOWZkNzcxODkwYzRlYzkwZmZiNg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBzdWdpeWFtYTQwNCZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWJjZThkODc3MjQ2Zjk0ZjU2ZDQzYjZkMGYwZGY3ZDAz&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=08db68aadf2c5f66ac6821514f0980d0",
+        "alt": "VS Code GitHub Copilot Chatの裏側：ステートレスLLMを操るコンテキスト＆エージェント・オーケストレーションの全貌",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "782d012e1b6a83ce",
@@ -344,7 +360,7 @@
       "titleEn": "Microsoft Digital Defense Report: How AI is reshaping the cybersecurity landscape",
       "lang": "en",
       "publishedAt": "2026-10-02T17:45:11.000Z",
-      "collectedAt": "2026-10-03T23:30:32.632Z",
+      "collectedAt": "2026-10-04T05:30:45.568Z",
       "tags": [
         "artificial-intelligence",
         "cybersecurity",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T00:31:11.766Z",
+  "generatedAt": "2026-10-04T01:30:55.402Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -645,8 +645,8 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
-      "excerptOrigin": "article-unavailable"
+      "excerptOrigin": "article-unavailable",
+      "evergreen": true
     },
     {
       "id": "def78e43152d6ece",
@@ -17215,7 +17215,15 @@
       "archiveTier": "warm",
       "contentSnippet": "LLMの学習で「AIの評価を報酬にする」手法が主流になりつつあります。人間の代わりにLLMが応答を採点し（RLAIF: Reinforcement Learning from AI Feedback）、そのスコアでモデルを強化学習する。DeepSeek-R1以降は正誤の機械検証（RLVR: Reinforcement Learning with Verifiable Rewards）やrubric採点を報酬にする研究も急増しています。 ただ、強化学習に馴染みがないと、「評価のスコアが報酬になる」と言われても、モデルの中で何が起きるのかをイメージしにくいと思います。スコアはただの数値です。その数値が、どういう計算を経て、何十億個の重みを動かすのか。 この記事は、SFT（教師ありファインチューニング）は知っているが強化学習は未経験、という読者に向けて、この機構を1学習ステップ単位で追う解説です。教材にはGRPOという手法を使い、LLM判定（LLM-as-a-Judge）のスコアがモデルの重みを動かすまでを、具体的な数字で見ていきます。読み終えたとき、次の3つが説明できる状態になることを目指します。 強化学習の話に入る前に、比較対象としてSFTの機構を確認します。ここが後で効いてきます。 SFTの訓練データは「プロンプトと正解応答のペア」です。学習は、正解応答のトークン列をモデルが出力する確率を最大化する、言い換えると次の損失を最小化することで進みます。 x はプロンプト、 y^{*} は正解応答、 \\pi_\\theta はいまのモデル（パラメータ \\theta ）が応答を出力する確率です。重要なのは、 正解データ y^{*} が損失関数の中に直接入っている ことです。勾配降下法は「この正解トークン列の確率を上げる方向」を損失の微分から直接計算できます。 正解の応答文が必要になる。タスクごとに人が書くか、強いモデルから蒸留するしかない 負例を見せられない。「こういう応答はダメ」という情報を損失に入れる場所がない 他人の文体を写す学習になる。",
       "feedSnippet": "LLMの学習で「AIの評価を報酬にする」手法が主流になりつつあります。人間の代わりにLLMが応答を採点し（RLAIF: Reinforcement Learning from AI Feedback）、そのスコアでモデルを強化学習する。DeepSeek-R1以降は正誤の機械検証（RLVR: Reinforcement Learning with Verifiable Rewards）やrubric採点を報酬にする研究も急増しています。 ただ、強化学習に馴染みがないと、「評価のスコアが報酬になる」と言われても、モデルの中で何が起きるのかをイメージしにくいと",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--mJMyijSd--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AE%25E8%25A9%2595%25E4%25BE%25A1%25E3%2582%2592%25E5%25A0%25B1%25E9%2585%25AC%25E3%2581%25AB%25E3%2581%2599%25E3%2582%258B%25E5%25BC%25B7%25E5%258C%2596%25E5%25AD%25A6%25E7%25BF%2592%25E3%2581%25AF%25E4%25BD%2595%25E3%2582%2592%25E3%2581%2597%25E3%2581%25A6%25E3%2581%2584%25E3%2582%258B%25E3%2581%25AE%25E3%2581%258B%2520%25E2%2580%2594%2520GRPO%25E3%2581%25AE1%25E3%2582%25B9%25E3%2583%2586%25E3%2583%2583%25E3%2583%2597%25E3%2582%2592%25E6%2595%25B0%25E5%25AD%2597%25E3%2581%25A7%25E8%25BF%25BD%25E3%2581%2586%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Hirotaka%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTVjMWlIS0g2Z1dlUzU0UnREY2hJQk5QbDc5NWhKbmVvdjRDTHpkV2xrMkxCbWZTRT1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--mJMyijSd--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:AI%25E3%2581%25AE%25E8%25A9%2595%25E4%25BE%25A1%25E3%2582%2592%25E5%25A0%25B1%25E9%2585%25AC%25E3%2581%25AB%25E3%2581%2599%25E3%2582%258B%25E5%25BC%25B7%25E5%258C%2596%25E5%25AD%25A6%25E7%25BF%2592%25E3%2581%25AF%25E4%25BD%2595%25E3%2582%2592%25E3%2581%2597%25E3%2581%25A6%25E3%2581%2584%25E3%2582%258B%25E3%2581%25AE%25E3%2581%258B%2520%25E2%2580%2594%2520GRPO%25E3%2581%25AE1%25E3%2582%25B9%25E3%2583%2586%25E3%2583%2583%25E3%2583%2597%25E3%2582%2592%25E6%2595%25B0%25E5%25AD%2597%25E3%2581%25A7%25E8%25BF%25BD%25E3%2581%2586%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Hirotaka%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSTVjMWlIS0g2Z1dlUzU0UnREY2hJQk5QbDc5NWhKbmVvdjRDTHpkV2xrMkxCbWZTRT1zOTYtYw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "AIの評価を報酬にする強化学習は何をしているのか — GRPOの1ステップを数字で追う",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "b7e46dcc57f23780",

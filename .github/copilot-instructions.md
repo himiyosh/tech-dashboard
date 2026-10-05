@@ -3294,3 +3294,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: JSON importのmockは`import.meta.glob`が見つける別の実ファイルを隔離しない。片方のstorage modeしか持たない開発データで成功したことを、移行前後の全unitで成功する証拠として扱った。
 - **対策**: synthetic indexを使うcollection testは本文reader自体をmockし、本文の品質・出典判定はstorage入力を受けるpure helperへ独立fixtureを渡す。実readerのmode、index marker、raw shard digestは別のschema/Publisher/Web build testで検証する。legacyと4 shardの双方で同じfull suiteを実行する。
 - **教訓**: 保存形式の移行でfixtureを旧fileだけへ差し込むと、globや自動発見した新fileがmockをすり抜ける。生成dataの任意modeに依存しないunit fixtureを作り、productionのfail-closed guardをtest環境だけで無効化しない。
+
+### LL-498: 新しいworktreeではunitが通ってもhookのroot Playwright binaryが無い場合がある
+- **事象**: 4 shardのWeb build、全unit、全Playwrightを個別に通した後、通常のpre-push hookはunitとbuildを通過したが`node_modules/.bin/playwright: No such file or directory`でPublisher E2E開始前にpushを中断した。rootの`node_modules`には`@playwright/test`がなく、`npm test`の`pretest`はWeb依存だけを復元していた。
+- **根本原因**: 新設worktreeへrootの全devDependencyは自動復元されず、直接起動したhookはrootのbinary pathを要求する。別の実行経路でPlaywrightが見つかっても、そのpathの存在は保証されない。
+- **対策**: 失敗したpushの前に保全したdataは承認どおり原bytesとSHA-256へ復元し、rootで`npm ci --no-audit --no-fund`を実行して`@playwright/test`と実行ファイルを確認する。検査skipは使わず、同じfresh-data手順と通常hookで再試行する。
+- **教訓**: 新しいworktreeのpush前には`pretest`が復元する対象とhookが直接参照するbinaryを別々に確認する。unitのPASSや`npm run test:e2e`の成功をroot `node_modules/.bin`の存在証明と読み替えず、missing dependencyはmanifestを変えず`npm ci`で再現可能に復元する。

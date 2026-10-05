@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T16:01:55.368Z",
+  "generatedAt": "2026-10-05T16:36:32.640Z",
   "month": "2026-10",
   "count": 53,
   "entries": [
@@ -10,11 +10,15 @@
       "url": "https://qiita.com/J-N/items/feeda6ea2b0e269fb58c",
       "title": "AzureでAWS Cloud9みたいなブラウザIDEを作ってみた（Azure ML × VS Code for the Web）",
       "titleJa": "AzureでAWS Cloud9みたいなブラウザIDEを作ってみた（Azure ML × VS Code for the Web）",
-      "titleEn": "",
+      "titleEn": "Building an AWS Cloud9-Like Browser IDE on Azure with Azure ML and VS Code for the Web",
       "lang": "ja",
       "publishedAt": "2026-10-05T15:00:24.000Z",
-      "collectedAt": "2026-10-05T16:01:39.806Z",
+      "collectedAt": "2026-10-05T16:36:14.366Z",
       "tags": [
+        "aws-cloud9",
+        "azure",
+        "azure-machine-learning",
+        "cloud-ide",
         "qiita",
         "vscode"
       ],
@@ -23,8 +27,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "AWS の Cloud9 は、マネジメントコンソールからそのまま開けるブラウザ IDE です。ローカルに何も入れずにクラウド上の環境で開発できますが、2024年7月に新規利用の受付を終了しています。 Azure で同じようにコンソールから開ける IDE がないか探したところ、Azure Machine Learning（以下 Azure ML）のコンピューティング インスタンス（Azure 上の VM）に、ブラウザ版の VS Code（VS Code for the Web）で接続する機能がありました。 作業はすべて Azure ポータルと Azure ML Studio の GUI 操作です。 画面だけブラウザ（vscode.dev）で動いて、コードの実行やターミナルは全部 Azure 上の VM で動く、という構成です。 Standard_F2s_v2 （2コア / 4GB、約 $0.11/時間） VM サイズは、作成画面で「すべてのオプションから選択」を開いてコストの安い順に並べて選びました。いちばん安いのは Standard_DS1_v2 （1コア / 3.5GB、約 $0.10/時間）でしたが、VS Code Server と Python を同時に動かすには 1コア・3.5GB だと心もとないので、ほぼ同じ値段で 2コア / 4GB の Standard_F2s_v2 にしました。後で free -h を見たら、何もしていない状態で 2.3GB 使っていました。3.5GB でも動くとは思いますが、余裕はあまりなさそうです（価格は作業時点の表示です）。 Azure ポータルの「リソース グループ」から「＋作成」を押し、名前 rg-aml-vscode-demo 、リージョン Japan East で作成します。 2. Azure Machine Learning ワークスペースを作成する ポータル上部の検索で「Azure Machine Learning」を開き、「＋作成」から新しいワークスペースを作ります。",
-      "feedSnippet": "はじめに AWS の Cloud9 は、マネジメントコンソールからそのまま開けるブラウザ IDE です。ローカルに何も入れずにクラウド上の環境で開発できますが、2024年7月に新規利用の受付を終了しています。 Azure で同じようにコンソールから開ける IDE がないか...",
       "excerptOrigin": "article",
+      "feedSnippet": "はじめに AWS の Cloud9 は、マネジメントコンソールからそのまま開けるブラウザ IDE です。ローカルに何も入れずにクラウド上の環境で開発できますが、2024年7月に新規利用の受付を終了しています。 Azure で同じようにコンソールから開ける IDE がないか...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkY5ZTQ5YzY2MzU4NTRkMzZhMWRiOWUxOTBlZWZlMjE3ZT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGFkZDM4ZGNjOGM2M2VjNDE2MzIwMzYxOWNiMWYwMDI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da4855123986b4ce0d046db84ec6d73f8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QXp1cmUlRTMlODElQTdBV1MlMjBDbG91ZDklRTMlODElQkYlRTMlODElOUYlRTMlODElODQlRTMlODElQUElRTMlODMlOTYlRTMlODMlQTklRTMlODIlQTYlRTMlODIlQjZJREUlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYlRUYlQkMlODhBenVyZSUyME1MJTIwJUMzJTk3JTIwVlMlMjBDb2RlJTIwZm9yJTIwdGhlJTIwV2ViJUVGJUJDJTg5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NTZhZGFhNDNkMjQ4ZDM3MmIxMjk5YzhjMGQxZTQ4YjI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBKLU4mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jOTQ1MzEwNTFmNjkwZDkyYjk5NGYwNTUyMjA3OGMzMw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=95a81f884bc7c012521125a2a83c21b8",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnNlY3VyZS5ncmF2YXRhci5jb20lMkZhdmF0YXIlMkY5ZTQ5YzY2MzU4NTRkMzZhMWRiOWUxOTBlZWZlMjE3ZT9peGxpYj1yYi00LjEuMSZhcj0xJTNBMSZmaXQ9Y3JvcCZtYXNrPWVsbGlwc2UmYmc9RkZGRkZGJmZtPXBuZzMyJnM9OGFkZDM4ZGNjOGM2M2VjNDE2MzIwMzYxOWNiMWYwMDI%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3Da4855123986b4ce0d046db84ec6d73f8?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9QXp1cmUlRTMlODElQTdBV1MlMjBDbG91ZDklRTMlODElQkYlRTMlODElOUYlRTMlODElODQlRTMlODElQUElRTMlODMlOTYlRTMlODMlQTklRTMlODIlQTYlRTMlODIlQjZJREUlRTMlODIlOTIlRTQlQkQlOUMlRTMlODElQTMlRTMlODElQTYlRTMlODElQkYlRTMlODElOUYlRUYlQkMlODhBenVyZSUyME1MJTIwJUMzJTk3JTIwVlMlMjBDb2RlJTIwZm9yJTIwdGhlJTIwV2ViJUVGJUJDJTg5JnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9NTZhZGFhNDNkMjQ4ZDM3MmIxMjk5YzhjMGQxZTQ4YjI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBKLU4mdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1jOTQ1MzEwNTFmNjkwZDkyYjk5NGYwNTUyMjA3OGMzMw&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=95a81f884bc7c012521125a2a83c21b8",
@@ -44,7 +48,7 @@
       "titleEn": "How to Set Up the Portable Version of VS Code",
       "lang": "ja",
       "publishedAt": "2026-10-05T05:17:39.000Z",
-      "collectedAt": "2026-10-05T16:01:39.806Z",
+      "collectedAt": "2026-10-05T16:36:14.366Z",
       "tags": [
         "portable-apps",
         "qiita",
@@ -78,7 +82,7 @@
       "titleEn": "Reducing Manual Transfers of Codex Results Back to ChatGPT with MCP and Human Review",
       "lang": "ja",
       "publishedAt": "2026-10-05T01:31:17.000Z",
-      "collectedAt": "2026-10-05T16:01:39.806Z",
+      "collectedAt": "2026-10-05T16:36:14.366Z",
       "tags": [
         "chatgpt",
         "human-in-the-loop",
@@ -92,8 +96,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "ブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装すると、作業結果をChatGPTへ戻すための転記が残ります。 この転記を減らすため、CodexがMCPで結果を未公開保存し、人間が確認した本文だけをChatGPTから読める構成を検証しました。テスト本文では、未公開保存、人間による確認・公開、新しいChatGPT Work会話での読取りまで成功しています。 手動で結果ファイルを用意する操作は減りました。ただし、同じ指示に結果が2件あり、一覧から対象を選べない場面もありました。本文のコピペを減らしても、どの結果を戻すかの指定は人間に残りました。 ChatGPTからCodexへの指示受渡しは、次の記事で扱っています。 この記事でいうWorkは、ブラウザーで使うChatGPTのWork画面です。Reporterは、Locolisu AI Task Monitorで使う自作のVS Code拡張です。今回の受渡しでは、元指示と結果を表示し、人間が確認した結果をChatGPTから読める状態にします。MCP（Model Context Protocol）を通して、Codexによる保存とWorkによる読取りを行います。 Codex専用STDIO MCPが、結果を未公開領域の pending へ保存する。 VS CodeのReporterが元指示と結果を表示し、人間が確認したものだけを confirmed へ保存する。 ChatGPT Workが、指示IDと結果IDを指定して読み取る。 STDIO MCPは、標準入出力でCodexと通信するローカルのMCPサーバーです。 ここでの「公開」は、 Work向けMCPから読み取れるようにすること です。インターネット上への一般公開ではありません。 また、保存するのはCodexがtoolへ明示的に渡した本文です。Codex画面の最終回答を自動取得する仕組みではありません。",
-      "feedSnippet": "ブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装すると、作業結果をChatGPTへ戻すための転記が残ります。 この転記を減らすため、CodexがMCPで結果を未公開保存し、人間が確認した本文だけをChatGPTから読める構成を検証しました。テスト本...",
       "excerptOrigin": "article",
+      "feedSnippet": "ブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装すると、作業結果をChatGPTへ戻すための転記が残ります。 この転記を減らすため、CodexがMCPで結果を未公開保存し、人間が確認した本文だけをChatGPTから読める構成を検証しました。テスト本...",
       "image": {
         "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZXglRTMlODElQUUlRTclQjUlOTAlRTYlOUUlOUMlRTMlODIlOTJDaGF0R1BUJUUzJTgxJUI4JUU2JTg4JUJCJUUzJTgxJTk5JUU4JUJCJUEyJUU4JUE4JTk4JUUzJTgyJTkyJUU2JUI4JTlCJUUzJTgyJTg5JUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE4JUU0JUJBJUJBJUU5JTk2JTkzJUU3JUEyJUJBJUU4JUFBJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTdmMTRmNDIyNDg2Njg3ODkzZWE0Mzk3ZWFmZWE3NmI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2eba6c65298310123d484ab6f2d72e87",
         "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZXglRTMlODElQUUlRTclQjUlOTAlRTYlOUUlOUMlRTMlODIlOTJDaGF0R1BUJUUzJTgxJUI4JUU2JTg4JUJCJUUzJTgxJTk5JUU4JUJCJUEyJUU4JUE4JTk4JUUzJTgyJTkyJUU2JUI4JTlCJUUzJTgyJTg5JUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE4JUU0JUJBJUJBJUU5JTk2JTkzJUU3JUEyJUJBJUU4JUFBJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTdmMTRmNDIyNDg2Njg3ODkzZWE0Mzk3ZWFmZWE3NmI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2eba6c65298310123d484ab6f2d72e87",

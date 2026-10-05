@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T07:30:56.218Z",
+  "generatedAt": "2026-10-05T07:55:22.179Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -19438,7 +19438,15 @@
       "archiveTier": "warm",
       "contentSnippet": "Anthropicが公式ブログに「 Lessons from building Claude Code: Prompt caching is everything 」という記事を出しています（2026年4月30日）。Claude Codeチームはキャッシュヒット率を監視していて、下がるとアラートが飛び、ひどい場合は障害（SEV）扱いにするとのこと。「everything」は誇張ではないらしい。 冒頭の3つ、特に1は直感に反しませんか？鍵は「プロンプトキャッシュ」です。理由は3つ。 LLMはステートレスです。Claude Codeはユーザーが1回Enterを押すたびに、裏でこんなループを回しています。 システムプロンプト＋CLAUDE.md＋会話履歴の 全量 をAnthropicサーバへ送信 → モデルがツール呼び出しタスクを返す つまりツール呼び出しを30回やれば、コンテキスト全量の送信を30回やっている。そのまんま課金したらUsage破産します。これを抑制しているのがプロンプトキャッシュです。 キャッシュ読み：入力単価の0.1倍 （TTLによらず同じ。ヒットするたびTTLは無料でリフレッシュ） キャッシュ書き込み：5分TTLなら1.25倍、1時間TTLなら2倍 TTL（Time to Live）はAPIでは5分と1時間の2択で、Claude Codeが認証方式に応じて自動選択します。 サブスクリプションならメインセッションは1時間TTL （usageがプラン込みなので、長い方を採ってもユーザーの追加負担がない）。APIキー利用時と、プラン上限超過で従量課金（overage）になっている間は5分です。 エージェントループでは前回までのコンテキストがキャッシュヒットするので、各リクエストの実質コストは「既存部分×0.1＋新規追加分×書き込み倍率」程度に圧縮されます。サブスクのusage消費もほぼこの重み付けに従うと言われており、キャッシュ効率はレート制限の寛大さに直結するとAnthropic自身が明言しています。 冒頭の 操作3 の答えがこれです。",
       "feedSnippet": "まとめ：Claude Code Usageを節約する観点でやってはいけない3つの操作 ! セッション途中のモデル切替（安いモデルに切り替えたつもりが、むしろ高くつく） 会話の途中でツール（MCP含む）を追加・削除（それまでの節約効果が全部無効になる） 重いセッションを、5分以上の放置を挟みながらダラダラ延命（休憩のたびに見えないペナルティ） Anthropicが公式ブログに「Lessons from building Claude Code: Prompt caching is everything」という記事を出しています（2026年4月30日）。Cl",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--G61xNj6H--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Prompt%2520caching%2520is%2520everything%2520%25E2%2580%2595%25E2%2580%2595%2520Claude%2520Code%25E3%2581%25AE%25E8%25AA%25B2%25E9%2587%2591%25E6%25A7%258B%25E9%2580%25A0%25E3%2582%2592%25E3%2582%25B5%25E3%2582%25AF%25E3%2583%2583%25E3%2581%25A8%25E7%2590%2586%25E8%25A7%25A3%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:just2enough%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly96ZW5uLWRldi5naXRodWIuaW8vZGVmYXVsdC1hdmF0YXJzL2Rhcmsvai5wbmc=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--G61xNj6H--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Prompt%2520caching%2520is%2520everything%2520%25E2%2580%2595%25E2%2580%2595%2520Claude%2520Code%25E3%2581%25AE%25E8%25AA%25B2%25E9%2587%2591%25E6%25A7%258B%25E9%2580%25A0%25E3%2582%2592%25E3%2582%25B5%25E3%2582%25AF%25E3%2583%2583%25E3%2581%25A8%25E7%2590%2586%25E8%25A7%25A3%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:just2enough%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly96ZW5uLWRldi5naXRodWIuaW8vZGVmYXVsdC1hdmF0YXJzL2Rhcmsvai5wbmc=%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "Prompt caching is everything ―― Claude Codeの課金構造をサクッと理解",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "4b8aefc1243c7896",

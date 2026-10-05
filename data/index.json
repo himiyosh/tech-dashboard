@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-05T07:55:22.179Z",
+  "generatedAt": "2026-10-05T09:01:32.981Z",
   "count": 2000,
   "health": {
-    "lastRunAt": "2026-10-05T07:55:22.177Z",
-    "batchIndex": 2,
+    "lastRunAt": "2026-10-05T09:01:32.978Z",
+    "batchIndex": 4,
     "batchTotal": 6,
     "sourcesAttempted": 10,
     "sourcesOk": 10,
@@ -15,7 +15,7 @@
     "fallbackTotal": 4,
     "fallbackPercent": 0,
     "kvLookupCap": 35,
-    "kvLookupCount": 3,
+    "kvLookupCount": 4,
     "queueMode": "enabled",
     "queueCap": 35,
     "summaryQueueSnapshotStage": "final-entries",
@@ -27,12 +27,12 @@
     "summaryQueueCooldownCount": 1,
     "copilotOk": true,
     "copilotError": null,
-    "ogCached": 4479,
+    "ogCached": 4480,
     "ogNewHits": 1,
-    "excerptFetchCandidates": 0,
-    "excerptFetchAttempted": 0,
+    "excerptFetchCandidates": 1,
+    "excerptFetchAttempted": 1,
     "excerptFetched": 0,
-    "excerptFetchUnavailable": 0,
+    "excerptFetchUnavailable": 1,
     "excerptFetchDeferred": 0,
     "excerptFetchPrioritized": 0,
     "excerptFetchUnlockable": 0,
@@ -43,7 +43,7 @@
     "bodyEnqueueCap": 32,
     "bodyEnqueueCandidates": 0,
     "bodyEnqueued": 0,
-    "bodyBacklog": 590,
+    "bodyBacklog": 589,
     "bodyQueueDrainEstimateHours": 19,
     "bodyLookupCount": 4,
     "chatLookupCount": 0,
@@ -482,7 +482,6 @@
       "b6ed1379c4f1617b",
       "b6fdda0932f5e27a",
       "b70b7c2fc8add0c6",
-      "b7bbe1ab449bbdeb",
       "b7f3db3ca07494c2",
       "b8e279433af937a2",
       "b9145b3618559fab",
@@ -656,45 +655,6 @@
   },
   "entries": [
     {
-      "id": "b7bbe1ab449bbdeb",
-      "source": "qiita-vscode",
-      "sourceType": "blog",
-      "url": "https://qiita.com/locolisu/items/012eef27f5db4f4a57ff",
-      "title": "Codexの結果をChatGPTへ戻す転記を減らす――MCPと人間確認",
-      "titleJa": "Codexの結果をChatGPTへ戻す転記を減らす――MCPと人間確認",
-      "titleEn": "Reducing Manual Transfers of Codex Results Back to ChatGPT with MCP and Human Review",
-      "summaryJa": "CodexはMCP経由で実装結果を非公開保存し、Reporterで人間が承認した内容だけをChatGPT Workが指示IDと結果IDから取得できる構成を検証。転記を減らせる一方、重複結果の選択は人間に残るため、設計と実装を往復する利用者に有用です。",
-      "summaryEn": "Codex stores results privately via MCP, and ChatGPT Work reads only Reporter-approved output by instruction and result IDs. This reduces copying between design and coding.",
-      "lang": "ja",
-      "publishedAt": "2026-10-05T01:31:17.000Z",
-      "collectedAt": "2026-10-05T04:30:39.107Z",
-      "tags": [
-        "chatgpt",
-        "human-in-the-loop",
-        "mcp-server",
-        "qiita",
-        "vscode",
-        "workflow-automation"
-      ],
-      "category": "codex",
-      "importance": 1,
-      "halfLife": "tutorial",
-      "archiveTier": "hot",
-      "contentSnippet": "ブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装すると、作業結果をChatGPTへ戻すための転記が残ります。 この転記を減らすため、CodexがMCPで結果を未公開保存し、人間が確認した本文だけをChatGPTから読める構成を検証しました。テスト本文では、未公開保存、人間による確認・公開、新しいChatGPT Work会話での読取りまで成功しています。 手動で結果ファイルを用意する操作は減りました。ただし、同じ指示に結果が2件あり、一覧から対象を選べない場面もありました。本文のコピペを減らしても、どの結果を戻すかの指定は人間に残りました。 ChatGPTからCodexへの指示受渡しは、次の記事で扱っています。 この記事でいうWorkは、ブラウザーで使うChatGPTのWork画面です。Reporterは、Locolisu AI Task Monitorで使う自作のVS Code拡張です。今回の受渡しでは、元指示と結果を表示し、人間が確認した結果をChatGPTから読める状態にします。MCP（Model Context Protocol）を通して、Codexによる保存とWorkによる読取りを行います。 Codex専用STDIO MCPが、結果を未公開領域の pending へ保存する。 VS CodeのReporterが元指示と結果を表示し、人間が確認したものだけを confirmed へ保存する。 ChatGPT Workが、指示IDと結果IDを指定して読み取る。 STDIO MCPは、標準入出力でCodexと通信するローカルのMCPサーバーです。 ここでの「公開」は、 Work向けMCPから読み取れるようにすること です。インターネット上への一般公開ではありません。 また、保存するのはCodexがtoolへ明示的に渡した本文です。Codex画面の最終回答を自動取得する仕組みではありません。",
-      "feedSnippet": "ブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装すると、作業結果をChatGPTへ戻すための転記が残ります。 この転記を減らすため、CodexがMCPで結果を未公開保存し、人間が確認した本文だけをChatGPTから読める構成を検証しました。テスト本...",
-      "excerptOrigin": "article",
-      "image": {
-        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZXglRTMlODElQUUlRTclQjUlOTAlRTYlOUUlOUMlRTMlODIlOTJDaGF0R1BUJUUzJTgxJUI4JUU2JTg4JUJCJUUzJTgxJTk5JUU4JUJCJUEyJUU4JUE4JTk4JUUzJTgyJTkyJUU2JUI4JTlCJUUzJTgyJTg5JUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE4JUU0JUJBJUJBJUU5JTk2JTkzJUU3JUEyJUJBJUU4JUFBJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTdmMTRmNDIyNDg2Njg3ODkzZWE0Mzk3ZWFmZWE3NmI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2eba6c65298310123d484ab6f2d72e87",
-        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmxoMy5nb29nbGV1c2VyY29udGVudC5jb20lMkZhJTJGQUNnOG9jS2hfUEtoaUNVdmdMOTB6QU9jWExRMnRWSDg1UEFmTXJCVTl5d0UzUnU2MXdWbnk3QSUzRHM5Ni1jP2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz00YjJhZTg1ZGU4MzcxZTlmZTc5MDU4YTVmMDUzNmE1Yw%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3D47b5f88d1b8590c8afb9769e8509004e?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9Q29kZXglRTMlODElQUUlRTclQjUlOTAlRTYlOUUlOUMlRTMlODIlOTJDaGF0R1BUJUUzJTgxJUI4JUU2JTg4JUJCJUUzJTgxJTk5JUU4JUJCJUEyJUU4JUE4JTk4JUUzJTgyJTkyJUU2JUI4JTlCJUUzJTgyJTg5JUUzJTgxJTk5JUUyJTgwJTk1JUUyJTgwJTk1TUNQJUUzJTgxJUE4JUU0JUJBJUJBJUU5JTk2JTkzJUU3JUEyJUJBJUU4JUFBJThEJnR4dC1hbGlnbj1sZWZ0JTJDdG9wJnR4dC1jb2xvcj0lMjMxRTIxMjEmdHh0LWZvbnQ9SGlyYWdpbm8lMjBTYW5zJTIwVzYmdHh0LXNpemU9NTYmdHh0LXBhZD0wJnM9MTdmMTRmNDIyNDg2Njg3ODkzZWE0Mzk3ZWFmZWE3NmI&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBsb2NvbGlzdSZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPWRlMWU3OWE5YjJiMTc3ZTBmNmI1NjQ5YjBkYTcxNGJm&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=2eba6c65298310123d484ab6f2d72e87",
-        "alt": "Codexの結果をChatGPTへ戻す転記を減らす――MCPと人間確認",
-        "width": 0,
-        "height": 0,
-        "source": "og"
-      },
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "c165093443616ca2",
       "source": "ollama-releases",
       "sourceType": "release",
@@ -706,7 +666,7 @@
       "summaryEn": "Ollama v0.40.0 defaults supported models to MLX on Apple Silicon, adding qwen3.8, gemma4, and decision models to expand local inference options for Mac users.",
       "lang": "en",
       "publishedAt": "2026-10-05T00:17:06.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "apple-silicon",
         "local-inference",
@@ -742,7 +702,7 @@
       "summaryEn": "Ollama v0.40.0 automatically selects MLX on Apple Silicon for supported model architectures and will test more models during prerelease, simplifying runtime choice for Mac users.",
       "lang": "en",
       "publishedAt": "2026-10-04T15:48:45.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "apple-silicon",
         "mlx",
@@ -780,7 +740,7 @@
       "summaryEn": "Ollama v0.40.0-rc1 aligns MLX tokenization with publisher behavior for stage order, Unicode boundaries, added tokens, and BPE merges, improving model compatibility.",
       "lang": "en",
       "publishedAt": "2026-10-04T14:45:15.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "bpe",
         "mlx",
@@ -1093,7 +1053,7 @@
       "summaryEn": "Cline Desktop v0.0.43 adds a one-time Connectors tour with logos, a selectable sample prompt, and a launch button. Existing users can replay it from About settings to discover integrations.",
       "lang": "en",
       "publishedAt": "2026-10-02T20:39:10.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "cline",
         "connectors",
@@ -1170,7 +1130,7 @@
       "summaryEn": "Ollama v0.35.1 adds Clef 27B and Clef Flash 9B via /v1/systemone, jointly evaluating images and text for developers building multimodal decision workflows.",
       "lang": "en",
       "publishedAt": "2026-10-02T18:28:37.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "clef",
         "cloudflare",
@@ -1283,7 +1243,7 @@
       "summaryEn": "Spanner queues are now generally available, adding transactional messaging inside Spanner so agent builders can keep state changes and asynchronous work consistent.",
       "lang": "en",
       "publishedAt": "2026-10-02T16:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agentic-workflows",
@@ -1296,11 +1256,11 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
       "contentSnippet": "AI agents don't just answer queries — they can autonomously issue refunds, manage inventory, execute multi-step handoffs, and orchestrate sub-agents, to name but a few complex agentic workflows. That frequently requires the agents to maintain internal state in an operational database while dispatching asynchronous actions through a separate messaging or event queue system. And unfortunately for the teams building these applications, managing two systems with disjointed commit points destroys transactional consistency in agentic systems. Today, we are excited to announce the general availability of Spanner queues : native transactional messaging embedded directly within Spanner. Designed specifically for reliable agentic execution, with Spanner queues, creating a message is simply another w",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true,
-      "knowledgeEligible": false
+      "bodyEn": ""
     },
     {
       "id": "532e62c3ca749eed",
@@ -1538,7 +1498,7 @@
       "summaryEn": "Cline Desktop v0.0.42 adds /compact to condense a session and reclaim context. Connectors become the default Customize view, with catalog search, logos, and access notices for easier discovery.",
       "lang": "en",
       "publishedAt": "2026-10-02T10:04:08.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "cline",
         "compact-command",
@@ -1574,7 +1534,7 @@
       "summaryEn": "Cline Desktop v0.0.41 adds web-model access for Cloud sessions, retains unsent drafts when switching sessions, and improves sidebar state for smoother workflows.",
       "lang": "en",
       "publishedAt": "2026-10-02T05:29:30.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "cline",
         "cloud-sessions",
@@ -1649,7 +1609,7 @@
       "summaryEn": "Cline CLI v3.0.68 avoids full team-state rewrites while streaming, auto-compacts existing data, and refreshes provider defaults, keeping long team runs fast and databases smaller.",
       "lang": "en",
       "publishedAt": "2026-10-02T04:42:19.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent-teams",
         "cli",
@@ -1687,7 +1647,7 @@
       "summaryEn": "Cline SDK v0.0.90 moves team storage to SQLite schema v2, stops persisting stream chunks and heartbeats, and batches changed entities, keeping long agent-team runs fast.",
       "lang": "en",
       "publishedAt": "2026-10-02T04:35:33.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agent-teams",
@@ -1763,7 +1723,7 @@
       "summaryEn": "Ollama v0.35.1 bumps llama.cpp to b11232, the concrete change listed since v0.35.0. This maintenance release benefits local LLM users tracking runtime updates.",
       "lang": "en",
       "publishedAt": "2026-10-02T01:05:01.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "llama-cpp",
         "ollama",
@@ -1801,7 +1761,7 @@
       "summaryEn": "Ollama v0.35.1-rc1 is a release candidate for v0.35.1 published on GitHub. No specific changes are listed, but users can identify and evaluate the prerelease build.",
       "lang": "en",
       "publishedAt": "2026-10-01T22:52:04.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "github-release",
         "ollama",
@@ -3037,7 +2997,7 @@
       "summaryEn": "Google summarizes the latest updates across its AI infrastructure stack—including TPUs, GPUs, GKE, and Cluster Director—highlighting enhancements to the AI Hypercomputer supercomputing platform and related orchestration tools.",
       "lang": "en",
       "publishedAt": "2026-09-30T16:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-hypercomputer",
         "ai-infrastructure",
@@ -3051,11 +3011,11 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "evergreen": true,
+      "knowledgeEligible": false,
       "contentSnippet": "We hereby declare September to be scalability month! As the world prepares for a surge of agentic fleets, we are shoring up our AI infrastructure and orchestration offerings to gracefully — and quickly — respond to that demand, all while maintaining workload isolation and security, and keeping costs in check. Read on to learn how these enhancements manifest across Google Cloud’s compute, network, storage, and orchestration offerings, plus new ways customers are using Google Cloud AI infrastructure, and third-party industry validation of our strategy. Product, technology, and tools updates Google Kubernetes Engine updates: The GKE team is all about improving the scalability of the platform, and in September, those improvements came in many shapes and sizes: New feature: Need an execution ru",
       "bodyJa": "",
-      "bodyEn": "",
-      "evergreen": true,
-      "knowledgeEligible": false
+      "bodyEn": ""
     },
     {
       "id": "83fda40cd2c9d8ea",
@@ -3336,7 +3296,7 @@
       "summaryEn": "Cline v4.1.22 adds Bee and Pareto Inference, improves Anthropic fallback and filter notices, and refreshes default models for more reliable user requests.",
       "lang": "en",
       "publishedAt": "2026-09-30T04:10:18.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-providers",
         "anthropic",
@@ -3599,7 +3559,7 @@
       "summaryEn": "Ollama v0.35.0 adds decision-model support via /v1/systemone, with Nimble and Tev1 returning scored options and probability estimates for triage, routing, and classification.",
       "lang": "en",
       "publishedAt": "2026-09-29T23:56:54.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "classification",
         "decision-models",
@@ -3754,7 +3714,7 @@
       "summaryEn": "Ollama v0.35.1-rc0 updates its underlying llama.cpp dependency to b11232. This release candidate helps users and developers evaluate changes since v0.35.0.",
       "lang": "en",
       "publishedAt": "2026-09-29T18:10:25.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "llama-cpp",
         "ollama",
@@ -4136,7 +4096,7 @@
       "summaryEn": "Ollama v0.35.0-rc1 introduces the System One scoring API, retires typical_p, and improves macOS startup sync and MLX pull retries for users and developers.",
       "lang": "en",
       "publishedAt": "2026-09-28T20:31:38.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "api",
         "macos",
@@ -4175,7 +4135,7 @@
       "summaryEn": "Ollama v0.35.0-rc0 is now available on GitHub as a signed release candidate, enabling users and developers to evaluate it before the final release.",
       "lang": "en",
       "publishedAt": "2026-09-28T20:21:01.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "github",
         "ollama",
@@ -4759,7 +4719,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Most tools give you a fixed set of screens and ask you to fit your work into them. But what if you could start with the workflow you want instead and have the interface take shape around it? That’s the idea behind canvases in the GitHub Copilot app . A canvas, also called a canvas extension, is a customizable interface that you and the agent share. It can be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or even a spreadsheet: a UI shaped to how you work. Because the canvas is bidirectional, the agent can update it as it works, and you can use buttons, cards, filters, and other controls to make changes too. Just like using a live shared whiteboard. To create a canvas, you don’t have to do any coding or design by hand. Just open an agent session, enter the /create-canvas skill , and describe what you want in plain English.",
       "excerptOrigin": "article",
       "feedSnippet": "Describe the interface you need in plain English, then let the agent build a live surface you can both use and update—so you spend less time adapting to tools and more time getting work done. The post GitHub Copilot app for Beginners: How to build custom workflows with canvases appeared first on The GitHub Blog .",
@@ -4772,7 +4731,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "969d8392e395ca07",
@@ -5288,7 +5248,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "We’re 176 years into this AI experiment. Wait…it’s only been three years? Sometimes I remember things that happened last year, but it feels like it was so long ago. Did that really happen to me, or was it something that happened to my dad and he just told me about it when I was a kid? Anyway… we’re three years into this AI experiment and the primary interaction surface we have with LLMs is still chat. I’m pretty sure it was @pmarca who first argued for a textarea component in the HTML spec. And I’m pretty sure of that fact because I asked AI about it. In a textarea. But I would like to propose to you that perhaps, just maybe, chat is the wrong UI. Well, at least most of the time. It’s kind of a shame that the first large-scale implementation of AI was kind of a gimmick—a first-person chatbot. But there is tremendous promise for AI if it is task oriented.",
       "excerptOrigin": "article",
       "feedSnippet": "What is a developer to do when they need something more tangible than a chat box? Enter canvases. The post When chat is the wrong UI appeared first on The GitHub Blog .",
@@ -5301,7 +5260,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "75990177efa1f29d",
@@ -6037,7 +5997,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Broad refactors and migrations often have to land as one change. Stacked pull requests are a great way to split work into smaller changes, which makes reviews easier and helps teams ship with less risk. But some changes, like this one, can’t be split cleanly. That leaves you with a single pull request that can get very large, and the review conversation causes it to grow. The review experience needs to remain fast and smooth even when the diff and its conversation are enormous. In the GitHub Copilot app , we rebuilt the pull request view with that requirement in mind. To see how far that goes, we opened the biggest pull request we could find: an open source one with 2,200 files, over a million changed lines, and more than 400 inline review comments. Here’s how we made even this extreme pull request performant.",
       "excerptOrigin": "article",
       "feedSnippet": "How we rebuilt the diff surface in the GitHub Copilot app to open a million-line pull request with hundreds of inline review comments. The post Rendering huge pull requests in the GitHub Copilot app appeared first on The GitHub Blog .",
@@ -6050,7 +6009,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "94ccdd64a04914e1",
@@ -6064,7 +6024,7 @@
       "summaryEn": "Anthropic offers an inside look at its molecular biology lab, giving researchers and developers a clearer view of the AI company's work in biology.",
       "lang": "en",
       "publishedAt": "2026-09-23T18:01:32.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "anthropic",
         "life-sciences",
@@ -7092,7 +7052,7 @@
       "summaryEn": "NVIDIA Isaac ROS 5.0 adds agentic workflows and new platform support to its GPU-powered ROS toolkit, helping robotics teams accelerate application creation and rollout.",
       "lang": "en",
       "publishedAt": "2026-09-22T12:00:41.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -8599,7 +8559,6 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "The GitHub Copilot CLI , GitHub Copilot app , and GitHub Copilot SDK are all backed by the Copilot agent runtime, an agentic harness that can be embedded into applications and services. It was originally written in TypeScript on Node.js and the V8 JavaScript engine for what is now the GitHub Copilot cloud agent (CCA), and the runtime stayed on that stack as the runtime and its capabilities grew rapidly. That has now changed. Using the GitHub Copilot app and the Copilot CLI, we completely rewrote the runtime into more than 800,000 lines of production Rust. AI agents wrote most of the code, spanning 128 pull requests that landed in main and shipped incrementally rather than waiting for a single cutover at the end. The few inevitable regressions were discovered and fixed quickly along the way, while the performance of the runtime improved by orders of magnitude.",
       "excerptOrigin": "article",
       "feedSnippet": "A rewrite this size wasn't affordable before agents. Here's what porting the Copilot agent runtime to 800,000 lines of production Rust actually took. The post Migrating the GitHub Copilot runtime to Rust, using Copilot appeared first on The GitHub Blog .",
@@ -8612,7 +8571,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6864600a6e7244b3",
@@ -9657,7 +9617,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I run marketing for GitHub in Japan and Korea, and events are the heartbeat of it: a recurring webinar series for enterprise developers, community meetups in Tokyo, invite-only executive sessions in Seoul. What does a developer in this market actually need right now? Which topics are worth an hour of their time, and who should be in the room? I’d happily spend all day on those questions. What follows the decisions is another matter. Once an event is greenlit, a fixed sequence begins: Duplicate a landing page on our event platform. Generate a set of UTM-tagged links: one for each channel, each formatted just so. Draft the invitation email and file a request with the team that sends it. Add the event to two project boards. Every morning until the event: download the registrant list, clean it up, post a status update for stakeholders.",
       "excerptOrigin": "article",
       "feedSnippet": "If you can write down how you do your work, you can automate it. Here's what I did to support GitHub's APAC marketing team. The post Marketing ops as code: Automating events from planning to follow-up on GitHub appeared first on The GitHub Blog .",
@@ -9670,7 +9629,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "93dcd14a5e3a0d95",
@@ -9924,7 +9884,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "When an agent makes a change to your code, you want to review it, run it, and see what changed. Great news: now you can do all three without having to leave the GitHub Copilot app . Before, doing those three jobs would mean having to bounce between your editor, terminal window, and web browser. But when these steps live side by side as built-in panels in the Copilot app, checking your agent’s work is simple. Let’s walk through each of the panels in the app and how we’ll use them to complete the AI coding loop. The diff panel (a diff is a before and after comparison) shows exactly what lines were added, removed, or changed, with additions highlighted in green and deletions in red. This gives you complete clarity, so you can choose what happens. You can accept changes, leave comments, or ask Copilot to make changes. You’re in complete control and make the final decisions.",
       "excerptOrigin": "article",
       "feedSnippet": "Checking agent-generated code usually means hopping between tabs. Learn how to view diffs, run terminal commands, and preview web apps side by side in the GitHub Copilot app. The post GitHub Copilot app for Beginners: Using the diff, terminal, and browser appeared first on The GitHub Blog .",
@@ -9937,7 +9896,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "2f102358044020cb",
@@ -11148,8 +11108,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "In controlled offline evaluations, HydraFusion’s selective coding workflows matched or exceeded the evaluated Opus 5 baseline while reducing estimated workflow cost. Now available as a research preview in GitHub Copilot. The post Project HydraFusion: Frontier quality via multi-model orchestration appeared first on The GitHub Blog .",
       "excerptOrigin": "article-unavailable",
       "bodyJa": "",
@@ -11161,7 +11119,9 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "b3860ff03421d355",
@@ -11292,7 +11252,7 @@
       "summaryEn": "Semantic Kernel .NET 1.80.1 updates the SDK to 10.0.303 and refreshes OpenAPI dependencies, CI configuration, and tests, improving reliability for .NET developers.",
       "lang": "en",
       "publishedAt": "2026-09-03T18:41:24.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "ci",
@@ -11533,7 +11493,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Running multiple AI agents on the same project seems like pure chaos, with too many cooks in your development kitchen. But with the GitHub Copilot app , these agents work separately and don’t interfere with each other, allowing you to get more done in less time. Think of parallel agent sessions like a trip to the laundromat. You can start multiple loads of laundry at the same time, in their own machines. You can set each washer with its own settings, and it won’t impact the other loads. Most importantly, you don’t have to wait for one to finish before you can start another one. An agent session is a task you’ve given Copilot, start to finish. In the GitHub Copilot app, you can manage several sessions through the sessions view. Each card shows its title and how far along the agent is in completing its task. Each session runs independently of the others.",
       "excerptOrigin": "article",
       "feedSnippet": "Learn how to run parallel agents in the GitHub Copilot app, and experience the moment it stops feeling scary and starts feeling powerful. The post GitHub Copilot app for Beginners: Run several agents at once appeared first on The GitHub Blog .",
@@ -11546,7 +11505,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "c401f1c5778c2ea7",
@@ -11826,7 +11786,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "Output quality is important when working with AI coding agents, but true efficiency comes from getting work done quickly, efficiently, and with the right context. That’s why token count of individual interactions alone isn’t a meaningful measure of efficiency. The goal shouldn’t be to use fewer tokens, but to tap into the right amount of context to move a task forward. A concise tool response can sometimes require additional calls or work if it leaves out information the agent needs, ultimately making the task slower and more expensive. That’s why we want to optimize for the outcome rather than the tool call. This post examines four changes in GitHub Copilot that put that principle into practice: Preserve useful context while reducing repetitive output. Remove formatting that adds no value to the task. Shorten instructions without changing useful behavior.",
       "excerptOrigin": "article",
       "feedSnippet": "Why shorter outputs can cost more, and how GitHub Copilot reduces wasted work across the complete coding task. The post How we make AI coding more cost efficient without sacrificing task quality appeared first on The GitHub Blog .",
@@ -11839,7 +11798,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "6625a77e4710b219",
@@ -12490,7 +12450,7 @@
       "summaryEn": "Claude Fable 5.1 is introduced as a new model version. While capabilities and availability are not detailed, viewers can quickly identify the Claude lineup update.",
       "lang": "en",
       "publishedAt": "2026-09-01T19:21:24.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "anthropic",
         "claude-fable-5-1",
@@ -12517,7 +12477,7 @@
       "summaryEn": "Claude Fable 5.1 is introduced as a new version in an Anthropic YouTube video, helping Claude users and developers track the latest model update.",
       "lang": "en",
       "publishedAt": "2026-09-01T18:02:31.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "anthropic",
         "claude-fable",
@@ -13430,7 +13390,7 @@
       "summaryEn": "Model Hardware Standard presents a common framework for AI models to control real-world equipment, helping developers assess practical physical-world applications.",
       "lang": "en",
       "publishedAt": "2026-08-28T00:40:16.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-agents",
         "anthropic",
@@ -13612,7 +13572,7 @@
       "summaryEn": "Anthropic is developing an interface that lets AI models operate devices of any kind and conduct physical experiments, helping researchers automate real-world testing.",
       "lang": "en",
       "publishedAt": "2026-08-27T19:42:35.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-agents",
         "anthropic",
@@ -13751,7 +13711,7 @@
       "summaryEn": "AI models can now assist in conducting physical-science experiments, showing how researchers may use AI as a practical partner in laboratory work.",
       "lang": "en",
       "publishedAt": "2026-08-27T17:54:32.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "anthropic",
         "physical-science",
@@ -14357,7 +14317,6 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
       "contentSnippet": "I might be biased, but I think Dependabot is pretty amazing. It helps keep my projects up to date, ensuring I’m always using secure libraries. But because there’re frequently new vulnerabilities, there’re frequently new pull requests from Dependabot. Sometimes it’s a minor version bump. Sometimes it’s a major version upgrade. Sometimes everything will work just fine. And sometimes… well, every single developer has been caught by a breaking change. How can we best triage these pull requests? The work isn’t particularly difficult per se, but it certainly is repetitive. It’s the perfect task to offload to Copilot! With GitHub Copilot app automations , you can hand off that first round of review.",
       "excerptOrigin": "article",
       "feedSnippet": "Managing library updates can be tedious at times. Learn how the GitHub Copilot app can handle this type of repetitive task. The post GitHub Copilot app for Beginners: Automate Dependabot pull request triage appeared first on The GitHub Blog .",
@@ -14370,7 +14329,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "bbffbe230b585ac7",
@@ -18908,7 +18868,7 @@
       "summaryEn": "Semantic Kernel dotnet-1.80.0 ships with updated OpenAPI HTTP client defaults, a fix for FunctionChoiceBehavior function list handling in the Gemini connector, and bumped Testcontainers packages.",
       "lang": "en",
       "publishedAt": "2026-08-18T15:12:30.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "dotnet",
@@ -23965,7 +23925,7 @@
       "summaryEn": "OpenAI research shows enterprises are shifting AI use from simple assistance to autonomous execution via ChatGPT and Codex, with frontier adopters pulling significantly ahead of peers.",
       "lang": "en",
       "publishedAt": "2026-08-12T06:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -25207,7 +25167,7 @@
       "summaryEn": "Anthropic shares dispatches from Iceland exploring how locals think about and relate to AI, offering a cultural perspective on attitudes toward the technology.",
       "lang": "en",
       "publishedAt": "2026-08-10T14:30:52.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "anthropic",
         "iceland",
@@ -28010,7 +27970,7 @@
       "summaryEn": "Semantic Kernel for .NET bumps to v1.79.0 with an SDK update from 10.0.301 to 10.0.302, a form-data dependency patch, and a CodeQL false-positive suppression for internal HTTP code.",
       "lang": "en",
       "publishedAt": "2026-08-06T11:33:35.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "dotnet",
@@ -28084,7 +28044,7 @@
       "summaryEn": "A patch release of Semantic Kernel for Python fixing OpenAPI server variable encoding, consolidating Dependabot updates, and suppressing a CodeQL false positive in the HTTP utility.",
       "lang": "en",
       "publishedAt": "2026-08-06T09:55:22.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "bugfix",
@@ -44288,7 +44248,7 @@
       "summaryEn": "OpenAI launched a dedicated ChatGPT program for small businesses, offering resources and support to help smaller organizations adopt AI tools and improve operational efficiency.",
       "lang": "en",
       "publishedAt": "2026-07-21T17:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "chatgpt",
         "openai",
@@ -47902,7 +47862,15 @@
       "bodyJa": "",
       "bodyEn": "",
       "feedSnippet": "はじめに 本記事は「Context Engineering 完全入門」シリーズの補章 A です。 VS Code 1.109 では、本編シリーズで扱ってきた Context Engineering の概念が、Microsoft の公式実装として多数リリースされました。Me...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY0Mzg2NzM1OSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz04MzkzMzA4OGU3OTM3MmUxMmMyM2M0ZWMwNmRlYzQ0NA%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5YjRhNDhhYWMzMTU4OTRiYjE4MDllODA2ZjI3MWU4ZTZhOTgwNjkyJTJGb3JpZ2luYWwuanBnJTNGMTc3MTQ2NzcxOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz00YzA3MjgwZDU2ZDc3ZTk1NzExODNhMGQyNjA1MTRlNw%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D710b09fc9e556fafb703cf812608be28?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwMjAyNiVFNSVCOSVCNDYlRTYlOUMlODglRTclODklODglRTMlODAlOTFDb250ZXh0JTIwRW5naW5lZXJpbmclMjAlRTUlQUUlOEMlRTUlODUlQTglRTUlODUlQTUlRTklOTYlODAlMjglRTglQTMlOUMlRTclQUIlQTBBJTI5JTIwJUVGJUJDJThEJTIwVlMlMjBDb2RlJTIwQ29waWxvdCUyMENoYXQlMjAxLjEwOSVFMyU4MSVBRTglRTMlODElQTQlRTMlODElQUUlRTYlOTYlQjAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0yOWM3NmJhNzg0NDUxZTc1NjAyZTExN2I1MTE0MGI3ZA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5LW5hLWJpeiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTAwZTJjNjY3OTI3ZTkxY2IxYWI0Mjk0ZmQxOTVhYzA3&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-5pel56uL44K344K544OG44Og44K6&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=2dbe41add7432a7fe4df5feeea6830c0",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRmF2YXRhcnMyLmdpdGh1YnVzZXJjb250ZW50LmNvbSUyRnUlMkY0Mzg2NzM1OSUzRnYlM0Q0P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz04MzkzMzA4OGU3OTM3MmUxMmMyM2M0ZWMwNmRlYzQ0NA%26blend-x%3D120%26blend-y%3D462%26blend-w%3D90%26blend-h%3D90%26blend-mode%3Dnormal%26mark64%3DaHR0cHM6Ly9xaWl0YS1vcmdhbml6YXRpb24taW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnMzLWFwLW5vcnRoZWFzdC0xLmFtYXpvbmF3cy5jb20lMkZxaWl0YS1vcmdhbml6YXRpb24taW1hZ2UlMkY5YjRhNDhhYWMzMTU4OTRiYjE4MDllODA2ZjI3MWU4ZTZhOTgwNjkyJTJGb3JpZ2luYWwuanBnJTNGMTc3MTQ2NzcxOD9peGxpYj1yYi00LjEuMSZ3PTQ0Jmg9NDQmZml0PWNyb3AmbWFzaz1jb3JuZXJzJmNvcm5lci1yYWRpdXM9OCZiZz1GRkZGRkYmYm9yZGVyPTIlMkNGRkZGRkYmZm09cG5nMzImcz00YzA3MjgwZDU2ZDc3ZTk1NzExODNhMGQyNjA1MTRlNw%26mark-x%3D186%26mark-y%3D515%26mark-w%3D40%26mark-h%3D40%26s%3D710b09fc9e556fafb703cf812608be28?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9JUUzJTgwJTkwMjAyNiVFNSVCOSVCNDYlRTYlOUMlODglRTclODklODglRTMlODAlOTFDb250ZXh0JTIwRW5naW5lZXJpbmclMjAlRTUlQUUlOEMlRTUlODUlQTglRTUlODUlQTUlRTklOTYlODAlMjglRTglQTMlOUMlRTclQUIlQTBBJTI5JTIwJUVGJUJDJThEJTIwVlMlMjBDb2RlJTIwQ29waWxvdCUyMENoYXQlMjAxLjEwOSVFMyU4MSVBRTglRTMlODElQTQlRTMlODElQUUlRTYlOTYlQjAlRTIlODAlQTYmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz0yOWM3NmJhNzg0NDUxZTc1NjAyZTExN2I1MTE0MGI3ZA&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDB5LW5hLWJpeiZ0eHQtY29sb3I9JTIzMUUyMTIxJnR4dC1mb250PUhpcmFnaW5vJTIwU2FucyUyMFc2JnR4dC1zaXplPTM2JnR4dC1wYWQ9MCZzPTAwZTJjNjY3OTI3ZTkxY2IxYWI0Mjk0ZmQxOTVhYzA3&blend-x=242&blend-y=454&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&txt64=5qCq5byP5Lya56S-5pel56uL44K344K544OG44Og44K6&txt-x=242&txt-y=539&txt-width=838&txt-clip=end%2Cellipsis&txt-color=%231E2121&txt-font=Hiragino%20Sans%20W6&txt-size=28&s=2dbe41add7432a7fe4df5feeea6830c0",
+        "alt": "【2026年6月版】Context Engineering 完全入門(補章A) － VS Code Copilot Chat 1.109の8つの新機能を調査",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "218d333522942047",
@@ -49524,7 +49492,7 @@
       "summaryEn": "OpenAI introduced a scorecard framework to measure and track AI's progress across social, economic, and safety dimensions, aiming to improve accountability and transparency in how AI development affects the world.",
       "lang": "en",
       "publishedAt": "2026-07-17T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "accountability",
         "ai-policy",
@@ -51659,7 +51627,7 @@
       "summaryEn": "OpenAI highlights growing momentum in US AI safety policy, with state and federal initiatives shaping a regulatory framework to ensure responsible AI development.",
       "lang": "en",
       "publishedAt": "2026-07-15T12:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -51815,7 +51783,7 @@
       "summaryEn": "OpenAI introduced GPT-Red, a model that leverages self-improvement techniques to enhance robustness, marking a significant step toward building more reliable and resilient AI systems.",
       "lang": "en",
       "publishedAt": "2026-07-15T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-safety",
         "gpt-red",
@@ -53488,7 +53456,7 @@
       "summaryEn": "OpenAI published a strategic guide for managing AI investments as agentic systems become mainstream, offering practical frameworks to help organizations maximize ROI and govern autonomous AI deployments responsibly.",
       "lang": "en",
       "publishedAt": "2026-07-14T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agentic-ai",
@@ -54706,36 +54674,6 @@
       "excerptOrigin": "article"
     },
     {
-      "id": "6434478feb881825",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/academy/codex-for-work/how-data-science-teams-use-codex",
-      "title": "How data science teams use ChatGPT Work",
-      "titleJa": "データサイエンスチームによる ChatGPT Work の活用方法",
-      "titleEn": "How data science teams use ChatGPT Work",
-      "summaryJa": "OpenAIがデータサイエンスチーム向けにChatGPT WorkおよびCodexの実践的な活用事例を公開し、分析・コーディング業務の効率化に役立つ具体的なワークフローを紹介している。",
-      "summaryEn": "OpenAI published a guide showing how data science teams can leverage ChatGPT Work and Codex to streamline analytics and coding workflows, offering practical patterns for real-world adoption.",
-      "lang": "en",
-      "publishedAt": "2026-07-14T00:00:00.000Z",
-      "collectedAt": "2026-08-11T09:47:55.831Z",
-      "tags": [
-        "chatgpt",
-        "codex",
-        "data-science",
-        "openai",
-        "tutorial",
-        "workflow"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "See how data science teams can use ChatGPT Work to build root-cause briefs, impact readouts, KPI memos, scoped analyses, and dashboard specs from real work inputs.",
-      "bodyJa": "",
-      "bodyEn": "",
-      "excerptOrigin": "article-unavailable"
-    },
-    {
       "id": "4459bb6d04f5a323",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -54795,6 +54733,36 @@
       "bodyEn": "",
       "feedSnippet": "Le français suit. Canadian institutions and researchers have played a critical role in the modern AI era. During a period of broad skepticism about research into neural networks, the University of Toronto and the Université de Montréal were two of only a handful of institutions t",
       "excerptOrigin": "article"
+    },
+    {
+      "id": "6434478feb881825",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/academy/codex-for-work/how-data-science-teams-use-codex",
+      "title": "How data science teams use ChatGPT Work",
+      "titleJa": "データサイエンスチームによる ChatGPT Work の活用方法",
+      "titleEn": "How data science teams use ChatGPT Work",
+      "summaryJa": "OpenAIがデータサイエンスチーム向けにChatGPT WorkおよびCodexの実践的な活用事例を公開し、分析・コーディング業務の効率化に役立つ具体的なワークフローを紹介している。",
+      "summaryEn": "OpenAI published a guide showing how data science teams can leverage ChatGPT Work and Codex to streamline analytics and coding workflows, offering practical patterns for real-world adoption.",
+      "lang": "en",
+      "publishedAt": "2026-07-14T00:00:00.000Z",
+      "collectedAt": "2026-08-11T09:47:55.831Z",
+      "tags": [
+        "chatgpt",
+        "codex",
+        "data-science",
+        "openai",
+        "tutorial",
+        "workflow"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "See how data science teams can use ChatGPT Work to build root-cause briefs, impact readouts, KPI memos, scoped analyses, and dashboard specs from real work inputs.",
+      "bodyJa": "",
+      "bodyEn": "",
+      "excerptOrigin": "article-unavailable"
     },
     {
       "id": "94650efddaeed6b0",
@@ -58660,7 +58628,7 @@
       "summaryEn": "Deutsche Telekom is partnering with OpenAI to transform customer service and network operations with AI, marking a significant enterprise deployment of AI in the telecom sector.",
       "lang": "en",
       "publishedAt": "2026-07-10T07:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "deutsche-telekom",
         "enterprise",
@@ -59197,36 +59165,6 @@
       "bodyEn": ""
     },
     {
-      "id": "e8e2c91188516b96",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/side-chat",
-      "title": "Side Chats and Conversation Search",
-      "titleJa": "サイドチャットと会話検索機能の追加",
-      "titleEn": "Side Chats and Conversation Search",
-      "summaryJa": "Cursorにサイドチャットと会話検索機能が追加され、複数の会話を並行管理しながら過去のやり取りを素早く検索できるようになった。作業効率と情報の再利用性が大幅に向上する。",
-      "summaryEn": "Cursor introduces Side Chats and Conversation Search, enabling users to run multiple chat threads simultaneously and quickly retrieve past conversations, significantly improving multitasking and workflow continuity.",
-      "lang": "en",
-      "publishedAt": "2026-07-10T00:00:00.000Z",
-      "collectedAt": "2026-10-05T06:30:50.827Z",
-      "tags": [
-        "changelog",
-        "cursor",
-        "productivity",
-        "search",
-        "side-chat"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "このリリースでは、メインチャットと並行して使えるサイドチャット、エージェントの会話履歴を検索できる機能、さらにシンプルになったプロジェクト / リポジトリ ピッカーにより、作業の流れを保ちやすくなりました。 サイドチャットを開くと、メインのエージェントとの会話を中断せずに、ご質問をしたり、アイデアを広げたり、脇道にそれた話題を掘り下げたりできます。 /side 、 /btw 、またはチャットパネル上部のプラスボタンを使って、メインチャットのコンテキストを引き継いだ新しいサイドチャットを作成します。 各サイドチャットは、後から追加で質問したり、あとで見返したり、@メンションでコンテキストをメインスレッドに戻したりできる、永続的で完全なエージェントとの会話です。 デフォルトでは、サイドチャットは読み取り、検索、回答に重点を置いています。メインのエージェントを実行し続けながら、確認したい点を質問したり、方針転換を確定せずに代替案を調査したり、判断が妥当かどうかを確認したりするのに使えます。 名前や PR 番号だけでなく、会話内容まで対象にした検索で、過去のエージェントチャットをよりすばやく見つけられます。 エージェントウィンドウ では、コマンドパレット (Cmd+K) から会話履歴を検索できます。Cursor はローカル検索インデックスを構築し、数千件の会話でも軽快に検索できます。 また、Cmd+F を使って現在の会話内を検索することもできます。一致箇所の間を移動したり、一致件数を確認したりしながら、長い会話履歴をスクロール中でも検索を続けられます。 プロジェクト / リポジトリ ピッカーをシンプルにし、さらに使いやすく強化しました。これまで別の画面に移動する必要があったワークフローも、今ではピッカー内でそのまま完結できます。たとえば、ピッカーを離れずにプロジェクトを作成し、GitHub、GitLab、Azure DevOps に接続できます。",
-      "excerptOrigin": "article",
-      "feedSnippet": "This release makes it easier to stay in flow with side chats that run alongside your main chat, the ability to search agent transcripts, and simplified project and repo pickers.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "a311ac6ab310d5d5",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -59254,6 +59192,36 @@
       "archiveTier": "warm",
       "contentSnippet": "This is the third post of Profiling in PyTorch, a series where we slowly build the skill of reading profiler traces and use it to drive optimization: Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP The series \"Profiling in PyTorch\" is meant to make you comfortable reading profiler traces and tables. In Part 1 we profiled basic math operations like addition and multiplication. We saw how the profiler table uncovers hotspots, and how the profiler trace shows the order in which an algorithm runs over time. In Part 2 we wrapped that addition and multiplication into a torch linear layer. We then stacked several linear layers on top of each other (a multilayer perceptron) and profiled that. Along the way we also profiled fused and hand-tuned kernels.",
       "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "e8e2c91188516b96",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/side-chat",
+      "title": "Side Chats and Conversation Search",
+      "titleJa": "サイドチャットと会話検索機能の追加",
+      "titleEn": "Side Chats and Conversation Search",
+      "summaryJa": "Cursorにサイドチャットと会話検索機能が追加され、複数の会話を並行管理しながら過去のやり取りを素早く検索できるようになった。作業効率と情報の再利用性が大幅に向上する。",
+      "summaryEn": "Cursor introduces Side Chats and Conversation Search, enabling users to run multiple chat threads simultaneously and quickly retrieve past conversations, significantly improving multitasking and workflow continuity.",
+      "lang": "en",
+      "publishedAt": "2026-07-10T00:00:00.000Z",
+      "collectedAt": "2026-10-05T06:30:50.827Z",
+      "tags": [
+        "changelog",
+        "cursor",
+        "productivity",
+        "search",
+        "side-chat"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "このリリースでは、メインチャットと並行して使えるサイドチャット、エージェントの会話履歴を検索できる機能、さらにシンプルになったプロジェクト / リポジトリ ピッカーにより、作業の流れを保ちやすくなりました。 サイドチャットを開くと、メインのエージェントとの会話を中断せずに、ご質問をしたり、アイデアを広げたり、脇道にそれた話題を掘り下げたりできます。 /side 、 /btw 、またはチャットパネル上部のプラスボタンを使って、メインチャットのコンテキストを引き継いだ新しいサイドチャットを作成します。 各サイドチャットは、後から追加で質問したり、あとで見返したり、@メンションでコンテキストをメインスレッドに戻したりできる、永続的で完全なエージェントとの会話です。 デフォルトでは、サイドチャットは読み取り、検索、回答に重点を置いています。メインのエージェントを実行し続けながら、確認したい点を質問したり、方針転換を確定せずに代替案を調査したり、判断が妥当かどうかを確認したりするのに使えます。 名前や PR 番号だけでなく、会話内容まで対象にした検索で、過去のエージェントチャットをよりすばやく見つけられます。 エージェントウィンドウ では、コマンドパレット (Cmd+K) から会話履歴を検索できます。Cursor はローカル検索インデックスを構築し、数千件の会話でも軽快に検索できます。 また、Cmd+F を使って現在の会話内を検索することもできます。一致箇所の間を移動したり、一致件数を確認したりしながら、長い会話履歴をスクロール中でも検索を続けられます。 プロジェクト / リポジトリ ピッカーをシンプルにし、さらに使いやすく強化しました。これまで別の画面に移動する必要があったワークフローも、今ではピッカー内でそのまま完結できます。たとえば、ピッカーを離れずにプロジェクトを作成し、GitHub、GitLab、Azure DevOps に接続できます。",
+      "excerptOrigin": "article",
+      "feedSnippet": "This release makes it easier to stay in flow with side chats that run alongside your main chat, the ability to search agent transcripts, and simplified project and repo pickers.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -59654,7 +59622,7 @@
       "summaryEn": "OpenAI's GPT-5.6 has been designated the default model powering Microsoft 365 Copilot, bringing the latest capabilities to enterprise productivity tools used by millions.",
       "lang": "en",
       "publishedAt": "2026-07-09T13:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "copilot",
         "enterprise",
@@ -59683,7 +59651,7 @@
       "summaryEn": "OpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases, offering developers and enterprises enhanced reasoning and task-handling capabilities.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "gpt-5",
         "llm",
@@ -59712,7 +59680,7 @@
       "summaryEn": "OpenAI has repositioned ChatGPT as a capable collaborator for complex, high-stakes work, expanding its role beyond simple Q&A into a true professional partner for ambitious projects.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-assistant",
         "chatgpt",
@@ -59740,7 +59708,7 @@
       "summaryEn": "OpenAI launched a bio-focused bug bounty program for GPT-5.5, inviting external researchers to probe the model for biosafety vulnerabilities and help strengthen its defenses against biological misuse.",
       "lang": "en",
       "publishedAt": "2026-07-09T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "biosafety",
         "bug-bounty",
@@ -60346,7 +60314,7 @@
       "summaryEn": "OpenAI launched an initiative to help K–12 educators develop hands-on AI skills, equipping teachers with practical tools and knowledge to integrate AI effectively into their classrooms.",
       "lang": "en",
       "publishedAt": "2026-07-08T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-literacy",
         "education",
@@ -60365,6 +60333,35 @@
       "bodyEn": ""
     },
     {
+      "id": "a6d8ce1cd45ede0b",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/native-speed-vllm-transformers-backend",
+      "title": "Native-speed vLLM transformers modeling backend",
+      "titleJa": "vLLMのネイティブ速度 transformers モデリングバックエンド",
+      "titleEn": "Native-speed vLLM transformers modeling backend",
+      "summaryJa": "HuggingFaceのtransformersライブラリがvLLMのネイティブモデリングバックエンドとして統合され、重複実装なしに最高速度での推論が可能になった。",
+      "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
+      "lang": "en",
+      "publishedAt": "2026-07-08T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "huggingface",
+        "inference",
+        "open-model",
+        "transformers",
+        "vllm"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "warm",
+      "contentSnippet": "TL;DR : The transformers vLLM backend is now as fast (or faster) than custom vLLM implementations for many LLM architectures. Model authors can automatically leverage their transformers implementations to get ultra fast vLLM inference, for free. The transformers library has become the reference modeling library for Machine Learning. It supports 450+ architectures through consistent APIs, and is designed with the main goal that model implementations are self contained and easy to understand . Going through transformers code makes it easy for contributors to learn how an architecture works, and then port it to other frameworks such as vLLM, SGLang, MLX, llama.cpp, and many others. We have fully embraced this role in the ecosystem and are investing a lot of effort to make it easier. A big step in this direction was the integration last year of transformers as a modeling backend in vLLM.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "d4fcae9550ab0099",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -60376,7 +60373,7 @@
       "summaryEn": "OpenAI announced GPT-Live, a new real-time interactive AI experience that enables more natural, live interactions with GPT models, marking a significant step in conversational AI accessibility.",
       "lang": "en",
       "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "conversational-ai",
         "gpt-live",
@@ -60422,35 +60419,6 @@
       "bodyEn": "",
       "feedSnippet": "On May 23, 2026, fresh off the stage at Google I/O, our Google Developer Experts (GDEs) converged on...",
       "excerptOrigin": "article"
-    },
-    {
-      "id": "a6d8ce1cd45ede0b",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/native-speed-vllm-transformers-backend",
-      "title": "Native-speed vLLM transformers modeling backend",
-      "titleJa": "vLLMのネイティブ速度 transformers モデリングバックエンド",
-      "titleEn": "Native-speed vLLM transformers modeling backend",
-      "summaryJa": "HuggingFaceのtransformersライブラリがvLLMのネイティブモデリングバックエンドとして統合され、重複実装なしに最高速度での推論が可能になった。",
-      "summaryEn": "Transformers is now a native modeling backend for vLLM, enabling full-speed inference without duplicating model implementations across the two libraries.",
-      "lang": "en",
-      "publishedAt": "2026-07-08T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "huggingface",
-        "inference",
-        "open-model",
-        "transformers",
-        "vllm"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "warm",
-      "contentSnippet": "TL;DR : The transformers vLLM backend is now as fast (or faster) than custom vLLM implementations for many LLM architectures. Model authors can automatically leverage their transformers implementations to get ultra fast vLLM inference, for free. The transformers library has become the reference modeling library for Machine Learning. It supports 450+ architectures through consistent APIs, and is designed with the main goal that model implementations are self contained and easy to understand . Going through transformers code makes it easy for contributors to learn how an architecture works, and then port it to other frameworks such as vLLM, SGLang, MLX, llama.cpp, and many others. We have fully embraced this role in the ecosystem and are investing a lot of effort to make it easier. A big step in this direction was the integration last year of transformers as a modeling backend in vLLM.",
-      "excerptOrigin": "article",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "0adb5a934461e0ba",
@@ -60729,7 +60697,7 @@
       "summaryEn": "Semantic Kernel .NET v1.78.0 is out, delivering agent framework improvements and bug fixes that enhance the stability of AI-integrated .NET application development.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:33:18.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "dotnet",
@@ -60765,7 +60733,7 @@
       "summaryEn": "Semantic Kernel Python 1.44.0 delivers incremental bug fixes and improvements to the agent framework and connectors, enhancing stability for developers building AI-powered applications with the SDK.",
       "lang": "en",
       "publishedAt": "2026-07-07T16:18:18.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "llm-orchestration",
@@ -60878,7 +60846,7 @@
       "category": "tech-news",
       "importance": 2,
       "halfLife": "news",
-      "archiveTier": "warm",
+      "archiveTier": "cold",
       "contentSnippet": "We’re adding support for new capabilities like background execution for async interactions, easy connection to remote MCP servers, custom functions and credential refresh. Your browser does not support the audio element. This content is generated by Google AI. Generative AI is experimental Today we’re announcing new capabilities for Managed Agents in Gemini API , including background execution , remote MCP server integration , custom function calling and refreshing credentials across interactions . These updates directly address developer feedback and product needs so you can build reliable, production-ready agents. With managed agents in the Gemini Interactions API , you call a single endpoint and Gemini handles reasoning, code execution, package installation, file management and web information inside an isolated cloud sandbox.",
       "image": {
         "src": "https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Managed_agents_feature_bundle_l.max-600x600.format-webp.webp",
@@ -60968,6 +60936,37 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "1ae5bbd48af43ba2",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/lerobot-release-v060",
+      "title": "LeRobot v0.6.0: Imagine, Evaluate, Improve",
+      "titleJa": "LeRobot v0.6.0: 想像・評価・改善",
+      "titleEn": "LeRobot v0.6.0: Imagine, Evaluate, Improve",
+      "summaryJa": "LeRobot v0.6.0では、ロボット学習における想像・評価・改善のサイクルを強化する新機能が追加され、実機なしでの検証や性能改善が容易になった。",
+      "summaryEn": "LeRobot v0.6.0 introduces capabilities for imagination-based planning, improved evaluation pipelines, and iterative policy improvement, making robot learning more accessible without physical hardware.",
+      "lang": "en",
+      "publishedAt": "2026-07-07T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "benchmark",
+        "huggingface",
+        "lerobot",
+        "open-model",
+        "policy-learning",
+        "reinforcement-learning",
+        "robotics"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "LeRobot v0.6.0: Imagine, Evaluate, Improve This new release is about closing the robot learning loop: policies that imagine the future before acting, reward models that tell you when your robot succeeds, a deployment CLI that turns failures into training data, and six new simulation benchmarks to measure it all. It also brings depth sensing, VLM-powered dataset annotation, custom video encoding, cloud training on HF Jobs, and a much leaner install. LeRobot v0.6.0 introduces world model policies (VLA-JEPA, FastWAM, LingBot-VA) that learn to imagine the future, a wave of new VLAs (GR00T N1.7, MolmoAct2, EO-1, EVO1, Multitask DiT), and a new reward models API (Robometer, TOPReward). It ships six new simulation benchmarks unified under lerobot-eval , the lerobot-rollout CLI with DAgger-style human-in-the-loop corrections, FSDP training, and cloud training on HF Jobs.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "dc34ba0c581f0720",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -60979,7 +60978,7 @@
       "summaryEn": "MUFG has partnered with OpenAI to embed AI across its entire organization, pursuing a transformation into a fully AI-native bank. The move signals a major commitment by a global financial institution to AI-driven operations.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "enterprise-ai",
         "finance",
@@ -61008,7 +61007,7 @@
       "summaryEn": "Australian Payments Plus adopted ChatGPT and Codex to accelerate software development and streamline operations, demonstrating practical AI gains in critical financial infrastructure.",
       "lang": "en",
       "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "case-study",
         "codex",
@@ -61022,37 +61021,6 @@
       "archiveTier": "cold",
       "contentSnippet": "See how Australian Payments Plus uses ChatGPT Enterprise and Codex to move faster through payments complexity. AP+ saves time, improves quality, and keeps human judgment central.",
       "excerptOrigin": "article-unavailable",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "1ae5bbd48af43ba2",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/lerobot-release-v060",
-      "title": "LeRobot v0.6.0: Imagine, Evaluate, Improve",
-      "titleJa": "LeRobot v0.6.0: 想像・評価・改善",
-      "titleEn": "LeRobot v0.6.0: Imagine, Evaluate, Improve",
-      "summaryJa": "LeRobot v0.6.0では、ロボット学習における想像・評価・改善のサイクルを強化する新機能が追加され、実機なしでの検証や性能改善が容易になった。",
-      "summaryEn": "LeRobot v0.6.0 introduces capabilities for imagination-based planning, improved evaluation pipelines, and iterative policy improvement, making robot learning more accessible without physical hardware.",
-      "lang": "en",
-      "publishedAt": "2026-07-07T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "benchmark",
-        "huggingface",
-        "lerobot",
-        "open-model",
-        "policy-learning",
-        "reinforcement-learning",
-        "robotics"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "LeRobot v0.6.0: Imagine, Evaluate, Improve This new release is about closing the robot learning loop: policies that imagine the future before acting, reward models that tell you when your robot succeeds, a deployment CLI that turns failures into training data, and six new simulation benchmarks to measure it all. It also brings depth sensing, VLM-powered dataset annotation, custom video encoding, cloud training on HF Jobs, and a much leaner install. LeRobot v0.6.0 introduces world model policies (VLA-JEPA, FastWAM, LingBot-VA) that learn to imagine the future, a wave of new VLAs (GR00T N1.7, MolmoAct2, EO-1, EVO1, Multitask DiT), and a new reward models API (Robometer, TOPReward). It ships six new simulation benchmarks unified under lerobot-eval , the lerobot-rollout CLI with DAgger-style human-in-the-loop corrections, FSDP training, and cloud training on HF Jobs.",
-      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -61136,7 +61104,7 @@
       "summaryEn": "Anthropic examines the core values and character at the heart of Claude, revealing the fundamental principles and motivations that shape how the AI thinks and behaves. Understanding Claude's inner life matters for transparency in AI development.",
       "lang": "en",
       "publishedAt": "2026-07-06T16:59:51.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-identity",
         "ai-philosophy",
@@ -61326,6 +61294,37 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "cba740f1d7ffc5ee",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/revamped-kernels",
+      "title": "🤗 Kernels: Major Updates",
+      "titleJa": "🤗 Kernels: 主要アップデート",
+      "titleEn": "🤗 Kernels: Major Updates",
+      "summaryJa": "Hugging FaceがKernelsプラットフォームを大幅に刷新した。最適化されたGPUカーネルの統合・共有の仕組みが改善され、ローカル環境でのLLM推論の高速化と開発体験の向上が期待できる。",
+      "summaryEn": "Hugging Face has revamped its Kernels platform, making it significantly easier to integrate and share optimized GPU kernels within inference pipelines, delivering better performance for local LLM deployments.",
+      "lang": "en",
+      "publishedAt": "2026-07-06T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "cuda",
+        "gpu",
+        "huggingface",
+        "inference",
+        "kernels",
+        "open-model",
+        "performance"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "In our previous post (From Zero to GPU) , we introduced the 🤗 Kernels project, which aims at standardizing how custom kernels are packaged, distributed, and consumed. We want the project to be frictionless and secure, while making it as Hub-friendly as possible. Over the past few months, we have worked towards this goal. In the process, we also almost completely redesigned the project. This post will summarize the major updates we have shipped and what’s coming. We have introduced a new repository type on the Hub called \"kernel\" . This enables us to cater to users with compute-related specificities. For example, a user can get a sense of which accelerators, operating systems, and backend versions are supported for a given kernel: One can browse all available kernels on the Hub here: https://huggingface.co/kernels .",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "accc5aab195019c1",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -61395,37 +61394,6 @@
       "bodyEn": "",
       "feedSnippet": "Distributed AI training is notoriously fragile because losing a single machine typically crashes the entire multi-node job, forcing a time-consuming, full-workload infrastructure restart. To address this, Google’s JAX ecosystem utilizes elastic training via Pathways, which conver",
       "excerptOrigin": "article"
-    },
-    {
-      "id": "cba740f1d7ffc5ee",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/revamped-kernels",
-      "title": "🤗 Kernels: Major Updates",
-      "titleJa": "🤗 Kernels: 主要アップデート",
-      "titleEn": "🤗 Kernels: Major Updates",
-      "summaryJa": "Hugging FaceがKernelsプラットフォームを大幅に刷新した。最適化されたGPUカーネルの統合・共有の仕組みが改善され、ローカル環境でのLLM推論の高速化と開発体験の向上が期待できる。",
-      "summaryEn": "Hugging Face has revamped its Kernels platform, making it significantly easier to integrate and share optimized GPU kernels within inference pipelines, delivering better performance for local LLM deployments.",
-      "lang": "en",
-      "publishedAt": "2026-07-06T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "cuda",
-        "gpu",
-        "huggingface",
-        "inference",
-        "kernels",
-        "open-model",
-        "performance"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "In our previous post (From Zero to GPU) , we introduced the 🤗 Kernels project, which aims at standardizing how custom kernels are packaged, distributed, and consumed. We want the project to be frictionless and secure, while making it as Hub-friendly as possible. Over the past few months, we have worked towards this goal. In the process, we also almost completely redesigned the project. This post will summarize the major updates we have shipped and what’s coming. We have introduced a new repository type on the Hub called \"kernel\" . This enables us to cater to users with compute-related specificities. For example, a user can get a sense of which accelerators, operating systems, and backend versions are supported for a given kernel: One can browse all available kernels on the Hub here: https://huggingface.co/kernels .",
-      "excerptOrigin": "article",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "aad5d20522a6820a",
@@ -61858,6 +61826,36 @@
       "evergreen": true
     },
     {
+      "id": "78e835214fea6c6c",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/cerebras-gemma4-voice-ai",
+      "title": "Hugging Face and Cerebras bring Gemma 4 to real-time voice AI",
+      "titleJa": "Hugging Face と Cerebras が Gemma 4 をリアルタイム音声 AI に対応",
+      "titleEn": "Hugging Face and Cerebras bring Gemma 4 to real-time voice AI",
+      "summaryJa": "Hugging Face と Cerebras が連携し、Google の Gemma 4 モデルをリアルタイム音声 AI パイプラインで利用可能にした。高速推論と音声対話を組み合わせることで、低遅延な会話体験の実現が期待される。",
+      "summaryEn": "Hugging Face and Cerebras have partnered to integrate Google's Gemma 4 model into a real-time voice AI pipeline, enabling low-latency conversational experiences by combining fast inference hardware with state-of-the-art open models.",
+      "lang": "en",
+      "publishedAt": "2026-07-01T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "cerebras",
+        "gemma",
+        "huggingface",
+        "open-model",
+        "real-time-inference",
+        "voice-ai"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "For voice AI, latency is a critical parameter. Developers have made tremendous progress in model quality, but the user experience is still often limited by response times. Hugging Face and Cerebras are changing that experience. Today, we demonstrate what becomes possible when an open, modular voice AI architecture is paired with industry-leading inference speed. The result is a speech-to-speech experience that feels dramatically more natural. Instead of waiting for an AI to respond, conversations flow with the responsiveness users expect from human interaction. The demo is built as a real-time speech-to-speech pipeline. Each part of the system is modular, open, and replaceable, making it easy for developers to adapt the stack for different assistants, robots, products, or research projects.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "9c6f346430372edb",
       "source": "google-developers",
       "sourceType": "blog",
@@ -61951,36 +61949,6 @@
       "bodyEn": "",
       "feedSnippet": "The open-source Genkit framework has introduced the Agents API, a full-stack tool designed to simplify the complex plumbing of conversational AI by packaging message history, tool loops, and streaming into a single interface. The API supports flexible, server- or client-managed s",
       "excerptOrigin": "article"
-    },
-    {
-      "id": "78e835214fea6c6c",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/cerebras-gemma4-voice-ai",
-      "title": "Hugging Face and Cerebras bring Gemma 4 to real-time voice AI",
-      "titleJa": "Hugging Face と Cerebras が Gemma 4 をリアルタイム音声 AI に対応",
-      "titleEn": "Hugging Face and Cerebras bring Gemma 4 to real-time voice AI",
-      "summaryJa": "Hugging Face と Cerebras が連携し、Google の Gemma 4 モデルをリアルタイム音声 AI パイプラインで利用可能にした。高速推論と音声対話を組み合わせることで、低遅延な会話体験の実現が期待される。",
-      "summaryEn": "Hugging Face and Cerebras have partnered to integrate Google's Gemma 4 model into a real-time voice AI pipeline, enabling low-latency conversational experiences by combining fast inference hardware with state-of-the-art open models.",
-      "lang": "en",
-      "publishedAt": "2026-07-01T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "cerebras",
-        "gemma",
-        "huggingface",
-        "open-model",
-        "real-time-inference",
-        "voice-ai"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "For voice AI, latency is a critical parameter. Developers have made tremendous progress in model quality, but the user experience is still often limited by response times. Hugging Face and Cerebras are changing that experience. Today, we demonstrate what becomes possible when an open, modular voice AI architecture is paired with industry-leading inference speed. The result is a speech-to-speech experience that feels dramatically more natural. Instead of waiting for an AI to respond, conversations flow with the responsiveness users expect from human interaction. The demo is built as a real-time speech-to-speech pipeline. Each part of the system is modular, open, and replaceable, making it easy for developers to adapt the stack for different assistants, robots, products, or research projects.",
-      "excerptOrigin": "article",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "87e205c49218df67",
@@ -62253,7 +62221,7 @@
       "summaryEn": "OpenAI reviewed how ChatGPT adoption has grown across individuals, businesses, and institutions, highlighting the expanding range of use cases and the scale of its global reach.",
       "lang": "en",
       "publishedAt": "2026-06-30T09:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "adoption",
         "chatgpt",
@@ -62270,90 +62238,32 @@
       "bodyEn": ""
     },
     {
-      "id": "3331a55ea23268f9",
-      "source": "openai-blog",
+      "id": "95f13a7124617b6a",
+      "source": "huggingface-blog",
       "sourceType": "blog",
-      "url": "https://openai.com/index/core-dump-epidemiology-data-infrastructure-bug",
-      "title": "Core dump epidemiology: fixing an 18-year-old bug",
-      "titleJa": "コアダンプの疫学：18年前のバグを修正",
-      "titleEn": "Core dump epidemiology: fixing an 18-year-old bug",
-      "summaryJa": "OpenAIのエンジニアがデータインフラに潜む18年来のバグを特定・修正し、コアダンプ解析の手法を用いて長年の不安定性の根本原因を解消した。",
-      "summaryEn": "OpenAI engineers traced and fixed an 18-year-old bug lurking in their data infrastructure by applying core dump epidemiology techniques, eliminating a long-standing source of system instability.",
+      "url": "https://huggingface.co/blog/eee-community-evals",
+      "title": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
+      "titleJa": "Hugging Faceモデルページに「Every Eval Ever」の評価結果を掲載",
+      "titleEn": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
+      "summaryJa": "Hugging Faceはコミュニティ主導の評価プロジェクト「Every Eval Ever」の結果をモデルページ上で直接閲覧できるようにした。これにより、多様なベンチマーク結果を一か所で比較できる透明性の高い評価環境が整う。",
+      "summaryEn": "Hugging Face now surfaces Every Eval Ever community benchmark results directly on model pages, giving users a unified view of diverse evaluation scores and making open-model comparison more transparent.",
       "lang": "en",
       "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
-      "tags": [
-        "codex",
-        "core-dump",
-        "debugging",
-        "infrastructure",
-        "openai"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "OpenAI engineers used large-scale core dump analysis to debug rare infrastructure crashes, uncovering both a hardware fault and a long-standing software bug.",
-      "excerptOrigin": "article-unavailable",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "7faf801be2706db2",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/introducing-genebench-pro",
-      "title": "Introducing GeneBench-Pro",
-      "titleJa": "GeneBench-Proの紹介",
-      "titleEn": "Introducing GeneBench-Pro",
-      "summaryJa": "OpenAIはゲノム・生命科学分野のAI評価基準となるベンチマークスイートGeneBench-Proを公開した。研究者がAIモデルの遺伝子解析能力を標準的な指標で比較できるようになる。",
-      "summaryEn": "OpenAI launched GeneBench-Pro, a benchmark suite designed to evaluate AI models on genomics and biological reasoning tasks, giving researchers a standardized way to measure progress in AI-driven gene analysis.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
       "tags": [
         "benchmark",
-        "biology",
+        "community",
         "evaluation",
-        "genomics",
-        "openai",
-        "release",
-        "research"
+        "huggingface",
+        "leaderboard",
+        "open-model"
       ],
-      "category": "codex",
+      "category": "local-llm",
       "importance": 2,
       "halfLife": "news",
       "archiveTier": "cold",
-      "contentSnippet": "Introducing GeneBench-Pro, a new benchmark testing AI performance in genomics, biology, and scientific research using complex, real-world datasets.",
-      "excerptOrigin": "article-unavailable",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "32763feb9e400384",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/genebench-pro/case-studies",
-      "title": "Inside Genebench-Pro",
-      "titleJa": "Genebench-Pro の内側：事例研究",
-      "titleEn": "Inside Genebench-Pro",
-      "summaryJa": "OpenAIはゲノム解析AIの性能評価基準「Genebench-Pro」の詳細と実際の活用事例を公開し、生命科学分野におけるAI研究の進展を示した。",
-      "summaryEn": "OpenAI unveiled Genebench-Pro, a genomics-focused AI benchmark, sharing case studies that highlight its role in advancing biological research and model evaluation.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
-      "tags": [
-        "benchmark",
-        "genomics",
-        "life-science",
-        "openai",
-        "research"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "excerptOrigin": "article-unavailable",
+      "contentSnippet": "Every Eval Ever (EEE) and Hugging Face Community Evals are now intercompatible. We enable cross-posting and interpreting evaluation results, while linking to open models, leaderboards, and a unified standardized metadata store. EEE launched in February 2026 as a project of the EvalEval Coalition , the first cross-institutional effort to improve how AI evaluation results get reported by both first and third party evaluators. Hugging Face launched Community Evals in February 2026 to decentralize how benchmark scores get reported on the Hub. Combined, they patch gaps in how users, researchers, and policymakers trust, understand, and choose evaluations and models. Evaluation results are how we measure model capabilities, compare models against each other, and reason about safety and governance, and yet they are scattered and hard to compare.",
+      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -62447,6 +62357,94 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "3331a55ea23268f9",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/core-dump-epidemiology-data-infrastructure-bug",
+      "title": "Core dump epidemiology: fixing an 18-year-old bug",
+      "titleJa": "コアダンプの疫学：18年前のバグを修正",
+      "titleEn": "Core dump epidemiology: fixing an 18-year-old bug",
+      "summaryJa": "OpenAIのエンジニアがデータインフラに潜む18年来のバグを特定・修正し、コアダンプ解析の手法を用いて長年の不安定性の根本原因を解消した。",
+      "summaryEn": "OpenAI engineers traced and fixed an 18-year-old bug lurking in their data infrastructure by applying core dump epidemiology techniques, eliminating a long-standing source of system instability.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "codex",
+        "core-dump",
+        "debugging",
+        "infrastructure",
+        "openai"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "OpenAI engineers used large-scale core dump analysis to debug rare infrastructure crashes, uncovering both a hardware fault and a long-standing software bug.",
+      "excerptOrigin": "article-unavailable",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "7faf801be2706db2",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/introducing-genebench-pro",
+      "title": "Introducing GeneBench-Pro",
+      "titleJa": "GeneBench-Proの紹介",
+      "titleEn": "Introducing GeneBench-Pro",
+      "summaryJa": "OpenAIはゲノム・生命科学分野のAI評価基準となるベンチマークスイートGeneBench-Proを公開した。研究者がAIモデルの遺伝子解析能力を標準的な指標で比較できるようになる。",
+      "summaryEn": "OpenAI launched GeneBench-Pro, a benchmark suite designed to evaluate AI models on genomics and biological reasoning tasks, giving researchers a standardized way to measure progress in AI-driven gene analysis.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "benchmark",
+        "biology",
+        "evaluation",
+        "genomics",
+        "openai",
+        "release",
+        "research"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Introducing GeneBench-Pro, a new benchmark testing AI performance in genomics, biology, and scientific research using complex, real-world datasets.",
+      "excerptOrigin": "article-unavailable",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "32763feb9e400384",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/genebench-pro/case-studies",
+      "title": "Inside Genebench-Pro",
+      "titleJa": "Genebench-Pro の内側：事例研究",
+      "titleEn": "Inside Genebench-Pro",
+      "summaryJa": "OpenAIはゲノム解析AIの性能評価基準「Genebench-Pro」の詳細と実際の活用事例を公開し、生命科学分野におけるAI研究の進展を示した。",
+      "summaryEn": "OpenAI unveiled Genebench-Pro, a genomics-focused AI benchmark, sharing case studies that highlight its role in advancing biological research and model evaluation.",
+      "lang": "en",
+      "publishedAt": "2026-06-30T00:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "benchmark",
+        "genomics",
+        "life-science",
+        "openai",
+        "research"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "excerptOrigin": "article-unavailable",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "84a32ff166848340",
       "source": "google-developers",
       "sourceType": "blog",
@@ -62506,36 +62504,6 @@
       "contentSnippet": "チームマーケットプレイス を拡張し、チームMCPと組織グループに対応しました。 管理者は、チーム MCP サーバーを一度設定するだけで、クラウドエージェント、エージェントウィンドウ、IDE、CLI で利用できるようになりました。 管理者がクラウドエージェント用にチーム MCP サーバーを設定すると、 ダッシュボード -> 統合 & MCP から、同じサーバーをチームマーケットプレイスでも利用できるようにできます。これにより、チームのメンバーは自分でサーバーを設定しなくても、承認済みの統合をローカルにインストールできます。 詳しくは、ドキュメントの 既存のチーム MCP を移行する方法 をご覧ください。 チームマーケットプレイスで、チーム単位の SCIM ディレクトリグループに加えて、 組織グループ もサポートされるようになりました。 ダッシュボード -> Plugins -> チームマーケットプレイス で、マーケットプレイスへのアクセスを特定の組織グループのみに制限できます。すでに SCIM ディレクトリグループを使っているマーケットプレイスでは、その設定が維持されます。 チームマーケットプレイス を拡張し、チームMCPと組織グループに対応しました。 管理者は、チーム MCP サーバーを一度設定するだけで、クラウドエージェント、エージェントウィンドウ、IDE、CLI で利用できるようになりました。 管理者がクラウドエージェント用にチーム MCP サーバーを設定すると、 ダッシュボード -> 統合 & MCP から、同じサーバーをチームマーケットプレイスでも利用できるようにできます。これにより、チームのメンバーは自分でサーバーを設定しなくても、承認済みの統合をローカルにインストールできます。 詳しくは、ドキュメントの 既存のチーム MCP を移行する方法 をご覧ください。 チームマーケットプレイスで、チーム単位の SCIM ディレクトリグループに加えて、 組織グループ もサポートされるようになりました。",
       "excerptOrigin": "article",
       "feedSnippet": "We've expanded team marketplaces to support Team MCPs and organization groups.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "95f13a7124617b6a",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/eee-community-evals",
-      "title": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
-      "titleJa": "Hugging Faceモデルページに「Every Eval Ever」の評価結果を掲載",
-      "titleEn": "Featuring Every Eval Ever Results on Hugging Face Model Pages",
-      "summaryJa": "Hugging Faceはコミュニティ主導の評価プロジェクト「Every Eval Ever」の結果をモデルページ上で直接閲覧できるようにした。これにより、多様なベンチマーク結果を一か所で比較できる透明性の高い評価環境が整う。",
-      "summaryEn": "Hugging Face now surfaces Every Eval Ever community benchmark results directly on model pages, giving users a unified view of diverse evaluation scores and making open-model comparison more transparent.",
-      "lang": "en",
-      "publishedAt": "2026-06-30T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "benchmark",
-        "community",
-        "evaluation",
-        "huggingface",
-        "leaderboard",
-        "open-model"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Every Eval Ever (EEE) and Hugging Face Community Evals are now intercompatible. We enable cross-posting and interpreting evaluation results, while linking to open models, leaderboards, and a unified standardized metadata store. EEE launched in February 2026 as a project of the EvalEval Coalition , the first cross-institutional effort to improve how AI evaluation results get reported by both first and third party evaluators. Hugging Face launched Community Evals in February 2026 to decentralize how benchmark scores get reported on the Hub. Combined, they patch gaps in how users, researchers, and policymakers trust, understand, and choose evaluations and models. Evaluation results are how we measure model capabilities, compare models against each other, and reason about safety and governance, and yet they are scattered and hard to compare.",
-      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -62684,7 +62652,7 @@
       "summaryEn": "OpenAI released a report mapping AI workforce opportunities across Europe, analyzing job transition potential and the labor market impact of AI adoption.",
       "lang": "en",
       "publishedAt": "2026-06-29T07:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-jobs",
         "europe",
@@ -62745,7 +62713,7 @@
       "summaryEn": "HP Inc. has formed the Frontier strategic partnership with OpenAI, integrating advanced AI capabilities into HP's hardware and services to boost enterprise productivity.",
       "lang": "en",
       "publishedAt": "2026-06-28T17:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "enterprise",
         "enterprise-ai",
@@ -62817,7 +62785,7 @@
       "summaryEn": "OpenAI previewed GPT-5.6 Sol, a next-generation model offering significant capability improvements in reasoning and performance, marking a notable step forward in their model lineup.",
       "lang": "en",
       "publishedAt": "2026-06-26T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "gpt-5",
         "language-model",
@@ -63085,7 +63053,7 @@
       "summaryEn": "Immunologist Derya Unutmaz used GPT-5 to crack a three-year-old research mystery in immunology, showcasing how AI can meaningfully accelerate real-world scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-06-23T17:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "gpt-5",
         "immunology",
@@ -63186,7 +63154,7 @@
       "summaryEn": "OpenAI announced efforts to help establish shared industry standards for advanced AI safety and interoperability, aiming to align practices across organizations and foster more trustworthy AI development.",
       "lang": "en",
       "publishedAt": "2026-06-23T13:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-safety",
         "openai",
@@ -63245,70 +63213,6 @@
       "evergreen": true
     },
     {
-      "id": "4f2ea20ce40749de",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/omio",
-      "title": "How Omio is building the future of conversational travel",
-      "titleJa": "OmioがOpenAIで会話型旅行の未来を構築する方法",
-      "titleEn": "How Omio is building the future of conversational travel",
-      "summaryJa": "旅行プラットフォームOmioがOpenAIの技術を活用し、自然言語で交通手段を検索・予約できる会話型インターフェースを構築。旅行体験の利便性向上に向けた新たなアプローチを示している。",
-      "summaryEn": "Omio is integrating OpenAI's models to enable conversational travel search and booking, allowing users to find trains, buses, and flights through natural dialogue rather than traditional form-based search.",
-      "lang": "en",
-      "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
-      "tags": [
-        "conversational-ai",
-        "omio",
-        "openai",
-        "product-integration",
-        "travel"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Discover how Omio uses OpenAI to power conversational travel experiences, accelerate product development, and transform into an AI-native company.",
-      "excerptOrigin": "article-unavailable",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "d33cb088918ef6f1",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/introducing-claude-tag",
-      "title": "Introducing Claude Tag",
-      "titleJa": "SlackでClaudeをチームメンバーとして招待できる「Claude Tag」登場",
-      "titleEn": "Introducing Claude Tag",
-      "summaryJa": "AnthropicはSlack上でClaudeをチャンネルメンバーとして追加し、ツールやデータと連携させながら@メンションで呼び出せる「Claude Tag」を発表した。日常業務へのAI統合をより自然な形で実現し、チーム全員がシームレスに活用できる。",
-      "summaryEn": "Claude Tag lets teams add Claude as a Slack channel member with access to chosen tools, data, and codebases, making AI participation a natural part of daily workflows rather than a separate tool.",
-      "lang": "en",
-      "publishedAt": "2026-06-23T00:00:00.000Z",
-      "collectedAt": "2026-07-08T08:00:40.126Z",
-      "tags": [
-        "ai-assistant",
-        "anthropic",
-        "claude",
-        "claude-tag",
-        "collaboration-tools",
-        "enterprise",
-        "slack",
-        "slack-integration",
-        "team-collaboration",
-        "workflow-integration"
-      ],
-      "category": "claude",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Claude Tag is a new way for teams to work with Claude. We’re starting on Slack, which Claude can join as a team member. Grant Claude access to selected channels, and connect it to whichever tools, data—and even codebases—you choose. Then, anyone in the channel can tag @Claude in, and delegate tasks to it while they focus on other work. Claude builds context by remembering relevant information from the channels it’s in, and can plan out tasks to complete in the future. We see Claude Tag as the beginning of an evolution of Claude Code: it makes the model even more proactive, and it works better with a full team. Tagging @Claude is now one of the main ways we get things done at Anthropic. Today, 65% of our product team’s code is created by our internal version of Claude Tag.",
-      "bodyJa": "",
-      "bodyEn": "",
-      "feedSnippet": "Claude Tag is a new way for teams to work with Claude. We’re starting on Slack, which Claude can join as a team member. Grant Claude access to selected channels, and connect it to whichever tools, data-and even codebases-you choose. Then, anyone in the channel can tag @Claude in,",
-      "excerptOrigin": "article"
-    },
-    {
       "id": "fed82c8c6bccdada",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -63365,6 +63269,70 @@
       "archiveTier": "cold",
       "contentSnippet": "Experimenting with the proposed Cross-Origin Storage API in Transformers.js (This is a guest post by Developer Relations Engineer Thomas Steiner from the Chrome team at Google.) Transformers.js provides Web developers with a simple way to use the power of transformers in their Web apps through task-specific pipelines. To run inference in the browser, developers create an instance of pipeline() and specify a task they want to use the pipeline for. As a concrete example, the following snippet shows how to set up an automatic speech recognition (ASR) pipeline. import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0' ; const result = await asr ( 'jfk.wav' ); You will notice in the source code that I specified Xenova/whisper-tiny.en as the model, which is a very decent choice for common English automatic speech recognition tasks.",
       "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "d33cb088918ef6f1",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/introducing-claude-tag",
+      "title": "Introducing Claude Tag",
+      "titleJa": "SlackでClaudeをチームメンバーとして招待できる「Claude Tag」登場",
+      "titleEn": "Introducing Claude Tag",
+      "summaryJa": "AnthropicはSlack上でClaudeをチャンネルメンバーとして追加し、ツールやデータと連携させながら@メンションで呼び出せる「Claude Tag」を発表した。日常業務へのAI統合をより自然な形で実現し、チーム全員がシームレスに活用できる。",
+      "summaryEn": "Claude Tag lets teams add Claude as a Slack channel member with access to chosen tools, data, and codebases, making AI participation a natural part of daily workflows rather than a separate tool.",
+      "lang": "en",
+      "publishedAt": "2026-06-23T00:00:00.000Z",
+      "collectedAt": "2026-07-08T08:00:40.126Z",
+      "tags": [
+        "ai-assistant",
+        "anthropic",
+        "claude",
+        "claude-tag",
+        "collaboration-tools",
+        "enterprise",
+        "slack",
+        "slack-integration",
+        "team-collaboration",
+        "workflow-integration"
+      ],
+      "category": "claude",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Claude Tag is a new way for teams to work with Claude. We’re starting on Slack, which Claude can join as a team member. Grant Claude access to selected channels, and connect it to whichever tools, data—and even codebases—you choose. Then, anyone in the channel can tag @Claude in, and delegate tasks to it while they focus on other work. Claude builds context by remembering relevant information from the channels it’s in, and can plan out tasks to complete in the future. We see Claude Tag as the beginning of an evolution of Claude Code: it makes the model even more proactive, and it works better with a full team. Tagging @Claude is now one of the main ways we get things done at Anthropic. Today, 65% of our product team’s code is created by our internal version of Claude Tag.",
+      "bodyJa": "",
+      "bodyEn": "",
+      "feedSnippet": "Claude Tag is a new way for teams to work with Claude. We’re starting on Slack, which Claude can join as a team member. Grant Claude access to selected channels, and connect it to whichever tools, data-and even codebases-you choose. Then, anyone in the channel can tag @Claude in,",
+      "excerptOrigin": "article"
+    },
+    {
+      "id": "4f2ea20ce40749de",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/omio",
+      "title": "How Omio is building the future of conversational travel",
+      "titleJa": "OmioがOpenAIで会話型旅行の未来を構築する方法",
+      "titleEn": "How Omio is building the future of conversational travel",
+      "summaryJa": "旅行プラットフォームOmioがOpenAIの技術を活用し、自然言語で交通手段を検索・予約できる会話型インターフェースを構築。旅行体験の利便性向上に向けた新たなアプローチを示している。",
+      "summaryEn": "Omio is integrating OpenAI's models to enable conversational travel search and booking, allowing users to find trains, buses, and flights through natural dialogue rather than traditional form-based search.",
+      "lang": "en",
+      "publishedAt": "2026-06-23T00:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "conversational-ai",
+        "omio",
+        "openai",
+        "product-integration",
+        "travel"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Discover how Omio uses OpenAI to power conversational travel experiences, accelerate product development, and transform into an AI-native company.",
+      "excerptOrigin": "article-unavailable",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -63487,7 +63455,7 @@
       "summaryEn": "OpenAI launched Daybreak, a cybersecurity initiative offering AI-powered tools designed to help organizations of all sizes detect and defend against sophisticated threats.",
       "lang": "en",
       "publishedAt": "2026-06-22T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "codex",
         "cybersecurity",
@@ -63517,7 +63485,7 @@
       "summaryEn": "OpenAI's Daybreak initiative launches Patch the Planet to provide financial and resource support to open source maintainers, aiming to strengthen the sustainability of critical software infrastructure.",
       "lang": "en",
       "publishedAt": "2026-06-22T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "daybreak",
         "funding",
@@ -63535,6 +63503,36 @@
       "bodyEn": ""
     },
     {
+      "id": "c64f69921adf199e",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/local-models-pr-triage",
+      "title": "We got local models to triage the OpenClaw repo for FREE!*",
+      "titleJa": "ローカルモデルで OpenClaw リポジトリのトリアージを無料で実現！",
+      "titleEn": "We got local models to triage the OpenClaw repo for FREE!*",
+      "summaryJa": "HuggingFace がローカル LLM を活用して OpenClaw リポジトリの Issue・PR トリアージを自動化する手法を紹介。クラウド API 不要でコスト削減と開発効率向上を両立できる点が注目される。",
+      "summaryEn": "HuggingFace demonstrates how locally-run open models can automatically triage issues and pull requests in the OpenClaw repo without relying on paid cloud APIs, offering a cost-free workflow for maintainers.",
+      "lang": "en",
+      "publishedAt": "2026-06-22T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "automation",
+        "huggingface",
+        "llm-tooling",
+        "open-model",
+        "open-source",
+        "pr-triage"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "We got local models to triage the OpenClaw repo for FREE!* *Free as in beer, excluding the cost of electricity, and assuming you already own the hardware June 2026 will go down as the moment that people realized closed models can be taken away. With the removal of Anthropic's latest flagship model Claude Fable 5 fresh in memory, one can see why it is more important than ever to own your AI stack and be able to run models locally, especially if you are building your business on top of AI. In that light, we wanted to share how we use local models like Gemma and Qwen in an agent harness, to run classification tasks [1] . This approach is different from using a model like BERT for classification. A local model in an agent harness like Pi can be used in tandem with structured outputs, to assign labels.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "6402e4250110a58e",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -63546,7 +63544,7 @@
       "summaryEn": "OpenAI shares best practices for leveraging Codex on long-running, complex tasks, offering practical guidance on automating large-scale work and boosting developer productivity.",
       "lang": "en",
       "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "automation",
         "best-practices",
@@ -63668,36 +63666,6 @@
       "bodyEn": ""
     },
     {
-      "id": "c64f69921adf199e",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/local-models-pr-triage",
-      "title": "We got local models to triage the OpenClaw repo for FREE!*",
-      "titleJa": "ローカルモデルで OpenClaw リポジトリのトリアージを無料で実現！",
-      "titleEn": "We got local models to triage the OpenClaw repo for FREE!*",
-      "summaryJa": "HuggingFace がローカル LLM を活用して OpenClaw リポジトリの Issue・PR トリアージを自動化する手法を紹介。クラウド API 不要でコスト削減と開発効率向上を両立できる点が注目される。",
-      "summaryEn": "HuggingFace demonstrates how locally-run open models can automatically triage issues and pull requests in the OpenClaw repo without relying on paid cloud APIs, offering a cost-free workflow for maintainers.",
-      "lang": "en",
-      "publishedAt": "2026-06-22T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "automation",
-        "huggingface",
-        "llm-tooling",
-        "open-model",
-        "open-source",
-        "pr-triage"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "We got local models to triage the OpenClaw repo for FREE!* *Free as in beer, excluding the cost of electricity, and assuming you already own the hardware June 2026 will go down as the moment that people realized closed models can be taken away. With the removal of Anthropic's latest flagship model Claude Fable 5 fresh in memory, one can see why it is more important than ever to own your AI stack and be able to run models locally, especially if you are building your business on top of AI. In that light, we wanted to share how we use local models like Gemma and Qwen in an agent harness, to run classification tasks [1] . This approach is different from using a model like BERT for classification. A local model in an agent harness like Pi can be used in tandem with structured outputs, to assign labels.",
-      "excerptOrigin": "article",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "1d73e3edba6f9593",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -63709,7 +63677,7 @@
       "summaryEn": "Samsung Electronics has deployed ChatGPT and Codex across its workforce, enabling employees to leverage AI for productivity and software development tasks at enterprise scale.",
       "lang": "en",
       "publishedAt": "2026-06-21T23:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "chatgpt",
         "deployment",
@@ -64238,35 +64206,6 @@
       "bodyEn": ""
     },
     {
-      "id": "f598b635f4d8741a",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/chatgpt-enterprise-spend-controls",
-      "title": "New usage analytics and updated spend controls for enterprises",
-      "titleJa": "エンタープライズ向け使用状況アナリティクスと支出管理機能の強化",
-      "titleEn": "New usage analytics and updated spend controls for enterprises",
-      "summaryJa": "OpenAIはChatGPT Enterprise向けに詳細な使用状況アナリティクスと柔軟な支出制御機能を追加し、企業がコストをより正確に管理・最適化できるようになった。",
-      "summaryEn": "OpenAI has introduced enhanced usage analytics and updated spend controls for ChatGPT Enterprise, giving organizations better visibility and tighter management over AI-related costs.",
-      "lang": "en",
-      "publishedAt": "2026-06-18T17:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
-      "tags": [
-        "analytics",
-        "chatgpt-enterprise",
-        "enterprise",
-        "openai",
-        "spend-controls"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "OpenAI introduces new spend controls and usage analytics for ChatGPT Enterprise, helping organizations manage costs and scale AI with confidence.",
-      "excerptOrigin": "article-unavailable",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "c8bd93796f696549",
       "source": "mcp-blog",
       "sourceType": "blog",
@@ -64299,6 +64238,35 @@
       "bodyEn": ""
     },
     {
+      "id": "f598b635f4d8741a",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/chatgpt-enterprise-spend-controls",
+      "title": "New usage analytics and updated spend controls for enterprises",
+      "titleJa": "エンタープライズ向け使用状況アナリティクスと支出管理機能の強化",
+      "titleEn": "New usage analytics and updated spend controls for enterprises",
+      "summaryJa": "OpenAIはChatGPT Enterprise向けに詳細な使用状況アナリティクスと柔軟な支出制御機能を追加し、企業がコストをより正確に管理・最適化できるようになった。",
+      "summaryEn": "OpenAI has introduced enhanced usage analytics and updated spend controls for ChatGPT Enterprise, giving organizations better visibility and tighter management over AI-related costs.",
+      "lang": "en",
+      "publishedAt": "2026-06-18T17:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "analytics",
+        "chatgpt-enterprise",
+        "enterprise",
+        "openai",
+        "spend-controls"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "OpenAI introduces new spend controls and usage analytics for ChatGPT Enterprise, helping organizations manage costs and scale AI with confidence.",
+      "excerptOrigin": "article-unavailable",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "5716d5642331846f",
       "source": "openai-blog",
       "sourceType": "blog",
@@ -64310,7 +64278,7 @@
       "summaryEn": "OpenAI announced improvements to ChatGPT's health intelligence capabilities, enhancing the accuracy and safety of medical information responses. This matters as reliable health guidance in AI assistants directly impacts everyday user well-being.",
       "lang": "en",
       "publishedAt": "2026-06-18T11:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "chatgpt",
         "health",
@@ -64338,7 +64306,7 @@
       "summaryEn": "OpenAI announced an initiative using AI to assist physicians in diagnosing rare genetic diseases in children, potentially enabling earlier detection and better outcomes for patients with hard-to-identify conditions.",
       "lang": "en",
       "publishedAt": "2026-06-18T08:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "diagnosis",
         "genetics",
@@ -64818,7 +64786,7 @@
       "summaryEn": "OpenAI's near-autonomous AI chemist agent independently designed and executed experiments to improve a difficult reaction in medicinal chemistry, demonstrating AI's potential to accelerate real-world scientific discovery.",
       "lang": "en",
       "publishedAt": "2026-06-17T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "autonomous-agents",
@@ -64879,7 +64847,7 @@
       "summaryEn": "A patch release that adds function_choice_behavior support to the Azure AI and OpenAI Assistant agents and fixes a MessagePack issue, giving developers more flexible control over agent function calling.",
       "lang": "en",
       "publishedAt": "2026-06-17T07:28:05.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "assistant-agent",
@@ -64905,35 +64873,6 @@
         "height": 0,
         "source": "media"
       },
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "a3b557de42638604",
-      "source": "openai-blog",
-      "sourceType": "blog",
-      "url": "https://openai.com/index/introducing-life-sci-bench",
-      "title": "Introducing LifeSciBench",
-      "titleJa": "LifeSciBenchの発表",
-      "titleEn": "Introducing LifeSciBench",
-      "summaryJa": "OpenAIは生命科学分野のAI評価ベンチマーク「LifeSciBench」を公開した。これにより、生物学・化学・医学領域におけるモデルの能力を標準的に測定できるようになる。",
-      "summaryEn": "OpenAI introduced LifeSciBench, a benchmark designed to evaluate AI models across life science domains including biology, chemistry, and medicine, providing a standardized way to measure scientific reasoning capabilities.",
-      "lang": "en",
-      "publishedAt": "2026-06-17T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
-      "tags": [
-        "benchmark",
-        "evaluation",
-        "life-sciences",
-        "openai",
-        "research"
-      ],
-      "category": "codex",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Introducing LifeSciBench, an expert-authored, expert-reviewed benchmark for evaluating how AI systems handle real-world life science research tasks and decisions.",
-      "excerptOrigin": "article-unavailable",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -64971,6 +64910,35 @@
       "bodyEn": "",
       "feedSnippet": "We’ve just opened our Seoul office . Alongside it, we’re announcing new partnerships across the Korean AI ecosystem, with the enterprises, startups, and researchers behind some of the most ambitious uses of Claude. We’ve also signed a Memorandum of Understanding (MOU) with Korea’",
       "excerptOrigin": "article"
+    },
+    {
+      "id": "a3b557de42638604",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/index/introducing-life-sci-bench",
+      "title": "Introducing LifeSciBench",
+      "titleJa": "LifeSciBenchの発表",
+      "titleEn": "Introducing LifeSciBench",
+      "summaryJa": "OpenAIは生命科学分野のAI評価ベンチマーク「LifeSciBench」を公開した。これにより、生物学・化学・医学領域におけるモデルの能力を標準的に測定できるようになる。",
+      "summaryEn": "OpenAI introduced LifeSciBench, a benchmark designed to evaluate AI models across life science domains including biology, chemistry, and medicine, providing a standardized way to measure scientific reasoning capabilities.",
+      "lang": "en",
+      "publishedAt": "2026-06-17T00:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "benchmark",
+        "evaluation",
+        "life-sciences",
+        "openai",
+        "research"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Introducing LifeSciBench, an expert-authored, expert-reviewed benchmark for evaluating how AI systems handle real-world life science research tasks and decisions.",
+      "excerptOrigin": "article-unavailable",
+      "bodyJa": "",
+      "bodyEn": ""
     },
     {
       "id": "f0a66db346a7675c",
@@ -65307,7 +65275,7 @@
       "summaryEn": "OpenAI introduced a deployment simulation framework that predicts how models will behave in real-world settings before release, enabling earlier detection of safety issues and reducing post-launch surprises.",
       "lang": "en",
       "publishedAt": "2026-06-16T00:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "alignment",
         "evaluation",
@@ -65608,7 +65576,7 @@
       "summaryEn": "OpenAI launched a formal Partner Network to help businesses build and deploy AI solutions using its technology, establishing a structured ecosystem of certified partners to accelerate enterprise adoption.",
       "lang": "en",
       "publishedAt": "2026-06-14T17:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ecosystem",
         "enterprise",
@@ -65810,6 +65778,38 @@
       "evergreen": true
     },
     {
+      "id": "c601c107d674575b",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/torch-mlp-fusion",
+      "title": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
+      "titleJa": "PyTorchでのプロファイリング（第2部）：nn.LinearからFused MLPへ",
+      "titleEn": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
+      "summaryJa": "PyTorchのプロファイリングツールを使いnn.LinearベースのMLPを分析し、カーネル融合による最適化で推論速度を大幅に改善する手法を解説する記事。実践的なパフォーマンスチューニングの知見を提供する。",
+      "summaryEn": "This article walks through profiling a standard nn.Linear-based MLP in PyTorch and optimizing it via kernel fusion, demonstrating measurable inference speedups and practical techniques for production model efficiency.",
+      "lang": "en",
+      "publishedAt": "2026-06-11T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "huggingface",
+        "inference",
+        "kernel-fusion",
+        "mlp",
+        "open-model",
+        "performance-optimization",
+        "profiling",
+        "pytorch"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP This is the second post of Profiling in PyTorch, a series where we slowly build the skill of reading profiler traces and use it to drive optimization: Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP In the first part of this series \"Profiling in PyTorch\" , we used torch.add(torch.matmul(x, w), b) to learn how to read PyTorch profiler traces. We also discussed several other topics that came our way - the CPU dispatch chain, launch overhead, the difference between an overhead-bound and a compute-bound regime, and some internals of torch.compile . In the second iteration (this blog post), we climb one rung up the ladder. We replace the hand-written matmul-add pair with an nn.Linear (with bias=True ).",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "c34f42993d6d07b2",
       "source": "anthropic-news",
       "sourceType": "blog",
@@ -65851,38 +65851,6 @@
       },
       "contentSnippet": "We’re launching Claude Corps , a national fellowship program for people early in their careers who are passionate about extending the benefits of AI to communities across America. We’ll teach 1,000 fellows how to use Claude well, match them with nonprofits across America, and pay them to spend a year—full-time, in-person—helping host organizations to advance their missions. Our goals are twofold: that host organizations are equipped with valuable tools and systems, and fellows build AI skills that will serve them in their careers. The benefits of transformative AI systems could come at the cost of significant disruption. The companies building this technology have a responsibility to make sure the benefits are fully realized and widely shared, and to invest directly in the workers absorbing the change. As such, we’re committing an initial $150m to this program.",
       "excerptOrigin": "article"
-    },
-    {
-      "id": "c601c107d674575b",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/torch-mlp-fusion",
-      "title": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
-      "titleJa": "PyTorchでのプロファイリング（第2部）：nn.LinearからFused MLPへ",
-      "titleEn": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP",
-      "summaryJa": "PyTorchのプロファイリングツールを使いnn.LinearベースのMLPを分析し、カーネル融合による最適化で推論速度を大幅に改善する手法を解説する記事。実践的なパフォーマンスチューニングの知見を提供する。",
-      "summaryEn": "This article walks through profiling a standard nn.Linear-based MLP in PyTorch and optimizing it via kernel fusion, demonstrating measurable inference speedups and practical techniques for production model efficiency.",
-      "lang": "en",
-      "publishedAt": "2026-06-11T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "huggingface",
-        "inference",
-        "kernel-fusion",
-        "mlp",
-        "open-model",
-        "performance-optimization",
-        "profiling",
-        "pytorch"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP This is the second post of Profiling in PyTorch, a series where we slowly build the skill of reading profiler traces and use it to drive optimization: Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler Profiling in PyTorch (Part 2): From nn.Linear to a Fused MLP In the first part of this series \"Profiling in PyTorch\" , we used torch.add(torch.matmul(x, w), b) to learn how to read PyTorch profiler traces. We also discussed several other topics that came our way - the CPU dispatch chain, launch overhead, the difference between an overhead-bound and a compute-bound regime, and some internals of torch.compile . In the second iteration (this blog post), we climb one rung up the ladder. We replace the hand-written matmul-add pair with an nn.Linear (with bias=True ).",
-      "excerptOrigin": "article",
-      "bodyJa": "",
-      "bodyEn": ""
     },
     {
       "id": "b4bdc12f7043ae1e",
@@ -66346,7 +66314,7 @@
       "summaryEn": "Anthropic officially unveiled its new AI model Claude Fable 5 in a YouTube video, showcasing improved reasoning and new features over previous generations as the latest flagship in the Claude family.",
       "lang": "en",
       "publishedAt": "2026-06-09T17:00:05.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-models",
         "anthropic",
@@ -66527,37 +66495,6 @@
       "bodyEn": ""
     },
     {
-      "id": "99b31b2366a5e0d8",
-      "source": "anthropic-news",
-      "sourceType": "blog",
-      "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
-      "title": "Claude Fable 5 and Claude Mythos 5",
-      "titleJa": "Claude Fable 5とClaude Mythos 5",
-      "titleEn": "Claude Fable 5 and Claude Mythos 5",
-      "summaryJa": "AnthropicがMythosクラスのモデルを一般向けに安全化したClaude Fable 5をリリース。これまでに公開されたどのモデルをも超える能力を持つ最先端モデル。",
-      "summaryEn": "Anthropic launches Claude Fable 5, a safety-cleared Mythos-class model that surpasses all previously available Anthropic models in capability.",
-      "lang": "en",
-      "publishedAt": "2026-06-09T00:00:00.000Z",
-      "collectedAt": "2026-06-12T00:00:32.358Z",
-      "tags": [
-        "anthropic",
-        "claude",
-        "fable-5",
-        "frontier-ai",
-        "mythos-5",
-        "new-model",
-        "release"
-      ],
-      "category": "claude",
-      "importance": 1,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "bodyJa": "",
-      "bodyEn": "",
-      "contentSnippet": "Claude Fable 5 and Mythos 5 are now available. We are suspending access to Claude Fable 5 and Claude Mythos 5. We apologize for this disruption to our customers and are working to restore access as soon as possible. Today we’re launching Claude Fable 5 : a Mythos-class 1 model that we’ve made safe for general use. Fable 5’s capabilities exceed those of any model we’ve ever made generally available. It is state-of-the-art on nearly all tested benchmarks of AI capability, showing exceptional performance in software engineering, knowledge work, vision, scientific research, and many other areas. The longer and more complex the task, the larger Fable 5’s lead over our other models. Releasing a model this capable comes with risks. Without safeguards, Fable 5’s capabilities in areas like cybersecurity could be misused to cause serious damage.",
-      "excerptOrigin": "article"
-    },
-    {
       "id": "d28250894609a149",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -66588,6 +66525,37 @@
       "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
+    },
+    {
+      "id": "99b31b2366a5e0d8",
+      "source": "anthropic-news",
+      "sourceType": "blog",
+      "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+      "title": "Claude Fable 5 and Claude Mythos 5",
+      "titleJa": "Claude Fable 5とClaude Mythos 5",
+      "titleEn": "Claude Fable 5 and Claude Mythos 5",
+      "summaryJa": "AnthropicがMythosクラスのモデルを一般向けに安全化したClaude Fable 5をリリース。これまでに公開されたどのモデルをも超える能力を持つ最先端モデル。",
+      "summaryEn": "Anthropic launches Claude Fable 5, a safety-cleared Mythos-class model that surpasses all previously available Anthropic models in capability.",
+      "lang": "en",
+      "publishedAt": "2026-06-09T00:00:00.000Z",
+      "collectedAt": "2026-06-12T00:00:32.358Z",
+      "tags": [
+        "anthropic",
+        "claude",
+        "fable-5",
+        "frontier-ai",
+        "mythos-5",
+        "new-model",
+        "release"
+      ],
+      "category": "claude",
+      "importance": 1,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "bodyJa": "",
+      "bodyEn": "",
+      "contentSnippet": "Claude Fable 5 and Mythos 5 are now available. We are suspending access to Claude Fable 5 and Claude Mythos 5. We apologize for this disruption to our customers and are working to restore access as soon as possible. Today we’re launching Claude Fable 5 : a Mythos-class 1 model that we’ve made safe for general use. Fable 5’s capabilities exceed those of any model we’ve ever made generally available. It is state-of-the-art on nearly all tested benchmarks of AI capability, showing exceptional performance in software engineering, knowledge work, vision, scientific research, and many other areas. The longer and more complex the task, the larger Fable 5’s lead over our other models. Releasing a model this capable comes with risks. Without safeguards, Fable 5’s capabilities in areas like cybersecurity could be misused to cause serious damage.",
+      "excerptOrigin": "article"
     },
     {
       "id": "8557cf6d42575084",
@@ -67276,7 +67244,7 @@
       "summaryEn": "Semantic Kernel Python SDK 1.43.0 improves function call invocation parameter consistency and introduces a breaking change to OpenAPI document parsing options that affected developers must address.",
       "lang": "en",
       "publishedAt": "2026-06-03T22:40:50.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "ai-agents",
@@ -67814,6 +67782,38 @@
       "evergreen": true
     },
     {
+      "id": "f5c22a43a1f5a232",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/adding-mcp-tools-to-reachy-mini",
+      "title": "Adding MCP Tools to Reachy Mini",
+      "titleJa": "Reachy Mini に MCP ツールを追加する",
+      "titleEn": "Adding MCP Tools to Reachy Mini",
+      "summaryJa": "オープンソースロボット Reachy Mini に MCP サーバー経由でツール連携を追加する方法を解説した記事で、ローカル LLM とロボティクスを組み合わせた実践的なアーキテクチャを示している。",
+      "summaryEn": "This article explains how to integrate MCP tools with the Reachy Mini robot using a local LLM backend, demonstrating a practical architecture for connecting language models to physical robotic systems.",
+      "lang": "en",
+      "publishedAt": "2026-06-03T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "huggingface",
+        "local-llm",
+        "mcp-server",
+        "open-model",
+        "reachy-mini",
+        "robotics",
+        "tool-use",
+        "tutorial"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "The Reachy Mini conversation app can now use tools hosted in public Hugging Face Spaces, called over MCP. You can give your robot a new ability, like checking the weather or searching the web, by adding a Space from the Hub instead of editing the app. The tool keeps running in the Space itself, so no code is downloaded onto your machine. And you can publish your own tools for other people to use. reachy-mini-conversation-app tool-spaces add pollen-robotics/reachy-mini-weather-tool What's the weather in Paris today? Below, we look at what a tool is, how profiles control what the robot can use, and the current limits of the remote path. When you talk to the robot, what you get back isn't only a voice, it's a system that reacts to the conversation: the robot can move and respond non-verbally, when it's applicable. The part we want to focus on here is the tools that make that possible.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "bdb1ed8290c538a1",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -67845,38 +67845,6 @@
       "contentSnippet": "企業のお客様は、チームごとに異なるセキュリティ、ガバナンス、予算、機能の制御を設定しながら、複数の Cursor チームを 1 か所から管理できるようになりました。これらの機能は、すべての企業のお客様に一般提供されています。 組織は、貴社のアイデンティティ、管理、メンバーシップをまとめる最上位の単位です。これにより、管理者は、すべてのチームにまたがる支出とトークン使用量の集計を含め、Cursor 全体の設定を 1 か所で確認・管理できます。 チーム は、部門、地域、または子会社の運営単位です。現在、管理者はこれを Cursor org として管理しています。この単位は 組織 配下に移され、各チームが独自の セキュリティ、ガバナンス、支出、feature settings を持つ複数の チーム を運用できるようになりました。 1 人の user は複数の チーム に所属でき、それぞれで異なる role を持てます。現在ご利用中のお客様については、既存の チーム はそのまま保持され、ログイン、routing、新しい チーム の作成における default のホームになります。 グループは、チームをまたいで、またはチーム内で使える軽量なユーザーの集まりです。新しいチームをわざわざ作成しなくても、特定のユーザー群ごとに個別のモデルアクセス、利用上限、エージェント権限を設定できます。ユーザーが複数のチームまたはグループに所属している場合は、最も制限の緩い設定が適用されます。 企業のお客様は、チームごとに異なるセキュリティ、ガバナンス、予算、機能の制御を設定しながら、複数の Cursor チームを 1 か所から管理できるようになりました。これらの機能は、すべての企業のお客様に一般提供されています。 組織は、貴社のアイデンティティ、管理、メンバーシップをまとめる最上位の単位です。これにより、管理者は、すべてのチームにまたがる支出とトークン使用量の集計を含め、Cursor 全体の設定を 1 か所で確認・管理できます。 チーム は、部門、地域、または子会社の運営単位です。",
       "excerptOrigin": "article",
       "feedSnippet": "Enterprise customers can now manage multiple Cursor teams from one place, with different security, governance, budget, and feature controls for each. These capabilities are now generally available to all Enterprise customers.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "f5c22a43a1f5a232",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/adding-mcp-tools-to-reachy-mini",
-      "title": "Adding MCP Tools to Reachy Mini",
-      "titleJa": "Reachy Mini に MCP ツールを追加する",
-      "titleEn": "Adding MCP Tools to Reachy Mini",
-      "summaryJa": "オープンソースロボット Reachy Mini に MCP サーバー経由でツール連携を追加する方法を解説した記事で、ローカル LLM とロボティクスを組み合わせた実践的なアーキテクチャを示している。",
-      "summaryEn": "This article explains how to integrate MCP tools with the Reachy Mini robot using a local LLM backend, demonstrating a practical architecture for connecting language models to physical robotic systems.",
-      "lang": "en",
-      "publishedAt": "2026-06-03T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "huggingface",
-        "local-llm",
-        "mcp-server",
-        "open-model",
-        "reachy-mini",
-        "robotics",
-        "tool-use",
-        "tutorial"
-      ],
-      "category": "mcp",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "The Reachy Mini conversation app can now use tools hosted in public Hugging Face Spaces, called over MCP. You can give your robot a new ability, like checking the weather or searching the web, by adding a Space from the Hub instead of editing the app. The tool keeps running in the Space itself, so no code is downloaded onto your machine. And you can publish your own tools for other people to use. reachy-mini-conversation-app tool-spaces add pollen-robotics/reachy-mini-weather-tool What's the weather in Paris today? Below, we look at what a tool is, how profiles control what the robot can use, and the current limits of the remote path. When you talk to the robot, what you get back isn't only a voice, it's a system that reacts to the conversation: the robot can move and respond non-verbally, when it's applicable. The part we want to focus on here is the tools that make that possible.",
-      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -68314,6 +68282,37 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "2c6e0e551d4ebc3f",
+      "source": "huggingface-blog",
+      "sourceType": "blog",
+      "url": "https://huggingface.co/blog/torch-profiler",
+      "title": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
+      "titleJa": "PyTorchでのプロファイリング（第1部）：torch.profilerの初心者向けガイド",
+      "titleEn": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
+      "summaryJa": "torch.profilerを使ってPyTorchモデルのボトルネックを特定・分析する方法を解説したチュートリアル。パフォーマンス最適化の第一歩として実用的な手順を紹介している。",
+      "summaryEn": "A beginner-friendly guide to using torch.profiler for identifying performance bottlenecks in PyTorch models, covering practical profiling workflows that help developers optimize training and inference efficiently.",
+      "lang": "en",
+      "publishedAt": "2026-05-29T00:00:00.000Z",
+      "collectedAt": "2026-10-05T02:30:34.606Z",
+      "tags": [
+        "huggingface",
+        "open-model",
+        "optimization",
+        "performance",
+        "profiling",
+        "pytorch",
+        "tutorial"
+      ],
+      "category": "local-llm",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler What you cannot profile, you cannot optimize. Whether you are trying to squeeze more tokens per second out of a Large Language Model (LLM), shave milliseconds off inference, or just understand why your training loop runs slower than the spec sheet promises, the path eventually runs through profiling. The catch is that profiling has a steep on-ramp. The traces are dense walls of colored rectangles. The events carry intimidating names. Most tutorials assume you can already read them. So even when we know we should be profiling, opening a trace can feel like a chore best left for later (or for someone else). This post, and the series it kicks off, is our attempt to lower that on-ramp.",
+      "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "385a02589ce084f5",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -68345,37 +68344,6 @@
       "contentSnippet": "自動レビューは、承認を求める回数を減らしつつ、より安全に実行できるようにすることで、Cursorがより長時間作業できる新しい実行モードです。 自動レビューは、Shell、MCP、Fetch のツール呼び出しに適用されます。許可リスト登録済みの呼び出しはすぐに実行され、サンドボックス化できる呼び出しはサンドボックス内で実行されます。その他のエージェントのアクションはすべて、呼び出しを許可するか、別のアプローチを試すか、あるいは承認を求めるかを判断する分類サブエージェントに送られます。 Settings > Cursor Settings > Agents > 承認と実行 で実行モードを設定してください。カスタムの指示を与えることで、分類エージェントの動作を調整することもできます。 自動レビューは、承認を求める回数を減らしつつ、より安全に実行できるようにすることで、Cursorがより長時間作業できる新しい実行モードです。 自動レビューは、Shell、MCP、Fetch のツール呼び出しに適用されます。許可リスト登録済みの呼び出しはすぐに実行され、サンドボックス化できる呼び出しはサンドボックス内で実行されます。その他のエージェントのアクションはすべて、呼び出しを許可するか、別のアプローチを試すか、あるいは承認を求めるかを判断する分類サブエージェントに送られます。 Settings > Cursor Settings > Agents > 承認と実行 で実行モードを設定してください。カスタムの指示を与えることで、分類エージェントの動作を調整することもできます。",
       "excerptOrigin": "article",
       "feedSnippet": "Auto-review is a new run mode that allows Cursor to work for longer with fewer approval prompts and safer execution.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "2c6e0e551d4ebc3f",
-      "source": "huggingface-blog",
-      "sourceType": "blog",
-      "url": "https://huggingface.co/blog/torch-profiler",
-      "title": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
-      "titleJa": "PyTorchでのプロファイリング（第1部）：torch.profilerの初心者向けガイド",
-      "titleEn": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler",
-      "summaryJa": "torch.profilerを使ってPyTorchモデルのボトルネックを特定・分析する方法を解説したチュートリアル。パフォーマンス最適化の第一歩として実用的な手順を紹介している。",
-      "summaryEn": "A beginner-friendly guide to using torch.profiler for identifying performance bottlenecks in PyTorch models, covering practical profiling workflows that help developers optimize training and inference efficiently.",
-      "lang": "en",
-      "publishedAt": "2026-05-29T00:00:00.000Z",
-      "collectedAt": "2026-10-05T02:30:34.606Z",
-      "tags": [
-        "huggingface",
-        "open-model",
-        "optimization",
-        "performance",
-        "profiling",
-        "pytorch",
-        "tutorial"
-      ],
-      "category": "local-llm",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "Profiling in PyTorch (Part 1): A Beginner's Guide to torch.profiler What you cannot profile, you cannot optimize. Whether you are trying to squeeze more tokens per second out of a Large Language Model (LLM), shave milliseconds off inference, or just understand why your training loop runs slower than the spec sheet promises, the path eventually runs through profiling. The catch is that profiling has a steep on-ramp. The traces are dense walls of colored rectangles. The events carry intimidating names. Most tutorials assume you can already read them. So even when we know we should be profiling, opening a trace can feel like a chore best left for later (or for someone else). This post, and the series it kicks off, is our attempt to lower that on-ramp.",
-      "excerptOrigin": "article",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -68556,7 +68524,7 @@
       "summaryEn": "Semantic Kernel for .NET v1.77.0 is released, enabling default-on server URL validation for OpenAPI plugins to harden security, while continuing the ongoing migration toward the Agent Framework.",
       "lang": "en",
       "publishedAt": "2026-05-28T10:08:16.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agent-framework",
@@ -68791,12 +68759,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork. Twelve months ago, we'd have rejected out of hand the idea of granting Claude access sufficient to take down an internal Anthropic service. Today that level of access is routine, and Anthropic developers are more productive for it. The risk of these deployments has two components: how likely a failure is, and how much damage one could do. Progress on safeguards and model training has steadily driven down the first; the second—the theoretical blast radius—only grows as capabilities and access expand.",
       "excerptOrigin": "article",
       "feedSnippet": "As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "6b26acda64a14adb",
@@ -69125,37 +69093,6 @@
       }
     },
     {
-      "id": "16643d0d9d98ffdb",
-      "source": "cursor-changelog",
-      "sourceType": "changelog",
-      "url": "https://cursor.com/changelog/05-19-26",
-      "title": "Cursor in Jira",
-      "titleJa": "CursorがJiraで利用可能に",
-      "titleEn": "Cursor in Jira",
-      "summaryJa": "AIコードエディタのCursorがJiraと連携し、Jira上から直接Cursorの機能を活用できるようになった。",
-      "summaryEn": "Cursor, the AI-powered code editor, is now available inside Jira, enabling developers to access Cursor's capabilities directly within their project management workflow.",
-      "lang": "en",
-      "publishedAt": "2026-05-19T00:00:00.000Z",
-      "collectedAt": "2026-10-05T06:30:50.827Z",
-      "tags": [
-        "ai-coding",
-        "changelog",
-        "cursor",
-        "integration",
-        "jira",
-        "project-management"
-      ],
-      "category": "cursor",
-      "importance": 2,
-      "halfLife": "news",
-      "archiveTier": "cold",
-      "contentSnippet": "作業項目を Cursor に割り当てるか、コメントで @Cursor にメンションすると、 クラウドエージェント を起動できます。Cursor は、作業項目のタイトル、説明、コメント、そしてチームのリポジトリ設定をもとに、タスクのスコープを決定します。 チケットに記載された内容について、バグ修正、機能追加、テストの更新、または調査を Cursor に依頼できます。エージェントの作業が完了すると、Jira に完了状況の更新が表示され、PR へのリンクも含まれます。 統合は Cursor integrations からインストールできます。Cursor の管理者アクセスと、Rovo が有効になっている Jira Commercial Cloud が必要です。詳しくは ドキュメント をご覧ください。 作業項目を Cursor に割り当てるか、コメントで @Cursor にメンションすると、 クラウドエージェント を起動できます。Cursor は、作業項目のタイトル、説明、コメント、そしてチームのリポジトリ設定をもとに、タスクのスコープを決定します。 チケットに記載された内容について、バグ修正、機能追加、テストの更新、または調査を Cursor に依頼できます。エージェントの作業が完了すると、Jira に完了状況の更新が表示され、PR へのリンクも含まれます。 統合は Cursor integrations からインストールできます。Cursor の管理者アクセスと、Rovo が有効になっている Jira Commercial Cloud が必要です。詳しくは ドキュメント をご覧ください。",
-      "excerptOrigin": "article",
-      "feedSnippet": "Cursor is now available in Jira.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "4bd10cf53d72879d",
       "source": "huggingface-blog",
       "sourceType": "blog",
@@ -69183,6 +69120,37 @@
       "archiveTier": "cold",
       "contentSnippet": "Today I'm releasing six new Sentence Transformers CrossEncoder rerankers, state-of-the-art at their respective sizes, built on top of the Ettin ModernBERT encoders, together with the data and full training recipe that produced them: The models were trained with a distillation recipe : pointwise MSE on mixedbread-ai/mxbai-rerank-large-v2 scores over cross-encoder/ettin-reranker-v1-data , which is a subset of lightonai/embeddings-pre-training mixed with a reranked subset of lightonai/embeddings-fine-tuning . Our six rerankers paired with google/embeddinggemma-300m on MTEB(eng, v2) Retrieval. See Results for five more embedder pairings. If you're new to rerankers and want the \"why\" first, jump to What is a reranker, and why pair one with an embedder? . If you just want to plug a model in, jump to Usage . If you want to train your own, jump to Training .",
       "excerptOrigin": "article",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "16643d0d9d98ffdb",
+      "source": "cursor-changelog",
+      "sourceType": "changelog",
+      "url": "https://cursor.com/changelog/05-19-26",
+      "title": "Cursor in Jira",
+      "titleJa": "CursorがJiraで利用可能に",
+      "titleEn": "Cursor in Jira",
+      "summaryJa": "AIコードエディタのCursorがJiraと連携し、Jira上から直接Cursorの機能を活用できるようになった。",
+      "summaryEn": "Cursor, the AI-powered code editor, is now available inside Jira, enabling developers to access Cursor's capabilities directly within their project management workflow.",
+      "lang": "en",
+      "publishedAt": "2026-05-19T00:00:00.000Z",
+      "collectedAt": "2026-10-05T06:30:50.827Z",
+      "tags": [
+        "ai-coding",
+        "changelog",
+        "cursor",
+        "integration",
+        "jira",
+        "project-management"
+      ],
+      "category": "cursor",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "contentSnippet": "作業項目を Cursor に割り当てるか、コメントで @Cursor にメンションすると、 クラウドエージェント を起動できます。Cursor は、作業項目のタイトル、説明、コメント、そしてチームのリポジトリ設定をもとに、タスクのスコープを決定します。 チケットに記載された内容について、バグ修正、機能追加、テストの更新、または調査を Cursor に依頼できます。エージェントの作業が完了すると、Jira に完了状況の更新が表示され、PR へのリンクも含まれます。 統合は Cursor integrations からインストールできます。Cursor の管理者アクセスと、Rovo が有効になっている Jira Commercial Cloud が必要です。詳しくは ドキュメント をご覧ください。 作業項目を Cursor に割り当てるか、コメントで @Cursor にメンションすると、 クラウドエージェント を起動できます。Cursor は、作業項目のタイトル、説明、コメント、そしてチームのリポジトリ設定をもとに、タスクのスコープを決定します。 チケットに記載された内容について、バグ修正、機能追加、テストの更新、または調査を Cursor に依頼できます。エージェントの作業が完了すると、Jira に完了状況の更新が表示され、PR へのリンクも含まれます。 統合は Cursor integrations からインストールできます。Cursor の管理者アクセスと、Rovo が有効になっている Jira Commercial Cloud が必要です。詳しくは ドキュメント をご覧ください。",
+      "excerptOrigin": "article",
+      "feedSnippet": "Cursor is now available in Jira.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -69991,7 +69959,7 @@
       "summaryEn": "Semantic Kernel Python 1.42.0 is a routine release that adds a Microsoft Agent Framework successor callout to its READMEs, bumps dependencies like authlib, and ships various bug fixes.",
       "lang": "en",
       "publishedAt": "2026-05-14T02:13:48.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "agent-framework",
@@ -70673,7 +70641,7 @@
       "summaryEn": "Anthropic shares interpretability research that translates Claude's internal representations into human language, visualizing what the model thinks during reasoning to advance AI transparency and safety.",
       "lang": "en",
       "publishedAt": "2026-05-07T17:01:21.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-safety",
         "anthropic",
@@ -71060,7 +71028,7 @@
       "summaryEn": "OpenAI has open-sourced MRC (Multipath Reliable Connection) through OCP, a supercomputer networking protocol that boosts fault tolerance and throughput across GPU clusters. It enables the AI industry to build more scalable and resilient training infrastructure.",
       "lang": "en",
       "publishedAt": "2026-05-05T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "distributed-training",
         "gpu-cluster",
@@ -71809,12 +71777,12 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "We traced recent reports of Claude Code quality issues to three separate changes. Here's what happened and what we're changing. Over the past month, we’ve been looking into reports that Claude’s responses have worsened for some users. We’ve traced these reports to three separate changes that affected Claude Code, the Claude Agent SDK, and Claude Cowork. The API was not impacted. All three issues have now been resolved as of April 20 (v2.1.116). In this post, we explain what we found, what we fixed, and what we’ll do differently to ensure similar issues are much less likely to happen again. We take reports about degradation very seriously. We never intentionally degrade our models, and we were able to immediately confirm that our API and inference layer were unaffected.",
       "excerptOrigin": "article",
       "feedSnippet": "We traced recent reports of Claude Code quality issues to three separate changes. Here's what happened and what we're changing.",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "585b1b420e4c1d30",
@@ -72260,6 +72228,36 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "f1fb311acd5737de",
+      "source": "mcp-blog",
+      "sourceType": "blog",
+      "url": "https://blog.modelcontextprotocol.io/posts/2026-04-08-maintainer-update/",
+      "title": "Expanding the MCP Maintainer Team",
+      "titleJa": "MCPメンテナーチームの拡充",
+      "titleEn": "Expanding the MCP Maintainer Team",
+      "summaryJa": "MCPはLead Maintainerを新たに任命し、Core Maintainerグループにもメンバーを追加しました。成長するオープンソースプロジェクトの運営を強化し、貢献者と利用者を支える体制を整えます。",
+      "summaryEn": "MCP names a Lead Maintainer and welcomes another member into the Core Maintainer group, reinforcing governance to support its growing open-source community.",
+      "lang": "en",
+      "publishedAt": "2026-04-08T00:00:00.000Z",
+      "collectedAt": "2026-10-05T04:30:39.107Z",
+      "tags": [
+        "enterprise",
+        "mcp",
+        "mcp-server",
+        "open-source",
+        "project-governance"
+      ],
+      "category": "mcp",
+      "importance": 1,
+      "halfLife": "architecture",
+      "archiveTier": "warm",
+      "contentSnippet": "I’m happy to share two updates to the maintainer team: Clare Liguori is joining the Core Maintainer group, and Den Delimarsky is joining me as a Lead Maintainer . When we introduced the MCP governance model last summer, the goal was to make sure the protocol could keep growing without any one person becoming a bottleneck. That has held up well through two specification releases, the move to the Agentic AI Foundation (AAIF) , and a steady increase in SEP volume, and these changes give the project the leadership capacity it needs for what comes next. I’m pleased to welcome Clare Liguori to the Core Maintainer team. Clare is a Senior Principal Engineer at Amazon Web Services, where she works on agentic AI developer tooling.",
+      "excerptOrigin": "article",
+      "feedSnippet": "Updates to the Model Context Protocol (MCP) governance team: a new Lead Maintainer and an addition to the Core Maintainer group as the open-source project continues to grow.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "d37dc3e157551d8e",
       "source": "anthropic-engineering",
       "sourceType": "blog",
@@ -72288,12 +72286,12 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "Harnesses encode assumptions that go stale as models improve. Managed Agents—our hosted service for long-horizon agent work—is built around interfaces that stay stable as harnesses change. Get started with Claude Managed Agents by following our docs . A running topic on the Engineering Blog is how to build effective agents and design harnesses for long-running work . A common thread across this work is that harnesses encode assumptions about what Claude can’t do on its own. However, those assumptions need to be frequently questioned because they can go stale as models improve. As just one example, in prior work we found that Claude Sonnet 4.5 would wrap up tasks prematurely as it sensed its context limit approaching—a behavior sometimes called “context anxiety.” We addressed this by adding context resets to the harness.",
       "excerptOrigin": "article",
       "feedSnippet": "Harnesses encode assumptions that go stale as models improve. Managed Agents-our hosted service for long-horizon agent work-is built around interfaces that stay stable as harnesses change.",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "a5d6c6efda53aa30",
@@ -72330,36 +72328,6 @@
       "bodyEn": ""
     },
     {
-      "id": "f1fb311acd5737de",
-      "source": "mcp-blog",
-      "sourceType": "blog",
-      "url": "https://blog.modelcontextprotocol.io/posts/2026-04-08-maintainer-update/",
-      "title": "Expanding the MCP Maintainer Team",
-      "titleJa": "MCPメンテナーチームの拡充",
-      "titleEn": "Expanding the MCP Maintainer Team",
-      "summaryJa": "MCPはLead Maintainerを新たに任命し、Core Maintainerグループにもメンバーを追加しました。成長するオープンソースプロジェクトの運営を強化し、貢献者と利用者を支える体制を整えます。",
-      "summaryEn": "MCP names a Lead Maintainer and welcomes another member into the Core Maintainer group, reinforcing governance to support its growing open-source community.",
-      "lang": "en",
-      "publishedAt": "2026-04-08T00:00:00.000Z",
-      "collectedAt": "2026-10-05T04:30:39.107Z",
-      "tags": [
-        "enterprise",
-        "mcp",
-        "mcp-server",
-        "open-source",
-        "project-governance"
-      ],
-      "category": "mcp",
-      "importance": 1,
-      "halfLife": "architecture",
-      "archiveTier": "warm",
-      "contentSnippet": "I’m happy to share two updates to the maintainer team: Clare Liguori is joining the Core Maintainer group, and Den Delimarsky is joining me as a Lead Maintainer . When we introduced the MCP governance model last summer, the goal was to make sure the protocol could keep growing without any one person becoming a bottleneck. That has held up well through two specification releases, the move to the Agentic AI Foundation (AAIF) , and a steady increase in SEP volume, and these changes give the project the leadership capacity it needs for what comes next. I’m pleased to welcome Clare Liguori to the Core Maintainer team. Clare is a Senior Principal Engineer at Amazon Web Services, where she works on agentic AI developer tooling.",
-      "excerptOrigin": "article",
-      "feedSnippet": "Updates to the Model Context Protocol (MCP) governance team: a new Lead Maintainer and an addition to the Core Maintainer group as the open-source project continues to grow.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
       "id": "5c001a114a84cc69",
       "source": "youtube-anthropic",
       "sourceType": "blog",
@@ -72371,7 +72339,7 @@
       "summaryEn": "Anthropic announced Project Glasswing, an initiative using AI to discover and fix software vulnerabilities at scale. It aims to give defenders the advantage over attackers and strengthen security across the world's software.",
       "lang": "en",
       "publishedAt": "2026-04-07T18:03:51.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-defense",
         "ai-security",
@@ -72402,7 +72370,7 @@
       "summaryEn": "OpenAI Safety Fellowship launches as a pilot backing independently led work on safety and alignment, helping emerging researchers build expertise.",
       "lang": "en",
       "publishedAt": "2026-04-06T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-safety",
         "alignment",
@@ -72469,7 +72437,7 @@
       "summaryEn": "Anthropic discusses why AI models sometimes act emotional, exploring how affective expression shapes user experience and safety, and how researchers interpret and handle such behavior.",
       "lang": "en",
       "publishedAt": "2026-04-02T16:06:59.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "affective-computing",
         "ai-behavior",
@@ -73179,12 +73147,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses. By default, Claude Code asks users for approval before running commands or modifying files. This keeps users safe, but it also means a lot of clicking \"approve.\" Over time that leads to approval fatigue, where people stop paying close attention to what they're approving. Users have two solutions for avoiding this fatigue: a built-in sandbox where tools are isolated to prevent dangerous actions, or the --dangerously-skip-permissions flag that disables all permission prompts and lets Claude act freely, which is unsafe in most situations. Figure 1 lays out the tradeoff space.",
       "excerptOrigin": "article",
       "feedSnippet": "Claude Code users approve 93% of permission prompts. We built classifiers to automate some decisions, increasing safety while reducing approval fatigue. Here's what it catches, and what it misses.",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "8af33ea06769a73d",
@@ -73246,12 +73214,12 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "Harness design is key to performance at the frontier of agentic coding. Here's how we pushed Claude further in frontend design and long-running autonomous software engineering. Written by Prithvi Rajasekaran, a member of our Labs team. Over the past several months I’ve been working on two interconnected problems: getting Claude to produce high-quality frontend designs, and getting it to build complete applications without human intervention. This work originated with earlier efforts on our frontend design skill and long-running coding agent harness , where my colleagues and I were able to improve Claude’s performance well above baseline through prompt engineering and harness design—but both eventually hit ceilings.",
       "excerptOrigin": "article",
       "feedSnippet": "Harness design is key to performance at the frontier of agentic coding. Here's how we pushed Claude further in frontend design and long-running autonomous software engineering.",
       "bodyJa": "",
-      "bodyEn": ""
+      "bodyEn": "",
+      "evergreen": true
     },
     {
       "id": "ad078ef5e0b73d27",
@@ -73512,6 +73480,35 @@
       "excerptOrigin": "article"
     },
     {
+      "id": "2461be1f510548d6",
+      "source": "mcp-blog",
+      "sourceType": "blog",
+      "url": "https://blog.modelcontextprotocol.io/posts/2026-03-11-understanding-mcp-extensions/",
+      "title": "Understanding MCP Extensions",
+      "titleJa": "MCP Extensionsを理解する",
+      "titleEn": "Understanding MCP Extensions",
+      "summaryJa": "MCP Extensionsは、コアプロトコルに新機能を重ねる仕組みと、コミュニティですでに活用されている設計パターンを整理し、拡張を設計・採用する開発者の判断に役立ちます。",
+      "summaryEn": "MCP extensions add capabilities beyond the core protocol, explaining the layering model and patterns already used by the community to help developers design and adopt extensions.",
+      "lang": "en",
+      "publishedAt": "2026-03-11T00:00:00.000Z",
+      "collectedAt": "2026-10-05T04:30:39.107Z",
+      "tags": [
+        "developer-guide",
+        "mcp",
+        "mcp-server",
+        "protocol-extensions"
+      ],
+      "category": "mcp",
+      "importance": 2,
+      "halfLife": "architecture",
+      "archiveTier": "warm",
+      "contentSnippet": "You’ve built an MCP server that works quite well, but now you’re wondering: How do I add richer UI elements? Custom auth flows? What about domain-specific conventions, like those for finance or healthcare? This is where extensions come in. They let developers layer new capabilities on top of the baseline MCP implementation without touching the core protocol. This allows us to keep things stable while also opening up room to experiment, learn, and build with the community’s needs in mind. In this post, we’ll walk through how extensions fit into the MCP ecosystem and share some patterns the community is already exploring. Think of this less as a formal specification change and more as a short practical guide to extending MCP. MCP core specification: The protocol itself . This is how clients and servers talk to each other.",
+      "excerptOrigin": "article",
+      "feedSnippet": "A practical guide to MCP extensions: how they layer new capabilities on top of the core protocol, and patterns the community is already using.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
       "id": "7b8dc18bfb6491f5",
       "source": "cursor-changelog",
       "sourceType": "changelog",
@@ -73543,35 +73540,6 @@
       "contentSnippet": "Atlassian、Datadog、GitLab、Glean、Hugging Face、monday.com、PlanetScaleなどのパートナーから、30以上の新しい プラグイン を追加しました。Cursorは、さらに多くのスタックに対して読み取り、書き込み、アクションの実行が可能になりました。 ほとんどのプラグインにはMCPが含まれており、クラウドエージェントが手動で起動された場合や、 オートメーション を通じて自動的にトリガーされた場合に使うことができます。 新しいプラグインは cursor.com/marketplace でお試しいただけます。詳細は お知らせ をお読みください。 Atlassian、Datadog、GitLab、Glean、Hugging Face、monday.com、PlanetScaleなどのパートナーから、30以上の新しい プラグイン を追加しました。Cursorは、さらに多くのスタックに対して読み取り、書き込み、アクションの実行が可能になりました。 ほとんどのプラグインにはMCPが含まれており、クラウドエージェントが手動で起動された場合や、 オートメーション を通じて自動的にトリガーされた場合に使うことができます。 新しいプラグインは cursor.com/marketplace でお試しいただけます。詳細は お知らせ をお読みください。",
       "excerptOrigin": "article",
       "feedSnippet": "We've added more than 30 new plugins from partners such as Atlassian, Datadog, GitLab, Glean, Hugging Face, monday.com, and PlanetScale. Cursor can now read from, write to, and take actions across more of your stack.",
-      "bodyJa": "",
-      "bodyEn": ""
-    },
-    {
-      "id": "2461be1f510548d6",
-      "source": "mcp-blog",
-      "sourceType": "blog",
-      "url": "https://blog.modelcontextprotocol.io/posts/2026-03-11-understanding-mcp-extensions/",
-      "title": "Understanding MCP Extensions",
-      "titleJa": "MCP Extensionsを理解する",
-      "titleEn": "Understanding MCP Extensions",
-      "summaryJa": "MCP Extensionsは、コアプロトコルに新機能を重ねる仕組みと、コミュニティですでに活用されている設計パターンを整理し、拡張を設計・採用する開発者の判断に役立ちます。",
-      "summaryEn": "MCP extensions add capabilities beyond the core protocol, explaining the layering model and patterns already used by the community to help developers design and adopt extensions.",
-      "lang": "en",
-      "publishedAt": "2026-03-11T00:00:00.000Z",
-      "collectedAt": "2026-10-05T04:30:39.107Z",
-      "tags": [
-        "developer-guide",
-        "mcp",
-        "mcp-server",
-        "protocol-extensions"
-      ],
-      "category": "mcp",
-      "importance": 2,
-      "halfLife": "architecture",
-      "archiveTier": "warm",
-      "contentSnippet": "You’ve built an MCP server that works quite well, but now you’re wondering: How do I add richer UI elements? Custom auth flows? What about domain-specific conventions, like those for finance or healthcare? This is where extensions come in. They let developers layer new capabilities on top of the baseline MCP implementation without touching the core protocol. This allows us to keep things stable while also opening up room to experiment, learn, and build with the community’s needs in mind. In this post, we’ll walk through how extensions fit into the MCP ecosystem and share some patterns the community is already exploring. Think of this less as a formal specification change and more as a short practical guide to extending MCP. MCP core specification: The protocol itself . This is how clients and servers talk to each other.",
-      "excerptOrigin": "article",
-      "feedSnippet": "A practical guide to MCP extensions: how they layer new capabilities on top of the core protocol, and patterns the community is already using.",
       "bodyJa": "",
       "bodyEn": ""
     },
@@ -73745,7 +73713,6 @@
       "importance": 1,
       "halfLife": "architecture",
       "archiveTier": "warm",
-      "evergreen": true,
       "contentSnippet": "Eval awareness in Claude Opus 4.6’s BrowseComp performance Evaluating Opus 4.6 on BrowseComp, we found cases where the model recognized the test, then found and decrypted answers to it—raising questions about eval integrity in web-enabled environments. BrowseComp is an evaluation designed to test how well models can find hard-to-locate information on the web. Like many benchmarks, it is vulnerable to contamination: answers leak onto the public web through academic papers, blog posts, and GitHub issues, and a model running the eval can encounter them in search results. When we evaluated Claude Opus 4.6 on BrowseComp in a multi-agent configuration, we found nine examples of this kind of contamination across 1,266 BrowseComp problems. However, we also witnessed two cases of a novel contamination pattern.",
       "excerptOrigin": "article",
       "feedSnippet": "Evaluating Opus 4.6 on BrowseComp, we found cases where the model recognized the test, then found and decrypted answers to it-raising questions about eval integrity in web-enabled environments.",
@@ -73758,7 +73725,8 @@
         "width": 0,
         "height": 0,
         "source": "og"
-      }
+      },
+      "evergreen": true
     },
     {
       "id": "5e4b5a55bd35da2a",
@@ -73916,7 +73884,7 @@
       "summaryEn": "OpenAI announced efforts to scale access to Codex and its AI tools for a broader audience, lowering barriers so more developers and everyday users can benefit from advanced AI capabilities.",
       "lang": "en",
       "publishedAt": "2026-02-27T05:30:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "accessibility",
         "codex",
@@ -74056,7 +74024,7 @@
       "summaryEn": "Anthropic announced Claude Opus 4.6, its new flagship model with improved coding and agentic performance, positioned as the top-tier offering with stronger reasoning and practical capabilities over the prior generation.",
       "lang": "en",
       "publishedAt": "2026-02-05T17:45:22.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "anthropic",
@@ -74088,7 +74056,7 @@
       "summaryEn": "Anthropic released a short-form video titled 'Claude on Mars' on its official YouTube channel. It appears to be promotional content highlighting Claude's brand image and imaginative use cases rather than a product announcement.",
       "lang": "en",
       "publishedAt": "2026-01-30T19:09:11.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "ai-assistant",
         "anthropic",
@@ -74163,7 +74131,7 @@
       "summaryEn": "Anthropic announced that tools in Claude are now interactive, letting users click buttons and fill forms directly in chat instead of relying on text-only responses for a richer, hands-on experience.",
       "lang": "en",
       "publishedAt": "2026-01-26T19:06:25.000Z",
-      "collectedAt": "2026-10-04T21:30:39.881Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "agent",
         "anthropic",
@@ -74424,7 +74392,7 @@
       "summaryEn": "OpenAI announced the second cohort of its Grove startup program, expanding support for emerging AI companies and strengthening its broader developer ecosystem.",
       "lang": "en",
       "publishedAt": "2026-01-02T10:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "cohort",
         "grove",
@@ -74809,7 +74777,7 @@
       "summaryEn": "OpenAI announced the first cohort of grantees for its People-First AI Fund, marking the program's official launch to direct AI benefits toward underserved communities.",
       "lang": "en",
       "publishedAt": "2025-12-03T08:00:00.000Z",
-      "collectedAt": "2026-10-05T03:30:36.925Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
       "tags": [
         "grants",
         "openai",
@@ -74926,6 +74894,30 @@
       "contentSnippet": "Today, MCP turns one year old . You can check out the original announcement blog post if you don’t believe us. It’s hard to imagine that a little open-source experiment, a protocol to provide context to models , became the de-facto standard for this very scenario in less than twelve months. But not only do we hit the first anniversary milestone today - we’re also releasing a brand-new MCP specification version. Before we get to the details of what’s new, let’s do a bit of a retrospective. With all the changes that we’ve made in the past year, it feels like a decade flew by. The protocol has grown leaps and bounds since its inception and has been adopted by a huge number of developers and organizations. We went from a little open source experiment to becoming the standard for connecting data and applications to Large Language Models (LLMs).",
       "excerptOrigin": "article",
       "feedSnippet": "MCP turns one — a look back at the year, plus the full details of the November 2025 specification release.",
+      "bodyJa": "",
+      "bodyEn": ""
+    },
+    {
+      "id": "4a95cbecd0b05dd1",
+      "source": "openai-blog",
+      "sourceType": "blog",
+      "url": "https://openai.com/global-affairs/learning-accelerator",
+      "title": "Announcing the OpenAI Learning Accelerator",
+      "titleJa": "OpenAI Learning Acceleratorの発表",
+      "titleEn": "Announcing the OpenAI Learning Accelerator",
+      "summaryJa": "OpenAIは教育機関や学習者を支援する「Learning Accelerator」プログラムを発表した。AIを活用した学習の普及と教育格差の解消を目指す取り組みとして注目される。",
+      "summaryEn": "OpenAI announced the Learning Accelerator, a program aimed at expanding AI-powered education and supporting learners and institutions, signaling a broader push into the education sector.",
+      "lang": "en",
+      "publishedAt": "2025-08-25T06:00:00.000Z",
+      "collectedAt": "2026-10-05T09:01:10.421Z",
+      "tags": [
+        "openai"
+      ],
+      "category": "codex",
+      "importance": 2,
+      "halfLife": "news",
+      "archiveTier": "cold",
+      "excerptOrigin": "article-unavailable",
       "bodyJa": "",
       "bodyEn": ""
     }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T10:01:37.479Z",
+  "generatedAt": "2026-10-05T11:01:24.691Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -19587,7 +19587,15 @@
       "archiveTier": "warm",
       "contentSnippet": "2026年7月、OpenAI（GPT-5.6 + ChatGPT Work）、Anthropic（Claude Sonnet 5）、Google（Gemini Spark）が相次いで「エージェント型」のAIを打ち出しました。共通点は、単発の応答ではなく、ゴールを渡すと複数ステップの作業を自律的に進めて成果物を返すという設計思想です。この記事では、その「エージェント的な使い方」をコードレベルでどう実装するかを、最小構成のサンプルで解説します。 エージェントAIの本質は次の流れです。まずゴールを受け取り、次に取るべきアクション（tool呼び出しか完了か）を決め、tool を実行して結果を観測する。これを完了まで繰り返します。疑似コードで表すと以下の通りです（要点を1行ずつ並べています）。 name, args = response.tool_call # 呼ぶtoolと引数 messages.append({ \"role\" : \"tool\" , \"content\" : result}) # tool_callが無くなるまで上を最大max_steps回繰り返し、最後にresponse.contentを返す ポイントは、モデルが「まだ作業が必要」なら tool を呼び、「完成した」と判断したら最終回答を返すという分岐です。ChatGPT Work のような製品も、抽象化すればこの構造の拡張版と言えます。 エージェントに「作業」をさせるには、実際に副作用を持つ関数（tool）を渡します。たとえばレポート書き出しとノート検索を用意すると、「ノートを検索して要点をレポートにまとめて」というゴールを渡すだけで、検索→書き出しの順にエージェントが自分で判断して進められます。tool のシグネチャは次のようなイメージです。 # tool = 副作用を持つ関数。名前→関数の辞書で登録する（各行フラット表記） def write_report (filename, content): ...",
       "feedSnippet": "はじめに 2026年7月、OpenAI（GPT-5.6 + ChatGPT Work）、Anthropic（Claude Sonnet 5）、Google（Gemini Spark）が相次いで「エージェント型」のAIを打ち出しました。共通点は、単発の応答ではなく、ゴールを渡すと複数ステップの作業を自律的に進めて成果物を返すという設計思想です。この記事では、その「エージェント的な使い方」をコードレベルでどう実装するかを、最小構成のサンプルで解説します。 エージェントの基本ループ エージェントAIの本質は次の流れです。まずゴールを受け取り、次に取るべきアクシ",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--qBMouRm0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588AI%25E6%2599%2582%25E4%25BB%25A3%25E3%2581%25AE%25E5%25AE%259F%25E8%25A3%2585%25E5%2585%25A5%25E9%2596%2580%25EF%25BC%259AGPT-5.6%2520%252F%2520Claude%2520Sonnet%25205%2520%25E3%2582%2592%25E3%2580%258C%25E4%25BD%259C%25E6%25A5%25AD%25E3%2582%2592%25E4%25BB%2595%25E4%25B8%258A%25E3%2581%2592%25E3%2582%258B%25E9%2581%2593%25E5%2585%25B7%25E3%2581%25A8%25E3%2581%2597%25E3%2581%25A6%25E4%25BD%25BF%25E3%2581%2586%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kairos%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2JhODBlYzQ1MTQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--qBMouRm0--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E3%2582%25A8%25E3%2583%25BC%25E3%2582%25B8%25E3%2582%25A7%25E3%2583%25B3%25E3%2583%2588AI%25E6%2599%2582%25E4%25BB%25A3%25E3%2581%25AE%25E5%25AE%259F%25E8%25A3%2585%25E5%2585%25A5%25E9%2596%2580%25EF%25BC%259AGPT-5.6%2520%252F%2520Claude%2520Sonnet%25205%2520%25E3%2582%2592%25E3%2580%258C%25E4%25BD%259C%25E6%25A5%25AD%25E3%2582%2592%25E4%25BB%2595%25E4%25B8%258A%25E3%2581%2592%25E3%2582%258B%25E9%2581%2593%25E5%2585%25B7%25E3%2581%25A8%25E3%2581%2597%25E3%2581%25A6%25E4%25BD%25BF%25E3%2581%2586%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:kairos%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyL2JhODBlYzQ1MTQuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "エージェントAI時代の実装入門：GPT-5.6 / Claude Sonnet 5 を「作業を仕上げる道具として使う",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "35ed74798f660751",
@@ -34537,7 +34545,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-10-05T05:30:37.955Z",
+      "collectedAt": "2026-10-05T11:01:05.231Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -40868,7 +40876,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-10-05T05:30:37.955Z",
+      "collectedAt": "2026-10-05T11:01:05.231Z",
       "tags": [
         "mcp",
         "mcp-server",

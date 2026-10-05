@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T01:00:52.284Z",
+  "generatedAt": "2026-10-05T01:24:34.331Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -18921,7 +18921,15 @@
       "archiveTier": "warm",
       "contentSnippet": "2026年3月31日、Caltech 発のスタートアップ PrismML が 1-bit LLM ファミリー Bonsai を発表しました。8B クラスのモデルがわずか 1.15GB 、必要メモリ約 1.5GB で動作し、 GPU なしの普通の PC でも実用的な速度で推論できる として大きな話題になっています。 圧倒的な省フットプリント — 8B モデルで 1.15GB。同クラスの 16-bit モデルの約 1/14 Apache 2.0 ライセンス — 商用利用も含め制限なし この記事では、Bonsai の概要とセットアップ手順を押さえたうえで、 ローカルチャット・OpenAI 互換 API でのアプリ組み込み・ツール呼び出し・コーディングエージェント連携 といった活用法を、現時点での「向き・不向き」も含めてまとめます。 従来の軽量化は、16-bit や 32-bit で学習したモデルの重みを後から 4-bit などに丸める**学習後量子化（Post-Training Quantization）**が主流でした。これに対して Bonsai は、 埋め込み層・アテンション層・MLP 層・LM ヘッドまでネットワーク全体を 1-bit のままスクラッチで学習 しています。高精度のまま残す「逃げ道」のレイヤーが存在しないのが特徴です。 その結果、8B クラスでありながらファイルサイズ 1.15GB という極小サイズを実現しつつ、標準ベンチマークでは同クラスのフル精度モデルと競合する性能を出しています。 さらに 2026年4月16日には、サイズを少し犠牲にして品質を高めた 1.58-bit 版の「Ternary Bonsai」 （重みが -1 / 0 / +1 の3値）ファミリーも発表されています。公式デモではこちらがデフォルトになっており、iPhone クラスのデバイスでも動作報告があります。",
       "feedSnippet": "はじめに 2026年3月31日、Caltech 発のスタートアップ PrismML が 1-bit LLM ファミリー Bonsai を発表しました。8B クラスのモデルがわずか 1.15GB、必要メモリ約 1.5GB で動作し、GPU なしの普通の PC でも実用的な速度で推論できるとして大きな話題になっています。 Bonsai の注目ポイントは次の3つです。 真の 1-bit モデル — 量子化ではなく、最初から 1-bit（+1 / -1 のみ）で学習 圧倒的な省フットプリント — 8B モデルで 1.15GB。同クラスの 16-bit モデルの約",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--WfKQPJ34--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:1-bit%2520LLM%25E3%2580%258CBonsai%25E3%2580%258D%25E6%25B4%25BB%25E7%2594%25A8%25E3%2582%25AC%25E3%2582%25A4%25E3%2583%2589%2520%25E2%2580%2594%25201.15GB%2520%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258F%25208B%2520%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2582%2592%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%25E3%2581%25A7%25E4%25BD%25BF%25E3%2581%2584%25E5%2580%2592%25E3%2581%2599%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:k1t%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzliZjJlOTdjMmMuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--WfKQPJ34--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:1-bit%2520LLM%25E3%2580%258CBonsai%25E3%2580%258D%25E6%25B4%25BB%25E7%2594%25A8%25E3%2582%25AC%25E3%2582%25A4%25E3%2583%2589%2520%25E2%2580%2594%25201.15GB%2520%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258F%25208B%2520%25E3%2583%25A2%25E3%2583%2587%25E3%2583%25AB%25E3%2582%2592%25E3%2583%25AD%25E3%2583%25BC%25E3%2582%25AB%25E3%2583%25AB%25E3%2581%25A7%25E4%25BD%25BF%25E3%2581%2584%25E5%2580%2592%25E3%2581%2599%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:k1t%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzliZjJlOTdjMmMuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "1-bit LLM「Bonsai」活用ガイド — 1.15GB で動く 8B モデルをローカルで使い倒す",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "8340c56717395382",

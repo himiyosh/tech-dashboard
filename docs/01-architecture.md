@@ -190,7 +190,8 @@ data/
 │     └─ <id>.json              # 1 エントリ 1 ファイル (diff 可視)
 ├─ clusters.json                # 重複クラスタマップ
 ├─ index.json                   # サイト配信用 (最新 2000 件)
-├─ bodies.json                  # 記事本文 sidecar (index は本文フリー)
+├─ bodies.json                  # 旧本文 sidecar (4分割後は凍結・復旧用)
+├─ bodies-0.json ～ bodies-3.json # 記事ID hashの本文4 shard (index は本文フリー)
 ├─ stats.json                   # archive 込みの記事数推移 / source 集計
 ├─ archive/
 │  ├─ _index.json               # 月別 archive index

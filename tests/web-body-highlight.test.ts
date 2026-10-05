@@ -11,6 +11,7 @@
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { readBodyStorageFromDisk } from "../scripts/body-storage-node.mjs";
 import {
   collectTagHighlightRanges,
   escapeHtml,
@@ -152,7 +153,7 @@ describe("corpus regression guard", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; tags?: string[]; archiveTier?: string }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     const rows = [...index.entries];

@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { describe, expect, it } from "vitest";
+import { bodyShardDigests } from "../web/src/lib/body-shard-integrity.ts";
 import {
   applyCurrentData,
   assertFreshIndex,
@@ -25,6 +26,7 @@ const required = [
   "data/index.json",
   "data/stats.json",
 ];
+const shards = Array.from({ length: 4 }, (_, index) => `data/bodies-${index}.json`);
 const cleanGitEnv = Object.fromEntries(
   Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")),
 );
@@ -106,6 +108,9 @@ describe("immutable main data for feature-branch CI", () => {
 
   it("only accepts an exact generated-data inventory, leaving the update seed outside it", () => {
     expect(assertSnapshotPaths([...required, "data/archive/2026-09.json"])).toHaveLength(6);
+    expect(assertSnapshotPaths([...required, ...shards, "data/archive/2026-09.json"])).toHaveLength(10);
+    expect(() => assertSnapshotPaths([...required, shards[0]!, "data/archive/2026-09.json"]))
+      .toThrow(/incomplete/);
     expect(() => assertSnapshotPaths(required.slice(1))).toThrow(/incomplete/);
     expect(() => assertSnapshotPaths([...required, "data/archive/../updates/_index.json"]))
       .toThrow(/unexpected/);
@@ -113,6 +118,8 @@ describe("immutable main data for feature-branch CI", () => {
       .toThrow(/unexpected/);
     expect(() => assertNoGeneratedEdits(["data/updates/_index.json"])).not.toThrow();
     expect(() => assertNoGeneratedEdits(["data/index.json"])).toThrow(/refusing to replace/);
+    expect(() => assertNoGeneratedEdits(["data/bodies-0.json"])).toThrow(/refusing to replace/);
+    expect(() => assertNoGeneratedEdits(["data/bodies-4.json"])).toThrow(/refusing to replace/);
     expect(() => assertNoGeneratedEdits(["data/approved-entries.json"])).toThrow(/refusing to replace/);
     expect(() => assertNoGeneratedEdits(["data/archive/2026-09.json"])).toThrow(/refusing to replace/);
   });
@@ -142,6 +149,127 @@ describe("immutable main data for feature-branch CI", () => {
       expect(readFileSync(join(fixture.root, "data/updates/_index.json"), "utf8")).toBe(fixture.seed);
       expect(git(fixture.root, "rev-parse", "HEAD"))
         .not.toBe(fixture.mainSha);
+    } finally {
+      rmSync(fixture.directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("pins all four shard files when main has migrated, never a partial set", () => {
+    const fixture = setup();
+    try {
+      git(fixture.root, "switch", "-q", "main");
+      for (const path of shards) {
+        json(fixture.root, path, { generatedAt: fixture.mainClock, count: 0, bodies: {} });
+      }
+      const contents = shards.map((path) => readFileSync(join(fixture.root, path), "utf8"));
+      json(fixture.root, "data/index.json", {
+        generatedAt: fixture.mainClock,
+        count: 0,
+        entries: [],
+        health: {
+          bodyStorageMode: "shards-v1",
+          bodyShardDigests: bodyShardDigests(contents),
+        },
+      });
+      git(fixture.root, "add", "data/index.json", ...shards);
+      git(fixture.root, "commit", "-qm", "migrate four body shards");
+      git(fixture.root, "push", "-q", "origin", "main");
+      const migratedSha = git(fixture.root, "rev-parse", "HEAD");
+      git(fixture.root, "switch", "-q", "tracker");
+
+      const manifest = prepareCurrentData(fixture.root, fixture.snapshot, fixture.baseSha);
+      expect(manifest.mainSha).toBe(migratedSha);
+      expect(shards.every((path) => path in manifest.files)).toBe(true);
+      applyCurrentData(fixture.root, fixture.snapshot, migratedSha);
+      for (const path of shards) {
+        expect(readFileSync(join(fixture.root, path), "utf8"))
+          .toBe(readFileSync(join(fixture.snapshot, path), "utf8"));
+      }
+    } finally {
+      rmSync(fixture.directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("rejects a main snapshot that lost all shards or has stale shard bytes", () => {
+    const fixture = setup();
+    try {
+      git(fixture.root, "switch", "-q", "main");
+      json(fixture.root, "data/index.json", {
+        generatedAt: fixture.mainClock,
+        count: 0,
+        entries: [],
+        health: { bodyStorageMode: "shards-v1" },
+      });
+      git(fixture.root, "add", "data/index.json");
+      git(fixture.root, "commit", "-qm", "index expects body shards");
+      git(fixture.root, "push", "-q", "origin", "main");
+      git(fixture.root, "switch", "-q", "tracker");
+      expect(() => prepareCurrentData(fixture.root, fixture.snapshot, fixture.baseSha))
+        .toThrow(/body shards required by the index/);
+      expect(existsSync(fixture.snapshot)).toBe(false);
+    } finally {
+      rmSync(fixture.directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("rejects a complete but mixed main shard set before copying any files", () => {
+    const fixture = setup();
+    try {
+      git(fixture.root, "switch", "-q", "main");
+      for (const path of shards) {
+        json(fixture.root, path, { generatedAt: fixture.mainClock, count: 0, bodies: {} });
+      }
+      const contents = shards.map((path) => readFileSync(join(fixture.root, path), "utf8"));
+      json(fixture.root, "data/index.json", {
+        generatedAt: fixture.mainClock,
+        count: 0,
+        entries: [],
+        health: {
+          bodyStorageMode: "shards-v1",
+          bodyShardDigests: bodyShardDigests(contents),
+        },
+      });
+      write(fixture.root, shards[0]!, `${contents[0]}\n`);
+      git(fixture.root, "add", "data/index.json", ...shards);
+      git(fixture.root, "commit", "-qm", "mixed shard snapshot");
+      git(fixture.root, "push", "-q", "origin", "main");
+      git(fixture.root, "switch", "-q", "tracker");
+      expect(() => prepareCurrentData(fixture.root, fixture.snapshot, fixture.baseSha))
+        .toThrow(/body shard digest mismatch/);
+      expect(existsSync(fixture.snapshot)).toBe(false);
+    } finally {
+      rmSync(fixture.directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("rejects an unknown shard name before creating the snapshot", () => {
+    const fixture = setup();
+    try {
+      git(fixture.root, "switch", "-q", "main");
+      json(fixture.root, "data/bodies-4.json", { generatedAt: fixture.mainClock, count: 0, bodies: {} });
+      git(fixture.root, "add", "data/bodies-4.json");
+      git(fixture.root, "commit", "-qm", "unexpected body shard");
+      git(fixture.root, "push", "-q", "origin", "main");
+      git(fixture.root, "switch", "-q", "tracker");
+      expect(() => prepareCurrentData(fixture.root, fixture.snapshot, fixture.baseSha))
+        .toThrow(/unexpected main data paths/);
+      expect(existsSync(fixture.snapshot)).toBe(false);
+    } finally {
+      rmSync(fixture.directory, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("allows a main-based code branch against older develop without masking its own generated-data edits", () => {
+    const fixture = setup();
+    try {
+      git(fixture.root, "switch", "-q", "main");
+      git(fixture.root, "switch", "-q", "-c", "main-based-feature");
+      write(fixture.root, "feature.txt", "main-based code\n");
+      git(fixture.root, "add", "feature.txt");
+      git(fixture.root, "commit", "-qm", "implement code against current main");
+      const snapshot = prepareCurrentData(fixture.root, fixture.snapshot, fixture.baseSha);
+      expect(snapshot.mainSha).toBe(fixture.mainSha);
+      expect(snapshot.files["data/bodies.json"]).toMatch(/^[a-f0-9]{64}$/);
     } finally {
       rmSync(fixture.directory, { recursive: true, force: true });
     }

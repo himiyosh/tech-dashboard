@@ -34,7 +34,7 @@
  *
  * The reconciliation deliberately reuses the SAME helpers the Publisher
  * runtime and tests/data-schema.test.ts use (isBodyRetentionEligible,
- * needsBody, enforceBodiesBudget, carryForwardBudgetEvictedIds,
+ * needsBody, enforceWorktreeBodyBudget, carryForwardBudgetEvictedIds,
  * buildStatsPayloadFromArtifacts, synchronizeBodyHealth) instead of
  * reimplementing the rules, so this script cannot drift from the contract it
  * has to satisfy.
@@ -57,10 +57,13 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import {
-  DEFAULT_BODY_BUDGET_TARGET_BYTES,
   carryForwardBudgetEvictedIds,
-  enforceBodiesBudget,
 } from "../worker/src/bodies-budget.ts";
+import {
+  enforceWorktreeBodyBudget,
+  planBodyStorageWrites,
+  readBodyStorageWorktree,
+} from "./body-storage-worktree.ts";
 import type { NormalizedEntry } from "../harness/types.ts";
 // The data-artifact write transaction (journal + lock) is owned by
 // clean-source-noise.mjs. Reusing its journal path is intentional: both
@@ -228,11 +231,9 @@ const retentionEntries = liveEntries.filter((entry) =>
 );
 const retentionIds = new Set(retentionEntries.map((entry) => entry.id));
 
-const bodiesExisted = existsSync(bodiesPath);
+const bodyStorage = readBodyStorageWorktree(root, index.health);
 const storedBodies = validateBodiesPayload(
-  bodiesExisted
-    ? readJson(bodiesPath, "data/bodies.json")
-    : { generatedAt: index.generatedAt, count: 0, bodies: {} },
+  bodyStorage.payload,
 ) as { generatedAt: string; count: number; bodies: Record<string, unknown> };
 
 // A demoted entry can lose retention eligibility; its body must go with it.
@@ -246,20 +247,22 @@ for (const [id, record] of Object.entries(storedBodies.bodies)) {
 // Same byte-budget enforcement as the Publisher runtime. Pruning by retention
 // only shrinks the payload, so this is normally a no-op here -- it is kept so
 // the script cannot leave bodies.json over target if the input already was.
-const budgetTargetBytes = Math.max(
-  1,
-  Number(process.env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
-);
-const budget = enforceBodiesBudget(
+const { targetBytes: budgetTargetBytes, result: budget } = enforceWorktreeBodyBudget(
+  bodyStorage,
   {
     generatedAt: storedBodies.generatedAt,
     count: Object.keys(retainedBodies).length,
     bodies: retainedBodies,
-  } as Parameters<typeof enforceBodiesBudget>[0],
-  retentionEntries as unknown as Parameters<typeof enforceBodiesBudget>[1],
-  budgetTargetBytes,
+  } as Parameters<typeof enforceWorktreeBodyBudget>[1],
+  retentionEntries as unknown as Parameters<typeof enforceWorktreeBodyBudget>[2],
+  process.env.BODY_BUDGET_TARGET_BYTES,
 );
 const nextBodies = budget.payload;
+const bodyWrites = planBodyStorageWrites(root, bodyStorage, nextBodies);
+if (bodyStorage.mode === "shards-v1"
+  && bodyWrites.fileBytes.reduce((sum, bytes) => sum + bytes, 0) !== budget.bytes) {
+  fail("body shard byte budget differs from the staged data");
+}
 const bodyPresentIds = new Set(Object.keys(nextBodies.bodies));
 const bodyBacklog = retentionEntries.filter((entry) =>
   needsBody(entry as unknown as NormalizedEntry, bodyPresentIds)
@@ -287,6 +290,9 @@ const nextHealth = synchronizeBodyHealth(
     bytes: budget.bytes,
     pruned: budget.prunedIds.length,
     evictedIds,
+    mode: bodyStorage.mode,
+    fileBytes: bodyWrites.fileBytes,
+    digests: bodyWrites.digests,
   },
 );
 const nextIndex = { ...index, entries: liveEntries, health: nextHealth };
@@ -328,10 +334,7 @@ for (const archive of archives) {
   const entry = perFile.find((file) => file.label === `data/archive/${archive.name}`);
   if ((entry?.changed ?? 0) > 0) writes.push({ path: archive.path, value: archive.payload });
 }
-if (!bodiesExisted || retentionPrunedIds.length > 0 || budget.changed
-  || storedBodies.count !== nextBodies.count) {
-  writes.push({ path: bodiesPath, value: nextBodies });
-}
+writes.push(...bodyWrites.writes);
 if (!isDeepStrictEqual(storedStats, nextStats)) {
   writes.push({ path: statsPath, value: nextStats });
 }

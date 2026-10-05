@@ -34,6 +34,7 @@ import {
 } from "../worker/src/copilot-client.ts";
 import { hasMaterialBodyGroundingConflict } from "../harness/pipeline/source-grounding.ts";
 import { isRealBody, type BodyRecord } from "../worker/src/bodies-file.ts";
+import { readBodyStorageFromDisk } from "./body-storage-node.mjs";
 
 const KV_NAMESPACE_ID = "6d67debb991742efadfec473a121f5fc";
 /** Same chain as worker-body/wrangler.toml (R-007). */
@@ -164,7 +165,7 @@ async function bodyCacheKeyForUrl(url: string): Promise<string> {
 const index = JSON.parse(readFileSync(join(process.cwd(), "data", "index.json"), "utf8")) as {
   entries: Array<Record<string, unknown> & { id: string; url: string }>;
 };
-const bodies = JSON.parse(readFileSync(join(process.cwd(), "data", "bodies.json"), "utf8")) as {
+const bodies = readBodyStorageFromDisk() as {
   bodies: Record<string, BodyRecord>;
 };
 

@@ -1,17 +1,22 @@
 /**
  * web/src/lib/bodies.ts
  *
- * Body-file architecture (LL-115). Long-form article bodies live in
- * data/bodies.json, NOT in data/index.json. This keeps the index small (under
- * the CI size budget, LL-112). Retention is bounded to evergreen, important,
- * or recent entries so the sidecar remains within its own size budget. The
- * article detail page reads retained bodies from here, keyed by entry id.
+ * Long-form bodies live in four ID-hash JSON shards after migration. Until
+ * the first atomic Publisher migration, the frozen data/bodies.json supplies
+ * the same article detail routes. A partial shard set fails the build.
  *
  * Bodies are generated separately (Phase B: a dedicated cloud worker using
  * opus-4.8). Entries without a body simply have no key here and the detail page
  * falls back to the summary-first "AI summary digest + read original" view.
  */
 import bodiesJson from "../../../data/bodies.json";
+import indexJson from "../../../data/index.json";
+import {
+  BODY_SHARD_PATHS,
+  assertBodyStorageMode,
+  loadBodyStorage,
+} from "./body-shards.ts";
+import { assertBodyShardDigests } from "./body-shard-integrity.ts";
 import {
   hasMeaningfulSourceSnippet,
   type SourceSnippetInput,
@@ -29,17 +34,41 @@ export interface BodyRecord {
 
 export type ArticleBodyState = "ready" | "queued" | "summary-only";
 
-interface BodiesPayload {
-  generatedAt: string;
-  count: number;
-  bodies: Record<string, BodyRecord>;
+const shardImports = import.meta.glob<string>("../../../data/bodies-*.json", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+const shardPaths = new Set(BODY_SHARD_PATHS.map((path) => `../../../${path}`));
+for (const path of Object.keys(shardImports)) {
+  if (!shardPaths.has(path)) throw new Error(`unexpected body shard: ${path}`);
 }
+const shardContents = BODY_SHARD_PATHS.map((path) => shardImports[`../../../${path}`] ?? null);
+const shardValues = shardContents.map((content, index) => {
+  if (content === null) return null;
+  try {
+    return JSON.parse(content) as unknown;
+  } catch {
+    throw new Error(`invalid body storage JSON at ${BODY_SHARD_PATHS[index]}`);
+  }
+});
+const { mode: BODIES_STORAGE_MODE, payload: data } = loadBodyStorage<BodyRecord>(
+  bodiesJson,
+  shardValues,
+);
+const index = indexJson as { health?: { bodyShardDigests?: unknown; bodyStorageMode?: unknown } };
+assertBodyStorageMode(BODIES_STORAGE_MODE, index.health);
+if (BODIES_STORAGE_MODE === "shards-v1") {
+  assertBodyShardDigests(
+    shardContents.map((content) => content!),
+    index.health?.bodyShardDigests,
+  );
+}
+export { BODIES_STORAGE_MODE };
 
-const data = bodiesJson as BodiesPayload;
-
-export const BODIES: Readonly<Record<string, BodyRecord>> = data.bodies ?? {};
+export const BODIES: Readonly<Record<string, BodyRecord>> = data.bodies;
 export const BODIES_GENERATED_AT = data.generatedAt;
-export const BODIES_COUNT = data.count ?? Object.keys(BODIES).length;
+export const BODIES_COUNT = data.count;
 
 /** The minimum an entry must carry for its stored body to be renderable. */
 export type BodySourceEntry = SourceSnippetInput & { id: string };

@@ -10,6 +10,8 @@ import {
   parsePublicationApprovalManifest,
   type PublicationApprovalManifest,
 } from "../web/src/lib/publication-gate.ts";
+import { BODY_SHARD_PATHS, serializeBodyShards, splitBodyShards } from "../web/src/lib/body-shards.ts";
+import { bodyShardDigests } from "../web/src/lib/body-shard-integrity.ts";
 
 const HEX = {
   changed: "00000000000000c1",
@@ -67,11 +69,25 @@ function json(value: unknown): string {
 }
 
 function files(values: Record<string, unknown>): Map<string, string | null> {
-  return new Map(Object.entries(values).map(([path, value]) => [path, json(value)]));
+  return new Map(Object.entries(values).map(([path, value]) => {
+    if (/^data\/bodies(?:-[0-3])?\.json$/.test(path)
+      && value && typeof value === "object" && "bodies" in value) {
+      const bodies = (value as { bodies: Record<string, unknown> }).bodies;
+      return [path, json({
+        generatedAt: "2026-08-12T00:00:00.000Z",
+        count: Object.keys(bodies).length,
+        ...value,
+      })];
+    }
+    return [path, json(value)];
+  }));
 }
 
 describe("Publisher incremental impact plan", () => {
   it("allows only versioned monthly update artifacts and declares both public route families", () => {
+    for (const path of BODY_SHARD_PATHS) expect(PUBLISHER_DATA_PATH_RE.test(path)).toBe(true);
+    expect(PUBLISHER_DATA_PATH_RE.test("data/bodies-4.json")).toBe(false);
+    expect(PUBLISHER_DATA_PATH_RE.test("data/bodies-0/../secret.json")).toBe(false);
     expect(PUBLISHER_DATA_PATH_RE.test("data/updates/_index.json")).toBe(true);
     expect(PUBLISHER_DATA_PATH_RE.test("data/updates/2026-10.json")).toBe(true);
     expect(PUBLISHER_DATA_PATH_RE.test("data/updates/../secrets.json")).toBe(false);
@@ -185,6 +201,119 @@ describe("Publisher incremental impact plan", () => {
       shadowSafe: true,
       blockers: [],
     });
+  });
+
+  it("treats a lossless legacy-to-shard commit as a full reconciliation, not 1,000 changed articles", () => {
+    const record = { bodyJa: "実際の本文。", bodyEn: "A real article." };
+    const legacy = {
+      generatedAt: "2026-08-12T00:00:00.000Z",
+      count: 1,
+      bodies: { [HEX.body]: record },
+    };
+    const parts = splitBodyShards(legacy);
+    const before = files({
+      "data/index.json": { generatedAt: legacy.generatedAt, entries: [entry(HEX.body)] },
+      "data/bodies.json": legacy,
+    });
+    const after = files({
+      "data/index.json": { generatedAt: legacy.generatedAt, entries: [entry(HEX.body)] },
+      "data/bodies.json": legacy,
+      ...Object.fromEntries(BODY_SHARD_PATHS.map((path, index) => [path, parts[index]])),
+    });
+    const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "b".repeat(40),
+      beforeFiles: before,
+      afterFiles: after,
+      changedPaths: BODY_SHARD_PATHS,
+    });
+    expect(plan.changedBodyIds).toEqual([]);
+    expect(plan.incremental.shadowSafe).toBe(false);
+    expect(plan.incremental.blockers).toContain("body-storage-migration-requires-full-reconciliation");
+    expect(plan.fullReconciliationReasons).toContain("body-storage-migration-requires-full-reconciliation");
+  });
+
+  it("rejects missing or mixed shards when the index declares sharded storage", () => {
+    const baseline = {
+      generatedAt: "2026-08-12T00:00:00.000Z",
+      count: 1,
+      bodies: {
+        [HEX.body]: { bodyJa: "実際の本文。", bodyEn: "A real article." },
+      },
+    };
+    const shards = serializeBodyShards(baseline);
+    const modeIndex = {
+      generatedAt: baseline.generatedAt,
+      entries: [entry(HEX.body)],
+      health: {
+        bodyStorageMode: "shards-v1",
+        bodyShardDigests: bodyShardDigests(shards.map((file) => file.content)),
+      },
+    };
+    const before = files({ "data/index.json": modeIndex, "data/bodies.json": baseline });
+    expect(() => buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "c".repeat(40),
+      beforeFiles: before,
+      afterFiles: before,
+      changedPaths: [],
+    })).toThrow(/body shards required by the index/);
+
+    const mixed = new Map(before);
+    for (const file of shards) mixed.set(file.path, file.content);
+    mixed.set(shards[0]!.path, `${shards[0]!.content}\n`);
+    expect(() => buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "c".repeat(40),
+      beforeFiles: files({ "data/index.json": { entries: [entry(HEX.body)] }, "data/bodies.json": baseline }),
+      afterFiles: mixed,
+      changedPaths: BODY_SHARD_PATHS,
+    })).toThrow(/body shard digest mismatch/);
+  });
+
+  it("tracks an individual shard write as an exact body/search delta", () => {
+    const baseline = {
+      generatedAt: "2026-08-12T00:00:00.000Z",
+      count: 0,
+      bodies: {},
+    };
+    const next = {
+      ...baseline,
+      count: 1,
+      bodies: { [HEX.body]: { bodyJa: "実際の本文。", bodyEn: "A real article." } },
+    };
+    const before = files(Object.fromEntries(
+      BODY_SHARD_PATHS.map((path, index) => [path, splitBodyShards(baseline)[index]]),
+    ));
+    const after = files(Object.fromEntries(
+      BODY_SHARD_PATHS.map((path, index) => [path, splitBodyShards(next)[index]]),
+    ));
+    before.set("data/index.json", json({ generatedAt: baseline.generatedAt, entries: [entry(HEX.body)] }));
+    after.set("data/index.json", json({ generatedAt: baseline.generatedAt, entries: [entry(HEX.body)] }));
+    const changedPath = BODY_SHARD_PATHS.find((_path, index) =>
+      splitBodyShards(next)[index]?.count === 1);
+    expect(changedPath).toBeDefined();
+    const plan = buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "c".repeat(40),
+      beforeFiles: before,
+      afterFiles: after,
+      changedPaths: [changedPath!],
+    });
+    expect(plan.changedBodyIds).toEqual([HEX.body]);
+    expect(plan.incremental).toMatchObject({
+      detailMode: "exact",
+      searchMode: "delta",
+      searchDeltaIds: [HEX.body],
+      shadowSafe: true,
+    });
+    expect(() => buildPublisherImpactPlan({
+      approvalManifest: manifest(),
+      baseRef: "c".repeat(40),
+      beforeFiles: before,
+      afterFiles: new Map([[changedPath!, after.get(changedPath!)!]]),
+      changedPaths: [changedPath!],
+    })).toThrow(/incomplete body shard set/);
   });
 
   it("emits a tombstone when an addressable detail leaves the final snapshot", () => {

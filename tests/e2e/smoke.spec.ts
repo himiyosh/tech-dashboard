@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
+import { readBodyStorageFromDisk } from "../../scripts/body-storage-node.mjs";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import {
   effectiveTitleLanguage,
@@ -2666,7 +2667,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: SummaryFixtureEntry[];
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, unknown>;
     };
     const summaryOnlyEntry = index.entries.find(
@@ -2710,7 +2711,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     // web/src/lib/bodies.ts suppresses a stored body whose entry carries no
@@ -2848,7 +2849,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     // Same render-guard derivation as the provenance test above: the previous
@@ -8914,7 +8915,7 @@ test.describe("TECH Dashboard smoke", () => {
         contentSnippet?: string;
       }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, unknown>;
     };
     const withBody = index.entries.find(
@@ -8950,7 +8951,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<DetailAddressableEntry & { id: string; tags?: string[] }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     const escapeTagRegex = (value: string): string =>
@@ -13043,7 +13044,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const hasChat = (entry: { id: string }) => (
@@ -13375,7 +13376,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: Array<{ s: "a" | "b"; ja: string; en: string }> }>;
     };
     const address = index.entries.find((entry) =>
@@ -13409,7 +13410,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const chatEntry = index.entries.find((entry) => (
@@ -13439,7 +13440,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const entry = index.entries.find((item) => (

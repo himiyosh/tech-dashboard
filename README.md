@@ -429,6 +429,8 @@ Copilot要約は `worker-summarizer/` が 1 message / invocation で生成し、
 
 **移行の検証・release順序:** `node --import tsx scripts/verify-body-shard-migration.mts --main-sha <git ls-remoteで得た40桁のmain SHA> --measure-pack` は同一immutable mainのlegacy record全件を投影し、本文・6発言chat・model・生成日時を含む各recordのSHA-256と集合を照合します。`--measure-pack`は直近13 snapshotを**リポジトリ外の2つの一時git repoだけ**で再生し、両方へ`git gc`してpack sizeを比較します (試算であり実repoの将来容量ではない)。旧sourceを消さず、初回の承認済みPublisher runが4 shardとindex healthを**1つのCAS commit**で生成し、次runから本文を取り込みます。PRはdevelopへ統合してもproduction Workerをdeployしません。別途承認したdevelop→main releaseではR-027に従いQueue consumer→旧in-flight drain→main merge→旧writer停止確認→別承認のFree bridge更新→Publisher・Pagesのread-back順です。新shardのlossless parityとproduction build成功を確認するまで旧 `data/bodies.json` は削除しません。rollback時も新規本文を失う旧9MB版へ黙って戻さず、最新main SHAのshardを検証したうえで別の承認済み復旧手順を取ります。Cloudflare accountのbuild件数・費用はローカル計測から断定しません。
 
+4 shardへの切替後、単一ファイルへ直接書く旧 `npm run body:migrate` と `scripts/backfill-bodies.mjs` は書戻しを拒否します。本文の追加はPublisherのbounded Queue、既存本文の修復は4 shard対応のtransaction migrationを使い、凍結した旧sourceへ新しい本文を戻しません。
+
 Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 60000 ms) で timeout します。Queue retry と次回 Publisher run の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 
 **手動トリガ** (緊急で回したい時):

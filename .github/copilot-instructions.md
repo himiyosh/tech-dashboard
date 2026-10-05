@@ -3288,3 +3288,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: ファイルの有無だけでlegacy/shard modeを決め、同じcommitのindex healthが宣言する保存modeを入力にしていなかった。また、JSONとして等価な内容とGitへcommitする正確なbyte列を同一視した。
 - **対策**: 旧modeとshard modeをindex healthへ照合し、shard modeで全件欠落した場合もfail-closedにする。Webはraw importの実bytesをdigest検査し、Publisherとmigration、plain Node reader、CI snapshotも同じmode・全件inventory・digestを検証する。旧sourceは削除せず復旧に必要な明示手順だけで利用する。
 - **教訓**: 非原子的な表示側fallbackで保存形式の移行を隠さない。旧fileが残っていても新modeが確定したら新集合の完全性が必須であり、indexが宣言したmode・個数・hashを実bytesで検証する。JSONの再シリアライズは元fileのintegrity proofにならない。
+
+### LL-497: Web unitの旧file mockは実shard globと独立にしないとfull suiteだけ失敗する
+- **事象**: legacy modeでは通るWebのunit testが、4 shardを一時配置して全unitを実行した時に5件失敗した。indexを旧fixtureだけでmockしたtestは実shardと保存modeが一致せず、旧`bodies.json`だけをmockしたtestは実shardが優先され、想定した5件でなく現行1,156件を読んだ。
+- **根本原因**: JSON importのmockは`import.meta.glob`が見つける別の実ファイルを隔離しない。片方のstorage modeしか持たない開発データで成功したことを、移行前後の全unitで成功する証拠として扱った。
+- **対策**: synthetic indexを使うcollection testは本文reader自体をmockし、本文の品質・出典判定はstorage入力を受けるpure helperへ独立fixtureを渡す。実readerのmode、index marker、raw shard digestは別のschema/Publisher/Web build testで検証する。legacyと4 shardの双方で同じfull suiteを実行する。
+- **教訓**: 保存形式の移行でfixtureを旧fileだけへ差し込むと、globや自動発見した新fileがmockをすり抜ける。生成dataの任意modeに依存しないunit fixtureを作り、productionのfail-closed guardをtest環境だけで無効化しない。

@@ -69,6 +69,12 @@ vi.mock("../data/index.json", () => ({
   },
 }));
 
+// These pure collection tests use a synthetic index, not a synthetic body
+// inventory. Avoid importing real shard files alongside the mocked index.
+vi.mock("../web/src/lib/bodies.ts", () => ({
+  hasRealBody: () => false,
+}));
+
 // モック後に import する (Vitest の hoisting により vi.mock は先行する)
 const {
   relativeTime,

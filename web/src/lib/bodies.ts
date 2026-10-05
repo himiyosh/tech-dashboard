@@ -96,11 +96,18 @@ export type BodySourceEntry = SourceSnippetInput & { id: string };
  * supposed to be grounded in; making the source a required argument means the
  * type checker rejects that instead of silently skipping the guard.
  */
-export function bodyForEntry(entry: BodySourceEntry): BodyRecord | null {
-  const record: BodyRecord | undefined = BODIES[entry.id];
+export function bodyForEntryIn(
+  entry: BodySourceEntry,
+  records: Readonly<Record<string, BodyRecord>>,
+): BodyRecord | null {
+  const record: BodyRecord | undefined = records[entry.id];
   if (!record || !isRealBodyRecord(record)) return null;
   if (!hasMeaningfulSourceSnippet(entry)) return null;
   return record;
+}
+
+export function bodyForEntry(entry: BodySourceEntry): BodyRecord | null {
+  return bodyForEntryIn(entry, BODIES);
 }
 
 /**

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-06T18:31:20.408Z",
-  "count": 1160,
+  "generatedAt": "2026-10-06T19:30:54.318Z",
+  "count": 1158,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -1975,44 +1975,6 @@
           "s": "b",
           "ja": "その通りじゃ。記事は2026年7月18日時点で生まれたばかりの議論としており、前提が変わる可能性にも注意が必要じゃよ。",
           "en": "Exactly. The article says this debate was brand-new as of July 18, 2026, so its assumptions may change. That’s worth keeping in mind."
-        }
-      ]
-    },
-    "88f95b73721fbf85": {
-      "bodyJa": "AIエージェントに業務を委任する際、同じタスクでも「渡し方」を変えるだけで成果物の完成度が大きく変わる——。Cursorを題材にした本記事は、AIへの作業委任を三つの段階に整理し、それぞれの品質を10点満点で評価しながら、実務でどの手法を選ぶべきかの指針を示している。\n\nまず最も手軽なのが、その都度プロンプトで指示を出す方法だ。記事によれば、この「そのまま任せる」段階では成果物の品質はおおむね6点にとどまるという。AIは一般的な回答を返せる一方で、プロジェクト固有の作法や過去の判断基準を毎回把握できるわけではなく、出力にばらつきが生じやすい。指示のたびに前提条件を書き足す手間もかかる。\n\n次の段階が「スキル化」である。頻出する作業手順やルール、テンプレートをあらかじめ定義しておき、AIが参照できる形にまとめておく手法だ。これにより品質は8点程度まで高まるとされる。Cursorのルール機能やスラッシュコマンド、あるいはClaudeが提供する「Skills」のように、再利用可能な指示セットを用意しておく発想は各社のツールで広がりつつある。手順が固定化されることで再現性が上がり、担当者による品質の差も縮まりやすい。\n\n最後が「アプリ化」だ。特定の目的に特化した専用ツールとして作業フロー全体を作り込むことで、品質は10点に達し得るという。入力の検証や出力の整形、外部サービスとの連携までを組み込めば、AIの裁量に委ねる部分を減らし、安定した結果を得やすくなる。一方で、開発や保守のコストは相応に大きくなるため、利用頻度や重要度に見合うかの見極めが求められる。\n\n重要なのは、三段階に単純な優劣があるというより、タスクの性質に応じて使い分ける点にあると見られる。一度きりの作業ならプロンプトで十分だが、繰り返し発生し品質のばらつきが許されない業務ほど、スキル化やアプリ化の投資対効果は高まる。プロンプトエンジニアリングやワークフロー自動化への関心が高まる中、AI活用を「単発の依頼」から「仕組み」へと引き上げる考え方は、今後の実務導入で一つの参考軸になりそうだ。",
-      "bodyEn": "As teams increasingly hand routine work to AI coding assistants and agents, a practical question keeps resurfacing: how much can you actually trust the output, and what does it take to make it dependable? A recent Qiita post built around the Cursor editor tackles this directly, proposing a three-tier model for delegating tasks to AI. In its framing, a raw, one-off instruction yields roughly 60 percent of the desired quality, packaging the same task as a reusable \"skill\" raises it to about 80 percent, and turning it into a dedicated application pushes the result toward full marks.\n\nThe underlying argument is that the gap between a mediocre result and a reliable one has less to do with the model's raw capability than with how the task is structured and constrained. When you simply describe what you want in a chat prompt, the assistant fills ambiguity with guesses. The output may be good on one attempt and disappointing on the next, because nothing anchors the model to a consistent process. This is why the post scores unstructured delegation at six out of ten: it is fast and flexible, but neither reproducible nor predictable.\n\nThe second tier, described as turning the task into a skill, addresses reproducibility by capturing the instructions, context, and constraints into a reusable form. In the Cursor ecosystem this maps naturally onto rule files and saved prompts that travel with a project, and it echoes the broader industry move toward packaged, invokable capabilities. Anthropic, for example, has promoted the idea of agent skills as self-contained bundles of instructions and resources that a model can load on demand. By encoding hard-won preferences once, such as formatting rules, naming conventions, or review checklists, a team can get closer to the same quality every time rather than re-explaining the same details in each session. The post rates this approach around eight out of ten, noting that it dramatically improves consistency while still leaving the final execution to a probabilistic model.\n\nThe third tier, app-ification, wraps the task in a dedicated tool that combines deterministic code with AI where each is strongest. Here, the parts of the workflow that must be exact, such as input validation, data retrieval, formatting, and enforcing business rules, are handled by conventional code, while the model is reserved for the genuinely generative or judgment-based steps. Because the surrounding logic removes most of the room for error, the output becomes far more stable, which is why the article awards it a full ten. The tradeoff is cost: building an application requires more engineering effort and maintenance than writing a prompt or a rule file, so it makes sense mainly for high-volume or high-stakes tasks that justify the investment.\n\nRead together, the three stages form a spectrum that trades effort against reliability. The message is not that one method is universally superior, but that the right choice depends on how often a task recurs and how much the outcome matters. A quick, exploratory request is well served by direct prompting, a repeated team workflow benefits from a skill, and a business-critical process may warrant a purpose-built app. This kind of tiered thinking is increasingly common as organizations move from experimenting with AI toward operationalizing it.\n\nSome useful background helps situate the framework. Cursor is an AI-augmented code editor that supports project-level rules and agent-style task execution, making it a natural setting for this discussion. The Model Context Protocol, an open standard for connecting models to external tools and data, points in a similar direction by letting AI systems act through well-defined interfaces rather than free-form text. All of these efforts share a common theme: reducing the unpredictability of large language models by surrounding them with structure, whether that structure is a template, a tool, or a full application.\n\nIt is worth treating the specific scores as illustrative rather than measured benchmarks. The 60, 80, and 100 figures appear to be the author's qualitative estimates drawn from hands-on experience, not results from a controlled evaluation, and actual outcomes will vary by task, model, and prompt quality. Even so, the framework offers a clear and practical heuristic for anyone deciding how much engineering to invest before trusting an AI agent with real work.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T05:13:03.281Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "同じYouTube要約なのに、丸投げだと6点で、スキル化なら8点、アプリ化なら10点？ そもそもスキル化って何？",
-          "en": "The same YouTube summary scores 6 when simply delegated, 8 as a skill, and 10 as an app? What does “turning it into a skill” mean?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、スキル化は手順や指示を再利用できる型にすることじゃ。記事では、専用アプリにするとさらに完成度が上がったそうじゃよ。",
-          "en": "Simply put, a skill is a reusable template of instructions and steps. According to the article, wrapping the task in a dedicated app improved the result even further."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ 型やアプリにすると、何がそんなに嬉しいの？",
-          "en": "Wow, that’s impressive! What’s the real benefit of using a template or an app?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、成果物の品質と再現性を高めやすいのが利点じゃ。18回測り、品質・実行時間・コストの総合ではComposerのアプリ化が最良だったそうじゃよ。",
-          "en": "The article says it can improve quality and consistency. Across 18 tests covering output quality, runtime, and cost, the Composer app approach performed best overall."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、AIに頼むだけより、作業を型にして、必要ならアプリにすると安定した成果を狙いやすいんだね。",
-          "en": "So instead of just asking the AI, structuring the task—and turning it into an app when needed—can make strong results more consistent."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事の結果を参考に、品質だけでなく実行時間やコストも見ながら、どの方式にするか選ぶのがポイントじゃな。",
-          "en": "Exactly. The key takeaway is to choose an approach by considering not only quality, but also runtime and cost, using the article’s results as a guide."
         }
       ]
     },
@@ -26450,44 +26412,6 @@
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-29T13:03:47.277Z"
     },
-    "b4d7c0e943ade733": {
-      "bodyJa": "## MCPの寄贈\n\nAnthropicは、MCPをLinux Foundation傘下で新たに設立されたAgentic AI Foundationへ寄贈します。プロトコルの将来を、特定企業に偏らない運営基盤へ移す取り組みです。\n\n## 中立的な運営\n\n移行の中心にあるのは、MCPのガバナンスをベンダー中立にすることです。Agentic AI Foundationが受け皿となり、中立的な管理の下でMCPの長期的かつ継続的な発展を支えると説明されています。",
-      "bodyEn": "## MCP and Agentic AI Foundation\n\nMCP is moving from Anthropic to the newly formed Agentic AI Foundation under the Linux Foundation. The change matters because it places the protocol’s future under vendor-neutral governance rather than stewardship tied to a particular company.\n\n## Vendor-neutral governance\n\nAnthropic is donating MCP to the new foundation, establishing a neutral foundation for its continued development. Under this arrangement, the Agentic AI Foundation will provide stewardship for the protocol within the Linux Foundation. The announcement presents the donation as a way to support MCP’s long-term development while ensuring its governance does not favor a specific vendor.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "MCPがAnthropicから新組織に寄贈されるって、つまり管理する場所が変わるの？",
-          "en": "MCP is being donated by Anthropic to a new organization—does that mean its stewardship is moving?"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃ。この記事では、Linux Foundation傘下に新設されたAgentic AI Foundationへ移し、中立的に運営するとしておる。",
-          "en": "Exactly. The article says stewardship will move to the newly formed Agentic AI Foundation under the Linux Foundation, providing vendor-neutral governance."
-        },
-        {
-          "s": "a",
-          "ja": "一社の持ち物から、みんなで支えるルールになる感じ？MCPを使う側にはどう役立つの？",
-          "en": "So it’s like moving from one company’s property to rules supported more broadly? How does that help people using MCP?"
-        },
-        {
-          "s": "b",
-          "ja": "書かれている範囲では、特定企業に偏らない管理によって、プロトコルの継続的で長期的な発展を支える点じゃよ。",
-          "en": "As described, vendor-neutral stewardship is meant to support the protocol’s continued, long-term development rather than favoring one company."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、MCPの将来を一社ではなく中立的な組織に託す動きなんだね。へえ、大きな転換だ！",
-          "en": "So MCP’s future is being entrusted to a neutral organization instead of one company. Wow, that’s a major shift!"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。大事なのは、MCPがLinux Foundationそのものではなく、その傘下の新組織へ寄贈される点じゃ。",
-          "en": "Right. One detail to note: MCP is being donated not directly to the Linux Foundation, but to the new foundation operating under it."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-05T06:28:10.522Z"
-    },
     "7124d071c29f4ccb": {
       "bodyJa": "Microsoftは、教育機関が抱える固有の複雑さに対応するために設計されたAI機能を紹介した。同社の公式ブログ「Source」で公開された投稿で、学校や大学がAIをより効果的に導入・活用できるよう支援する狙いがあると説明している。\n\n教育現場は、一般的な企業とは異なる複雑な要件を抱えている。学生の個人情報や成績といった機微なデータの保護、教員・職員・学生・保護者など多様な関係者、学部や部門ごとに分かれた組織構造、さらに地域や国ごとに異なる法規制などが絡み合う。こうした固有の事情を踏まえずに汎用的なAIを導入しても、期待した効果が得られにくいと指摘されてきた。\n\n今回Microsoftが強調するのは、こうした「機関を理解する」AIという考え方だと見られる。機関ごとのデータやポリシー、運用体制を踏まえた形でAIを組み込むことで、単なる質問応答にとどまらず、それぞれの学校や大学の文脈に即した支援を目指すものと考えられる。具体的な提供形態や対象範囲については、元の投稿に沿って確認する必要がある。\n\n背景には、教育分野でAI活用が急速に広がっている状況がある。生成AIの登場以降、授業準備や事務作業の効率化、個別最適化された学習支援などへの応用が模索されており、各社が教育向けの取り組みを強化している。GoogleやOpenAIなども教育機関向けのサービスや利用条件を整えるなど、競争が活発化している分野だ。\n\n一方で、教育機関でのAI導入には、プライバシー保護や公平性、学術的誠実性の確保といった課題も残る。生成AIが誤った情報を出力する可能性や、評価・採点への影響をどう扱うかは、依然として議論が続いている。Microsoftのように機関固有の複雑さに焦点を当てるアプローチが、こうした懸念にどこまで応えられるかが今後の注目点となりそうだ。",
       "bodyEn": "Microsoft has published new material outlining how it is positioning artificial intelligence for the specific demands of schools, colleges and universities, arguing that generic AI tools often fall short of what educational institutions actually require. The announcement, shared through the company's Source blog, matters because education is one of the largest and most sensitive sectors experimenting with generative AI, and the way large vendors package these tools will shape how millions of students and staff encounter the technology.\n\nThe central message is that AI for education needs to be built for the complexity of the institution rather than treated as a one-size-fits-all consumer product. Microsoft frames this around AI that \"understands your institution,\" suggesting systems designed to work within the particular structures, data environments and compliance obligations that distinguish a university or school district from a typical business. In practice this points to tools that can respect institutional boundaries around who can see what information, and that can be grounded in an organization's own content rather than only drawing on general knowledge.\n\nEducational institutions are unusually complicated customers. A single university may run overlapping systems for admissions, learning management, research, human resources and alumni relations, each with different data owners and access rules. Schools must also navigate strict privacy expectations, including regulations governing student records, and they frequently serve minors, which raises the stakes for safety and content controls. Microsoft's argument appears to be that AI deployed in this setting has to reflect these realities out of the box, rather than requiring every institution to solve them independently.\n\nThis messaging fits within Microsoft's broader education portfolio. The company already offers Microsoft 365 Education, which bundles familiar productivity applications with tools such as Teams for Education, and it has been extending its Copilot assistant across its software. Copilot is designed to work over an organization's own documents, email and chats while honoring existing permissions, an approach the company describes as respecting the boundaries of enterprise and institutional data. The latest education framing is likely an extension of that same strategy, tailored to the vocabulary and needs of academic environments.\n\nContext also comes from the wider industry. Microsoft is a major investor in and partner of OpenAI, whose models underpin much of Copilot, and OpenAI has separately courted the education market with offerings aimed at universities. Google promotes its own Gemini-based tools through Google Workspace for Education, and a range of specialist startups pitch tutoring, grading and administrative assistants directly to schools. Against this competitive backdrop, vendors increasingly compete less on raw model capability and more on trust, integration and governance, which is the terrain Microsoft appears to be emphasizing here.\n\nFor institutions weighing adoption, several prerequisite concepts help make sense of the pitch. Grounding refers to connecting an AI system to verified, institution-specific sources so responses reflect local policies and records instead of generic web content. Data residency and access controls determine where information is stored and who the assistant is permitted to draw from, which is central to complying with rules such as FERPA in the United States or GDPR in Europe. These mechanisms are what allow an AI assistant to answer a question about a particular course or policy without exposing data it should not reach.\n\nThe announcement, as summarized, stops short of detailing specific new products, pricing or regional availability, and readers should treat the broader claims about effectiveness with appropriate caution until concrete features and independent evaluations are available. Marketing language about AI that \"understands your institution\" describes an aspiration and a design philosophy as much as a fixed set of capabilities, and real-world outcomes will depend on how deployments handle accuracy, bias and the well-documented tendency of generative systems to produce confident but incorrect answers.\n\nStill, the direction is notable. Education has moved quickly from debating whether to allow AI at all to negotiating how to integrate it responsibly, and large platform providers are racing to define the default tools that institutions will use. Microsoft's framing signals that the competition is increasingly about fitting AI to the messy, regulated, multi-stakeholder reality of schools and universities. Whether these tools meaningfully reduce administrative burden or improve learning will become clearer as institutions pilot them and share results, but the emphasis on institutional context reflects a broader maturation in how enterprise AI is being sold to complex organizations.",
@@ -43436,120 +43360,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T20:37:37.461Z"
     },
-    "f67c88ba872d8347": {
-      "bodyJa": "## AI時代の指標\n\nOpenAIのCFOであるSarah Friar氏は、AI時代の進捗を評価する実用的なスコアカードを紹介した。社会・経済・安全の各側面からAIの影響を可視化して追跡し、説明責任と透明性の向上を目指す枠組みだ。\n\n## ROIの測定軸\n\nROIは、有用な仕事、成功したタスク当たりのコスト、信頼性、計算資源に対するリターンで測定する。タスクの成功に要するコストや計算資源も指標に含め、AI開発が世界に与える影響の把握につなげると説明されている。",
-      "bodyEn": "## Practical AI scorecard\n\nOpenAI introduced a framework for measuring and tracking AI progress across social, economic, and safety dimensions. The scorecard matters because it aims to improve accountability and transparency around how AI development affects the world.\n\nSarah Friar, OpenAI’s CFO, presents the approach as a practical way to measure return on investment through indicators tied to actual performance.\n\n## Useful work and dependability\n\nThe scorecard focuses on useful work, cost per successful task, dependability, and return on compute. Together, these measures provide criteria for making AI’s effects more visible and tracking progress rather than relying on a single measure of value.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "役立つ仕事、成功タスクのコスト、信頼性、計算資源のリターンの4つで測るんだね。これは大きいこと？",
-          "en": "It uses four measures: useful work, cost per successful task, dependability, and return on compute. Is that a big shift?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、AIへの投資効果を具体的に追える実用的な物差しとして示しているよ。影響の可視化と説明責任にもつながる考え方だね。",
-          "en": "The piece presents them as practical ways to track AI’s return on investment. The broader goal is to make its impact more visible and accountable."
-        },
-        {
-          "s": "a",
-          "ja": "「計算資源のリターン」って、何を見ようとしているの？",
-          "en": "What is “return on compute” trying to measure?"
-        },
-        {
-          "s": "b",
-          "ja": "使った計算資源に対して、どれだけ成果を得られたかを見る考え方だよ。投入と結果のつり合いを確かめるイメージだね。",
-          "en": "It looks at how much useful output comes from the computing resources used—the balance between what goes in and what comes out."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、AIに頼んだ作業が本当に成功したか、かかったコストと一緒に振り返ってみたいな。",
-          "en": "I’d use it to review whether an AI task actually succeeded, along with what that success cost."
-        },
-        {
-          "s": "b",
-          "ja": "いい使い方だね。ただ、コストだけでなく、役立つ仕事か、安定して任せられるか、計算資源に見合うかも合わせて見る枠組みだよ。",
-          "en": "That fits the framework. It also asks whether the work is useful, dependable, and worth the computing resources—not just whether the cost is low."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-28T20:36:26.151Z"
-    },
-    "b600595a83e8cb7d": {
-      "bodyJa": "## AI安全政策\n\nOpenAIは、米国の州政府と連邦政府でAI安全政策が進展し、責任あるAI開発を支える規制枠組みの整備が加速していると強調した。州と連邦の取り組みが、安全性を確保する政策形成につながっていると説明している。\n\n## 逆連邦主義\n\n示されたのは「逆連邦主義」と呼ぶAIガバナンスの考え方だ。州法を基礎として、安全で民主的なAIのための全国的な枠組みを築く。州の制度を連邦レベルの枠組み形成に生かし、双方の施策が規制の形を整えていくとされる。",
-      "bodyEn": "## AI safety policy\n\nOpenAI highlights growing momentum in US AI safety policy at both the state and federal levels. The effort matters because these initiatives are shaping a regulatory framework intended to support responsible AI development.\n\n## Reverse federalism approach\n\nOpenAI describes its model for AI governance as “reverse federalism.” Under this approach, state laws help build a national framework for AI that is safe and democratic. The company says progress by state and federal governments shows that work on this framework is accelerating, with policy development focused on AI safety and responsible development.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「リバース・フェデラリズム」って、州の法律から国の仕組みを作るってこと？",
-          "en": "Does “reverse federalism” mean building a national system from state laws?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、州の法律を土台に、安全で民主的なAIの全国的な枠組みを築く考え方として示しているよ。",
-          "en": "Here, it means using state laws to help build a national framework for safe, democratic AI."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、AIを開発する側が責任を持って進めるための共通ルールにつながるのかな？",
-          "en": "So could that lead to shared rules that help AI developers act responsibly?"
-        },
-        {
-          "s": "b",
-          "ja": "そうした方向だね。州と連邦の取り組みが、責任あるAI開発を支える規制の枠組みを形作っているんだ。",
-          "en": "That’s the direction described. State and federal initiatives are shaping a regulatory framework that supports responsible AI development."
-        },
-        {
-          "s": "a",
-          "ja": "州ごとの動きがばらばらに終わらず、国全体のAI安全政策につながる考え方なんだね。",
-          "en": "So the idea is for state efforts to contribute to nationwide AI safety policy, rather than remain isolated."
-        },
-        {
-          "s": "b",
-          "ja": "うん。ただ、完成した枠組みではなく、州と連邦の政策が進みつつある段階として伝えているよ。",
-          "en": "Yes. But it’s presented as growing policy momentum at the state and federal levels, not a finished framework."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-29T08:37:28.435Z"
-    },
-    "c376d1436e9255c9": {
-      "bodyJa": "## GPT-Red\n\nOpenAIはGPT-Redを発表した。自己改善によってモデルのロバスト性を高める手法で、AIの安全性と信頼性の向上に向けた重要な研究成果として注目される。\n\n## 自己対戦\n\nGPT-Redは、自動化されたレッドチーミングシステムとして自己対戦を利用する。この仕組みにより、AIの安全性やアラインメント、プロンプトインジェクションに対するロバスト性を改善すると説明されている。",
-      "bodyEn": "## GPT-Red\n\nOpenAI has introduced GPT-Red, an automated red teaming system intended to improve AI safety, alignment, and prompt injection robustness. The announcement matters because it presents self-improvement as a way to build more reliable and resilient AI systems.\n\n## Self-play and robustness\n\nGPT-Red uses self-play to enhance robustness. OpenAI describes it as a model that leverages self-improvement techniques, enabling the system to strengthen its robustness through that process.\n\nThe work is presented as a significant research step toward safer, more reliable AI. Its central technical elements are automated red teaming, self-play, and self-improvement.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "GPT-Redは、どうやって自分で強くなっていくの？",
-          "en": "How does GPT-Red improve itself?"
-        },
-        {
-          "s": "b",
-          "ja": "自己対戦を使う自動レッドチーミングだよ。自分の出力を相手に試しながら、弱点への強さを高める仕組みなんだ。",
-          "en": "It uses automated red teaming with self-play, testing against its own outputs to become more robust to weaknesses."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、AIを安全で信頼できるものにしたい人に役立つのかな？",
-          "en": "So could this help people working to make AI safer and more reliable?"
-        },
-        {
-          "s": "b",
-          "ja": "うん。安全性や意図との整合性を高め、プロンプトインジェクションへの強さを上げる狙いがあるよ。",
-          "en": "Yes. It aims to improve safety, alignment with intended behavior, and resistance to prompt injection."
-        },
-        {
-          "s": "a",
-          "ja": "AIが自分で試し合って、危ない指示や弱点に強くなる研究なんだね。",
-          "en": "Got it—it’s research where AI tests itself to become tougher against harmful instructions and weak spots."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。ただ、紹介されているのはロバスト性を高める手法で、あらゆる問題を防ぐ万能策とは限らないよ。",
-          "en": "Right. But it’s presented as a way to improve robustness, not necessarily a universal fix for every safety problem."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-29T15:38:06.030Z"
-    },
     "0d3409e022389698": {
       "bodyJa": "## GPT-5.6\n\nOpenAIはGPT-5.6を発表した。多様なユースケースに合わせて知能をスケールさせ、開発者や企業による複雑なタスクの効率的な処理を支えるフロンティアモデルとされる。\n\n## 推論能力\n\nGPT-5.6は高度な推論能力を備え、難しい作業に応じて能力を引き出せる。トークンごとの知能を高め、費用当たりの性能を強化することで、幅広い用途でのタスク処理能力を向上させたと説明されている。",
       "bodyEn": "## More intelligence from every token\n\nOpenAI launched GPT-5.6, a new frontier model designed to scale intelligence across diverse use cases. The release matters for developers and enterprises because it offers enhanced reasoning and task-handling capabilities for complex work.\n\n## Capability on demand\n\nThe announcement describes GPT-5.6 as delivering more intelligence from every token, stronger performance per dollar, and more capability on demand for users’ hardest work. Its advanced reasoning is intended to scale across different use cases, allowing developers and enterprises to handle complex tasks more efficiently and draw on greater capability when their work demands it.",
@@ -43782,9 +43592,155 @@
       "bodyJa": "## ML4\n\nフランスのAIラボMistral AIは、Mistral Large 4（ML4）を公開した。1T規模の大規模マルチモーダルモデルで、米国と中国の競合を上回ることを目指し、欧州発の選択肢としてAI利用者や企業に提示されている。\n\n## 1T規模\n\nML4の「1T」は、1兆個のパラメーターを持つことを指す。この規模にちなみ、「Le Chonk」という愛称も付けられた。名称とは対照的に、モデルの規模は非常に大きいと説明されている。Mistral AIは、この1T規模をML4の中心的な特徴として打ち出している。\n\n## マルチモーダル\n\nML4は、大規模であるだけでなく、マルチモーダルモデルとして登場した。Mistral AIは、オープン型とクローズド型をめぐる競争の中で、ML4をその双方に対する代替候補として位置付けている。一方、公開時点ではオープンウェイトモデルではない。\n\n## 第三の選択肢\n\nフランスのマクロン大統領は、この方向性をAIにおける「第三の道」と表現した。Mistral AIは、米国と中国の競合が存在する状況で、ML4を欧州発の別の選択肢として提示している。オープン型かクローズド型かという区分だけでなく、提供元の異なる候補をAI利用者や企業に示すモデルとされる。",
       "bodyEn": "## Mistral Large 4\n\nFrench AI lab Mistral AI released Mistral Large 4, or ML4, on Tuesday. The large multimodal model matters because it is positioned as a European alternative for AI users and businesses while aiming to challenge both American and Chinese rivals.\n\nML4 operates at a scale of 1 trillion parameters. It has been nicknamed “Le Chonk” in reference to that parameter count, emphasizing that the model is not small. Its combination of 1T scale and multimodal capabilities defines the technical scope described for the release.\n\n## Open and closed AI\n\nMistral is introducing ML4 amid what the announcement presents as a race between open and closed AI. The company aims for the model to leapfrog competitors on both sides rather than align solely with one category.\n\nThe release also arrives during a growing divide between closed models that can be unplugged and open models that are often made in China. Against that backdrop, Mistral is positioning ML4 as an alternative to both groups. That positioning gives users and businesses another candidate originating from Europe as they consider large AI models.\n\nDespite its scale and its role in the open-versus-closed competition, ML4 is not an open-weight model yet. The release therefore presents it as an alternative across that divide without describing the model itself as currently open-weight.\n\n## A third way in AI\n\nThe model follows what French president Macron described as “a third way in AI.” In this framing, Mistral’s role is not limited to competing with a single model or market. ML4 is intended to represent a European option alongside American and Chinese rivals.\n\nThe announcement’s claims are ambitious: a 1T-scale multimodal model designed to surpass competitors from both open and closed AI. For now, its stated significance rests on that scale, its multimodal capabilities, its European origin, and Mistral’s effort to establish an alternative to the two sides of the current divide.",
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-10-06T17:37:38.356Z"
+      "generatedAt": "2026-10-06T17:37:38.356Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段の仕事でAIを選ぶとき、何が変わるの？Mistral Large 4も候補に増えるってこと？",
+          "en": "When choosing AI for everyday work, what changes? Does Mistral Large 4 become another option?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。1T規模のマルチモーダルモデルで、AI利用者や企業に欧州発の新たな選択肢を示しているよ。",
+          "en": "Yes. It’s a 1T-scale multimodal model, offering AI users and businesses a new European alternative."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？それとも、同じことをもっと大きなモデルで狙うの？",
+          "en": "Couldn’t earlier models do this? Or is this pursuing similar goals with a much larger model?"
+        },
+        {
+          "s": "b",
+          "ja": "以前のモデルとの機能差は、この記事だけでは分からないよ。今回は複数種類の情報を扱うマルチモーダルと、1兆パラメータ規模が示されている。",
+          "en": "The comparison with earlier models isn’t clear here. What’s specified is multimodal capability—handling multiple kinds of information—and a scale of one trillion parameters."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ収穫は、米中のオープン型やクローズド型だけでなく、欧州発の候補も見えてきたことだね。",
+          "en": "So my takeaway is that there’s now a European option alongside open and closed rivals from the US and China."
+        },
+        {
+          "s": "b",
+          "ja": "うん。次は、まだオープンウェイトではないML4が、競合を超える狙いをどう示すかに注目だね。",
+          "en": "Right. Next, watch how ML4, which isn’t open-weight yet, demonstrates its ambition to surpass those rivals."
+        }
+      ]
     },
-    "ed744c789037c203": {
+    "9fc83e008c18992b": {
+      "bodyJa": "Metaの公開時刻サービスが、nts.meta.comでNTS（Network Time Security、RFC 8915）に対応した。時刻の精度に加え、受け取った時刻情報の送信元と、通信途中で変更されていないことを検証できるようにする取り組みだ。\n\n## NTS対応\n\nNTSではパケットが認証されるため、端末は時刻情報がMetaから届いたものかを確認できる。さらに、配送経路上で内容が改変されていないことも検証可能になる。認証されていなかったNTPによる時刻配信に、検証可能性を加える仕組みとして位置付けられている。\n\n## 状態を持たない設計\n\nMetaのNTSサーバーは、クライアントごとの状態を保持しない。Cookieの鍵は保存するのではなく導出され、複製もされない設計となっている。クライアント単位の状態やCookie鍵をサーバー側で保持・複製せずに、認証付きの時刻配信を提供する構成だ。\n\n## 公開された実装\n\nプロトコル、サーバー、クライアントを含む実装は、GitHub上のMeta’s Timeライブラリを通じてオープンソースとして公開された。Metaは特に、AndroidまたはiOS向けのNTPクライアントを保守する開発者に対し、NTS対応を有効にする取り組みへの参加を呼びかけている。\n\n## 精度から検証へ\n\nMetaはこれまで、ntpdからchronyへの移行、精度を10ミリ秒から100マイクロ秒へ高める作業、time.meta.comの一般公開を進めてきた。これらが時刻を高精度にする取り組みだったのに対し、今回のNTS対応は、その時刻が正しい送信元から届き、途中で変更されていないことを確かめられるようにするものと説明されている。",
+      "bodyEn": "## Network Time Security\n\nMeta’s public time service now supports NTS, or Network Time Security, at nts.meta.com. The implementation follows RFC 8915 and matters because it makes delivered time verifiable rather than merely precise.\n\nPackets are authenticated, allowing a device to verify that the time came from Meta and was not modified while in transit. NTP has been unauthenticated since 1985, like many of the internet’s foundational protocols. NTS adds verification to the public service without changing the core purpose of providing time.\n\n## No per-client state\n\nThe NTS servers retain no per-client state. Cookie keys are derived rather than stored, and they are not replicated.\n\nThis approach allows the servers to authenticate packets without maintaining state for each client. The server design and its handling of cookie keys are part of Meta’s implementation of verifiable time delivery.\n\n## Meta’s Time library\n\nMeta has open sourced the full implementation through its Time library on GitHub. The released material includes the protocol, server, and client.\n\nThe company is also encouraging others to enable NTS support, particularly developers and maintainers of NTP clients on Android or iOS. The available protocol, server, and client implementations are intended to help those developers introduce authenticated, verifiable time synchronization.\n\n## Precise and verifiable\n\nThe NTS work follows earlier changes to Meta’s time service. Those changes included migrating from ntpd to chrony, improving accuracy from 10 milliseconds to 100 microseconds, and opening time.meta.com to everyone.\n\nThat earlier work focused on making the service more precise. Adding RFC 8915 NTS at nts.meta.com addresses a separate property: whether a device can verify the source of the time and confirm that the packet was not altered on the way.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "10ミリ秒から100マイクロ秒になって、今度は時刻を検証できるの？これって大きいこと？",
+          "en": "It went from 10 milliseconds to 100 microseconds, and now the time can be verified too? Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "前の改善で時刻が正確になり、今回はMetaから届き、途中で変えられていないか確かめられるようになったんだ。",
+          "en": "The earlier work made the time more precise. This update lets devices verify it came from Meta and wasn’t altered in transit."
+        },
+        {
+          "s": "a",
+          "ja": "NTSって、時刻に鍵をかける仕組みなの？",
+          "en": "Is NTS like putting a lock on the time?"
+        },
+        {
+          "s": "b",
+          "ja": "近いね。NTSはNetwork Time Securityの略で、時刻データの送信元と改ざんの有無を認証する仕組みだよ。",
+          "en": "Close. NTS stands for Network Time Security. It authenticates where time data came from and whether it was tampered with."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくがAndroidやiOSのNTPクライアントを作るなら、この仕組みを入れてみたいな。",
+          "en": "If I were building an NTP client for Android or iOS, I’d want to add this."
+        },
+        {
+          "s": "b",
+          "ja": "MetaのTimeライブラリで実装が公開されているよ。使う側のクライアントにもNTS対応は必要だね。",
+          "en": "Meta has published the implementation through its Time library. The client still needs to support NTS to use it."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T18:37:33.274Z"
+    },
+    "fad4085bc60a693d": {
+      "bodyJa": "## 共通ベクトル空間\n\nEmbeddingGemma 2は、テキスト、画像、動画、音声を共通のベクトル空間へ変換する、新しい740Mのオープンウェイト・マルチモーダルモデルだ。複数形式のメディアを端末上で検索でき、低遅延とプライバシーを重視した取得処理を実現すると説明されている。\n\n## 端末上の検索\n\n各形式のデータを統一されたベクトル空間に写すことで、テキストだけでなく画像、動画、音声も一つのモデルで扱える。処理を端末上で行うことを前提としており、検索語の入力中にメディアを取得する「search-as-you-type」のような、極めて低遅延なローカル検索に利用できるとされる。\n\n## MediaPipe Tasks\n\n開発者はMediaPipe Tasksを使い、EmbeddingGemma 2の機能をクロスプラットフォームで容易に統合できる。複数種類のメディアを対象とする検索機能を、プライバシー重視の端末内ソリューションとして組み込むための手段が用意されている。\n\n## LiteRTの最適化\n\nLiteRTでは、CPU、GPU、NPUアクセラレータにわたって、細かな性能最適化が可能とされる。具体的な用途としては、動画から重要な瞬間のキーフレームを見つける処理や、事前の例を必要としないゼロショットの意図ルーティングも挙げられている。",
+      "bodyEn": "## Unified Vector Space\n\nEmbeddingGemma 2 is a new 740M open-weight multimodal model designed to bring semantic search to edge devices. It matters because the model supports privacy-first, low-latency retrieval directly on-device across several types of media.\n\nThe model maps text, images, video, and audio into a unified vector space. This provides one encoder for handling all four modalities rather than limiting retrieval to a single form of content.\n\n## Cross-Platform Integration\n\nDevelopers can integrate EmbeddingGemma 2’s capabilities across platforms with MediaPipe Tasks. This integration supports the creation of private and fast on-device retrieval experiences using the model’s shared representation of audio, video, images, and text.\n\nFor developers who need more detailed control over performance, LiteRT can be used to optimize execution across CPU, GPU, and NPU accelerators. The available approaches therefore cover both easier cross-platform integration and fine-grained performance optimization.\n\n## Ultra-Low-Latency Local Solutions\n\nEmbeddingGemma 2 enables ultra-low-latency local solutions. One example is search-as-you-type media retrieval, where retrieval occurs locally as a search is entered.\n\nThe model can also support finding keyframe moments in video. Because video is mapped into the same vector space as the other supported media types, this capability sits alongside retrieval involving text, images, and audio.\n\n## Zero-Shot Intent Routing\n\nAnother supported use case is zero-shot intent routing. Like the retrieval capabilities, intent routing can run on-device with an emphasis on privacy and low latency.\n\nTogether, the unified vector space, MediaPipe Tasks integration, and LiteRT optimization options provide a path for building multimodal retrieval and routing solutions that operate locally across available CPU, GPU, and NPU accelerators.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "写真や動画を探すとき、普段の操作はどう変わるの？入力しながら、端末の中ですぐ候補が出る感じ？",
+          "en": "How would this change the way I search photos or videos? Would results appear on my device as I type?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、文字・画像・動画・音声を同じベクトル空間に変換し、入力中のメディア検索などを端末上で低遅延に行えるとしています。",
+          "en": "It maps text, images, video, and audio into one vector space, enabling low-latency, on-device features such as media search as you type."
+        },
+        {
+          "s": "a",
+          "ja": "前は、文字で画像や音声をまとめて探せなかったの？",
+          "en": "So, was it impossible to search images and audio together with text before?"
+        },
+        {
+          "s": "b",
+          "ja": "従来できなかったとは書かれていないよ。EmbeddingGemma 2は、4種類を一つの空間で扱う740Mのオープンウェイトモデルとして紹介されているんだ。",
+          "en": "It doesn’t say that was impossible before. It presents EmbeddingGemma 2 as a 740M open-weight model that handles all four media types in one shared space."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。一番の収穫は、いろんな形式を同じ物差しにして、端末内で速く探せることなんだね。",
+          "en": "Got it. The big takeaway is that different media types share one yardstick, so they can be searched quickly on the device."
+        },
+        {
+          "s": "b",
+          "ja": "うん。次は、MediaPipe Tasksで組み込むか、LiteRTでCPU・GPU・NPUごとの性能を調整するかに注目だね。",
+          "en": "Right. Next, watch whether developers integrate it with MediaPipe Tasks or use LiteRT to tune performance across CPU, GPU, and NPU accelerators."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T18:37:59.518Z"
+    },
+    "f0b08b70949e93ac": {
+      "bodyJa": "## 768次元の共通表現\n\nEmbeddingGemma 2は、テキスト、コード、画像、動画、音声を、統一された768次元空間へ変換するコンパクトなオープンソースのマルチモーダル埋め込みモデルです。異なる種類のデータを共通表現へ写像し、検索に利用できる点が中核となります。\n\nここでいう768次元は、各入力を768個の要素からなる表現として扱うことを示します。テキストや画像だけでなく、コード、動画、音声も同じ次元数の空間へ変換されるため、複数のモダリティを統一的な埋め込みとして扱えます。\n\n## 選択式エンコーダー\n\n開発者はsentence-transformersライブラリを使い、モダリティ別に分かれたモジュール式エンコーダーを選択的に読み込めます。エンコーダーの規模は270Mから740Mパラメーターまで用意されており、必要なモダリティに応じて読み込み対象を選べます。\n\nすべてを一律に読み込むのではなく、用途に必要なエンコーダーへ絞ることで、メモリ使用量を最適化できると説明されています。扱うデータの種類と利用可能なメモリに合わせて構成を調整できる仕組みです。\n\n## 128次元への短縮\n\nMatryoshka Representation Learningにより、埋め込みの次元数は動的に128次元まで短縮できます。標準の768次元表現を常にそのまま保存するのではなく、用途に応じてより短い表現を利用できる設計です。\n\n次元を短くすると、ベクトルデータベースに保存する要素数を抑えられます。これにより保存要件を大幅に削減しながら、高い検索性能を維持できるとされています。モジュール式エンコーダーによるメモリ最適化と組み合わせ、読み込み時と保存時の双方で使用量を調整できます。",
+      "bodyEn": "## EmbeddingGemma 2\n\nEmbeddingGemma 2 is a compact, open-source multimodal embedding model designed for text, code, images, video, and audio. It matters for developers because these different inputs can be mapped into one shared representation while memory usage and vector storage requirements can be adjusted.\n\n## Unified 768-dimensional space\n\nThe model maps every supported modality into a unified 768-dimensional space. Text and code can therefore be represented in the same dimensional space as images, video, and audio.\n\nThis unified design provides a common embedding format across the five input types. The model’s output begins at 768 dimensions, while its dimension-reduction capability gives developers an option to use smaller representations when required.\n\n## Modular modality encoders\n\nEmbeddingGemma 2 uses modular modality encoders ranging from 270M to 740M parameters. Developers can use the sentence-transformers library to load these encoders selectively.\n\nSelective loading allows an application to load the modality encoders it needs rather than treating all modalities as a single fixed requirement. This enables developers to optimize memory usage according to the text, code, image, video, or audio capabilities required for a particular use.\n\nThe different encoder sizes also give developers a defined range of 270M to 740M parameters within the model’s modular structure.\n\n## Dynamic dimension truncation\n\nEmbeddingGemma 2 also uses Matryoshka Representation Learning to support dynamic dimension truncation. Embeddings can be shortened from the unified 768-dimensional representation down to 128 dimensions.\n\nReducing the number of dimensions lowers vector database storage requirements. According to the source, this truncation maintains high retrieval performance while significantly reducing the storage needed for vectors.\n\nTogether, selective modality-encoder loading and truncation to 128 dimensions provide two separate controls: one for optimizing memory usage when loading encoders, and another for reducing the amount of vector storage required for embeddings.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事で検索を作るなら、文章だけじゃなく画像や音声もまとめて探せるようになるの？",
+          "en": "If I’m building search for work, could this help search across images and audio, not just text?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、テキスト、コード、画像、動画、音声を共通の768次元表現に変換できるよ。種類をまたぐ検索に使えるモデルなんだ。",
+          "en": "It maps text, code, images, video, and audio into one shared 768-dimensional representation, so the model can support search across those formats."
+        },
+        {
+          "s": "a",
+          "ja": "前は、必要のない種類の機能まで全部読み込まないといけなかったの？",
+          "en": "Before this, did developers have to load support for every format, even when they didn’t need it?"
+        },
+        {
+          "s": "b",
+          "ja": "従来との厳密な違いは書かれていないよ。今回は用途別エンコーダーを選んで読み込み、メモリ使用量を調整できるとしている。",
+          "en": "The piece doesn’t spell out the exact previous limitation. Here, developers can selectively load modality encoders to optimize memory use."
+        },
+        {
+          "s": "a",
+          "ja": "必要な機能だけ選び、128次元まで短くして、検索性能を保ちながらメモリや保存量を抑えられるのが大きいんだね。",
+          "en": "So the big takeaway is choosing only what you need and trimming to 128 dimensions, while keeping retrieval performance high and reducing memory and storage."
+        },
+        {
+          "s": "b",
+          "ja": "次に注目するなら、270M〜740Mの用途別エンコーダーと、128次元への短縮をどう組み合わせるかだね。",
+          "en": "Next, watch how developers combine the 270M-to-740M modality encoders with truncation down to 128 dimensions."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T18:38:14.667Z"
+    },
+    "571c8c47df881aa3": {
       "bodyJa": "ReviewBenchは、AIコードレビューを担うエージェントを比較・検証するための公開ベンチマークだ。代表的なGitHubプルリクエストを土台とし、公平な評価と実運用に沿った検証を支える。\n\n## 評価セット\n\n評価セットには、代表的なGitHubプルリクエストが使われる。コードレビューの対象に即した材料を基に、レビューエージェントを共通の条件で確かめられる仕組みとされ、開発者や研究者による比較検証を支援する。\n\n## 複数情報源\n\n正解データのラベルは、単一ではなく複数の情報源から構成される。採点には調整済みの評価手法を採用し、レビューエージェントを公平に評価できるよう設計されている。\n\n## 実運用の指標\n\n評価には、実運用に沿った指標も組み込まれる。公開の評価セット、複数情報源の正解データ、調整済みの採点、実運用に合わせた指標を組み合わせた点が、ReviewBenchの特徴だ。",
       "bodyEn": "## ReviewBench\n\nReviewBench is an open benchmark for AI code review agents. It matters because it gives developers and researchers a shared evaluation set for comparing and validating review agents through a fair assessment process.\n\n## Representative GitHub pull requests\n\nThe benchmark is built on representative GitHub pull requests. It uses multi-source ground truth, also described as multi-source labels, as the reference data for evaluating review agents.\n\nThis combination provides a common set of pull requests and labels for comparative testing. Developers and researchers can use that shared basis when assessing different review agents.\n\n## Calibrated evaluation\n\nReviewBench combines calibrated evaluation and scoring with production-aligned metrics. These elements are intended to support fair assessment while keeping the evaluation connected to production use.\n\nAs an open benchmark, ReviewBench brings its representative pull requests, multi-source labels, calibrated scoring, and production metrics into one evaluation framework for AI code review agents.",
       "chat": [
@@ -43822,7 +43778,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-05T19:38:21.495Z"
     },
-    "ed204fd38e64c798": {
+    "11814c13f8eb0837": {
       "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
       "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
       "chat": [
@@ -43860,7 +43816,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:36:46.380Z"
     },
-    "3e5e727e385d3f8c": {
+    "93db8516427cde42": {
       "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
       "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
       "chat": [
@@ -43898,7 +43854,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:19.430Z"
     },
-    "c45ef450c3820855": {
+    "4c9d688cf44b534e": {
       "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
       "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
       "chat": [
@@ -43936,7 +43892,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:32.042Z"
     },
-    "655fd12194d5c751": {
+    "3109af25bedf6259": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
       "chat": [
@@ -43974,7 +43930,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:50.296Z"
     },
-    "2576bf8a180858a9": {
+    "8156421f827a3dc7": {
       "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
       "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
       "chat": [
@@ -44012,7 +43968,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:38:10.006Z"
     },
-    "433004a6bd914ded": {
+    "b310b2c06dbd9321": {
       "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
       "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
       "chat": [

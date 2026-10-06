@@ -5,6 +5,8 @@ import type {
   Page,
   Request,
 } from "@playwright/test";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { SITE_URL } from "../web/src/lib/site.ts";
 
 export const DECISION_JOURNEY_SCHEMA_VERSION = 3 as const;
 export const DECISION_JOURNEY_OUTPUT_LIMIT_BYTES = 64 * 1024;
@@ -39,7 +41,7 @@ export const DECISION_JOURNEY_STEPS = [
     startCondition:
       "Start from Home and open the production search control using the visible trigger for the viewport.",
     completionCondition:
-      "The selected Timeline article appears as an exact result, or a corpus without an internal candidate exposes the truthful zero-result recovery links.",
+      "A sitemap-indexable Timeline article appears as an exact result, or a corpus without one exposes the truthful zero-result recovery links.",
   },
   {
     name: "subscription_path_discovery",
@@ -178,6 +180,7 @@ interface JourneyRuntime {
 
 const TIMELINE_ENTRY_LINK_SELECTOR =
   'main article.card:not([data-catvis="muted"]) h3.title > a[href^="/e/"]';
+const SITEMAP_REQUEST_TIMEOUT_MS = 5_000;
 const UNKNOWN_ARTICLE_ROUTE = "/e/0000000000000000/";
 const ZERO_RESULT_QUERY = "techdb-synthetic-no-match-9f6f2e45";
 const OBSERVATION_TIMEOUT_MS = 1_000;
@@ -213,6 +216,55 @@ export function isExactSearchTitleCandidate(title: string): boolean {
     .test(normalized);
   const wordCount = normalized.match(/[\p{L}\p{N}]+/gu)?.length ?? 0;
   return hasJapanese ? normalized.length >= 10 : wordCount >= 2;
+}
+
+export function indexableDetailPathsFromSitemap(xml: string): ReadonlySet<string> {
+  if (XMLValidator.validate(xml) !== true) {
+    throw new Error("Sitemap XML is invalid");
+  }
+  const parsed: unknown = new XMLParser({ parseTagValue: false }).parse(xml);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Sitemap has no urlset");
+  }
+  const urlset = (parsed as Record<string, unknown>).urlset;
+  if (!urlset || typeof urlset !== "object" || Array.isArray(urlset)) {
+    throw new Error("Sitemap has no urlset");
+  }
+  const rawUrls = (urlset as Record<string, unknown>).url;
+  const urls = Array.isArray(rawUrls) ? rawUrls : [rawUrls];
+  if (urls.length === 0 || urls[0] === undefined) {
+    throw new Error("Sitemap has no URL entries");
+  }
+  const canonicalOrigin = new URL(SITE_URL).origin;
+  const paths = new Set<string>();
+  for (const item of urls) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error("Sitemap has an invalid URL entry");
+    }
+    const loc = (item as Record<string, unknown>).loc;
+    if (typeof loc !== "string") {
+      throw new Error("Sitemap has an invalid URL location");
+    }
+    const url = new URL(loc);
+    if (url.origin !== canonicalOrigin || url.search || url.hash) {
+      throw new Error(`Sitemap has a non-canonical URL: ${loc}`);
+    }
+    if (url.pathname.startsWith("/e/")) paths.add(url.pathname);
+  }
+  return paths;
+}
+
+export async function selectIndexableExactSearchCandidate(
+  hrefs: readonly (string | null)[],
+  indexablePaths: ReadonlySet<string>,
+  readTitle: (index: number) => Promise<string>,
+): Promise<{ href: string; title: string } | null> {
+  for (const [index, href] of hrefs.entries()) {
+    if (!href || !indexablePaths.has(href)) continue;
+    const title = await readTitle(index);
+    if (isExactSearchTitleCandidate(title)) return { href, title };
+  }
+  return null;
 }
 
 function elapsedSince(startedAt: number): number {
@@ -604,17 +656,25 @@ function journeyStepDefinitions(
           waitUntil: "domcontentloaded",
           timeout: 15_000,
         });
-        const candidates = page.locator(TIMELINE_ENTRY_LINK_SELECTOR);
-        const candidateCount = Math.min(await candidates.count(), 12);
-        for (let index = 0; index < candidateCount; index += 1) {
-          const candidate = candidates.nth(index);
-          const href = await candidate.getAttribute("href");
-          const title = await readerFacingTitle(candidate);
-          if (href && isExactSearchTitleCandidate(title)) {
-            runtime.exactSearchCandidate = { href, title };
-            break;
-          }
+        const sitemapResponse = await page.request.get(
+          new URL("/sitemap.xml", baseURL).href,
+          { timeout: SITEMAP_REQUEST_TIMEOUT_MS },
+        );
+        if (sitemapResponse.status() !== 200) {
+          throw new Error(`Sitemap returned ${sitemapResponse.status()}`);
         }
+        const indexablePaths = indexableDetailPathsFromSitemap(
+          await sitemapResponse.text(),
+        );
+        const candidates = page.locator(TIMELINE_ENTRY_LINK_SELECTOR);
+        const hrefs = await candidates.evaluateAll((links) =>
+          links.map((link) => link.getAttribute("href")),
+        );
+        runtime.exactSearchCandidate = await selectIndexableExactSearchCandidate(
+          hrefs,
+          indexablePaths,
+          (index) => readerFacingTitle(candidates.nth(index)),
+        );
 
         const visibleSearchTrigger = page
           .locator("button[data-search-trigger]:visible")

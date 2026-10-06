@@ -6,8 +6,10 @@ import {
   DecisionJourneyTimeoutError,
   createDecisionJourneyReport,
   deterministicStepContractFailure,
+  indexableDetailPathsFromSitemap,
   isExactSearchTitleCandidate,
   pendingSummaryOutcome,
+  selectIndexableExactSearchCandidate,
   serializeDecisionJourneyReport,
   validateDecisionJourneyReport,
   withBoundedTimeout,
@@ -82,6 +84,46 @@ describe("decision journey report contract", () => {
       ),
     ).toBe(true);
     expect(isExactSearchTitleCandidate("Copilot reliability update")).toBe(true);
+  });
+
+  it("skips body-less and otherwise noindex Timeline cards before exact search", async () => {
+    const indexablePaths = indexableDetailPathsFromSitemap(
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+      + '<url><loc>https://techdb.studio344.net/</loc></url>'
+      + '<url><loc>https://techdb.studio344.net/e/bodied/</loc></url>'
+      + "</urlset>",
+    );
+    const hrefs = ["/e/bodyless/", "/e/held/", "/e/bodied/"];
+    const readTitle = vi.fn(async (index: number) => [
+      "シークレットスキャンにLovable、Supabaseなどの検出機能を追加",
+      "A held article with a real body",
+      "An indexed article with a real body",
+    ][index]!);
+
+    expect(indexablePaths.has(hrefs[0]!)).toBe(false);
+    expect(
+      await selectIndexableExactSearchCandidate(hrefs, indexablePaths, readTitle),
+    ).toEqual({
+      href: "/e/bodied/",
+      title: "An indexed article with a real body",
+    });
+    expect(readTitle).toHaveBeenCalledExactlyOnceWith(2);
+  });
+
+  it("uses zero-result recovery only when no Home Timeline card is indexable", async () => {
+    const readTitle = vi.fn(async () => "Never needed");
+    expect(
+      await selectIndexableExactSearchCandidate(
+        ["/e/bodyless/", "/e/held/"],
+        new Set<string>(),
+        readTitle,
+      ),
+    ).toBeNull();
+    expect(readTitle).not.toHaveBeenCalled();
+    expect(() => indexableDetailPathsFromSitemap("<urlset>")).toThrow(
+      "Sitemap XML is invalid",
+    );
   });
 
   it("serializes a bounded, non-field report with every named step and viewport", () => {

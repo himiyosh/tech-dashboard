@@ -101,20 +101,20 @@
 - `npm run summaries:apply-cache` は品質 gate を通過した title / summary / importance / tags だけを `data/index.json` に反映する。本文を index へ書き戻してはならない。
 - index に旧 `bodyJa` / `bodyEn` が残る migration では、実本文を `data/bodies.json` へ移してから index を空にする。完了前に `tests/data-schema.test.ts` の summary 必須、index 本文なし、bodies schema の各 gate を通す。
 
-### R-012: live index は要約のみ・本文は別ファイル (body-file architecture / LL-115)
+### R-012: live index は要約のみ・本文はID-hashの4 shard (LL-115/411)
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
-- **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) に entry id をキーに格納する。index は本文フリーで軽量維持し CI サイズ予算 (8MB, LL-112) を超えない。完了前に `tests/data-schema.test.ts` の「live index は本文を持たない」ゲートを通す。
-- 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し `data/bodies.json` に蓄積する。生成は I/O 主体で Cloudflare の CPU 予算に当たらない (LL-115)。決定論的 filler body は**生成・格納しない** (LL-112)。
+- **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は記事IDのUTF-8 FNV-1a hashで `data/bodies-0.json`〜`data/bodies-3.json` の4 JSON shardに分配する (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, chat?, model, generatedAt} } }`)。indexは本文フリーで8MB予算を守り、保存mode・各shardの実ファイルbytesのSHA-256を同じcommitのindex healthへ保存する。移行後は一部だけでなく4件全部が欠落しても旧sourceへのfallbackで隠さない。移行前のみ旧 `data/bodies.json` を読み、移行後は復旧用に凍結して削除しない。
+- 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し、Node Publisherが4 shardへ反映する。生成はI/O主体でCloudflareのCPU予算に当たらない (LL-115)。決定論的filler bodyは**生成・格納しない** (LL-112)。
 - 本文の保持対象は **evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日**に限定する。対象外の古い低重要度本文は `scripts/clean-source-noise.mjs` が prune し、要約と原文リンクは維持する。Worker、migration、`tests/data-schema.test.ts` は `worker/src/body-queue.ts` の同じ retention helper を使う。
-- 上記の retention 判定 (boolean gate) とは**別に**、`data/bodies.json` は実バイト量の運用 target (`worker/src/bodies-budget.ts` の `DEFAULT_BODY_BUDGET_TARGET_BYTES`、既定 9,000,000 bytes) を**必ず**超えない (`enforceBodiesBudget()` は record が 1 件でも残る限り `bytes <= targetBytes` を保証する、LL-411)。target 超過時は importance 1 (直近のみ) → importance 2 → importance 3 の順で同 tier 内は最古から prune し、evergreen は最優先 (pruned last) だが**絶対的に免除されるわけではない**。全ての低優先 tier を prune してもなお target を超える場合は evergreen も last-resort として同じ決定論的順序 (最古から) で prune する。「保護」とは「最後に prune される」であって「決して prune されない」ではない (LL-411 follow-up)。`tests/data-schema.test.ts` の 10MB hard ceiling は据え置き、この target より大きい安全網として維持する (target 自体を上げて hard ceiling へ寄せない)。Publisher runtime (`worker/src/index.ts` の `runBodyPipeline`) と `scripts/clean-source-noise.mjs` の migration は同じ `enforceBodiesBudget()` を共有する。
-- 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
-- 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
+- retention boolean gateと別に、**合計18,000,000 bytes (hard 20,000,000)・各shard 9,000,000 bytes (hard 10,000,000)**の実serial化byte予算を同時に守る。`enforceShardedBodiesBudget()` は importance 1 → 2 → 3 → evergreenを同tier最古から最小件数だけpruneし、evergreenもlast-resort対象から除外しない。Publisherとmigrationは同じhelperを使う。旧source単体には従来の9MB target/10MB hard ceilingを維持し、旧sourceの上限を黙って引き上げない。初回移行はimmutableな同一main SHAから本文・chat・metadataを完全複製してindex healthと4 shardを1 data-only CAS commitで書き、旧9MB予算による除外IDだけ次runのbounded Queue選定へ戻す。data-only生成物をdevelop PRへ直接同梱しない。
+- 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(entry)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
+- 旧index→単一sidecarの `npm run body:migrate` は4 shard導入前だけ使用する。4 shard移行後は書戻しを拒否する。
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
 - summary/body Queue job は収集元の `contentSnippet` を保持し、sparse/title-only inputで十分なsource groundingがないentryを生成対象にしない。公式title/snippetから決定論的に抽出できるbounded profile（料金plan・対象地域・価格/決済、または既存productのnamed platform展開）の範囲でmaterially矛盾する生成title/summary/bodyは、consumer書込み、cache read、Publisher最終化、bodies sidecar mergeの全境界で共通のdeterministic contractにより拒否し、summaryはsource excerptを伴うpendingへ戻す。不合格cacheは採用せず、十分なgroundingがある場合だけ再生成対象へ戻す。
 - `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
-- publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
+- publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない。本文は4 shard経路でのみ更新し、旧単一sourceは凍結する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
 - publisher runtime contract は `scripts/run-publisher.ts` と `worker/src/**` で共有する。bridge / Queue consumer の品質修正後は、明示承認を得て対象 Worker を deploy し、`publisher.yml` の次 run と data schema gate で本文が index に戻らないことを確認する。
@@ -3282,3 +3282,21 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **対策**: hookとdata-schema testは単一の共有helperで、remote `origin/develop`の実SHA、追跡ref、HEAD/remote push、祖先関係、クリーンなtracked tree、developからの累積diffとfile modeを確認する。文書・規則Markdownとpolicy自身の4ファイルだけが古いindexの**時刻検査のみ**WARNになる。未知path・data・アプリ/生成コード・main/release・ambiguous ref・Git errorはstrictに戻し、secret scanのpush range、全unitの他の検査、Web build、E2E、CI側の36時間gateは変えない。
 - **教訓**: feature→developとmainの生成data更新を分離したbranch topologyでは、ローカル鮮度検査の適用範囲もPRの実差分で限定する。例外を設ける場合はpushで増えたcommitだけでもmainとの差分でもなく、検証済みdevelop baseからの**全PR差分**を見る。baseが動いた時や判定不能時は例外を取り消し、少なくとも一つの受入条件を黙って省いた成功形にしない。
 - **追補**: 共有worktreeで`GIT_`prefixの環境変数を全削除したremote照合は、実環境がremote通信へ使う`GIT_CONFIG_*`や`GIT_ASKPASS`まで消して`ls-remote`を失敗させた。一時repoのtestではこれらを消す必要があっても、本番hookの子processは`GIT_DIR`・`GIT_WORK_TREE`・`GIT_INDEX_FILE`などrepository-pinning変数だけを除き、通信設定を維持する。推測で認証値を表示せず、sanitized subprocessのexit codeで切り分ける。
+
+### LL-496: shard 全欠落と再シリアライズしたハッシュを移行済みsnapshotの証拠にしない
+- **事象**: 4 shardの一部欠落は検出できたが、indexが移行済みを宣言した後に全4件が欠落すると、Web、Publisher、plain Node readerが凍結済み旧本文を正常な現行値として読み得た。WebはJSON importを再シリアライズしてSHA-256を照合したため、実ファイルbytesが変更されても同じJSON値ならindexのdigestと一致し得た。
+- **根本原因**: ファイルの有無だけでlegacy/shard modeを決め、同じcommitのindex healthが宣言する保存modeを入力にしていなかった。また、JSONとして等価な内容とGitへcommitする正確なbyte列を同一視した。
+- **対策**: 旧modeとshard modeをindex healthへ照合し、shard modeで全件欠落した場合もfail-closedにする。Webはraw importの実bytesをdigest検査し、Publisherとmigration、plain Node reader、CI snapshotも同じmode・全件inventory・digestを検証する。旧sourceは削除せず復旧に必要な明示手順だけで利用する。
+- **教訓**: 非原子的な表示側fallbackで保存形式の移行を隠さない。旧fileが残っていても新modeが確定したら新集合の完全性が必須であり、indexが宣言したmode・個数・hashを実bytesで検証する。JSONの再シリアライズは元fileのintegrity proofにならない。
+
+### LL-497: Web unitの旧file mockは実shard globと独立にしないとfull suiteだけ失敗する
+- **事象**: legacy modeでは通るWebのunit testが、4 shardを一時配置して全unitを実行した時に5件失敗した。indexを旧fixtureだけでmockしたtestは実shardと保存modeが一致せず、旧`bodies.json`だけをmockしたtestは実shardが優先され、想定した5件でなく現行1,156件を読んだ。
+- **根本原因**: JSON importのmockは`import.meta.glob`が見つける別の実ファイルを隔離しない。片方のstorage modeしか持たない開発データで成功したことを、移行前後の全unitで成功する証拠として扱った。
+- **対策**: synthetic indexを使うcollection testは本文reader自体をmockし、本文の品質・出典判定はstorage入力を受けるpure helperへ独立fixtureを渡す。実readerのmode、index marker、raw shard digestは別のschema/Publisher/Web build testで検証する。legacyと4 shardの双方で同じfull suiteを実行する。
+- **教訓**: 保存形式の移行でfixtureを旧fileだけへ差し込むと、globや自動発見した新fileがmockをすり抜ける。生成dataの任意modeに依存しないunit fixtureを作り、productionのfail-closed guardをtest環境だけで無効化しない。
+
+### LL-498: 新しいworktreeではunitが通ってもhookのroot Playwright binaryが無い場合がある
+- **事象**: 4 shardのWeb build、全unit、全Playwrightを個別に通した後、通常のpre-push hookはunitとbuildを通過したが`node_modules/.bin/playwright: No such file or directory`でPublisher E2E開始前にpushを中断した。rootの`node_modules`には`@playwright/test`がなく、`npm test`の`pretest`はWeb依存だけを復元していた。
+- **根本原因**: 新設worktreeへrootの全devDependencyは自動復元されず、直接起動したhookはrootのbinary pathを要求する。別の実行経路でPlaywrightが見つかっても、そのpathの存在は保証されない。
+- **対策**: 失敗したpushの前に保全したdataは承認どおり原bytesとSHA-256へ復元し、rootで`npm ci --no-audit --no-fund`を実行して`@playwright/test`と実行ファイルを確認する。検査skipは使わず、同じfresh-data手順と通常hookで再試行する。
+- **教訓**: 新しいworktreeのpush前には`pretest`が復元する対象とhookが直接参照するbinaryを別々に確認する。unitのPASSや`npm run test:e2e`の成功をroot `node_modules/.bin`の存在証明と読み替えず、missing dependencyはmanifestを変えず`npm ci`で再現可能に復元する。

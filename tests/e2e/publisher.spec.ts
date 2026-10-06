@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
+import { readBodyStorageFromDisk } from "../../scripts/body-storage-node.mjs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
@@ -1071,7 +1072,7 @@ test.describe("Publisher generated artifact", () => {
       entries: DetailAddressableEntry[];
     };
     const bodies = (
-      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      readBodyStorageFromDisk() as {
         bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
       }
     ).bodies;
@@ -1158,7 +1159,7 @@ test.describe("Publisher generated artifact", () => {
       entries: Array<DetailAddressableEntry & { archiveTier?: string }>;
     };
     const bodies = (
-      JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+      readBodyStorageFromDisk() as {
         bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
       }
     ).bodies;

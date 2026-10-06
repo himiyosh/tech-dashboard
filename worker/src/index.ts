@@ -55,9 +55,12 @@ import {
 } from "./body-queue.ts";
 import {
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
+  LEGACY_BODY_BUDGET_TARGET_BYTES,
+  bodyBudgetTarget,
   carryForwardBudgetEvictedIds,
-  enforceBodiesBudget,
+  enforceShardedBodiesBudget,
   serializedByteLength,
+  serializedShardByteLengths,
 } from "./bodies-budget.ts";
 import { validateArticleChat } from "./article-chat.ts";
 import {
@@ -72,10 +75,24 @@ import {
   mergeBodiesWithGuards,
   parseBodies,
   pruneInvalidBodyRecords,
-  serializeBodies,
+  readBodyStorage,
   isRealBody,
+  type BodiesPayload,
   type NewBody,
 } from "./bodies-file.ts";
+import {
+  BODY_SHARD_PATHS,
+  BODY_SHARD_TARGET_BYTES,
+  BODY_TOTAL_TARGET_BYTES,
+  LEGACY_BODY_PATH,
+  assertBodyStorageMode,
+  serializeBodyShards,
+  type BodyStorageMode,
+} from "../../web/src/lib/body-shards.ts";
+import {
+  assertBodyShardDigests,
+  bodyShardDigests,
+} from "../../web/src/lib/body-shard-integrity.ts";
 import {
   cacheMetadataMatchesPublisherContract,
   getCacheEntriesWithLegacyFallback,
@@ -158,9 +175,7 @@ export interface PublisherEnv extends GithubRepositoryEnv {
    * article prose (worker/src/article-excerpt.ts; default 40, 0 disables).
    */
   ARTICLE_FETCH_CAP?: string;
-  // Operational size budget for data/bodies.json (LL-411). Defaults to
-  // DEFAULT_BODY_BUDGET_TARGET_BYTES, well below the much larger
-  // tests/data-schema.test.ts hard ceiling (10MB, unchanged safety net).
+  // Total operational limit across four shards (max 18MB, each <=9MB).
   BODY_BUDGET_TARGET_BYTES?: string;
 }
 
@@ -1184,13 +1199,103 @@ export async function runHarness(
   // Contents API omits content for files >1MB, but pin every baseline read to
   // the captured commit SHA so branch CDN staleness cannot roll data backward.
   const existing = await ghGetFileRaw(env, "data/index.json", publisherSnapshotSha);
-  // Body-file architecture (LL-115): read the committed bodies.json so the body
-  // pipeline can merge newly generated bodies and prune stale ones. Only read
-  // when the body pipeline is active to save a subrequest otherwise.
-  const existingBodies =
-    env.ENABLE_BODY_QUEUE === "1"
-      ? await ghGetFileRaw(env, "data/bodies.json", publisherSnapshotSha)
-      : null;
+  // Pin all four shard reads to the SAME main SHA. Before the first atomic
+  // shard commit, only the legacy sidecar exists. A partial shard set is
+  // invalid; never fill its gaps with the frozen legacy snapshot.
+  const existingShardFiles = await Promise.all(BODY_SHARD_PATHS.map((path) =>
+    ghGetFileRaw(env, path, publisherSnapshotSha)
+  ));
+  const existingLegacyBody = existingShardFiles.every((file) => file === null)
+    ? await ghGetFileRaw(env, LEGACY_BODY_PATH, publisherSnapshotSha)
+    : null;
+  const existingBodyStorage = readBodyStorage(
+    existingLegacyBody?.content ?? null,
+    existingShardFiles.map((file) => file?.content ?? null),
+  );
+  if (existingBodyStorage.mode === "legacy") {
+    if (!existing) throw new Error("body shard migration requires the captured main index");
+    const baseline = parseBaselineJson<{
+      generatedAt?: unknown;
+      count?: unknown;
+      health?: Record<string, unknown>;
+      entries?: Array<{ id?: unknown }>;
+    }>(
+      "data/index.json",
+      existing,
+    );
+    if (!Array.isArray(baseline?.entries)
+      || typeof baseline?.generatedAt !== "string"
+      || !Number.isFinite(Date.parse(baseline.generatedAt))
+      || baseline.count !== baseline.entries.length
+      || !baseline.health || typeof baseline.health !== "object"
+      || Array.isArray(baseline.health)
+      || baseline.entries.some((entry) => typeof entry.id !== "string")
+      || new Set(baseline.entries.map((entry) => entry.id)).size !== baseline.entries.length) {
+      throw new Error("body shard migration requires a valid captured main index");
+    }
+    assertBodyStorageMode("legacy", baseline.health);
+    const liveIds = new Set(baseline.entries.map((entry) => entry.id));
+    for (const [id, record] of Object.entries(existingBodyStorage.payload.bodies)) {
+      if (!liveIds.has(id) || !isRealBody(record)
+        || (record.chat !== undefined && !validateArticleChat(record.chat))) {
+        throw new Error(`body shard migration found an orphan or invalid record: ${id}`);
+      }
+    }
+    const files = serializeBodyShards(existingBodyStorage.payload);
+    const reassembled = readBodyStorage(null, files.map((file) => file.content)).payload;
+    for (const [id, record] of Object.entries(existingBodyStorage.payload.bodies)) {
+      if (JSON.stringify(reassembled.bodies[id]) !== JSON.stringify(record)) {
+        throw new Error(`body shard migration changed the record for ${id}`);
+      }
+    }
+    const sizes = serializedShardByteLengths(existingBodyStorage.payload);
+    if (sizes.reduce((sum, size) => sum + size, 0) > BODY_TOTAL_TARGET_BYTES
+      || sizes.some((size) => size > BODY_SHARD_TARGET_BYTES)) {
+      throw new Error("lossless body shard migration exceeds the operational byte budget");
+    }
+    const migratedIndex = {
+      ...baseline,
+      health: {
+        ...(baseline.health ?? {}),
+        bodyStorageMode: "shards-v1",
+        bodyShardBytes: sizes,
+        bodyBudgetTargetBytes: BODY_TOTAL_TARGET_BYTES,
+        bodyBudgetBytes: sizes.reduce((sum, size) => sum + size, 0),
+        bodyShardDigests: bodyShardDigests(files.map((file) => file.content)),
+        bodyBudgetPruned: 0,
+        // Old 9MB exclusions are not evidence of eviction at the new 18MB
+        // target. Re-admit them to normal bounded Queue selection next run.
+        bodyBudgetEvictedIds: [],
+      },
+    };
+    const commitSha = await (opts.commitFiles ?? ghCommitFiles)(
+      env,
+      `chore(data): migrate body storage ${collectedAt}`,
+      [
+        ...files,
+        { path: "data/index.json", content: `${JSON.stringify(migratedIndex, null, 2)}\n` },
+      ],
+      publisherSnapshotSha,
+    );
+    console.log(
+      `[worker] migrated ${reassembled.count} body records from ${publisherSnapshotSha}`
+      + ` into four shards (${sizes.join(", ")} bytes), commit=${commitSha}`,
+    );
+    return {
+      changed: true,
+      stats: { finalEntries: baseline.entries.length, summarized: 0, errors: 0, enqueued: 0 },
+    };
+  }
+  if (!existing) throw new Error("body shard snapshot requires the captured main index");
+  const shardIndex = parseBaselineJson<{ health?: { bodyShardDigests?: unknown } }>(
+    "data/index.json",
+    existing,
+  );
+  assertBodyStorageMode("shards-v1", shardIndex?.health);
+  assertBodyShardDigests(
+    existingShardFiles.map((file) => file!.content),
+    shardIndex?.health?.bodyShardDigests,
+  );
   let priorEntries: NormalizedEntry[] = [];
   let previousBodyPendingIds: string[] = [];
   let previousChatRepairIds: string[] = [];
@@ -1358,7 +1463,7 @@ export async function runHarness(
       );
       const presentEarly = bodiesPresentSet(
         pruneInvalidBodyRecords(
-          parseBodies(existingBodies?.content ?? null),
+          existingBodyStorage.payload,
           retainedEarly,
           new Date(bodySelectionNowMs).toISOString(),
         ).payload,
@@ -1757,8 +1862,8 @@ export async function runHarness(
     fallbackTotal,
     "pre-publish",
   );
-  // Body-file pipeline (LL-115): merge generated bodies into data/bodies.json
-  // and enqueue body-less entries. Summary jobs keep priority within the
+  // Merge generated bodies into the sharded storage and enqueue body-less
+  // entries. Summary jobs keep priority within the
   // shared Queue write allowance; body jobs consume only the unused capacity.
   // No-op unless ENABLE_BODY_QUEUE=1.
   const bodyGeneratedAt = new Date().toISOString();
@@ -1778,10 +1883,12 @@ export async function runHarness(
   const bodyPipeline = await runBodyPipeline(
     env,
     finalEntries,
-    existingBodies?.content ?? null,
+    null,
     bodyGeneratedAt,
     publisherContractFingerprint,
     {
+      existingBodyPayload: existingBodyStorage.payload,
+      existingStorageMode: existingBodyStorage.mode,
       previousPendingIds: previousBodyPendingIds,
       previousChatRepairIds,
       previousBudgetEvictedIds: previousBodyBudgetEvictedIds,
@@ -1790,6 +1897,18 @@ export async function runHarness(
       nowMs: bodySelectionNowMs,
       prefetchedBodyLookup,
     },
+  );
+  const nextShardFiles = bodyPipeline.health.bodyQueueMode === "enabled"
+    ? serializeBodyShards(bodyPipeline.payload)
+    : [];
+  const bodyShardChanges = nextShardFiles
+    .filter((file, index) =>
+        !existingShardFiles[index]
+        || jsonContentDiffers(existingShardFiles[index]!.content, file.content)
+      );
+  const changedShardContents = new Map(bodyShardChanges.map((file) => [file.path, file.content]));
+  const committedShardContents = BODY_SHARD_PATHS.map((path, index) =>
+    changedShardContents.get(path) ?? existingShardFiles[index]!.content
   );
   // How much of the lane's body batch actually got a body job this run.
   const pinnedIdSet = new Set(bodyBound.bodyBatchIds);
@@ -1833,6 +1952,7 @@ export async function runHarness(
     excerptBodyBatchEnqueued,
     publisherContractFingerprint,
     ...bodyPipeline.health,
+    bodyShardDigests: bodyShardDigests(committedShardContents),
     enrichmentEnqueueCap: totalEnrichmentEnqueueCap,
     enrichmentEnqueued: summaryEnqueued + bodyPipeline.enqueued,
     enrichmentRemaining: Math.max(
@@ -1841,8 +1961,8 @@ export async function runHarness(
     ),
   };
   // Body-file architecture (LL-115): the long-form body is NOT stored in
-  // data/index.json. It lives in data/bodies.json (managed by the body pipeline
-  // above). Strip body fields from the published index regardless of what the
+  // data/index.json. It lives in the four body shards. Strip body fields from
+  // the published index regardless of what the
   // cache merge produced, so the index stays well under the CI size budget
   // (LL-112) and a stale `s:` cache hit carrying a legacy body can never
   // re-bloat it (LL-073). `finalEntries` keeps its shape for archive/stats
@@ -1880,7 +2000,7 @@ export async function runHarness(
   const hasEntryChanges = !entriesEqual(existingPayload, indexEntries);
   const archiveUpdateEntries = selectArchiveUpdateEntries(existingPayload, indexEntries);
   const indexUnchanged = !jsonContentDiffers(existingJson, json);
-  const bodiesChanged = bodyPipeline.bodiesFileContent !== null;
+  const bodiesChanged = bodyShardChanges.length > 0;
   const noDataChanges = indexUnchanged && !bodiesChanged;
   const message = `chore(data): update tech dashboard ${payload.generatedAt}`;
   // Compare ignoring `generatedAt` timestamp so unchanged runs don't churn commits.
@@ -1889,7 +2009,7 @@ export async function runHarness(
   // the index payload changed. The commit sink still runs with zero files so
   // effect-only runs must pass the same final snapshot CAS before effects can
   // be persisted. Body-file (LL-115): also commit when only
-  // data/bodies.json changed (new bodies merged / stale ones pruned).
+  // one or more body shards changed (or the legacy source was first migrated).
   const historyStats = !noDataChanges && hasEntryChanges
     ? await publishHistoryFiles(
         env,
@@ -1912,16 +2032,14 @@ export async function runHarness(
   }
 
   // 7) Commit to GitHub. Use one Git Data API commit so index/archive/stats/
-  // bodies stay in sync. Only include index.json when its content actually
+  // body shards stay in sync. Only include index.json when its content actually
   // changed (avoid churning generatedAt on a bodies-only update); always
-  // include bodies.json when the body pipeline produced a new version.
+  // include only shards whose records changed, all four on first migration.
   const commitFiles = noDataChanges ? [] : [...historyStats.changes];
   if (!noDataChanges && !indexUnchanged) {
     commitFiles.push({ path: "data/index.json", content: json });
   }
-  if (!noDataChanges && bodyPipeline.bodiesFileContent) {
-    commitFiles.push({ path: "data/bodies.json", content: bodyPipeline.bodiesFileContent });
-  }
+  if (!noDataChanges) commitFiles.push(...bodyShardChanges);
   const commitSha = await (opts.commitFiles ?? ghCommitFiles)(
     env,
     message,
@@ -2296,8 +2414,9 @@ async function enqueueSummaryJobBatch(
 // ---------- Body pipeline (body-file Phase B, LL-115) -----------------------
 
 export interface BodyPipelineResult {
-  /** Serialized data/bodies.json to commit, or null when unchanged. */
-  bodiesFileContent: string | null;
+  /** Final in-memory union; the Publisher writes only changed ID-hash shards. */
+  payload: BodiesPayload;
+  changed: boolean;
   enqueued: number;
   health: {
     bodyQueueMode: string;
@@ -2329,6 +2448,8 @@ export interface BodyPipelineResult {
     bodyBudgetTargetBytes: number;
     /** Exact serialized byte length of the committed bodies.json this run. */
     bodyBudgetBytes: number;
+    bodyShardBytes: number[];
+    bodyStorageMode: BodyStorageMode;
     /** Records pruned this run for being over the byte budget (separate from
      * bodyPruned, which counts not-live / product-conflict pruning). */
     bodyBudgetPruned: number;
@@ -2414,6 +2535,8 @@ export async function runBodyPipeline(
   generatedAt: string,
   publisherContractFingerprint: string,
   options: {
+    existingBodyPayload?: BodiesPayload;
+    existingStorageMode?: BodyStorageMode;
     previousPendingIds?: readonly string[];
     previousChatRepairIds?: readonly string[];
     previousBudgetEvictedIds?: readonly string[];
@@ -2445,12 +2568,18 @@ export async function runBodyPipeline(
       retentionDays,
     ),
   );
-  const budgetTargetBytes = Math.max(
-    1,
-    Number(env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
+  const budgetTargetBytes = bodyBudgetTarget(
+    env.BODY_BUDGET_TARGET_BYTES,
+    DEFAULT_BODY_BUDGET_TARGET_BYTES,
   );
-  const parsedExistingForFallback = parseBodies(existingBodiesContent);
-  const existingBytes = serializedByteLength(parsedExistingForFallback);
+  const parsedExistingForFallback = options.existingBodyPayload ?? parseBodies(existingBodiesContent);
+  const existingStorageMode = options.existingStorageMode ?? "legacy";
+  const existingShardBytes = existingStorageMode === "shards-v1"
+    ? serializedShardByteLengths(parsedExistingForFallback)
+    : [];
+  const existingBytes = existingStorageMode === "shards-v1"
+    ? existingShardBytes.reduce((total, bytes) => total + bytes, 0)
+    : serializedByteLength(parsedExistingForFallback);
   // Present set used to carry forward budget-evicted ids even in the
   // disabled/missing-binding/error paths below, where no merge/enforcement
   // runs this invocation -- otherwise a transient mode change (e.g. the
@@ -2459,7 +2588,8 @@ export async function runBodyPipeline(
   // resumes (LL-411 follow-up).
   const existingBodiesPresentForFallback = bodiesPresentSet(parsedExistingForFallback);
   const disabled = (mode: string): BodyPipelineResult => ({
-    bodiesFileContent: null,
+    payload: parsedExistingForFallback,
+    changed: false,
     enqueued: 0,
     health: {
       bodyQueueMode: mode,
@@ -2482,8 +2612,12 @@ export async function runBodyPipeline(
       bodiesTotal: parsedExistingForFallback.count,
       bodyRetentionDays: retentionDays,
       bodyRetentionEligible: retainedEntries.length,
-      bodyBudgetTargetBytes: budgetTargetBytes,
+      bodyBudgetTargetBytes: existingStorageMode === "legacy"
+        ? LEGACY_BODY_BUDGET_TARGET_BYTES
+        : budgetTargetBytes,
       bodyBudgetBytes: existingBytes,
+      bodyShardBytes: existingShardBytes,
+      bodyStorageMode: existingStorageMode,
       bodyBudgetPruned: 0,
       bodyBudgetEvictedIds: carryForwardBudgetEvictedIds(
         options.previousBudgetEvictedIds ?? [],
@@ -2500,7 +2634,7 @@ export async function runBodyPipeline(
   }
 
   try {
-    const parsedBodies = parseBodies(existingBodiesContent);
+    const parsedBodies = parsedExistingForFallback;
     const sanitizedBodies = pruneInvalidBodyRecords(
       parsedBodies,
       retainedEntries,
@@ -2669,7 +2803,7 @@ export async function runBodyPipeline(
     //     priority) but is NOT exempt: if every lower tier has already been
     //     removed and the payload is still over budget, evergreen is pruned
     //     too, as a last resort (LL-411 follow-up 2).
-    const budget = enforceBodiesBudget(merge.payload, retainedEntries, budgetTargetBytes);
+    const budget = enforceShardedBodiesBudget(merge.payload, retainedEntries, budgetTargetBytes);
 
     // 2) Reserve at most five of the same shared body Queue slots for missing
     //    chats. These are ordinary body jobs: the consumer writes a fresh
@@ -2734,9 +2868,8 @@ export async function runBodyPipeline(
       budget.prunedIds,
     );
     return {
-      bodiesFileContent: sanitizedBodies.changed || merge.changed || budget.changed
-        ? serializeBodies(budget.payload)
-        : null,
+      payload: budget.payload,
+      changed: sanitizedBodies.changed || merge.changed || budget.changed,
       enqueued,
       health: {
         bodyQueueMode: "enabled",
@@ -2765,6 +2898,8 @@ export async function runBodyPipeline(
         bodyRetentionEligible: retainedEntries.length,
         bodyBudgetTargetBytes: budgetTargetBytes,
         bodyBudgetBytes: budget.bytes,
+        bodyShardBytes: budget.fileBytes,
+        bodyStorageMode: "shards-v1",
         bodyBudgetPruned: budget.prunedIds.length,
         bodyBudgetEvictedIds: persistedBudgetEvictedIds,
       },

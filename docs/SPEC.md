@@ -160,7 +160,7 @@ Queue telemetry の `backlog`、`candidate`、実 `enqueued`、`lookup`、`merge
 | ローカル品質ゲート + Worker コード deploy | `scripts/git-hooks/pre-push` | push 前に unit / web build / E2E を実行し、`RUN_WORKER_DEPLOY=1` の `main` push に worker/ 差分がある場合だけ deploy |
 | ヘルス監視 | bridge `/health` + publish run + data freshness / aggregate source outcome + summarizer + `/status` | 毎時外形監視。diagnostic dry-runは成功runから除外 |
 
-**残る手動運用**: Queue consumerの`COPILOT_PAT`更新と、コード変更時の明示承認付きWorker deploy。Publisher commitはbuilt-in `GITHUB_TOKEN`、bridge認証はGitHub Actions OIDCを使うため、新しい長命repository secretは追加しない。Publisherはcommit前にbilingual summary fallbackを適用し、`data/index.json`の本文を必ず空にする。cache済みの有効な要約がindexに未反映の場合だけ`npm run summaries:apply-cache`で再反映する。本文は`data/bodies.json`の専用経路で管理し、evergreen、importance 2/3、直近30日を保持する。
+**残る手動運用**: Queue consumerの`COPILOT_PAT`更新と、コード変更時の明示承認付きWorker deploy。Publisher commitはbuilt-in `GITHUB_TOKEN`、bridge認証はGitHub Actions OIDCを使うため、新しい長命repository secretは追加しない。Publisherはcommit前にbilingual summary fallbackを適用し、`data/index.json`の本文を必ず空にする。cache済みの有効な要約がindexに未反映の場合だけ`npm run summaries:apply-cache`で再反映する。本文は初回移行後に`data/bodies-[0-3].json`の専用経路で管理し、evergreen、importance 2/3、直近30日を保持する。移行前の`data/bodies.json`は凍結して残す。
 
 ### 2.6 Fully-free incremental serving shadow
 
@@ -200,7 +200,8 @@ interface NormalizedEntry {
 | パス | 内容 | 更新タイミング |
 |---|---|---|
 | `data/index.json` | 公開用 (最大 2000 件、`generatedAt` 付き) | Publisher実行ごと |
-| `data/bodies.json` | 記事本文sidecar。indexから本文を分離 | Publisher実行ごと |
+| `data/bodies-[0-3].json` | 記事IDのhashで4分割した本文。合計18MB/20MB、各9MB/10MBのtarget/hard ceiling | Publisher実行ごと (初回は旧sidecarを同一SHAから原子的に移行) |
+| `data/bodies.json` | 移行前の本文source。移行後も削除せず凍結・復旧用に保持 | 移行前のみ |
 | `data/archive/*.json` | warm/cold tierの月別永続archive。一覧表示用に本文`bodyJa` / `bodyEn`は保持しない | Publisher / `npm run collect`実行時 |
 | `data/archive/_index.json` | archive月一覧と件数 | Publisher / `npm run collect`実行時 |
 | `data/stats.json` | archive込みの記事数推移 / source集計 | Publisher / `npm run collect`実行時 |
@@ -352,7 +353,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 7. fallback      summary 空欄を deterministic fallback で埋める。body filler は作らない
 8. stage-effects Queue job と og.v1 KV write を RUNNER_TEMP に保存
 9. categorize    URL / tag でカテゴリ判定
-10. build        `data/index.json` / `data/bodies.json` / `data/archive/*` / `data/stats.json` 生成
+10. build        `data/index.json` / `data/bodies-[0-3].json` / `data/archive/*` / `data/stats.json` 生成
 11. verify       typecheck / unit / schema / web build / E2E / secret scan
 12. commit       main drift がなければ allowlist 済み data artifact を 1 commit にまとめて non-force push
 13. flush        push 成功後だけ OIDC bridge 経由で Queue / KV effects を実行
@@ -406,7 +407,7 @@ data artifact のサイズ予算は `tests/data-schema.test.ts` で検証する�
 ### 6.3 Crawl discovery
 
 - `web/src/lib/site.ts` の `SITE_URL` を canonical origin の唯一の正本とする。
-- `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、そして **`data/bodies.json` に実本文を持つ** live / warm の記事詳細だけを重複なしで列挙する。
+- `/sitemap.xml` は Home、top-level destination、カテゴリ、生成済みページネーション、arXiv / Knowledge / Glossary、Archive 月、10件以上の生成対象タグ、そして **4つの本文shardに実本文を持つ** live / warm の記事詳細だけを重複なしで列挙する。
 - 到達可能性 (route 生成) と索引可能性 (sitemap 収録 + `robots` meta) は別の決定である。`web/src/lib/detail-addressability.ts` が前者、`web/src/lib/detail-indexability.ts` が後者を持つ。実本文の無い addressable な detail は route を保ったまま `noindex, follow` を出し、本文が到着した時点で同じ URL のまま sitemap へ昇格する (redirect も URL 変更も発生しない)。
 - redirect-only `/sources`、query URL、生成されない低頻度タグ、外部 URL、cold / dropped の記事詳細は含めない。
 - 一覧上の cold / dropped は canonical source URL、untiered / hot / warm は内部 detail URL を共通 destination helper で選ぶ。新しいタブで開く source link は共有 `rel="noopener noreferrer nofollow"`、`↗`、表示言語別の visually-hidden 補足を持つ。production build は sitemap と実際の canonical HTML inventory の双方向 parity、redirect-only 非包含、標準 HTML parser が抽出・復号した実要素の `href` を各 HTML の canonical route 基準で解決し、内部 `/e/{id}/` link が実在する detail route を指すことを検証する。双方向 parity の唯一の免除は、標準 HTML parser で読み取った `<meta name="robots">` が `noindex` (または `none`) を宣言している canonical route であり、その場合だけ sitemap 非収録を許す。逆に `noindex` を宣言した route が sitemap にいる場合、および `content` 属性を欠く robots meta がある場合は build を fail-closed にする。

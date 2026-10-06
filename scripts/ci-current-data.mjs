@@ -12,11 +12,14 @@ import {
 } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readBodyStorageSnapshot } from "./body-storage-node.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SHA_RE = /^[0-9a-f]{40}$/;
 const DIGEST_RE = /^[0-9a-f]{64}$/;
 const ARCHIVE_PATH_RE = /^data\/archive\/(?:_index|\d{4}-\d{2})\.json$/;
+const BODY_SHARD_PATH_RE = /^data\/bodies-[0-3]\.json$/;
+const BODY_SHARD_PATHS = Array.from({ length: 4 }, (_, index) => `data/bodies-${index}.json`);
 const SNAPSHOT_PATH_RE = /^data\/(?:index|bodies|stats|approved-entries)\.json$/;
 const REQUIRED_PATHS = [
   "data/approved-entries.json",
@@ -52,7 +55,7 @@ function assertSha(value, label) {
 }
 
 function snapshotPath(path) {
-  return SNAPSHOT_PATH_RE.test(path) || ARCHIVE_PATH_RE.test(path);
+  return SNAPSHOT_PATH_RE.test(path) || BODY_SHARD_PATH_RE.test(path) || ARCHIVE_PATH_RE.test(path);
 }
 
 export function assertFreshIndex(contents, now = Date.now()) {
@@ -75,16 +78,20 @@ export function assertFreshIndex(contents, now = Date.now()) {
 }
 
 export function assertSnapshotPaths(paths) {
+  const shardCount = paths.filter((path) => BODY_SHARD_PATH_RE.test(path)).length;
   if (new Set(paths).size !== paths.length
     || paths.some((path) => !snapshotPath(path))
-    || REQUIRED_PATHS.some((path) => !paths.includes(path))) {
+    || REQUIRED_PATHS.some((path) => !paths.includes(path))
+    || (shardCount !== 0 && shardCount !== BODY_SHARD_PATHS.length)) {
     throw new Error("CI data snapshot: incomplete or unexpected main data paths");
   }
   return [...paths].sort();
 }
 
 export function assertNoGeneratedEdits(paths) {
-  const conflicts = paths.filter((path) => snapshotPath(path) || path.startsWith("data/archive/"));
+  const conflicts = paths.filter((path) =>
+    snapshotPath(path) || /^data\/bodies-[^/]+\.json$/.test(path) || path.startsWith("data/archive/")
+  );
   if (conflicts.length) {
     throw new Error(`CI data snapshot: refusing to replace PR-modified data: ${conflicts.join(", ")}`);
   }
@@ -101,6 +108,25 @@ function readGitFile(root, ref, path) {
     throw new Error(`CI data snapshot: ${path} is not a regular tracked JSON file`);
   }
   return git(root, ["show", `${ref}:${path}`], true);
+}
+
+function validateBodySnapshot(files) {
+  const indexContent = files.get("data/index.json");
+  const legacyContent = files.get("data/bodies.json");
+  if (!indexContent || !legacyContent) {
+    throw new Error("CI data snapshot: body storage files are missing");
+  }
+  let index;
+  try {
+    index = JSON.parse(indexContent.toString("utf8"));
+  } catch {
+    throw new Error("CI data snapshot: invalid main data/index.json");
+  }
+  readBodyStorageSnapshot(
+    index,
+    legacyContent.toString("utf8"),
+    BODY_SHARD_PATHS.map((path) => files.get(path)?.toString("utf8") ?? null),
+  );
 }
 
 function walkFiles(root, prefix = "") {
@@ -143,6 +169,10 @@ function readSnapshot(root, expectedMainSha, now) {
   if (assertFreshIndex(readFileSync(join(root, "data/index.json")), now) !== manifest.generatedAt) {
     throw new Error("CI data snapshot: generatedAt differs from manifest");
   }
+  validateBodySnapshot(new Map(
+    ["data/index.json", "data/bodies.json", ...BODY_SHARD_PATHS.filter((path) => paths.includes(path))]
+      .map((path) => [path, readFileSync(join(root, path))]),
+  ));
   return { manifest, paths };
 }
 
@@ -156,15 +186,24 @@ export function prepareCurrentData(root, snapshotRoot, baseSha, now = Date.now()
   }
   const headSha = assertSha(git(root, ["rev-parse", "HEAD"]).trim(), "checkout HEAD");
   git(root, ["cat-file", "-e", `${base}^{commit}`]);
-  const changedPaths = git(root, ["diff", "--name-only", base, headSha, "--", "data"])
-    .split("\n").filter(Boolean);
-  assertNoGeneratedEdits(changedPaths);
   git(root, ["fetch", "--quiet", "--no-tags", "origin", "main"]);
   const mainSha = assertSha(git(root, ["rev-parse", "FETCH_HEAD"]).trim(), "remote main SHA");
-  const archivePaths = listGitPaths(root, mainSha, ["data/archive"]);
-  const paths = assertSnapshotPaths([...REQUIRED_PATHS.filter((path) => path !== "data/archive/_index.json"), ...archivePaths]);
+  // The integration base can lag hundreds of main's data-only commits. A
+  // branch based on main has not edited generated data just because its PR
+  // differs from develop; inspect only changes since its shared main ancestor.
+  const commonMain = assertSha(git(root, ["merge-base", headSha, mainSha]).trim(), "common main SHA");
+  const changedPaths = git(root, ["diff", "--name-only", commonMain, headSha, "--", "data"])
+    .split("\n").filter(Boolean);
+  assertNoGeneratedEdits(changedPaths);
+  const dataPaths = listGitPaths(root, mainSha, ["data"])
+    .filter((path) => path.startsWith("data/archive/") || /^data\/bodies-.*\.json$/.test(path));
+  const paths = assertSnapshotPaths([
+    ...REQUIRED_PATHS.filter((path) => path !== "data/archive/_index.json"),
+    ...dataPaths,
+  ]);
   const contents = new Map(paths.map((path) => [path, readGitFile(root, mainSha, path)]));
   const generatedAt = assertFreshIndex(contents.get("data/index.json"), now);
+  validateBodySnapshot(contents);
   const manifest = {
     schemaVersion: 1,
     headSha,
@@ -188,7 +227,10 @@ export function applyCurrentData(root, snapshotRoot, expectedMainSha, now = Date
   if (git(root, ["rev-parse", "HEAD"]).trim() !== manifest.headSha) {
     throw new Error("CI data snapshot: checkout HEAD changed after snapshot capture");
   }
-  const trackedPaths = ["data/index.json", "data/bodies.json", "data/stats.json", "data/approved-entries.json", "data/archive"];
+  const trackedPaths = [
+    "data/index.json", "data/bodies.json", "data/stats.json",
+    "data/approved-entries.json", "data/archive", ...BODY_SHARD_PATHS,
+  ];
   if (git(root, ["status", "--porcelain=v1", "--untracked-files=all", "--", ...trackedPaths]).trim()) {
     throw new Error("CI data snapshot: checkout generated data was edited before hydration");
   }
@@ -200,6 +242,9 @@ export function applyCurrentData(root, snapshotRoot, expectedMainSha, now = Date
     return `data/archive/${item.name}`;
   });
   const required = new Set(paths);
+  for (const path of BODY_SHARD_PATHS) {
+    if (!required.has(path) && existsSync(join(root, path))) rmSync(join(root, path));
+  }
   for (const path of existingArchive) {
     if (!required.has(path)) rmSync(join(root, path));
   }

@@ -39,6 +39,17 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import { bodyBudgetPriorityRank, DEFAULT_BODY_BUDGET_TARGET_BYTES } from "../worker/src/bodies-budget.ts";
+import { readBodyStorage } from "../worker/src/bodies-file.ts";
+import { validateArticleChat } from "../worker/src/article-chat.ts";
+import {
+  BODY_SHARD_HARD_BYTES,
+  BODY_SHARD_PATHS,
+  BODY_SHARD_TARGET_BYTES,
+  BODY_TOTAL_HARD_BYTES,
+  LEGACY_BODY_PATH,
+  assertBodyStorageMode,
+} from "../web/src/lib/body-shards.ts";
+import { assertBodyShardDigests } from "../web/src/lib/body-shard-integrity.ts";
 import {
   MAJOR_UPDATE_INDEX_PATH,
   MAJOR_UPDATE_MAX_INDEX_BYTES,
@@ -102,6 +113,9 @@ interface IndexShape {
     bodyBudgetBytes?: number;
     bodyBudgetPruned?: number;
     bodyBudgetEvictedIds?: string[];
+    bodyShardBytes?: number[];
+    bodyShardDigests?: string[];
+    bodyStorageMode?: string;
   };
 }
 
@@ -476,19 +490,31 @@ describe("data/index.json 各エントリ", () => {
   });
 });
 
-describe("data/bodies.json (body-file architecture / LL-113)", () => {
-  const bodiesPath = join(process.cwd(), "data", "bodies.json");
-  const bodies = existsSync(bodiesPath)
-    ? (JSON.parse(readFileSync(bodiesPath, "utf8")) as {
-        generatedAt?: string;
-        count?: number;
-        bodies?: Record<string, { bodyJa?: unknown; bodyEn?: unknown }>;
-      })
-    : null;
+describe("article body storage (legacy source and four deterministic shards)", () => {
+  const bodiesPath = join(process.cwd(), LEGACY_BODY_PATH);
+  const shardContents = BODY_SHARD_PATHS.map((path) => {
+    const absolute = join(process.cwd(), path);
+    return existsSync(absolute) ? readFileSync(absolute, "utf8") : null;
+  });
+  const { mode: bodyStorageMode, payload: bodies } = readBodyStorage(
+    existsSync(bodiesPath) ? readFileSync(bodiesPath, "utf8") : null,
+    shardContents,
+  );
+  assertBodyStorageMode(bodyStorageMode, data.health);
+  const shardSizes = BODY_SHARD_PATHS.map((path) =>
+    existsSync(join(process.cwd(), path)) ? statSync(join(process.cwd(), path)).size : 0
+  );
 
-  it("data/bodies.json が存在し、スキーマが妥当である", () => {
-    expect(bodies).not.toBeNull();
-    expect(bodies && typeof bodies.bodies === "object").toBe(true);
+  it("legacy は残し、shard は0件またはexactly4件で count とID割当が妥当", () => {
+    expect(existsSync(bodiesPath)).toBe(true);
+    expect(bodies.count).toBe(Object.keys(bodies.bodies).length);
+    expect(shardContents.filter((content) => content !== null)).toHaveLength(
+      bodyStorageMode === "shards-v1" ? 4 : 0,
+    );
+    const unexpected = readdirSync(join(process.cwd(), "data"))
+      .filter((name) => /^bodies-.*\.json$/.test(name))
+      .filter((name) => !BODY_SHARD_PATHS.some((path) => path.endsWith(`/${name}`)));
+    expect(unexpected).toEqual([]);
   });
 
   it("各 body レコードの bodyJa / bodyEn は文字列である", () => {
@@ -503,7 +529,7 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("bodies.json に Unicode replacement character が残っていない", () => {
+  it("body shards に Unicode replacement character が残っていない", () => {
     const bad = Object.entries(bodies?.bodies ?? {})
       .filter(([, record]) =>
         String(record.bodyJa ?? "").includes("\uFFFD")
@@ -513,7 +539,7 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("bodies.json に決定論的 filler body が残っていない", () => {
+  it("body shards に決定論的 filler body が残っていない", () => {
     const JA_FILLER = "元記事の要約と収集時のメタデータから";
     const EN_FILLER = "completed from the existing summary and collection metadata";
     const bad = Object.entries(bodies?.bodies ?? {})
@@ -525,21 +551,32 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("bodies.json は運用上限 (hard ceiling, safety net) を超えない (10MB)", () => {
-    // Hard ceiling: unchanged and intentionally much larger than the active
-    // producer target below. This is a safety net that would still catch
-    // catastrophic growth even if the budget enforcement below were ever
-    // skipped or buggy -- it should not itself need raising (LL-411).
-    if (!existsSync(bodiesPath)) return;
-    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(10_000_000);
+  it("legacy source は9/10MB、shards は各9/10MB・合計18/20MBを超えない", () => {
+    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(BODY_SHARD_TARGET_BYTES);
+    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(BODY_SHARD_HARD_BYTES);
+    if (bodyStorageMode === "legacy") return;
+    for (const size of shardSizes) {
+      expect(size).toBeLessThanOrEqual(BODY_SHARD_TARGET_BYTES);
+      expect(size).toBeLessThanOrEqual(BODY_SHARD_HARD_BYTES);
+    }
+    const total = shardSizes.reduce((sum, bytes) => sum + bytes, 0);
+    expect(total).toBeLessThanOrEqual(DEFAULT_BODY_BUDGET_TARGET_BYTES);
+    expect(total).toBeLessThanOrEqual(BODY_TOTAL_HARD_BYTES);
   });
 
-  it("bodies.json は運用 target を超えない (deterministic budget policy, LL-411)", () => {
-    // Active target: the Publisher (worker/src/index.ts's runBodyPipeline)
-    // and the clean-source-noise.mjs migration both enforce this via
-    // enforceBodiesBudget() before ever committing data/bodies.json.
-    if (!existsSync(bodiesPath)) return;
-    expect(statSync(bodiesPath).size).toBeLessThanOrEqual(DEFAULT_BODY_BUDGET_TARGET_BYTES);
+  it("indexに固定したSHA-256 inventoryと4 shardの実bytesが一致する", () => {
+    if (bodyStorageMode === "legacy") return;
+    assertBodyShardDigests(
+      shardContents.map((content) => content!),
+      data.health?.bodyShardDigests,
+    );
+  });
+
+  it("保存したchatは6発言のままであり、失敗を空配列へ潰さない", () => {
+    const invalid = Object.entries(bodies.bodies)
+      .filter(([, record]) => record.chat !== undefined && !validateArticleChat(record.chat))
+      .map(([id]) => id);
+    expect(invalid).toEqual([]);
   });
 
   it("bodies.json の本文は収集元のmaterial factと矛盾しない", () => {
@@ -626,14 +663,20 @@ describe("data/bodies.json (body-file architecture / LL-113)", () => {
     if (targetBytes === undefined) return; // pre-rollout artifact, field not present yet
 
     expect(typeof targetBytes).toBe("number");
-    expect(targetBytes).toBe(DEFAULT_BODY_BUDGET_TARGET_BYTES);
+    expect(targetBytes).toBe(bodyStorageMode === "shards-v1"
+      ? DEFAULT_BODY_BUDGET_TARGET_BYTES
+      : BODY_SHARD_TARGET_BYTES);
     expect(typeof measuredBytes).toBe("number");
     // The recorded byte measurement must match the actual committed file, and
     // must be at or under the target (the enforcement's own contract).
-    if (existsSync(bodiesPath)) {
-      expect(measuredBytes).toBe(statSync(bodiesPath).size);
-    }
+    expect(measuredBytes).toBe(bodyStorageMode === "shards-v1"
+      ? shardSizes.reduce((sum, bytes) => sum + bytes, 0)
+      : statSync(bodiesPath).size);
     expect(measuredBytes as number).toBeLessThanOrEqual(targetBytes as number);
+    if (bodyStorageMode === "shards-v1") {
+      expect(data.health?.bodyStorageMode).toBe("shards-v1");
+      expect(data.health?.bodyShardBytes).toEqual(shardSizes);
+    }
     expect(typeof pruned).toBe("number");
     expect(pruned as number).toBeGreaterThanOrEqual(0);
     expect(Array.isArray(evictedIds)).toBe(true);

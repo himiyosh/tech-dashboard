@@ -1,48 +1,51 @@
 /**
  * tests/web-bodies.test.ts
  *
- * web/src/lib/bodies.ts のユニットテスト (LL-115)。data/bodies.json を
- * モックして bodyForEntry / hasRealBody を検証する。本文は index ではなく
- * bodies.json に格納され、id でルックアップする。
+ * web/src/lib/bodies.ts のユニットテスト (LL-115)。実storageの
+ * legacy/shard modeに依存しないfixtureで本文ルックアップを検証する。
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { isFillerBodyRecord, isRealBodyRecord } from "../web/src/lib/body-quality.ts";
 
-vi.mock("../data/bodies.json", () => ({
-  default: {
-    generatedAt: "2026-01-01T00:00:00.000Z",
-    count: 5,
-    bodies: {
-      "real-1": {
-        bodyJa: "これは実際の日本語本文です。複数段落あります。",
-        bodyEn: "This is a real English body with multiple paragraphs.",
-        model: "claude-opus-4.8",
-        generatedAt: "2026-01-01T00:00:00.000Z",
-      },
-      "empty-1": { bodyJa: "", bodyEn: "" },
-      "filler-1": {
-        bodyJa: "このエントリでは、元記事の要約と収集時のメタデータから補っています。",
-        bodyEn: "This note is completed from the existing summary and collection metadata.",
-        model: "legacy-import",
-      },
-      // The already-published fabrication case: a real-looking body whose
-      // entry carries no source excerpt at all (53 such pages are live).
-      "ungrounded-empty": {
-        bodyJa: "Gemini 3.7 Flash は推論速度を大幅に改善したと説明されている。",
-        bodyEn: "Gemini 3.7 Flash is described as a substantial latency improvement.",
-        model: "claude-opus-4.8",
-      },
-      // Same, from an excerpt too short to support long-form prose.
-      "ungrounded-short": {
-        bodyJa: "短い断片から生成された本文です。",
-        bodyEn: "A body generated from a fragment.",
-        model: "claude-opus-4.8",
-      },
+const fixture = {
+  generatedAt: "2026-01-01T00:00:00.000Z",
+  count: 5,
+  bodies: {
+    "real-1": {
+      bodyJa: "これは実際の日本語本文です。複数段落あります。",
+      bodyEn: "This is a real English body with multiple paragraphs.",
+      model: "claude-opus-4.8",
+      generatedAt: "2026-01-01T00:00:00.000Z",
+    },
+    "empty-1": { bodyJa: "", bodyEn: "" },
+    "filler-1": {
+      bodyJa: "このエントリでは、元記事の要約と収集時のメタデータから補っています。",
+      bodyEn: "This note is completed from the existing summary and collection metadata.",
+      model: "legacy-import",
+    },
+    // The already-published fabrication case: a real-looking body whose
+    // entry carries no source excerpt at all (53 such pages are live).
+    "ungrounded-empty": {
+      bodyJa: "Gemini 3.7 Flash は推論速度を大幅に改善したと説明されている。",
+      bodyEn: "Gemini 3.7 Flash is described as a substantial latency improvement.",
+      model: "claude-opus-4.8",
+    },
+    // Same, from an excerpt too short to support long-form prose.
+    "ungrounded-short": {
+      bodyJa: "短い断片から生成された本文です。",
+      bodyEn: "A body generated from a fragment.",
+      model: "claude-opus-4.8",
     },
   },
-}));
+};
 
-const { articleBodyState, bodyForEntry, hasRealBody, BODIES_COUNT } = await import("../web/src/lib/bodies.ts");
+const {
+  articleBodyState, bodyForEntry, bodyForEntryIn, hasRealBody, BODIES, BODIES_COUNT,
+} = await import("../web/src/lib/bodies.ts");
+const bodyForFixture = (entry: Parameters<typeof bodyForEntryIn>[0]) =>
+  bodyForEntryIn(entry, fixture.bodies);
+const fixtureHasRealBody = (entry: Parameters<typeof bodyForEntryIn>[0]) =>
+  bodyForFixture(entry) !== null;
 
 const GROUNDED_SNIPPET =
   "The source walks through the release, the behavior it changes, and the platforms it supports.";
@@ -55,9 +58,9 @@ function src(id: string, over: { title?: string; contentSnippet?: string } = {})
   };
 }
 
-describe("bodyForEntry (LL-115)", () => {
+describe("bodyForEntryIn (LL-115)", () => {
   it("実 body + 実 snippet の entry は BodyRecord を返す", () => {
-    const b = bodyForEntry(src("real-1"));
+    const b = bodyForFixture(src("real-1"));
     expect(b).not.toBeNull();
     expect(b?.bodyJa).toContain("日本語本文");
     expect(b?.bodyEn).toContain("real English body");
@@ -65,20 +68,20 @@ describe("bodyForEntry (LL-115)", () => {
   });
 
   it("存在しない id は null", () => {
-    expect(bodyForEntry(src("missing"))).toBeNull();
+    expect(bodyForFixture(src("missing"))).toBeNull();
   });
 
   it("空 body の id は null", () => {
-    expect(bodyForEntry(src("empty-1"))).toBeNull();
+    expect(bodyForFixture(src("empty-1"))).toBeNull();
   });
 
   it("legacy filler body の id は null (本物ではない)", () => {
-    expect(bodyForEntry(src("filler-1"))).toBeNull();
+    expect(bodyForFixture(src("filler-1"))).toBeNull();
   });
 
   it("contentSnippet が空の entry は body があっても描画しない", () => {
     expect(
-      bodyForEntry(src("ungrounded-empty", {
+      bodyForFixture(src("ungrounded-empty", {
         title: "Introducing Gemini 3.7 Flash",
         contentSnippet: "",
       })),
@@ -87,13 +90,13 @@ describe("bodyForEntry (LL-115)", () => {
 
   it("断片しかない contentSnippet の entry は body があっても描画しない", () => {
     expect(
-      bodyForEntry(src("ungrounded-short", { contentSnippet: "Read more" })),
+      bodyForFixture(src("ungrounded-short", { contentSnippet: "Read more" })),
     ).toBeNull();
   });
 
   it("contentSnippet がタイトルの echo なら描画しない", () => {
     expect(
-      bodyForEntry(src("real-1", {
+      bodyForFixture(src("real-1", {
         title: "Ollama Releases v0.33.0-rc2 for testing",
         contentSnippet: "Ollama Releases v0.33.0-rc2 for testing",
       })),
@@ -101,22 +104,27 @@ describe("bodyForEntry (LL-115)", () => {
   });
 });
 
-describe("hasRealBody (LL-115)", () => {
+describe("body lookup classification (LL-115)", () => {
   it("実 body + 実 snippet なら true", () => {
-    expect(hasRealBody(src("real-1"))).toBe(true);
+    expect(fixtureHasRealBody(src("real-1"))).toBe(true);
   });
   it("無い / 空 / filler / 出典未裏付け は false", () => {
-    expect(hasRealBody(src("missing"))).toBe(false);
-    expect(hasRealBody(src("empty-1"))).toBe(false);
-    expect(hasRealBody(src("filler-1"))).toBe(false);
-    expect(hasRealBody(src("ungrounded-empty", { contentSnippet: "" }))).toBe(false);
+    expect(fixtureHasRealBody(src("missing"))).toBe(false);
+    expect(fixtureHasRealBody(src("empty-1"))).toBe(false);
+    expect(fixtureHasRealBody(src("filler-1"))).toBe(false);
+    expect(fixtureHasRealBody(src("ungrounded-empty", { contentSnippet: "" }))).toBe(false);
+  });
+  it("production wrappers read the active storage without changing the shared guard", () => {
+    const entry = src(Object.keys(BODIES)[0] ?? "missing");
+    expect(bodyForEntry(entry)).toEqual(bodyForEntryIn(entry, BODIES));
+    expect(hasRealBody(entry)).toBe(bodyForEntryIn(entry, BODIES) !== null);
   });
 });
 
 describe("articleBodyState", () => {
   it("本文があれば pending ID より ready を優先する", () => {
     const entry = src("real-1");
-    expect(articleBodyState(entry, bodyForEntry(entry), ["real-1"])).toBe("ready");
+    expect(articleBodyState(entry, bodyForFixture(entry), ["real-1"])).toBe("ready");
   });
 
   it("本文なしで enqueue 成功 ID に含まれる場合だけ queued にする", () => {
@@ -137,7 +145,7 @@ describe("articleBodyState", () => {
 
 describe("BODIES_COUNT", () => {
   it("payload の count を反映する", () => {
-    expect(BODIES_COUNT).toBe(5);
+    expect(BODIES_COUNT).toBe(Object.keys(BODIES).length);
   });
 });
 
@@ -145,7 +153,7 @@ describe("isRealBodyRecord (body-quality)", () => {
   // body-quality.ts imports no data artifact, so route policy
   // (detail-indexability.ts), these unit tests, and the Playwright publisher
   // spec all apply the identical predicate without loading the 9MB
-  // data/bodies.json. That shared definition is the point of the module.
+  // the active legacy/shard artifact. That shared definition is the point of the module.
   it("rejects missing, empty, and whitespace-only records", () => {
     expect(isRealBodyRecord(undefined)).toBe(false);
     expect(isRealBodyRecord(null)).toBe(false);

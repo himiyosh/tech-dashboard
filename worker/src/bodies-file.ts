@@ -23,6 +23,12 @@ import {
   type ArticleChatCacheProvenance,
 } from "./body-cache.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "./publisher-contract.ts";
+import {
+  BODY_SHARD_PATHS,
+  LEGACY_BODY_PATH,
+  loadBodyStorage,
+  type BodyStorageMode,
+} from "../../web/src/lib/body-shards.ts";
 
 export interface BodyRecord {
   bodyJa: string;
@@ -37,6 +43,28 @@ export interface BodiesPayload {
   generatedAt: string;
   count: number;
   bodies: Record<string, BodyRecord>;
+}
+
+/** A partial shard set is an invalid snapshot, never a reason to read stale legacy data. */
+export function readBodyStorage(
+  legacyContent: string | null,
+  shardContents: readonly (string | null)[],
+): { mode: BodyStorageMode; payload: BodiesPayload } {
+  if (shardContents.length !== BODY_SHARD_PATHS.length) {
+    throw new Error("body storage requires exactly four shard slots");
+  }
+  const parse = (content: string | null, path: string): unknown => {
+    if (content === null) return null;
+    try {
+      return JSON.parse(content) as unknown;
+    } catch {
+      throw new Error(`invalid body storage JSON at ${path}`);
+    }
+  };
+  return loadBodyStorage<BodyRecord>(
+    parse(legacyContent, LEGACY_BODY_PATH),
+    shardContents.map((content, index) => parse(content, BODY_SHARD_PATHS[index]!)),
+  );
 }
 
 type BodyGuardEntry = Pick<NormalizedEntry, "id"> &

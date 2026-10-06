@@ -43,7 +43,7 @@ argument-hint: "scope or suspected regression"
 | R-001c: feature→develop→main release flowを守っているか | 通常PRのbaseが`develop`、main向けPRのheadが`develop`で、`.github/workflows/ci.yml`がmain/develop両方を対象に`check-pr-branch-flow.mjs`を実行することを確認 |
 | R-003: web build が web で自己完結しているか | `web/src/**` から `../../../harness/` への runtime import がないことを grep で確認 |
 | R-009: secret が staged / tracked に混入していないか | `npm run secrets:scan` と `npm run secrets:scan:worktree` を実行 |
-| R-012: live index が body-free architecture と retention を守っているか | `data/index.json` で非空 `bodyJa` / `bodyEn` 件数が 0、本文は `data/bodies.json` にあり、retention 対象外 record が 0 であることを `tests/data-schema.test.ts` で確認 |
+| R-012: live index と4 shard が body-free/retention/budget 契約を守るか | indexの非空本文0、4 shardの完全性・各9/10MBと合計18/20MB・record ID/retention・index healthのSHA-256を`tests/data-schema.test.ts`で確認。移行前は旧sidecar単体9/10MB、移行後も旧sourceを凍結 |
 | R-013: summary fallback が全 live entry に適用済みか | `summaryJa` / `summaryEn` の両方が非空であることを確認し、body は `data/bodies.json` 側で管理する |
 | R-026: Free publisher / bridge contract が維持されているか | `worker/wrangler.toml` に cron / `[limits]` / GitHub token がなく Free bridge entrypoint を使い、Publisher workflow が毎時のdata/impact gateと毎日のfull reconciliationを分離し、Node jobで検証後にdata-only pushと遅延effects flushを行い、18,000 files / 18分 / route-family growth contractを守ることを確認 |
 | R-027: publisher runtime / Queue cache fingerprint と snapshot CAS が同期しているか | `npm run publisher:contract -- --dry-run` が `CURRENT` を返し、`tests/worker-publisher-contract.test.ts` で immutable SHA read、parent drift 拒否、exact parent contractを、`tests/publisher-runner.test.ts` で副作用遅延と flush 境界を確認する。staged rolloutでは原則として旧harnessのmarker mismatchを観測する。deployment provenanceやguard到達性を確認できずmismatchを観測できなかった場合に限り、bridge deploy前に旧runのterminal failure、merge後data commit不在、旧heartbeat非更新の3点をすべて実測し、理由をLLへ記録したか確認する。いずれか未確認なら停止してユーザー判断を求める |
@@ -83,8 +83,8 @@ LL-015, LL-044, LL-055 を参照。
 
 **検査コマンド**:
 ```bash
-node -e "
-const fs=require('fs');
+node --input-type=module -e "
+import fs from 'node:fs';
 const d=JSON.parse(fs.readFileSync('./data/index.json','utf8'));
 const live=d.entries;
 const bycat={};
@@ -131,8 +131,8 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 
 - [ ] `data/index.json` のサイズが極端に大きくないか (目安: 15 MB 未満)
 - [ ] `data/index.json` に非空 `bodyJa` / `bodyEn` が残っていないか (expected: 0)
-- [ ] `data/bodies.json` が存在し、record count / coverage が確認できるか
-- [ ] `data/bodies.json` に body retention 対象外 (non-evergreen、importance 1、既定 30 日より古い) の record が残っていないか (`npx vitest run tests/data-schema.test.ts`)
+- [ ] 4 shardが0件 (初回移行前) またはexactly4件で、本文件数・coverage・実ファイルのdigestとindexの保存modeを確認できるか。移行後は旧 `data/bodies.json` を凍結して保持し、4件とも消えた場合も旧本文へ戻さない
+- [ ] 現行の本文集合にretention対象外・orphan・fillerがなく、各9MB/hard10MB・合計18MB/hard20MBを守るか (`npm test -- tests/data-schema.test.ts`)
 - [ ] archive 月別ファイルが 8 MB 未満か
 - [ ] `data/index.json` の `generatedAt` が古すぎず、`data/stats.json` / `data/archive/_index.json` と大きく乖離していないか
 - [ ] `publishedAt === collectedAt` のミリ秒一致が全体の 5% 未満か
@@ -141,10 +141,11 @@ npx playwright test tests/e2e/smoke.spec.ts --reporter=line
 **検査コマンド**:
 ```bash
 # data/index.json の entries に status フィールドは無く、全件が live 扱い
-node -e "
-const fs=require('fs');
+node --input-type=module -e "
+import fs from 'node:fs';
+import {readBodyStorageFromDisk} from './scripts/body-storage-node.mjs';
 const d=JSON.parse(fs.readFileSync('./data/index.json','utf8'));
-const bodies=JSON.parse(fs.readFileSync('./data/bodies.json','utf8'));
+const bodies=readBodyStorageFromDisk();
 const live=d.entries;
 const total=live.length;
 const noSumJa=live.filter(e=>!e.summaryJa).length;
@@ -158,7 +159,7 @@ console.log('entries:', total);
 console.log('no summaryJa:', noSumJa, '('+(noSumJa/total*100).toFixed(1)+'%)');
 console.log('no summaryEn:', noSumEn, '('+(noSumEn/total*100).toFixed(1)+'%)');
 console.log('index body present:', indexBodyPresent);
-console.log('bodies.json count:', bodyRecords, '('+bodyCoverage+'% of live entries)');
+console.log('active body records:', bodyRecords, '('+bodyCoverage+'% of live entries)');
 console.log('no titleEn:', noTitleEn, '('+(noTitleEn/total*100).toFixed(1)+'%)');
 console.log('publishedAt==collectedAt:', staleDate, '('+(staleDate/total*100).toFixed(1)+'%)');
 "

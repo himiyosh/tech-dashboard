@@ -32,6 +32,7 @@ import {
   serializeBodies,
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
+import { serializedShardByteLengths } from "../worker/src/bodies-budget.ts";
 import { validateArticleChat, type ArticleChatTurn } from "../worker/src/article-chat.ts";
 import { DEPLOYED_ARTICLE_CHAT_REVISION, type BodyCacheEntry } from "../worker/src/body-cache.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
@@ -925,7 +926,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       { nowMs: Date.parse(at) },
     );
 
-    const persisted = parseBodies(result.bodiesFileContent).bodies[article.id];
+    const persisted = result.payload.bodies[article.id];
     expect(persisted?.bodyJa).toBe(oldCache.bodyJa);
     expect(persisted?.bodyEn).toBe(oldCache.bodyEn);
     expect(persisted?.chat).toBeUndefined();
@@ -947,7 +948,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       { nowMs: Date.parse(at) },
     );
 
-    const persisted = parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id];
+    const persisted = result.payload.bodies[article.id];
     expect(persisted?.bodyJa).toBe(bodyGeneratedRecordText("existing").bodyJa);
     expect(persisted?.bodyEn).toBe(bodyGeneratedRecordText("existing").bodyEn);
     expect(persisted?.chat).toBeUndefined();
@@ -968,7 +969,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       { nowMs: Date.parse(at) },
     );
 
-    const persisted = parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id];
+    const persisted = result.payload.bodies[article.id];
     expect(persisted?.chat).toEqual(oldChat);
     expect(persisted?.chat?.map((turn) => turn.ja)).toEqual(oldChat.map((turn) => turn.ja));
     expect(persisted?.chat?.map((turn) => turn.en)).toEqual(oldChat.map((turn) => turn.en));
@@ -995,7 +996,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       DEPLOYED_PUBLISHER_FINGERPRINT,
       { nowMs: Date.parse(at) },
     );
-    expect(parseBodies(normal.bodiesFileContent).bodies[article.id]?.chat).toEqual(newChat);
+    expect(normal.payload.bodies[article.id]?.chat).toEqual(newChat);
     expect(normal.health.chatRepairEnqueued).toBe(0);
 
     const existingContent = storedBody();
@@ -1007,7 +1008,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       DEPLOYED_PUBLISHER_FINGERPRINT,
       { nowMs: Date.parse(at) },
     );
-    const persisted = parseBodies(graft.bodiesFileContent).bodies[article.id];
+    const persisted = graft.payload.bodies[article.id];
     expect(persisted?.chat).toEqual(newChat);
     expect(persisted?.bodyJa).toBe(bodyGeneratedRecordText("existing").bodyJa);
     expect(persisted?.bodyEn).toBe(bodyGeneratedRecordText("existing").bodyEn);
@@ -1039,7 +1040,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       DEPLOYED_PUBLISHER_FINGERPRINT,
       { nowMs: Date.parse(at) },
     );
-    expect(rejected.bodiesFileContent).toBeNull();
+    expect(rejected.changed).toBe(false);
     expect(sent).toHaveLength(1);
     expect(sent[0]?.publisherContractFingerprint).toBe(DEPLOYED_PUBLISHER_FINGERPRINT);
     expect(rejected.health.chatRepairPendingIds).toEqual([article.id]);
@@ -1057,7 +1058,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
         nowMs: Date.parse("2026-09-28T01:00:00.000Z"),
       },
     );
-    expect(parseBodies(repaired.bodiesFileContent).bodies[article.id]).toMatchObject({
+    expect(repaired.payload.bodies[article.id]).toMatchObject({
       ...bodyGeneratedRecordText("existing"),
       chat: newChat,
     });
@@ -1069,12 +1070,12 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     const preserved = await runBodyPipeline(
       env,
       [article],
-      repaired.bodiesFileContent,
+      serializeBodies(repaired.payload),
       "2026-09-28T02:00:00.000Z",
       DEPLOYED_PUBLISHER_FINGERPRINT,
       { nowMs: Date.parse("2026-09-28T02:00:00.000Z") },
     );
-    expect(parseBodies(preserved.bodiesFileContent ?? repaired.bodiesFileContent).bodies[article.id]?.chat)
+    expect(preserved.payload.bodies[article.id]?.chat)
       .toEqual(newChat);
   });
 
@@ -1126,7 +1127,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
       DEPLOYED_PUBLISHER_FINGERPRINT,
       { nowMs: Date.parse(at) },
     );
-    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.chat).toBeUndefined();
+    expect(result.payload.bodies[article.id]?.chat).toBeUndefined();
     expect(result.health.chatCompatibilityRejected).toBe(1);
     expect(result.health.chatRepairEnqueued).toBe(1);
   });
@@ -1171,7 +1172,7 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     expect(result.health.chatRepairBlocked).toBe(1);
     expect(result.health.chatRepairCandidates).toBe(0);
     expect(result.health.chatRepairEnqueued).toBe(0);
-    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.bodyJa)
+    expect(result.payload.bodies[article.id]?.bodyJa)
       .toBe(bodyGeneratedRecordText("existing").bodyJa);
   });
 
@@ -1189,12 +1190,14 @@ describe("old consumer echoes the new fingerprint without a chat code revision",
     expect(result.health.chatRepairCandidates).toBe(1);
     expect(result.health.chatRepairEnqueued).toBe(0);
     expect(result.health.bodyEnqueued).toBe(0);
-    expect(parseBodies(result.bodiesFileContent ?? existingContent).bodies[article.id]?.chat).toBeUndefined();
+    expect(result.payload.bodies[article.id]?.chat).toBeUndefined();
   });
 });
 
 describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
   const GENERATED_AT = "2026-07-25T00:00:00.000Z";
+  const shardBytes = (payload: BodiesPayload) =>
+    serializedShardByteLengths(payload).reduce((sum, bytes) => sum + bytes, 0);
   const pipelineEntries: NormalizedEntry[] = [
     entry({
       id: "ever",
@@ -1254,8 +1257,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       ),
     };
     const target = Math.round(
-      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
-        + new TextEncoder().encode(existingContent).byteLength) / 2,
+      (shardBytes(fourOnly) + shardBytes(full)) / 2,
     );
 
     const env = baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) });
@@ -1272,9 +1274,9 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     expect(result.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]);
     expect(result.health.bodyBudgetBytes).toBeLessThanOrEqual(target);
     expect(result.health.bodiesTotal).toBe(4);
-    expect(result.bodiesFileContent).not.toBeNull();
+    expect(result.changed).toBe(true);
 
-    const finalPayload = parseBodies(result.bodiesFileContent);
+    const finalPayload = result.payload;
     expect(finalPayload.bodies.ever).toBeDefined();
     expect(finalPayload.bodies.imp3).toBeDefined();
     expect(finalPayload.bodies.imp2).toBeDefined();
@@ -1293,8 +1295,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       ),
     };
     const target = Math.round(
-      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
-        + new TextEncoder().encode(existingContent).byteLength) / 2,
+      (shardBytes(fourOnly) + shardBytes(full)) / 2,
     );
 
     const run1 = await runBodyPipeline(
@@ -1312,7 +1313,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     const run2 = await runBodyPipeline(
       baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
       pipelineEntries,
-      run1.bodiesFileContent,
+      serializeBodies(run1.payload),
       "2026-07-25T01:00:00.000Z",
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
@@ -1359,8 +1360,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       ),
     };
     const target = Math.round(
-      (new TextEncoder().encode(serializeBodies(fourOnly)).byteLength
-        + new TextEncoder().encode(existingContent).byteLength) / 2,
+      (shardBytes(fourOnly) + shardBytes(full)) / 2,
     );
     const env = baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) });
 
@@ -1382,13 +1382,12 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     // evicted-ids list here, silently forgetting imp1-old. The fix must
     // still report it (carried forward), because it is still live,
     // retention-eligible, missing a body, and still the lowest-priority tier.
-    // `run1.bodiesFileContent` (not run2's, which is expected to be null
-    // since nothing changed) is what a real commit-on-change publisher would
-    // have persisted and what the next run would read back.
+    // The next run reads the last committed shard payload, not an empty
+    // write from a no-change run.
     const run2 = await runBodyPipeline(
       env,
       pipelineEntries,
-      run1.bodiesFileContent,
+      serializeBodies(run1.payload),
       "2026-07-25T01:00:00.000Z",
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
@@ -1397,7 +1396,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     expect(run2.health.bodyMergePendingIds).toEqual([]);
     expect(run2.health.chatRepairPendingIds).not.toContain("imp1-old");
     expect(run2.health.bodyBudgetPruned).toBe(0); // nothing NEW pruned this run
-    expect(run2.bodiesFileContent).toBeNull(); // nothing changed, no new commit
+    expect(run2.changed).toBe(false); // nothing changed, no new commit
     expect(run2.health.bodyBudgetEvictedIds).toEqual(["imp1-old"]); // still persisted, not emptied
 
     // Run 3: reads run2's (correctly non-empty) evicted ids and still
@@ -1408,7 +1407,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     const run3 = await runBodyPipeline(
       env,
       pipelineEntries,
-      run1.bodiesFileContent, // still the last actually-committed content
+      serializeBodies(run1.payload), // still the last actually-committed content
       "2026-07-25T02:00:00.000Z",
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run2.health.bodyBudgetEvictedIds },
@@ -1506,8 +1505,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
       ),
     };
     const target = Math.round(
-      (new TextEncoder().encode(serializeBodies(threeRemain)).byteLength
-        + new TextEncoder().encode(serializeBodies(twoRemain)).byteLength) / 2,
+      (shardBytes(threeRemain) + shardBytes(twoRemain)) / 2,
     );
 
     const run = await runBodyPipeline(
@@ -1521,7 +1519,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     expect(run.health.bodyBudgetPruned).toBe(3);
     expect([...run.health.bodyBudgetEvictedIds].sort()).toEqual(["imp1-new", "imp1-old", "imp2"]);
     expect(run.health.bodyBudgetBytes).toBeLessThanOrEqual(target);
-    const finalPayload = parseBodies(run.bodiesFileContent);
+    const finalPayload = run.payload;
     expect(finalPayload.bodies.imp3).toBeDefined();
     expect(finalPayload.bodies.ever).toBeDefined();
     expect(finalPayload.bodies.imp2).toBeUndefined();
@@ -1533,7 +1531,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     const existingContent = fullExistingBodies();
     const full = parseBodies(existingContent);
     const emptyPayload: BodiesPayload = { generatedAt: full.generatedAt, count: 0, bodies: {} };
-    const emptyBytes = new TextEncoder().encode(serializeBodies(emptyPayload)).byteLength;
+    const emptyBytes = shardBytes(emptyPayload);
     // Far below even a single record's byte size -- forces ALL 5 entries
     // (including "ever", the evergreen record) to be pruned as a last resort.
     const target = emptyBytes + 10;
@@ -1557,7 +1555,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     const run2 = await runBodyPipeline(
       baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
       pipelineEntries,
-      run1.bodiesFileContent,
+      serializeBodies(run1.payload),
       "2026-07-25T06:00:00.000Z",
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run1.health.bodyBudgetEvictedIds },
@@ -1577,7 +1575,7 @@ describe("runBodyPipeline: budget enforcement integration (LL-411)", () => {
     const run3 = await runBodyPipeline(
       baseEnv({ BODY_BUDGET_TARGET_BYTES: String(target) }),
       pipelineEntries,
-      run1.bodiesFileContent,
+      serializeBodies(run1.payload),
       "2026-07-25T07:00:00.000Z",
       `sha256:${"a".repeat(64)}`,
       { previousBudgetEvictedIds: run2.health.bodyBudgetEvictedIds },

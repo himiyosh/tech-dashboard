@@ -3300,3 +3300,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 新設worktreeへrootの全devDependencyは自動復元されず、直接起動したhookはrootのbinary pathを要求する。別の実行経路でPlaywrightが見つかっても、そのpathの存在は保証されない。
 - **対策**: 失敗したpushの前に保全したdataは承認どおり原bytesとSHA-256へ復元し、rootで`npm ci --no-audit --no-fund`を実行して`@playwright/test`と実行ファイルを確認する。検査skipは使わず、同じfresh-data手順と通常hookで再試行する。
 - **教訓**: 新しいworktreeのpush前には`pretest`が復元する対象とhookが直接参照するbinaryを別々に確認する。unitのPASSや`npm run test:e2e`の成功をroot `node_modules/.bin`の存在証明と読み替えず、missing dependencyはmanifestを変えず`npm ci`で再現可能に復元する。
+
+### LL-499: GitHub Actionsのbranch-filtered runs一覧をPublisher鮮度の正本にしない
+- **事象**: Worker Healthが`publisher run is stale`で失敗した時、`publisher.yml/runs?branch=main&per_page=10`は9月のrunを先頭に返した。同時刻のunfiltered `?per_page=40`には10月5日のmainで成功した`Publisher / reconcile`が含まれ、同じvalidatorはunfiltered一覧でエラー0件、filtered一覧で約39,600分の誤った遅延を報告した。
+- **根本原因**: GitHub APIのserver-side `branch=main`検索が観測時には新しいmain runを返さず、古い部分集合を鮮度判定へ入力した。API内部でなぜその差が生じたかは未確認である。`isPublishingRun()`は既に各runの`head_branch === "main"`を確認していたため、server-side filterへの依存は不要だった。
+- **対策**: workflow-runs APIから上限40件のunfiltered一覧を取得し、mainのscheduled runまたは明示されたpublish/reconcile dispatchだけをローカルで選ぶ。developなど他branchとdiagnostic dry-runは除外し、mainのrunが無い、失敗した、または本当に古い場合のfail-closed判定と180分閾値は維持する。実APIのfiltered/unfiltered対照に加え、混在runとmain不在の回帰testで固定した。
+- **教訓**: 監視APIのfilter付き結果が古いと疑う場合は、同時刻のboundedなunfiltered結果とrun単位のbranch/eventを比較してから原因を切り分ける。アラート閾値を緩めて隠すのではなく、取得量を制限した上でローカルの既存適格判定を適用し、別branchやdry-runの成功で本番失敗を覆わない。

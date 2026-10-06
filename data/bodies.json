@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-06T00:00:57.518Z",
-  "count": 1157,
+  "generatedAt": "2026-10-06T01:00:58.114Z",
+  "count": 1154,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -39408,44 +39408,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-22T18:37:42.519Z"
     },
-    "b8c765be6d26741d": {
-      "bodyJa": "## エージェント型\n\nAnthropicの最新OpusモデルであるClaude Opus 5.5が、GitHub Copilotで利用可能になった。エージェント型コーディングに加え、長時間にわたるエージェント型タスクや知識作業にも使用でき、複数の工程を伴う作業を任せられるモデルとして提供される。\n\n## 初期テスト\n\n初期テストでは、Claude Opus 5.5はClaude Opus 5と同程度にタスクを解決しながら、使用する手順とトークンを大幅に減らしたと説明されている。単にタスクを完了するだけでなく、処理に必要なステップを抑えられた点が特徴となる。\n\nまた、複数段階のタスクでエラーが発生した場合にも、素早く回復したとされる。長時間のエージェント型タスクを進める際に、途中のエラーから処理を立て直す能力も初期テストで確認された形だ。\n\n## ウォーターマーク\n\nClaude Opus 5.5のテキスト出力にはウォーターマークが付与される。このウォーターマークは、出力内容の意味、品質、読みやすさを変えず、追加のトークンや費用も発生させないと説明されている。\n\n## 料金と提供対象\n\n従量課金では、プロバイダーの定価に基づいて請求される。利用対象はCopilot Pro+、Max、Business、Enterpriseのユーザーで、モデルピッカーからClaude Opus 5.5を選択できる。\n\n提供は段階的に進められるため、現時点でモデルが表示されていない場合もある。その場合は、提供対象に反映されるまで待ってから再度確認する必要がある。",
-      "bodyEn": "## Claude Opus 5.5\n\nAnthropic’s newest Opus model, Claude Opus 5.5, is now available in GitHub Copilot. The addition matters for users who want to apply the model to agentic coding, long-running agentic tasks, and knowledge work directly through Copilot.\n\nUsers can choose Claude Opus 5.5 through the model picker. However, the rollout is gradual, so the option may not appear immediately for every eligible user.\n\n## Early testing\n\nIn early testing, Claude Opus 5.5 resolved tasks comparably to Claude Opus 5 while using significantly fewer steps and tokens. This suggests the newer model can complete similar tasks with a more efficient sequence of actions, based on the announced test results.\n\nThe model also recovered quickly from errors during multistep tasks. That behavior is particularly relevant to the agentic and long-running work described in the announcement, where a task may involve multiple actions rather than a single response.\n\n## Claude’s text watermark\n\nClaude Opus 5.5 watermarks its text outputs. According to the announcement, the watermark does not alter the meaning, quality, or readability of the generated text.\n\nThe watermark also does not add tokens or cost. Anthropic provides additional information in its “How Claude’s text watermark works” material for users who want more detail about the feature.\n\n## Models and pricing\n\nClaude Opus 5.5 is available to Copilot Pro+, Max, Business, and Enterprise users. Access is subject to the gradual rollout, and eligible users who do not yet see the model are advised to check again later.\n\nUnder usage-based billing, the model is billed at the provider’s list pricing. GitHub Copilot’s models and pricing information provides the applicable billing details.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Claude Opus 5.5は、初期テストで手順とトークンが大幅に減ったんだって。これって大きいこと？",
-          "en": "Claude Opus 5.5 used significantly fewer steps and tokens in early tests. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "同程度にタスクを解決しつつ減らせた、とこの記事では報告されておる。少ない手順で進めたい開発者には役立ちそうじゃ。",
-          "en": "The article reports comparable task completion with fewer steps and tokens. That could help developers who want to get work done more directly."
-        },
-        {
-          "s": "a",
-          "ja": "エージェント型コーディングって何？つまり、AIが何段階もの作業を進めるってこと？",
-          "en": "What is agentic coding? Does it mean the AI works through a task in multiple stages?"
-        },
-        {
-          "s": "b",
-          "ja": "一般には、AIが目標に向けて複数の手順をある程度自律的に進めるコーディングじゃ。今回は長時間タスクにも使えると紹介されておる。",
-          "en": "Broadly, it means AI coding toward a goal by handling a series of steps with some autonomy. Here, the model is also presented as suitable for long-running tasks."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ僕なら、長めの開発作業を任せて、途中でミスしても立て直してもらいたいな。すぐ試せる？",
-          "en": "I’d use it for a longer coding job and hope it can recover from mistakes along the way. Can I try it now?"
-        },
-        {
-          "s": "b",
-          "ja": "対象はCopilot Pro+、Max、Business、Enterpriseで、モデル選択画面から選べるそうじゃ。段階展開で、従量課金はプロバイダー定価じゃよ。",
-          "en": "It’s available to Copilot Pro+, Max, Business, and Enterprise users through the model picker. The rollout is gradual, and usage-based billing follows provider list pricing."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-22T21:36:58.228Z"
-    },
     "4f1ad13fafd65180": {
       "bodyJa": "## GPT-6の拡張\n\nGitHub Copilotで、OpenAIのGPT-6 SolとGPT-6 Lunaが利用可能になる。先に提供されていたGPT-6 Astraに新たな選択肢が加わり、開発作業の性質やコストに応じてモデルを選べるようになる。\n\n## GPT-6 Sol\n\nGPT-6 Solは、対話型コーディングとエージェント型コーディングのためのバランス重視のモデルと説明されている。慎重な多段階の検証が求められる開発タスクに適した、汎用性の高い選択肢と位置付けられる。\n\n単に素早く処理する用途ではなく、複数の段階を経ながら確認を重ねる作業を想定している点が特徴だ。GPT-6 Solは、Copilot Pro+、Max、Business、Enterpriseプランで利用できる。\n\n## GPT-6 Luna\n\nGPT-6 Lunaは、小規模で素早いタスクに向けた軽量かつコスト効率の高いモデルだ。GPT-6ファミリーの中では最も低コストの選択肢とされ、日常的な支援のうち、速度と費用を重視したい場面に対応する。\n\n利用対象はCopilot Pro、Pro+、Max、Business、Enterpriseプラン。Solよりも対応プランが広く、Copilot Proも含まれている。\n\n## 従量課金と展開\n\n両モデルには使用量ベースの課金が適用される。料金の詳細は、GitHub Copilotのモデルおよびリクエストに関する価格情報で確認する形となる。\n\n提供は段階的に進められる予定だ。Solは慎重な多段階検証を伴う開発、Lunaは小規模で迅速な作業という違いがあり、タスクの要件とコストを踏まえて使い分けられる。",
       "bodyEn": "## GPT-6 family is expanding\n\nOpenAI’s GPT-6 family is expanding in GitHub Copilot with two additional models, GPT-6 Sol and GPT-6 Luna. Joining the previously released GPT-6 Astra, the additions give developers more choice based on the task, from everyday agentic coding to fast, cost-efficient assistance.\n\nThe models have different roles within the family. GPT-6 Sol is positioned as a balanced option for interactive and agentic coding, while GPT-6 Luna focuses on smaller, faster tasks at a lower cost.\n\n## GPT-6 Sol\n\nGPT-6 Sol is described as a strong all-round choice for development tasks that benefit from careful, multistep validation. Its balance is intended to support both interactive development and agentic coding rather than emphasizing only speed or cost.\n\nThe model is available to GitHub Copilot Pro+, Max, Business, and Enterprise plans. Its availability will be introduced gradually as part of the wider rollout.\n\n## GPT-6 Luna\n\nGPT-6 Luna is a lightweight, cost-efficient model designed for smaller and faster tasks. It is also the lowest-cost option in the GPT-6 family, making it the model aimed most directly at quick assistance and cost-sensitive usage.\n\nGPT-6 Luna is available across more listed plans than GPT-6 Sol. It can be used with GitHub Copilot Pro, Pro+, Max, Business, and Enterprise plans, subject to the gradual rollout.\n\n## Usage-based billing\n\nBoth GPT-6 Sol and GPT-6 Luna are billed under usage-based billing. Developers can therefore choose between the models according to the kind of coding task they need to complete and their budget.\n\nPricing details are provided through the pricing information for GitHub Copilot models and requests. Access to both new models will roll out gradually rather than becoming available to all eligible plans at once.",
@@ -39483,82 +39445,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-22T21:37:35.901Z"
-    },
-    "8ac364eb04aae0d9": {
-      "bodyJa": "GitHub Copilot CLIのC++コードインテリジェンスが、コードベース全体のインデックス化に対応した。大規模なC++プロジェクトでも、定義や参照の検索、未知のコードの把握を高速化する仕組みだ。\n\n## C++コード解析\n\nC++のリポジトリは、深く関連し合うソースファイルやヘッダーにまたがり、数百万行規模になることがある。再利用可能なインデックスがない場合、コードインテリジェンスは移動やリクエストのたびにプロジェクト情報を再発見する必要があり、定義の検索や参照箇所の特定に時間がかかると説明されている。\n\n## 全体インデックス\n\nコードベース全体のインデックス化であるWCIは、C++プロジェクト全体のシンボルを永続的なインデックスとして作成する。現在開いているファイルだけでなく、開かれていないファイルも対象に含まれるため、複数のソースファイルやヘッダーに分散した情報を利用できる。\n\n## コンパイル情報\n\nMicrosoft C++ Language Serverは、プロジェクトのコンパイル情報を使用し、型、シンボル、インクルード、ファイル間の関係を解決する。単に表示中のコードだけを扱うのではなく、コンパイル情報に基づいてプロジェクト内のつながりを解析する仕組みとなっている。\n\n## シンボル再利用\n\nWCIによって得られたシンボル情報は、各リクエストで再発見するのではなく、繰り返し利用できる。これにより、大規模なC++プロジェクトで定義を探す、参照を特定する、見慣れないコードを理解するといったコードインテリジェンス処理が高速化される。",
-      "bodyEn": "## Whole Codebase Indexing\n\nC++ code intelligence in GitHub Copilot CLI is now faster through support for whole codebase indexing. The change matters for large C++ projects, where finding definitions, locating references, and understanding unfamiliar code can otherwise require project information to be rediscovered repeatedly.\n\nWhole codebase indexing, or WCI, creates a persistent index of symbols across a C++ project. The index includes symbols from files that are not currently open, extending code intelligence beyond the source files and headers being viewed at a given moment.\n\n## C++ Repositories\n\nC++ repositories can contain millions of lines of code distributed across deeply connected source files and headers. Those connections can make code-intelligence requests slower when no reusable index is available.\n\nWithout such an index, project information may need to be rediscovered as a developer navigates through the repository. That repeated work can affect requests to find a definition, locate references to a symbol, or understand code that is not already familiar.\n\n## Compilation Information\n\nThe Microsoft C++ Language Server uses the project’s compilation information when building its understanding of the codebase. This information allows it to resolve types, symbols, includes, and relationships between files.\n\nBecause the process covers the whole project, it can map symbols in unopened files as well as those currently being viewed. This provides a broader representation of how source files and headers connect across the repository.\n\n## Symbol Information for Reuse\n\nWCI makes the resulting symbol information available for reuse. Instead of rediscovering the same project details for each code-intelligence request, GitHub Copilot CLI can rely on the persistent index.\n\nThe result is faster definition and reference lookup across large C++ projects. The reusable index also supports navigation and code understanding by retaining information about symbols and file relationships throughout the codebase.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "C++のリポジトリって数百万行にもなるんだ！全体を索引化して検索を速くするのは、これって大きいこと？",
-          "en": "A C++ repository can have millions of lines? Wow! Is indexing the whole codebase to speed up searches really a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "大きな変化じゃ。この記事では、定義や参照を探すたびに情報を調べ直す負担を減らし、大規模プロジェクトで高速化するとしておる。",
-          "en": "It’s a meaningful change. The article says reusing project information avoids rediscovering it for each request, speeding up definition and reference searches in large C++ projects."
-        },
-        {
-          "s": "a",
-          "ja": "コードベース全体の永続インデックスって、つまりどういうこと？開いていないファイルまで見るの？",
-          "en": "What does a persistent whole-codebase index actually mean? Does it even look through files I haven’t opened?"
-        },
-        {
-          "s": "b",
-          "ja": "索引は、型や名前、その関係をまとめた再利用できる目録のようなものじゃ。説明では、コンパイル情報を使って未表示ファイルも解析するのう。",
-          "en": "Think of an index as a reusable catalog of types, names, and connections. The explanation says it uses compilation information to analyze files you haven’t opened, too."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、知らない大きなC++プロジェクトで定義や参照をすばやく追うのに使いたいな。迷子になりにくそう！",
-          "en": "I’d use it to trace definitions and references in a big, unfamiliar C++ project. Sounds like I’d get lost less often!"
-        },
-        {
-          "s": "b",
-          "ja": "その使い方に合いそうじゃ。ただ、紹介されているのはGitHub Copilot CLIのC++向け機能で、プロジェクトのコンパイル情報を使う仕組みじゃよ。",
-          "en": "That matches the intended use. As described, though, this is a C++ feature in GitHub Copilot CLI, and it works from the project’s compilation information."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-23T03:05:21.982Z"
-    },
-    "8300915bd1e41c1e": {
-      "bodyJa": "## SSHのセキュリティ\n\nGitHubはSSHのセキュリティ改善として、複数のアルゴリズムを廃止し、新しい鍵交換方式を追加するとともに、RSA SSH鍵により大きな鍵長を求める。古い暗号への依存を減らし、利用者の接続認証を強化する変更となる。\n\n## SHA-1署名の廃止\n\nSSHでは、SHA-1を使用するRSA鍵が利用できなくなる。対象はssh-rsa署名タイプで、SHA-1を使用するssh-rsa-cert-v01@openssh.com証明書も含まれる。RSA鍵そのものを一律に廃止するのではなく、SHA-1を使うRSA署名を対象とした変更である。\n\nまた、鍵交換メカニズムのdiffie-hellman-group-exchange-sha256も廃止される。これにより、SSHの署名と鍵交換の双方で、対象となる方式が利用できなくなる。\n\n## RSA鍵の要件\n\n2026年10月14日以降に新しくアップロードされるRSA SSH鍵は、少なくとも3072ビットの鍵長が必要になる。この最低要件は署名用と認証用の両方に適用される。対象は同日以降に追加される新しいRSA SSH鍵であり、アップロード時に満たすべき条件として示されている。\n\n## ML-KEMの追加\n\n新たに、耐量子鍵交換方式mlkem768x25519-sha256がSSHセッションでサポートされる。対象はgithub.comと、米国リージョンを除くGitHub Enterprise Cloud with Data Residencyである。\n\nML-KEMの追加により、量子コンピューターに対して安全で、より新しく高性能な鍵交換方式を提供できると説明されている。廃止される方式への対応に加え、SSHセッションで利用する鍵交換方式の選択肢も更新される。",
-      "bodyEn": "## Improve SSH security\n\nGitHub is changing its SSH configuration by removing several algorithms, adding a new key exchange method, and increasing the minimum size of newly uploaded RSA SSH keys. The changes are intended to reduce reliance on weaker cryptography and strengthen connection authentication.\n\nThe update affects RSA signatures, an existing key exchange mechanism, new RSA key uploads, and support for a post-quantum key exchange method.\n\n## SHA-1 RSA signatures\n\nGitHub is removing the ability to use RSA keys with SHA-1 in SSH. This includes the ssh-rsa signature type and ssh-rsa-cert-v01@openssh.com certificates that use SHA-1.\n\nThe diffie-hellman-group-exchange-sha256 key exchange mechanism is also being removed. No implementation date for these algorithm removals is specified in the announcement.\n\n## Larger RSA SSH keys\n\nAll new RSA SSH keys uploaded after October 14, 2026 must be at least 3,072 bits in size. The minimum applies to RSA keys used for both signing and authentication.\n\nThe requirement is specifically described for new RSA SSH keys uploaded after that date. Together with the retirement of SHA-1 RSA signatures, the larger minimum is part of GitHub’s effort to move users away from weaker cryptography.\n\n## Post-quantum key exchange\n\nGitHub is also adding support for the mlkem768x25519-sha256 post-quantum key exchange method. It will be supported for SSH sessions on github.com and on GitHub Enterprise Cloud with Data Residency, except for the U.S. region.\n\nAccording to the announcement, adding ML-KEM provides a newer and more performant key exchange method that is secure against quantum computers. This addition accompanies the removal of the specified older SSH algorithms and the stronger minimum size for newly uploaded RSA keys.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "SHA-1を使うRSA署名をやめて、RSA鍵も3072ビット以上にするんだね。何が変わるの？",
-          "en": "GitHub is dropping SHA-1 RSA signatures and requiring RSA keys of at least 3,072 bits. What changes for users?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、弱い暗号への依存を減らすため、SHA-1方式を廃止するんじゃ。2026年10月14日以降に追加するRSA鍵には3072ビット以上を求めるぞ。",
-          "en": "The article says GitHub is retiring SHA-1 signatures to reduce reliance on weaker cryptography. RSA keys uploaded from October 14, 2026, must be at least 3,072 bits."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、SSHで使う鍵をもっと頑丈なものに替えて、接続時の本人確認を守りやすくする感じ？",
-          "en": "So it’s like using sturdier keys for SSH, making identity checks during connections safer?"
-        },
-        {
-          "s": "b",
-          "ja": "そういう捉え方じゃ。本文が示す狙いは、SSHで接続・認証する利用者を弱い暗号から遠ざけ、認証を強化することじゃよ。",
-          "en": "That’s the idea. The stated goal is to move people using SSH connections and authentication away from weaker cryptography and strengthen their authentication."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、古い方式を外しつつ、新しく追加するRSA鍵の強さも底上げするんだね！",
-          "en": "Got it—GitHub is removing older methods while raising the strength required for newly uploaded RSA keys!"
-        },
-        {
-          "s": "b",
-          "ja": "その一方で、耐量子のML-KEM方式も追加されるのう。ただし記載上、github.comなどで対応し、米国リージョンは対象外じゃ。",
-          "en": "The changelog also adds the quantum-resistant ML-KEM exchange method. Its listed availability includes github.com and certain GitHub Enterprise Cloud environments, but excludes the U.S. region."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-23T03:06:02.559Z"
     },
     "0f205bd771e305e3": {
       "bodyJa": "## Omniの統合\n\nAmazon CloudWatch Omniは、CloudWatchの次の進化として、アプリケーションとAIエージェントのオブザーバビリティを一つの再構成された体験に統合する。運用チームとAIエージェントが連携し、アプリケーションの問題や障害の分析を迅速化できる点が重要となる。\n\n## 自動検出と調査\n\n構成のトポロジーを自動検出して可視化するため、アプリケーションを構成する要素の関係を把握できる。さらに、自然言語による質問を利用でき、AWS DevOps Agentが調査を支援する。\n\nこれらの機能は、構成の把握、質問、調査支援を同じ体験の中にまとめる。運用担当者とAIエージェントが分析に関わり、アプリケーション上の問題をより速く診断できると説明されている。",
@@ -43702,7 +43588,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-05T22:37:10.915Z"
     },
-    "ed744c789037c203": {
+    "571c8c47df881aa3": {
       "bodyJa": "ReviewBenchは、AIコードレビューを担うエージェントを比較・検証するための公開ベンチマークだ。代表的なGitHubプルリクエストを土台とし、公平な評価と実運用に沿った検証を支える。\n\n## 評価セット\n\n評価セットには、代表的なGitHubプルリクエストが使われる。コードレビューの対象に即した材料を基に、レビューエージェントを共通の条件で確かめられる仕組みとされ、開発者や研究者による比較検証を支援する。\n\n## 複数情報源\n\n正解データのラベルは、単一ではなく複数の情報源から構成される。採点には調整済みの評価手法を採用し、レビューエージェントを公平に評価できるよう設計されている。\n\n## 実運用の指標\n\n評価には、実運用に沿った指標も組み込まれる。公開の評価セット、複数情報源の正解データ、調整済みの採点、実運用に合わせた指標を組み合わせた点が、ReviewBenchの特徴だ。",
       "bodyEn": "## ReviewBench\n\nReviewBench is an open benchmark for AI code review agents. It matters because it gives developers and researchers a shared evaluation set for comparing and validating review agents through a fair assessment process.\n\n## Representative GitHub pull requests\n\nThe benchmark is built on representative GitHub pull requests. It uses multi-source ground truth, also described as multi-source labels, as the reference data for evaluating review agents.\n\nThis combination provides a common set of pull requests and labels for comparative testing. Developers and researchers can use that shared basis when assessing different review agents.\n\n## Calibrated evaluation\n\nReviewBench combines calibrated evaluation and scoring with production-aligned metrics. These elements are intended to support fair assessment while keeping the evaluation connected to production use.\n\nAs an open benchmark, ReviewBench brings its representative pull requests, multi-source labels, calibrated scoring, and production metrics into one evaluation framework for AI code review agents.",
       "chat": [
@@ -43740,7 +43626,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-05T19:38:21.495Z"
     },
-    "ed204fd38e64c798": {
+    "11814c13f8eb0837": {
       "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
       "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
       "chat": [
@@ -43778,7 +43664,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:36:46.380Z"
     },
-    "3e5e727e385d3f8c": {
+    "93db8516427cde42": {
       "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
       "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
       "chat": [
@@ -43816,7 +43702,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:19.430Z"
     },
-    "c45ef450c3820855": {
+    "4c9d688cf44b534e": {
       "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
       "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
       "chat": [
@@ -43854,7 +43740,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:32.042Z"
     },
-    "655fd12194d5c751": {
+    "3109af25bedf6259": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
       "chat": [
@@ -43892,7 +43778,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:50.296Z"
     },
-    "2576bf8a180858a9": {
+    "8156421f827a3dc7": {
       "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
       "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
       "chat": [
@@ -43930,7 +43816,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:38:10.006Z"
     },
-    "433004a6bd914ded": {
+    "b310b2c06dbd9321": {
       "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
       "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
       "chat": [

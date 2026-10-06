@@ -132,6 +132,9 @@ npm run build                # dist/ に静的ビルド + Pagefind インデッ�
 # ============ 品質監査 ============
 npx tsx .claude/skills/quality-audit/run.ts
 #   → data/_runs/audit-<ts>.md に Markdown レポート出力
+npx tsx .claude/skills/quality-audit/run.ts --stdout --no-write
+#   → 9 観点の完全な Markdown レポートを標準出力へ表示。data/_runs/ に書き込まない
+# --stdout 単独は表示と保存の両方。--no-write 単独・未知/重複引数はエラー。
 
 # ============ AI Scrum 開発運用 ============
 # Claude Code / Copilot Agent から /skill ai-scrum を実行

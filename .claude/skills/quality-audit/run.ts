@@ -3,8 +3,9 @@
  * quality-audit runner — called by the `quality-audit` Claude skill or directly:
  *   npx tsx .claude/skills/quality-audit/run.ts
  *
- * Reads data/index.json + harness/registry.ts, writes a Markdown report to
- * data/_runs/audit-<iso>.md and prints a summary to stdout.
+ * Reads data/index.json + harness/registry.ts. By default writes a Markdown
+ * report to data/_runs/audit-<iso>.md and prints a summary to stdout.
+ * --stdout prints the full report; --stdout --no-write skips the report file.
  */
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
@@ -79,6 +80,28 @@ interface Index {
 
 const CATS = [...ALL_CATEGORIES];
 
+export type AuditMode = "write" | "stdout" | "stdout-no-write" | "help";
+
+export function parseAuditArgs(args: readonly string[]): AuditMode {
+  const allowed = new Set(["--stdout", "--no-write", "--help", "-h"]);
+  const seen = new Set<string>();
+  for (const arg of args) {
+    if (!allowed.has(arg)) throw new Error(`Unknown audit option: ${arg}. Use --help for usage.`);
+    if (seen.has(arg)) throw new Error(`Duplicate audit option: ${arg}`);
+    seen.add(arg);
+  }
+  if (seen.has("--help") || seen.has("-h")) {
+    if (args.length !== 1) throw new Error("--help/-h cannot be combined with other options");
+    return "help";
+  }
+  if (seen.has("--no-write") && !seen.has("--stdout")) {
+    throw new Error("--no-write requires --stdout so the report is not discarded");
+  }
+  if (seen.has("--no-write")) return "stdout-no-write";
+  if (seen.has("--stdout")) return "stdout";
+  return "write";
+}
+
 export function isDeterministicFallbackEntry(entry: SummaryQualityInput): boolean {
   return needsSummaryGeneration(entry);
 }
@@ -116,6 +139,7 @@ export interface AuditQueueTelemetry {
 
 export interface KnowledgeAuditEntry extends SummaryQualityInput {
   source: string;
+  title: string;
   evergreen?: boolean;
   knowledgeEligible?: boolean;
   contentSnippet?: string;
@@ -327,12 +351,21 @@ export function summarizeAuditSeverity(input: AuditSeverityInput): { critical: n
   return { critical, warning, minor };
 }
 
-async function main() {
-  const root = resolve(new URL("../../..", import.meta.url).pathname);
+export async function runAudit(
+  args: readonly string[] = [],
+  root = resolve(new URL("../../..", import.meta.url).pathname),
+  now = Date.now(),
+): Promise<void> {
+  const mode = parseAuditArgs(args);
+  if (mode === "help") {
+    console.log("Usage: npx tsx .claude/skills/quality-audit/run.ts [--stdout [--no-write]]");
+    console.log("       npx tsx .claude/skills/quality-audit/run.ts --help");
+    console.log("Default: write data/_runs/audit-<timestamp>.md; --stdout also prints the full report.");
+    return;
+  }
   const indexPath = join(root, "data", "index.json");
   const raw = await readFile(indexPath, "utf8");
   const index = JSON.parse(raw) as Index;
-  const now = Date.now();
 
   // 1. Retained/listed-entry activity per source. Collection time tracks the
   // latest qualifying listed entry; published time is shown only as upstream context.
@@ -356,7 +389,7 @@ async function main() {
   // 2. Category distribution
   const catCount = Object.fromEntries(CATS.map((c) => [c, 0])) as Record<string, number>;
   for (const e of index.entries) {
-    if (e.category in catCount) catCount[e.category]++;
+    if (e.category in catCount) catCount[e.category] = (catCount[e.category] ?? 0) + 1;
   }
   const emptyCats = CATS.filter((c) => (catCount[c] ?? 0) === 0);
 
@@ -420,7 +453,7 @@ async function main() {
     nowMs: now,
   });
 
-  const ts = new Date().toISOString();
+  const ts = new Date(now).toISOString();
   const lines: string[] = [];
   lines.push(`# 品質監査レポート — ${ts}`);
   lines.push("");
@@ -566,18 +599,24 @@ async function main() {
 
   const out = lines.join("\n");
 
-  const reportPath = join(root, "data", "_runs", `audit-${ts.replace(/[:.]/g, "-")}.md`);
-  await mkdir(dirname(reportPath), { recursive: true });
-  await writeFile(reportPath, out, "utf8");
+  if (mode !== "stdout-no-write") {
+    const reportPath = join(root, "data", "_runs", `audit-${ts.replace(/[:.]/g, "-")}.md`);
+    await mkdir(dirname(reportPath), { recursive: true });
+    await writeFile(reportPath, out, "utf8");
+    if (mode === "write") console.log(`[audit] wrote ${reportPath}`);
+  }
 
-  console.log(`[audit] wrote ${reportPath}`);
+  if (mode !== "write") {
+    console.log(out);
+    return;
+  }
   console.log(`[audit] summary: ${critical + warning + minor} issues (🔴 ${critical} · 🟠 ${warning} · 🟢 ${minor})`);
   console.log(`[audit] summary coverage: ${covPct}% · fallback: ${fallbackEntries.length} (${fallbackPct}%) · empty categories: ${emptyCats.join(", ") || "none"}`);
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : "";
 if (import.meta.url === invokedPath) {
-  main().catch((err) => {
+  runAudit(process.argv.slice(2)).catch((err) => {
     console.error("[audit] fatal:", err);
     process.exit(1);
   });

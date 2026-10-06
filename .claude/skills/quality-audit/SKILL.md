@@ -25,7 +25,7 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 1. `data/index.json` を読み込む
 2. `harness/registry.ts` から期待ソース一覧を取得
 3. 各観点についてメトリクスを計算
-4. `_runs/audit-<timestamp>.md` に Markdown レポートを出力
+4. 既定では `data/_runs/audit-<timestamp>.md` に Markdown レポートを出力。`--stdout --no-write` ではファイルを作成・変更せず、完全なレポートを標準出力へ出す
 5. 深刻度別に以下を返す:
    - 🔴 **高 (Critical)**: index.json が空、aggregate run が 6h 超 stale (`lastRunAt`)、index.health で attempted 全件 failed、index.json 破損
    - 🟠 **中 (Warning)**: summarize disabled (`copilotOk=false`)、aggregate source failure が一部残る、2 以上のソースが stale/inactive、registry に無い data source あり、カテゴリ 3 つ以上が 0 件、要約カバレッジ < 50%、deterministic fallback が多い
@@ -103,7 +103,15 @@ description: tech-dashboard の index.json を監査し、品質・鮮度・カ�
 ```bash
 # Claude Code から
 /skill quality-audit
+
+# 既定: レポートを data/_runs/ に保存し、標準出力へ要約を表示
+npx tsx .claude/skills/quality-audit/run.ts
+
+# 読み取り専用: 9 観点の完全な Markdown レポートを標準出力へ表示し、書き込まない
+npx tsx .claude/skills/quality-audit/run.ts --stdout --no-write
 ```
+
+`--stdout` だけの場合は完全なレポートを標準出力へ表示し、既定のファイル保存も行う。`--no-write` 単独、重複・未知の引数、`--help` と他の引数の併用はエラーで中止する。`--help` 単独は使用方法だけを表示し、ファイルを変更しない。
 
 ## 参照
 

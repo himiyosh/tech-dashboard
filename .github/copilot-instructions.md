@@ -3312,3 +3312,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: 内部記事リンクと検索index収録を同一視した。LL-464の表示バッジ除去・識別子の除外では、候補記事が実際に索引可能かを保証できなかった。
 - **対策**: built `/sitemap.xml`のcanonical記事pathを検証し、Home Timeline内でsitemap掲載済みかつ検索に適したタイトルの候補を選ぶ。該当候補なしの場合だけ一致しないqueryで真の0件と3回復リンクを確認し、候補ありなら選んだhrefの可視exact hitを必須とし、見つからなければstepを失敗させる。本文なし/noindex先頭と全候補非掲載をfixtureで固定した。
 - **教訓**: synthetic検索の「候補なし」は正当な空状態だが「選定済み候補が検索で見つからない」は回帰である。両分岐を明確に分け、内部linkやtitle条件を検索索引の代理にしない。
+
+### LL-501: quality-audit CLI の型は root typecheck の検査範囲外
+- **事象**: `npm run typecheck` が成功しても、監査 CLI と回帰testを指定して直接TypeScript検査すると、Knowledge entry の `title` が optional である型と、カテゴリ件数の未定義可能な添字にエラーが出た。今回の stdout/no-write 追加でCLIを直接検査して初めて判明した。
+- **根本原因**: root `tsconfig.json` の `include` は `harness/**/*.ts` のみで、`.claude/skills/quality-audit/run.ts` と `tests/quality-audit-cli.test.ts` は対象外だった。Vitestによる実行成功も型の整合性を証明しない。
+- **対策**: 監査entryの必須titleを型に明示し、カテゴリ集計は既存値の未定義可能性を扱った。root typecheckに加えて、CLIとテストを明示指定した`tsc --noEmit`（rootのstrict/noUncheckedIndexedAccess等と同じ設定）を実行し、固定時計のfixtureで既定保存と読み取り専用の同一レポートを検証した。
+- **教訓**: package/scriptの型検査範囲を先に確認し、root typecheckが含まないTypeScript CLIを編集したら、そのCLIと対応testを明示指定して検査する。runtime testのPASSやroot typecheckのPASSを、対象外ファイルの型安全性の証拠にしない。

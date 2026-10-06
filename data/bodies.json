@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T10:31:29.174Z",
+  "generatedAt": "2026-10-06T11:30:58.318Z",
   "count": 1157,
   "bodies": {
     "7b752c9b3e3af2c6": {
@@ -2051,44 +2051,6 @@
           "s": "b",
           "ja": "その理解でよいぞ。MCPを使う際は、GUI操作を増やすより、APIやCLIを適切に公開するツール設計になっているかが見どころじゃな。",
           "en": "Exactly. When using MCP, the key question is whether the tool exposes suitable APIs or CLIs rather than adding more GUI automation."
-        }
-      ]
-    },
-    "62e2ec28f58e9349": {
-      "bodyJa": "AI コードエディタとして知られる Cursor が、Slack 連携機能を強化した。複数リポジトリをまたいだ操作に対応し、さらにアクションを実行する前に計画内容を提示する仕組みが追加されたことで、チーム開発における利用がより安全かつ柔軟になったとされる。\n\nCursor の Slack 連携は、チャットツール上から AI エージェントに指示を出し、コードの調査や修正、プルリクエストの作成といった作業を依頼できる機能だ。開発者がエディタを離れていても、Slack のスレッドから会話形式でタスクを進められる点が特徴で、チームメンバーが同じチャンネル上で経緯を共有しやすいという利点がある。\n\n今回のアップデートで注目されるのが、マルチリポジトリ対応だ。従来は単一のリポジトリを対象とした操作が中心だったと見られるが、複数のリポジトリを横断して扱えるようになることで、フロントエンドとバックエンドが分かれた構成や、マイクロサービスのように多数のリポジトリで運用されるプロジェクトでも、Slack から一貫して指示を出しやすくなる可能性がある。\n\nもう一つの柱が、実行前のプラン提示だ。エージェントがコードへ変更を加える前に、どのような手順で作業を進めるかという計画をあらかじめ示すことで、利用者は内容を確認したうえで承認や修正を判断できる。AI エージェントが自律的にコードを書き換える運用では、意図しない変更が入り込むリスクが懸念されてきたため、こうした事前確認の仕組みは、チームでの導入における心理的なハードルを下げる効果が期待される。\n\n背景には、AI コーディング支援の主戦場がエディタ内から、Slack や GitHub といった既存の開発ワークフローへ広がりつつある流れがある。GitHub Copilot をはじめとする競合ツールも、プルリクエストのレビューやイシュー対応など、開発プロセス全体への統合を進めており、Cursor の今回の対応もその潮流に沿ったものと位置づけられる。\n\nチームで AI エージェントを活用する際には、権限管理や変更内容のトレーサビリティが重要になる。事前のプラン提示とマルチリポジトリ対応は、こうした運用面の課題に応える一歩と言えそうだ。実際の使い勝手や適用範囲については、今後の利用事例を通じて評価が固まっていくとみられる。",
-      "bodyEn": "Cursor, the AI-assisted code editor built on a fork of Visual Studio Code, has updated its Slack integration to handle work across multiple repositories and to display a proposed plan before it carries out any changes. The update matters because it moves the tool's agent capabilities further into shared team spaces, where code changes are increasingly initiated, reviewed, and coordinated without anyone opening the editor itself.\n\nThe Slack integration lets developers trigger Cursor's background agent directly from a Slack channel or thread, typically by mentioning the bot and describing a task in natural language. The agent then works against a connected codebase, and can open pull requests or report results back into the conversation. Bringing this capability into Slack is significant because it turns an ambient chat tool into an entry point for coding work, allowing a team member to delegate a fix or investigation from wherever a discussion is already happening.\n\nThe headline change is support for multiple repositories. Previously, a given interaction was generally scoped to a single repository, which constrained tasks that touched more than one service or crossed the boundaries of a typical microservices layout. With multi-repository support, a request made from Slack can appear to span several codebases, which is useful for organizations that split functionality across many smaller repositories rather than keeping everything in one monolith. The practical effect is that teams should be able to route a task to the correct repository, or coordinate related changes, without having to reconfigure the integration or switch contexts for each project.\n\nThe second addition is a plan presented before execution. Instead of immediately acting on an instruction, the agent appears to outline what it intends to do, giving a human a chance to review the approach before code is written or a pull request is opened. This kind of preview step reflects a broader pattern in agentic coding tools, where an explicit planning phase is used both to improve the quality of the eventual output and to keep a person in the loop. For team workflows in particular, showing intent up front lowers the risk of an autonomous agent making unwanted or wide-reaching changes, since reviewers can catch a misunderstanding at the planning stage rather than after the work is done.\n\nTogether, these two features are framed as making team use safer and more flexible. The multi-repository capability addresses flexibility by matching how many engineering organizations actually structure their code, while the pre-execution plan addresses safety by adding a checkpoint before changes land. The combination is aimed at the collaborative scenario where several people share a channel and any of them might invoke the agent, and where a visible plan doubles as a lightweight record of what was requested and why.\n\nThis release fits into a wider industry push toward what is often called agentic or autonomous coding, where AI systems take on multi-step tasks rather than only offering inline completions. Cursor competes in a crowded field that includes GitHub Copilot and its more agent-oriented features, tools such as Devin from Cognition, Anthropic's Claude Code, and various open-source coding agents. Many of these products are converging on similar ideas: background agents that run asynchronously, integration with chat and issue-tracking surfaces, and mechanisms to review or approve an agent's actions before they take effect. Slack has separately been positioning itself as a hub for such integrations, exposing app and bot frameworks that let third-party tools operate inside conversations.\n\nFor teams considering the update, a few prerequisites are worth keeping in mind. Using the integration generally requires connecting Cursor to a code host such as GitHub and granting the appropriate repository permissions, along with installing and authorizing the Slack app for the relevant workspace. Organizations with strict access controls will likely want to confirm how repository permissions map onto Slack-initiated tasks, especially now that a single request can reach across multiple repositories. As with any tool that can modify source code from a chat prompt, the value of the new plan-preview step depends on teams actually reading and vetting the proposed actions. Readers should consult Cursor's official documentation for the precise configuration steps and any limits, since integration features of this kind tend to evolve quickly.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T05:13:53.038Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "複数リポジトリ対応って何？ 実行前にプランを見せるのも気になる！",
-          "en": "What does multi-repository support mean? I’m also curious about seeing the plan before anything runs!"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、複数のコード置き場をまたいで作業できるということじゃな。記事によれば、作業前には計画内容も示されるそうじゃよ。",
-          "en": "Simply put, it can work across multiple code repositories. According to the article, it also shows what it plans to do before starting."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、それってチームで使うと何が嬉しいの？",
-          "en": "Oh, neat! What makes that useful for a team?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、複数のリポジトリを扱えて、実行前に計画も確認できるため、チームの作業がより安全で柔軟になるとしておるよ。",
-          "en": "The article says handling multiple repositories and previewing the plan can make team workflows safer and more flexible."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、広い範囲の作業を頼めて、動く前に何をするかも分かるんだね！",
-          "en": "So it can handle broader tasks, while letting the team see what it intends to do first!"
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。記事によれば、Slack上でCursorにコードを書かせる流れが、より実運用に近づく点が見どころじゃな。",
-          "en": "Exactly. According to the article, the key point is that having Cursor write code through Slack is moving closer to a practical workflow."
         }
       ]
     },
@@ -43967,6 +43929,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-29T11:40:24.795Z"
+    },
+    "7318a496ebbbaec9": {
+      "bodyJa": "## MLXが既定に\n\nOllama v0.40.0では、Apple Siliconデバイス上のモデル実行が変更された。MLXランタイムに対応するモデルアーキテクチャは、既定でMLXへ自動的に振り分けられ、Macでのローカル推論の選択肢が広がる。\n\n## 自動振り分け\n\n対象となるのは、MLXランタイムがサポートするモデルアーキテクチャだ。Apple Silicon環境では、これらのモデルが自動的にMLX上で動作する。リリース内容では、qwen3.8を取得する「ollama pull qwen3.8」と、実行する「ollama run qwen3.8」が例として示されている。\n\n## 追加モデル\n\n追加モデルとして、gemma4、qwen3.6、qwen3.5が挙げられている。いずれも、Apple SiliconでMLXによる実行対象となるモデルの選択肢を広げる内容だ。対応するモデルについては、引き続きテストを行い、追加で有効化していくと説明されている。\n\n## 判断モデル\n\n判断モデルもMLXで利用可能になった。対象として示されているのは、Nimble、tev1、clef、clef-flashの4モデルである。変更履歴の範囲は、v0.34.4からv0.40.0-rc3までとして案内されている。",
+      "bodyEn": "## What's Changed\n\nOllama v0.40.0 changes how supported models run on Apple Silicon. By routing compatible model architectures to MLX by default and making decision models available on MLX, the release expands local inference options for Mac users.\n\n## Models run on MLX\n\nOn Apple Silicon devices, model architectures supported by the MLX runtime now run on MLX automatically. This makes MLX the default runtime for architectures that already have MLX support, rather than requiring users to select it separately.\n\nThe release information demonstrates pulling and running qwen3.8 with the commands “ollama pull qwen3.8” and “ollama run qwen3.8.” The automatic routing applies specifically to supported model architectures on Apple Silicon devices.\n\n## Additional models\n\nAdditional models named in the release are gemma4, qwen3.6, and qwen3.5. Decision models are also now available on MLX, including Nimble, tev1, clef, and clef-flash.\n\nTogether, these additions broaden the set of models that can use MLX for local inference on Mac. Ollama says it will continue testing and enabling additional models.\n\n## Full Changelog\n\nThe release points to a full changelog covering v0.34.4 through v0.40.0-rc3. The central change in v0.40.0 is the default use of MLX for supported architectures on Apple Silicon, alongside the newly listed models and MLX availability for decision models.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Apple Siliconでは、対応モデルが自動でMLXで動くようになったの？ 何もしなくても選ばれるってこと？",
+          "en": "On Apple Silicon, do supported models now run on MLX automatically? Does that mean it’s selected without me doing anything?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、MLX対応のモデル構成を自動でMLXへ振り分けるとしているよ。v0.40.0の既定動作だね。",
+          "en": "The release says MLX-supported model architectures are automatically routed to MLX. That’s the default behavior in v0.40.0."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあMacでローカル推論する人は、実行系を選ぶ手間が減るのかな？ 使えるモデルも増えた？",
+          "en": "So could this save Mac users from choosing the runtime themselves? Were more models added too?"
+        },
+        {
+          "s": "b",
+          "ja": "対象モデルなら、その手間は減りそうだね。gemma4、qwen3.6、qwen3.5に加え、判断モデルもMLXで使えるよ。",
+          "en": "For supported models, it could reduce that step. gemma4, qwen3.6, and qwen3.5 were added, and decision models can now use MLX too."
+        },
+        {
+          "s": "a",
+          "ja": "自動振り分けとモデル追加で、Macのローカル推論の選択肢が広がったんだね。全部がMLXになるわけではない？",
+          "en": "So automatic routing and added models expand local inference options on Mac. But not every model will use MLX, right?"
+        },
+        {
+          "s": "b",
+          "ja": "そう、対象はMLX実行系が対応するモデル構成だよ。追加モデルは今後もテストし、有効化を続けるとしている。",
+          "en": "Right—the scope is model architectures supported by the MLX runtime. The release says more models will continue to be tested and enabled."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T10:37:31.816Z"
     }
   }
 }

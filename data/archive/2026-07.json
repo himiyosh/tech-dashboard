@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T10:31:32.066Z",
+  "generatedAt": "2026-10-06T11:31:01.259Z",
   "month": "2026-07",
   "count": 1360,
   "entries": [
@@ -20517,7 +20517,15 @@
       "archiveTier": "warm",
       "contentSnippet": "Excelを生成AIに読ませるとき、ファイルの中身がそのまま届いていると思っていませんか。 実際には、 渡っている部分と渡っていない部分があります。 しかも渡した側からは区別がつきません。AIは中身が届いていなくても「レビューしました」という顔で返事をするからです。 実物で確かめました。デジタル庁が公開している業務フローのExcelをopenpyxl(Pythonのxlsx読み取りライブラリ)で開いたら、セルに入っている値はたった5個。業務の中身180個は、全部「図形」の中にありました。 この記事は「Excelのどこまでを生成AIに任せられるのか」を、実物の公開資料と実測で線引きしたものです。渡し方4通りの比較と、渡す前の確認事項までまとめています。 題材にしたのは、デジタル庁が公開している「地方公共団体情報システム共通機能標準仕様書」の別紙、申請管理機能の運用フローExcel( 20230929_policies_local_governments_common-feature-specification_outline_05.xlsx 、2026年6月取得)です。実物の公開資料です。 (検証環境: Python + openpyxl。Claudeを使った実験はブラウザ版 claude.ai の Pro プラン・Sonnet 5・思考モード最大で、いずれも2026年6月末〜7月頭に実施しています。) wb = openpyxl.load_workbook( \"業務フロー.xlsx\" ) for row in wb.active.iter_rows(): 結果は、拍子抜けするほどシンプルでした。業務フローのシートでセルに入っている値は、申請者・自治体・マイナポータル・申請管理機能・標準準拠システムの5つだけ。これはスイムレーン(担当ごとに分かれた横帯)の見出しです。結合セルも5個。業務の中身を示す言葉は、セルの中に1つもありませんでした。 では、実際の業務(申請データの取込や審査結果の連携)はどこに消えたのか。",
       "feedSnippet": "「業務フローのところだけ、指摘が薄くないですか」——AIに設計書レビューを頼んだとき、そんな経験はありませんか。 先日の記事(「この設計書、レビューして」で頼むと検出率0%だった)では、総務省の税務システム標準仕様書をAIにレビューさせ、頼み方で検出率が0%から86%まで変わる実測を書きました。実はあのとき、業務フローはPDFで渡していたので、この「指摘が薄い」問題は起きていません。 正体に行き当たったのは、同じ検証の途中で別の公開資料を調べていたときです。デジタル庁が公開している業務フローのExcelをopenpyxl(Pythonのxlsx読み取りラ",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://res.cloudinary.com/zenn/image/upload/s--Kb8vqpKN--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Excel%25E3%2582%2592%25E7%2594%259F%25E6%2588%2590AI%25E3%2581%25AB%25E8%25AA%25AD%25E3%2581%25BE%25E3%2581%259B%25E3%2582%258B%25E5%2589%258D%25E3%2581%25AB%25E7%25A2%25BA%25E8%25AA%258D%25E3%2581%2599%25E3%2582%258B%25E3%2581%2593%25E3%2581%25A8%2520%25E2%2580%2594%2520%25E5%259B%25B3%25E5%25BD%25A2%25E3%2581%25AE%25E4%25B8%25AD%25E8%25BA%25AB%25E3%2581%25AF%25E6%25B8%25A1%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%2584%25E3%2581%25AA%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:moname_ai%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzgyMjQ1ZDYwY2UuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "origSrc": "https://res.cloudinary.com/zenn/image/upload/s--Kb8vqpKN--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Excel%25E3%2582%2592%25E7%2594%259F%25E6%2588%2590AI%25E3%2581%25AB%25E8%25AA%25AD%25E3%2581%25BE%25E3%2581%259B%25E3%2582%258B%25E5%2589%258D%25E3%2581%25AB%25E7%25A2%25BA%25E8%25AA%258D%25E3%2581%2599%25E3%2582%258B%25E3%2581%2593%25E3%2581%25A8%2520%25E2%2580%2594%2520%25E5%259B%25B3%25E5%25BD%25A2%25E3%2581%25AE%25E4%25B8%25AD%25E8%25BA%25AB%25E3%2581%25AF%25E6%25B8%25A1%25E3%2581%25A3%25E3%2581%25A6%25E3%2581%2584%25E3%2581%25AA%25E3%2581%2584%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:moname_ai%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdGF0aWMuemVubi5zdHVkaW8vdXNlci11cGxvYWQvYXZhdGFyLzgyMjQ1ZDYwY2UuanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACMTiAE",
+        "alt": "Excelの業務フロー、AIには「見出し5個」しか見えていなかった — 図形に隠れた180個が消える罠",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
     },
     {
       "id": "b6ed1379c4f1617b",
@@ -34673,7 +34681,7 @@
       "summaryEn": "The official MCP Servers repository published release 2026.7.10, delivering routine maintenance updates and stability improvements to the Model Context Protocol server ecosystem.",
       "lang": "en",
       "publishedAt": "2026-07-10T03:39:07.000Z",
-      "collectedAt": "2026-10-06T05:00:35.157Z",
+      "collectedAt": "2026-10-06T11:30:43.765Z",
       "tags": [
         "mcp",
         "mcp-server",
@@ -41004,7 +41012,7 @@
       "summaryEn": "MCP Servers version 2026.7.4 is a routine update to the official Model Context Protocol server implementations, delivering the latest fixes and improvements to keep the MCP ecosystem stable.",
       "lang": "en",
       "publishedAt": "2026-07-04T23:05:56.000Z",
-      "collectedAt": "2026-10-06T05:00:35.157Z",
+      "collectedAt": "2026-10-06T11:30:43.765Z",
       "tags": [
         "mcp",
         "mcp-server",

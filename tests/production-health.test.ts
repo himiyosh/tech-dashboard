@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_PUBLISHER_RUNS_URL,
   validateBridge,
   validateIndexFreshness,
   validateJsonFeed,
@@ -47,6 +48,53 @@ describe("production health topology", () => {
     ).toContain(
       `bridge publisher fingerprint is sha256:wrong; expected ${DEPLOYED_PUBLISHER_FINGERPRINT}`,
     );
+  });
+
+  it("requests a bounded, unfiltered page and checks the main branch locally", () => {
+    expect(DEFAULT_PUBLISHER_RUNS_URL).toBe(
+      "https://api.github.com/repos/himiyosh/tech-dashboard/actions/workflows/publisher.yml/runs?per_page=40",
+    );
+    expect(new URL(DEFAULT_PUBLISHER_RUNS_URL).searchParams.has("branch")).toBe(false);
+
+    const now = Date.parse("2026-07-12T12:00:00.000Z");
+    const result = validatePublisherRuns(
+      {
+        workflow_runs: [
+          {
+            head_branch: "develop",
+            event: "workflow_dispatch",
+            display_title: "Publisher / reconcile",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:58:00.000Z",
+          },
+          {
+            head_branch: "feature/publisher",
+            event: "schedule",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:55:00.000Z",
+          },
+          {
+            head_branch: "main",
+            event: "workflow_dispatch",
+            display_title: "Publisher / dry-run",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:45:00.000Z",
+          },
+          {
+            head_branch: "main",
+            event: "schedule",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:30:00.000Z",
+          },
+        ],
+      },
+      now,
+    );
+    expect(result).toEqual({ errors: [], warnings: [], ageMinutes: 30 });
   });
 
   it("uses the latest completed successful publisher run and tolerates a concurrent run", () => {
@@ -102,6 +150,15 @@ describe("production health topology", () => {
       {
         workflow_runs: [
           {
+            id: 4,
+            head_branch: "develop",
+            event: "workflow_dispatch",
+            display_title: "Publisher / publish",
+            status: "completed",
+            conclusion: "success",
+            updated_at: "2026-07-12T11:58:00.000Z",
+          },
+          {
             id: 3,
             head_branch: "main",
             event: "workflow_dispatch",
@@ -143,6 +200,14 @@ describe("production health topology", () => {
         {
           workflow_runs: [
             {
+              head_branch: "develop",
+              event: "workflow_dispatch",
+              display_title: "Publisher / publish",
+              status: "completed",
+              conclusion: "success",
+              updated_at: "2026-07-12T11:55:00.000Z",
+            },
+            {
               head_branch: "main",
               event: "schedule",
               status: "completed",
@@ -165,6 +230,38 @@ describe("production health topology", () => {
         now,
       ).errors,
     ).toContain("data/index.json count does not match entries");
+  });
+
+  it("fails closed when no completed main publishing run is returned", () => {
+    const now = Date.parse("2026-07-12T12:00:00.000Z");
+    expect(
+      validatePublisherRuns(
+        {
+          workflow_runs: [
+            {
+              head_branch: "develop",
+              event: "workflow_dispatch",
+              display_title: "Publisher / publish",
+              status: "completed",
+              conclusion: "success",
+              updated_at: "2026-07-12T11:55:00.000Z",
+            },
+            {
+              head_branch: "main",
+              event: "workflow_dispatch",
+              display_title: "Publisher / dry-run",
+              status: "completed",
+              conclusion: "success",
+              updated_at: "2026-07-12T11:50:00.000Z",
+            },
+          ],
+        },
+        now,
+      ).errors,
+    ).toEqual(["publisher has no completed main run"]);
+    expect(validatePublisherRuns({ workflow_runs: [] }, now).errors).toEqual([
+      "publisher has no completed main run",
+    ]);
   });
 
   it("fails closed for missing or all-failed collection telemetry", () => {

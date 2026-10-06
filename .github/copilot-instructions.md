@@ -3306,3 +3306,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: GitHub APIのserver-side `branch=main`検索が観測時には新しいmain runを返さず、古い部分集合を鮮度判定へ入力した。API内部でなぜその差が生じたかは未確認である。`isPublishingRun()`は既に各runの`head_branch === "main"`を確認していたため、server-side filterへの依存は不要だった。
 - **対策**: workflow-runs APIから上限40件のunfiltered一覧を取得し、mainのscheduled runまたは明示されたpublish/reconcile dispatchだけをローカルで選ぶ。developなど他branchとdiagnostic dry-runは除外し、mainのrunが無い、失敗した、または本当に古い場合のfail-closed判定と180分閾値は維持する。実APIのfiltered/unfiltered対照に加え、混在runとmain不在の回帰testで固定した。
 - **教訓**: 監視APIのfilter付き結果が古いと疑う場合は、同時刻のboundedなunfiltered結果とrun単位のbranch/eventを比較してから原因を切り分ける。アラート閾値を緩めて隠すのではなく、取得量を制限した上でローカルの既存適格判定を適用し、別branchやdry-runの成功で本番失敗を覆わない。
+
+### LL-500: 合成exact検索はsitemap掲載対象だけを選び、候補ありの失敗を隠さない
+- **事象**: 5分判断ジャーニーがHomeの内部`/e/`リンクを検索候補にした結果、本文なしで`noindex`・sitemap非掲載の記事を選び、Pagefindの索引に無い記事のexact検索で失敗した（#357）。
+- **根本原因**: 内部記事リンクと検索index収録を同一視した。LL-464の表示バッジ除去・識別子の除外では、候補記事が実際に索引可能かを保証できなかった。
+- **対策**: built `/sitemap.xml`のcanonical記事pathを検証し、Home Timeline内でsitemap掲載済みかつ検索に適したタイトルの候補を選ぶ。該当候補なしの場合だけ一致しないqueryで真の0件と3回復リンクを確認し、候補ありなら選んだhrefの可視exact hitを必須とし、見つからなければstepを失敗させる。本文なし/noindex先頭と全候補非掲載をfixtureで固定した。
+- **教訓**: synthetic検索の「候補なし」は正当な空状態だが「選定済み候補が検索で見つからない」は回帰である。両分岐を明確に分け、内部linkやtitle条件を検索索引の代理にしない。

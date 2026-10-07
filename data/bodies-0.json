@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T12:31:29.726Z",
-  "count": 298,
+  "generatedAt": "2026-10-07T13:31:29.088Z",
+  "count": 301,
   "bodies": {
     "17f496c665a12174": {
       "bodyJa": "Metaは、AIネイティブ時代に向けたプライバシー対応インフラの中核として、社内の膨大なデータアセットを正確に分類する取り組みをエンジニアリングブログで公開した。データ保持期間やアクセス制御、利用目的の制限、第三者への共有可否、匿名化といったプライバシー制御は、対象となるデータの性質を正しく把握して初めて機能するためだ。\n\n同社の出発点はシンプルである。あらゆるプライバシーコントロールは「どこに、どのようなデータが存在するか」という信頼できる理解を前提とする。たとえば特定の個人情報を一定期間で削除する保持ポリシーを適用するには、まずそのデータがどのテーブルやログ、ストレージのどこに含まれているかを機械的に判別できなければならない。分類が曖昧なままでは、制御そのものが空回りしてしまう。\n\nしかし、この前提を大規模に満たすことは容易ではない。Meta規模のサービスでは、データは無数のシステムを横断して生成・変換・複製され、形式やスキーマも多様だ。さらに生成AIや機械学習パイプラインの普及により、学習用データセットや派生データが増え、データの流れはいっそう複雑になっている。こうした環境で分類の精度と網羅性を保つには、自動化された分類基盤と継続的な検証の仕組みが欠かせない。\n\nこの課題は業界共通のものでもある。EUのGDPRや米カリフォルニア州のCCPAをはじめとする各国の規制は、データの利用目的や保持に厳格な要件を課しており、データガバナンスの基盤整備は大手テック各社にとって避けて通れない。GoogleやMicrosoftなども独自のデータ分類・カタログ化の仕組みを整えてきたとされ、Metaの今回の公開はその一つの実装例と位置づけられる。\n\nAIの普及はデータ活用の幅を広げる一方で、プライバシー保護の難度を押し上げている。データを正確に「知る」ための分類基盤は、派手さこそないが、信頼できるAIサービスを支える土台になると見られる。Metaの事例は、プライバシーを後付けではなく設計段階から組み込む「プライバシー・バイ・デザイン」の実践として参考になりそうだ。",
@@ -11133,6 +11133,88 @@
       "bodyEn": "Microsoft's Semantic Kernel team has published version 1.78.0 of its .NET software development kit, continuing the project's steady release cadence with a package of agent framework refinements and bug fixes. For developers building AI-integrated applications on .NET, incremental releases like this one matter because they shape the stability, predictability, and long-term maintainability of production systems that increasingly depend on large language models.\n\nSemantic Kernel is an open-source SDK maintained by Microsoft that helps developers connect conventional application code to AI models from providers such as OpenAI, Azure OpenAI, and others. It offers abstractions for prompts, plugins, function calling, memory, and orchestration, allowing teams to weave model-driven reasoning into existing software without hard-coding to a single provider. The framework is available for .NET, Python, and Java, though the three language implementations do not always move in lockstep, and the .NET line has historically been among the most actively developed.\n\nThe 1.78.0 release is categorized under the agent framework, which is the component that lets developers define autonomous or semi-autonomous agents capable of invoking tools, maintaining conversational state, and coordinating multi-step tasks. According to the summary accompanying the release, this version delivers improvements and bug fixes across the framework's components rather than a single headline feature. That description is consistent with a maintenance-oriented update, and the version number itself, a minor increment within the stable 1.x series, suggests the changes are additive and backward-compatible under semantic versioning conventions. Developers seeking the precise list of modified APIs, resolved issues, and any behavioral changes should consult the official GitHub release notes and changelog, since the value of these point releases often lies in specific fixes that are not captured in a high-level summary.\n\nFor context, the agent framework has been one of the more rapidly evolving parts of Semantic Kernel, reflecting broader industry interest in agentic patterns where AI systems plan and act across multiple tool calls rather than responding to a single prompt. Microsoft has been working to consolidate its agent-related tooling, and the company has signaled an intention to bring together capabilities from Semantic Kernel and AutoGen, its research-oriented multi-agent framework, under a unified Microsoft Agent Framework direction. Teams adopting the current agent APIs should keep that trajectory in mind, as interfaces in this area appear more likely to evolve than the more mature prompt and plugin layers. Releases such as 1.78.0 are part of the ongoing process of hardening these newer abstractions.\n\nThe wider ecosystem around Semantic Kernel includes several adjacent and competing tools. LangChain and LlamaIndex remain popular choices, particularly in Python-centric environments, while Semantic Kernel is often favored by organizations already invested in the .NET and Azure stack because of its first-party integration and enterprise-oriented design. Semantic Kernel also intersects with emerging standards such as the Model Context Protocol, which aims to standardize how AI applications connect to external data sources and tools, and with Azure AI services that provide model hosting, evaluation, and content safety. Understanding these surrounding pieces helps clarify where an SDK update fits within a larger architecture.\n\nPractically, adopting a new minor version typically involves updating the relevant NuGet packages, reviewing the changelog for any deprecations, and running existing test suites to confirm that agent behaviors and function calls continue to work as expected. Because AI-driven applications can be sensitive to subtle changes in orchestration logic or prompt handling, teams operating in production environments are generally advised to validate updates in a staging environment before rolling them out broadly. Bug-fix releases like this one are usually low-risk, but the non-deterministic nature of model outputs means regression testing remains prudent.\n\nIn sum, Semantic Kernel .NET 1.78.0 represents an evolutionary step rather than a major shift, focused on polishing the agent framework and addressing defects. Its significance lies less in any single new capability and more in the cumulative reliability that frequent, disciplined releases bring to a fast-moving field. For .NET developers building AI-integrated software, staying current with these updates is a reasonable way to benefit from ongoing stability improvements while keeping an eye on the framework's longer-term consolidation with Microsoft's broader agent tooling.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T13:16:46.658Z"
+    },
+    "bca1d52245f30382": {
+      "bodyJa": "## 発表内容\n\nMicrosoft Build 2026で、Foundry Managed Computeと、Foundry上で利用できるHugging Faceモデルが発表された。Hugging Faceエコシステムのオープンウェイトモデルを、Microsoft Foundryの管理された環境へワンクリックでデプロイできる点が中心となる。\n\n## モデルカタログ\n\n提供されるのは、Hugging Faceエコシステムから選定されたオープンウェイトモデルのカタログで、毎週更新される。モデルのウェイトはAzure上にあらかじめ配置されているため、利用者がウェイトの配置から始めるのではなく、Foundry Managed Computeへのデプロイを直接進められる構成となっている。\n\n各モデルのランタイムはMicrosoftが構築し、スキャンする。コレクション内のすべてのモデルには、Foundry上のほかのモデルと同じエンタープライズ向けのセキュリティ、ガバナンス、可観測性、課金の仕組みが適用される。Hugging Faceのオープンモデルを、共通の運用基盤で扱えることが特徴だ。\n\n## Microsoft Foundry\n\nMicrosoft Foundryは、エージェント型AIアプリケーションを構築し、運用するためのプラットフォームと説明されている。Microsoft、OpenAI、Anthropic、Meta、Mistral、DeepSeek、Hugging Faceなどのモデルを扱い、フロンティアモデル、オープンソースモデル、カスタムウェイトを含む幅広い選択肢を提供するとしている。\n\n## 共通の接続方法\n\nFoundry上のモデルには、単一のエンドポイントと共通のSDK群を通じてアクセスできる。SDKはPython、C#、JavaScript、Javaに対応する。モデルごとに異なる接続方式を用意するのではなく、同じアクセス手段の中でHugging Faceモデルも選択し、Managed Computeへ展開できる形だ。",
+      "bodyEn": "## Foundry Managed Compute\n\nHugging Face open models can now be deployed on Microsoft Foundry Managed Compute, making it easier for enterprises to run open-source large language models in a managed cloud environment. The capability was announced at Microsoft Build 2026 alongside Hugging Face models on Foundry.\n\nMicrosoft Foundry is a platform for building and operating agentic AI applications. Models from the Hugging Face ecosystem can be deployed onto its Managed Compute service with one click.\n\n## Curated Model Catalog\n\nHugging Face models on Foundry are presented through a curated catalog of open-weight models. The catalog is refreshed weekly, giving users access to an updated Collection within the Foundry environment.\n\nThe deployment process uses model weights that are pre-staged in Azure. Microsoft also builds and scans the runtimes used by the models. Together, these elements provide a managed path for deploying the Collection rather than requiring users to supply the weights and runtimes described in the announcement.\n\n## Enterprise Security and Governance\n\nEvery model in the Collection ships with the same enterprise security, governance, observability, and billing that applies to every other model on Foundry. This allows Hugging Face open models to operate under the platform’s existing management framework.\n\nThe shared approach covers both operational visibility and billing, while applying consistent security and governance across the Collection. The announcement positions this integration as a way to make enterprise operation of open-source large language models easier.\n\n## Model Selection and SDKs\n\nFoundry provides models from Microsoft, OpenAI, Anthropic, Meta, Mistral, DeepSeek, Hugging Face, and others. Its selection spans frontier models, open-source models, and custom weights.\n\nThese models are accessible through a single endpoint and a single set of software development kits. The available SDKs support Python, C#, JavaScript, and Java, providing a common access method across the model selection.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "カタログが毎週更新されて、モデルをワンクリックでデプロイできるんだね。これって大きいこと？",
+          "en": "The catalog refreshes weekly, and models can be deployed in one click. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "更新や配置の手間を減らしやすい変化だね。重みはAzureに事前配置され、ランタイムはMicrosoftが構築・スキャンするよ。",
+          "en": "It can reduce the work around updates and deployment. Weights are pre-staged in Azure, while Microsoft builds and scans the runtimes."
+        },
+        {
+          "s": "a",
+          "ja": "「オープンウェイト」って、モデルがぜんぶ公開されてるってこと？",
+          "en": "Does “open-weight” mean the whole model is public?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでいうウェイトは、モデルが学習で得た調整値のこと。オープンウェイトは、その重みを利用できる形で公開する考え方だよ。",
+          "en": "Weights are the learned settings inside a model. “Open-weight” means those weights are made available for use."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、気になるモデルをワンクリックで置いて、Pythonから試してみたいな。",
+          "en": "I’d pick a model, deploy it with one click, and try it from Python."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方なら、単一エンドポイントとPython SDKが使えるね。対象はカタログ収録モデルで、Managed Compute上へのデプロイになるよ。",
+          "en": "That fits the setup: Foundry offers a single endpoint and a Python SDK. You’d deploy a model from the curated catalog onto Managed Compute."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T12:43:05.629Z"
+    },
+    "6f439ef95a874d8d": {
+      "bodyJa": "## AP+のAI活用\n\nオーストラリアの決済インフラ企業Australian Payments Plus（AP+）は、ChatGPT EnterpriseとCodexを導入し、ソフトウェア開発の加速と業務の効率化を進めた。金融インフラ分野でAIが実用的な成果をもたらした事例とされる。\n\n## 複雑性への対応\n\n両ツールは、決済の複雑さに対処しながら作業を速め、時間の節約と品質向上につながったと説明されている。一方で、判断をAIに委ねるのではなく、人間の判断を中心に据える点も重視されている。",
+      "bodyEn": "## Payments Complexity\n\nAustralian Payments Plus is using ChatGPT Enterprise and Codex to accelerate software development and streamline operations. The approach matters because it shows practical AI gains within critical financial infrastructure, where AP+ must move through payments complexity while maintaining quality.\n\n## Human Judgment Central\n\nThe tools help AP+ save time, improve development speed, and increase operational efficiency. At the same time, AP+ keeps human judgment central to its work. The case demonstrates how AI tools can support practical outcomes in payments infrastructure by helping teams work faster and improve quality without displacing human decision-making.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "支払いを支える仕事で、ChatGPTとCodexを使うと普段の作業はどう変わるの？",
+          "en": "How do ChatGPT and Codex change the day-to-day work behind payment systems?"
+        },
+        {
+          "s": "b",
+          "ja": "AP+では、複雑な決済を扱うソフト開発や業務が速くなり、時間の節約と品質向上につながったんだ。",
+          "en": "At AP+, they sped up software development and operations involving complex payments, saving time and improving quality."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、前は同じことができなかったの？ AIだけで進められるようになったのかな。",
+          "en": "So was that work impossible before? Does AI handle it all now?"
+        },
+        {
+          "s": "b",
+          "ja": "以前できなかったとは書かれていないよ。導入後に速さや効率が上がっても、判断の中心は人のままなんだ。",
+          "en": "It doesn’t say the work was impossible before. The tools improved speed and efficiency, while human judgment remained central."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、AIに任せきらず、人が判断しながら開発を速められたことなんだね。",
+          "en": "My biggest takeaway is that they moved development faster without handing every decision over to AI."
+        },
+        {
+          "s": "b",
+          "ja": "うん。複雑な決済業務で、時間短縮と品質向上を人の判断とどう両立しているかに注目だね。",
+          "en": "Right. The key point is how AP+ balances time savings and better quality with human judgment in complex payment work."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T12:43:27.277Z"
+    },
+    "2a0306911e2c3c42": {
+      "bodyJa": "医療分野で人工知能（AI）の導入が進むなか、その挙動が本当に臨床目的に沿っているのかを検証する手法が課題となっている。arXivで公開された本論文は、こうした問いに答えるための新たな概念「アライメント妥当性（alignment plausibility）」を提案し、医療AIの安全性を体系的に評価する枠組みを示した。\n\nアライメント（整合性）とは、AIの振る舞いが人間の意図や価値観に一致している状態を指す言葉で、近年の大規模言語モデル研究で特に注目されてきた。本論文が扱う「妥当性」は、この整合性がどの程度もっともらしく成立しているかを、臨床上の目標に照らして問い直す点に特徴がある。単に精度が高いだけでなく、AIが下す判断が診断や治療という目的と矛盾しないかを検証しようとするものだ。\n\n医療は誤りが患者の生命に直結するため、他分野以上に厳格な保証が求められる領域である。従来の評価は正解率やAUCといった統計指標に依存しがちだったが、これらは個別症例での不適切な挙動や、想定外の状況での判断のずれを十分に捉えきれないとの指摘がある。著者らは、モデル出力が臨床目標と一致する根拠を明示的に問うことで、こうした死角を補える可能性があるとしている。\n\n背景には、規制と倫理審査をめぐる国際的な動きがある。米国FDAはソフトウェアを医療機器として扱う枠組みを整備し、欧州のAI規則（EU AI Act）は医療AIを高リスク用途と位置づけている。こうした状況で、審査を担う機関が挙動の妥当性を判断するための共通言語が不足しているのが現状だ。本論文の枠組みは、規制当局や倫理委員会が用いる実務的な基準として応用できると見られる。\n\n一方で、妥当性をどう定量化し、多様な診療現場でどう運用するかには課題も残る。既存の説明可能AI（XAI）やモデル監査の手法とどう組み合わせるかも今後の論点となりそうだ。医療AIの信頼性を高めるうえで、こうした保証概念の整備は一つの重要な方向性を示していると言えるだろう。",
+      "bodyEn": "Healthcare organizations increasingly rely on artificial intelligence to triage patients, flag abnormal scans, and recommend treatments, yet demonstrating that such systems behave in ways clinicians can trust remains an unresolved challenge. A new paper posted to arXiv proposes \"alignment plausibility\" as a standard for evaluating whether medical AI reliably acts in accordance with clinical goals, framing it as a practical criterion that regulators and ethics boards could adopt.\n\nThe core idea is to shift the question from whether a model is accurate to whether its behavior is defensibly aligned with the intentions of the people deploying it. Conventional validation in medical AI leans heavily on statistical performance metrics such as sensitivity, specificity, and area under the curve. Those numbers describe how often a system is correct on a benchmark dataset, but they say little about why the system reaches its conclusions or whether it would continue to pursue the right objective when confronted with unfamiliar cases. The paper's authors argue that this gap matters most in high-stakes clinical settings, where a model that is right for the wrong reasons can fail unpredictably once deployed.\n\nAlignment plausibility, as described, appears to function as a structured argument rather than a single score. It asks evaluators to assemble evidence that a system's decisions, internal representations, and failure modes are consistent with an explicitly stated clinical goal. This resembles the logic of a safety case, a documentation method long used in aviation and other safety-critical industries, where developers must build a reasoned, evidence-backed claim that a system is acceptably safe for a defined context of use. Applying that mindset to healthcare AI would mean treating assurance as an ongoing justification, subject to challenge and revision, rather than a one-time certification.\n\nThe proposal sits within a broader research conversation about AI alignment, a term that originated largely in discussions of advanced and general-purpose systems but is now being adapted to narrower, domain-specific tools. In the medical context, misalignment can take subtle forms. A model trained to predict which patients need intervention might latch onto spurious correlations, such as which hospital department ordered a test, instead of the underlying disease signal. It might optimize a proxy target that diverges from the true clinical aim, or it might perform well on average while systematically underserving particular patient subgroups. The plausibility framework is intended to surface these risks by demanding explanations that hold up to scrutiny, not just aggregate accuracy.\n\nThis work connects to several parallel efforts in the field. Regulators including the U.S. Food and Drug Administration have been developing guidance for adaptive and machine-learning-based medical devices, and international standards bodies have published frameworks for AI risk management, such as the approach outlined in ISO/IEC 42001 and the NIST AI Risk Management Framework. Techniques from explainable AI, uncertainty quantification, and rigorous external validation are all candidate sources of the evidence that an alignment plausibility case would draw upon. The paper appears to position its contribution as a way to organize these disparate methods around a coherent question rather than to replace them.\n\nFor clinicians and ethics reviewers, the practical appeal is that plausibility offers a vocabulary for interrogating a system before and during deployment. Instead of accepting a vendor's headline accuracy figure, a review board could ask what clinical objective the model is meant to serve, what evidence supports the claim that its behavior tracks that objective, and under what conditions the argument would break down. This is likely to be especially relevant as generative and foundation models enter clinical workflows, since their broad capabilities make it harder to anticipate every behavior through testing alone.\n\nAs an academic proposal, the framework has not yet been validated across real-world clinical deployments, and its effectiveness will depend on how consistently different reviewers can apply it and how much evidence is enough to consider a case persuasive. The authors present it as a starting point for standardization rather than a finished protocol. Even so, the paper reflects a notable trend: assurance for medical AI is moving beyond raw predictive performance toward reasoned, auditable arguments about intent and behavior, an approach that could shape how future regulatory and ethical review processes are designed.",
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T01:05:45.213Z"
     }
   }
 }

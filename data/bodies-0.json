@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T14:54:45.890Z",
-  "count": 302,
+  "generatedAt": "2026-10-07T16:01:27.528Z",
+  "count": 306,
   "bodies": {
     "17f496c665a12174": {
       "bodyJa": "Metaは、AIネイティブ時代に向けたプライバシー対応インフラの中核として、社内の膨大なデータアセットを正確に分類する取り組みをエンジニアリングブログで公開した。データ保持期間やアクセス制御、利用目的の制限、第三者への共有可否、匿名化といったプライバシー制御は、対象となるデータの性質を正しく把握して初めて機能するためだ。\n\n同社の出発点はシンプルである。あらゆるプライバシーコントロールは「どこに、どのようなデータが存在するか」という信頼できる理解を前提とする。たとえば特定の個人情報を一定期間で削除する保持ポリシーを適用するには、まずそのデータがどのテーブルやログ、ストレージのどこに含まれているかを機械的に判別できなければならない。分類が曖昧なままでは、制御そのものが空回りしてしまう。\n\nしかし、この前提を大規模に満たすことは容易ではない。Meta規模のサービスでは、データは無数のシステムを横断して生成・変換・複製され、形式やスキーマも多様だ。さらに生成AIや機械学習パイプラインの普及により、学習用データセットや派生データが増え、データの流れはいっそう複雑になっている。こうした環境で分類の精度と網羅性を保つには、自動化された分類基盤と継続的な検証の仕組みが欠かせない。\n\nこの課題は業界共通のものでもある。EUのGDPRや米カリフォルニア州のCCPAをはじめとする各国の規制は、データの利用目的や保持に厳格な要件を課しており、データガバナンスの基盤整備は大手テック各社にとって避けて通れない。GoogleやMicrosoftなども独自のデータ分類・カタログ化の仕組みを整えてきたとされ、Metaの今回の公開はその一つの実装例と位置づけられる。\n\nAIの普及はデータ活用の幅を広げる一方で、プライバシー保護の難度を押し上げている。データを正確に「知る」ための分類基盤は、派手さこそないが、信頼できるAIサービスを支える土台になると見られる。Metaの事例は、プライバシーを後付けではなく設計段階から組み込む「プライバシー・バイ・デザイン」の実践として参考になりそうだ。",
@@ -11012,7 +11012,39 @@
       "bodyJa": "グーグルの開発者向けブログで、Antigravityがモータースポーツ向けのAIレースコーチをGeminiで構築した事例が公開された。汎用の大規模言語モデル（LLM）を専門性の高い領域へ適用する際に生じる「ドメインギャップ」をどう乗り越えるか、実践的な手法を示した内容として注目される。\n\nドメインギャップとは、一般的なテキストで学習したモデルが、特定の業界に固有の用語・文脈・判断基準を十分に把握できていない状態を指す。モータースポーツのコーチングでは、走行ラインやブレーキングポイント、タイヤの摩耗、車両セッティングといった要素が複雑に絡み合い、ドライバーの技量やコース条件に応じて適切な助言が変わる。こうした暗黙知や数値データを、汎用モデルがそのまま扱うのは難しいとされる。\n\n記事では、テレメトリーなどの走行データをGeminiが解釈できる形へ構造化し、専門知識を文脈として補うアプローチが解説されているとみられる。一般に、この種の課題への対処法としては、外部知識を検索して回答に反映する検索拡張生成（RAG）、特定領域のデータでモデルを調整するファインチューニング、出力形式を制御するプロンプト設計などが知られており、これらを組み合わせて精度を高める例が多い。\n\n背景には、生成AIを汎用チャットから専門業務へと展開する動きの広がりがある。医療や法務、製造など各分野で同様のドメイン適用が進んでおり、Geminiが備えるマルチモーダル対応や長いコンテキスト処理は、数値・映像・テキストが混在する現場データを扱ううえで利点になり得る。競合各社も業界特化型のAIエージェントやアシスタントを相次いで打ち出しており、専門領域での実用化競争は活発化している。\n\n本事例は、レースという限定的な題材を通じて、専門ドメインでLLMを実用化する際の課題と勘所を整理した点に意義がある。データの構造化と評価設計を丁寧に行うことが、こうしたシステムの実用性を大きく左右する可能性がある。",
       "bodyEn": "Antigravity has published a case study describing how it built an AI-powered race coach on top of Google's Gemini models, offering a concrete look at the challenges of adapting a general-purpose large language model to a highly specialized field. The project matters because it illustrates a problem that affects almost every serious attempt to deploy LLMs in professional settings: the so-called domain gap between what a model learns during broad pretraining and what an expert user actually needs.\n\nMotorsport coaching is a demanding test case. A human coach studies lap times, telemetry, and onboard video to tell a driver where to brake later, how to carry more speed through a corner, or how to adjust throttle on corner exit. Much of this knowledge is tacit, context-dependent, and expressed in a vocabulary that a general model may understand only partially. A model trained on the open web can discuss racing in broad terms, but it does not natively reason about a specific car, circuit, or session with the numerical precision a driver expects.\n\nThe domain gap, as the case study frames it, appears in several forms. There is a vocabulary gap, where terms such as trail braking, apex, or understeer carry precise operational meaning. There is a data gap, because raw telemetry arrives as long numerical time series rather than natural language. And there is a reasoning gap, since useful coaching requires connecting patterns in that data to concrete advice grounded in physics and driving technique. Each of these has to be addressed before the output feels credible to an experienced driver.\n\nTo bridge these gaps, the team appears to combine several techniques rather than relying on any single one. Retrieval-augmented generation, commonly abbreviated as RAG, lets the system ground its responses in curated coaching material and reference data, reducing the tendency to produce plausible-sounding but incorrect guidance. Structured preprocessing converts telemetry into summaries, engineered features, or annotated segments that the model can interpret more reliably than a raw stream of numbers. Carefully written system instructions and prompts encode the persona, priorities, and safety boundaries of an expert coach so the assistant stays focused and consistent.\n\nGemini's multimodal capabilities are central to this approach. Because the model family can process text alongside other inputs and handle long contexts, a coaching system can bring together varied signals in a single reasoning step rather than stitching outputs from separate tools. That is well suited to motorsport, where meaning emerges from the relationship between what a driver did, what the data recorded, and what an ideal reference lap looks like. The case study is likely of interest less for the specific racing use case and more as a template for any team facing similar constraints.\n\nIt helps to place this work against adjacent tools and concepts. Fine-tuning, where a base model is further trained on domain examples, is an alternative or complement to RAG; the two are often weighed against each other on cost, data availability, and how frequently the underlying knowledge changes. Function calling and tool use let a model query databases or run calculations rather than guessing at numbers, which is valuable when precision matters. Evaluation is another prerequisite that is easy to underestimate, since judging whether coaching advice is genuinely good requires domain experts, not just automated metrics.\n\nThe broader context is a steady industry shift from generic chatbots toward grounded, task-specific assistants. Motorsport already relies heavily on data analytics, with professional teams employing simulation, telemetry platforms, and performance engineers, so layering an LLM interface onto that pipeline is a natural extension rather than a departure. Similar patterns are emerging across medicine, law, finance, and engineering, where practitioners want systems that respect specialized terminology and cite verifiable sources.\n\nReaders should treat any case study as a curated account that highlights successes, and independent details on accuracy and real-world driver outcomes are limited here. Even so, the write-up is a useful, practical illustration of how vocabulary, data representation, retrieval, and prompting can be assembled to narrow the domain gap when applying models like Gemini to expert work.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T13:14:56.962Z"
+      "generatedAt": "2026-09-05T13:14:56.962Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "レース中、ドライバーの運転はどう変わるの？走りながら助言をもらえるってこと？",
+          "en": "How would this change what a driver does during a race? Would they get advice while driving?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、走行データをもとに、ラップタイム改善につながる助言を瞬時に返すAIレースコーチを目指しています。",
+          "en": "The system aims to use real-time driving data to deliver immediate, actionable coaching that can improve lap times."
+        },
+        {
+          "s": "a",
+          "ja": "前は、そういう助言まではできなかったの？データを見るだけだったのかな。",
+          "en": "Couldn’t it give that kind of advice before? Was it only reading the data?"
+        },
+        {
+          "s": "b",
+          "ja": "先行する試作で確認できたのは、基本的なテレメトリーの処理まで。今回はAntigravityとGeminiで、瞬時に実行できる助言へ進めています。",
+          "en": "The earlier pilot only proved it could process basic telemetry. This time, Antigravity and Gemini take it further by turning that data into split-second, actionable advice."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、AIが理屈を話すだけじゃなく、走行中に試せる助言を出せたことなんだね。",
+          "en": "So the big takeaway is that the AI didn’t just give theory—it offered advice a driver could act on during a lap."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、物理法則に基づく設計とリアルタイム検証で、重要な判断を任せられる信頼をどう支えるかに注目です。",
+          "en": "Right. Next, watch how physics-grounded design and real-time verification support the trust needed for high-stakes decisions."
+        }
+      ]
     },
     "d7b8997e6214dfa6": {
       "bodyJa": "マイクロソフトが主導するオープンソースの AI 統合 SDK「Semantic Kernel」の .NET 版が、バージョン 1.78.0 として公開された。エージェントフレームワークを含む各コンポーネントに改善とバグ修正が施され、AI を組み込んだ .NET アプリケーション開発の品質と安定性を高める内容となっている。\n\nSemantic Kernel は、大規模言語モデル（LLM）をアプリケーションのロジックへ組み込むためのフレームワークで、プロンプトや外部ツール呼び出しを「プラグイン」や「関数」として抽象化し、C# や Python から扱えるようにする点が特徴だ。近年は単発の推論だけでなく、複数のステップを自律的に実行する「エージェント」機能への需要が高まっており、同 SDK もエージェントフレームワークの整備を継続的に進めてきた。今回の 1.78.0 も、その延長線上に位置づけられるマイナーアップデートと見られる。\n\nリリースの主眼は、エージェント関連機能の改善と各所のバグ修正にあるとされる。SDK のマイナーバージョン更新では、API の後方互換性を保ちつつ、実験的機能の安定化や依存ライブラリの更新、細かな不具合の解消が行われるのが一般的だ。具体的な変更点は公式のリリースノートで確認する必要があるが、既存アプリケーションへの影響は限定的である可能性が高い。\n\n背景として、AI エージェント開発の分野では競争が活発化している。マイクロソフト自身も、マルチエージェント向けの「AutoGen」と Semantic Kernel の機能を統合し、より一貫したエージェント基盤へ集約する方針を示してきた。オープンソース界隈では LangChain や LlamaIndex といったツールが広く使われており、.NET エコシステムにおける選択肢として Semantic Kernel の存在感は大きい。\n\n.NET を主軸とする開発者にとって、こうした継続的なリリースは実運用での信頼性向上につながる。導入済みのプロジェクトでは、リリースノートで破壊的変更の有無を確認したうえで、段階的にバージョンを更新していくことが望ましいと言えるだろう。",
@@ -11094,7 +11126,39 @@
       "bodyJa": "医療分野で人工知能（AI）の導入が進むなか、その挙動が本当に臨床目的に沿っているのかを検証する手法が課題となっている。arXivで公開された本論文は、こうした問いに答えるための新たな概念「アライメント妥当性（alignment plausibility）」を提案し、医療AIの安全性を体系的に評価する枠組みを示した。\n\nアライメント（整合性）とは、AIの振る舞いが人間の意図や価値観に一致している状態を指す言葉で、近年の大規模言語モデル研究で特に注目されてきた。本論文が扱う「妥当性」は、この整合性がどの程度もっともらしく成立しているかを、臨床上の目標に照らして問い直す点に特徴がある。単に精度が高いだけでなく、AIが下す判断が診断や治療という目的と矛盾しないかを検証しようとするものだ。\n\n医療は誤りが患者の生命に直結するため、他分野以上に厳格な保証が求められる領域である。従来の評価は正解率やAUCといった統計指標に依存しがちだったが、これらは個別症例での不適切な挙動や、想定外の状況での判断のずれを十分に捉えきれないとの指摘がある。著者らは、モデル出力が臨床目標と一致する根拠を明示的に問うことで、こうした死角を補える可能性があるとしている。\n\n背景には、規制と倫理審査をめぐる国際的な動きがある。米国FDAはソフトウェアを医療機器として扱う枠組みを整備し、欧州のAI規則（EU AI Act）は医療AIを高リスク用途と位置づけている。こうした状況で、審査を担う機関が挙動の妥当性を判断するための共通言語が不足しているのが現状だ。本論文の枠組みは、規制当局や倫理委員会が用いる実務的な基準として応用できると見られる。\n\n一方で、妥当性をどう定量化し、多様な診療現場でどう運用するかには課題も残る。既存の説明可能AI（XAI）やモデル監査の手法とどう組み合わせるかも今後の論点となりそうだ。医療AIの信頼性を高めるうえで、こうした保証概念の整備は一つの重要な方向性を示していると言えるだろう。",
       "bodyEn": "Healthcare organizations increasingly rely on artificial intelligence to triage patients, flag abnormal scans, and recommend treatments, yet demonstrating that such systems behave in ways clinicians can trust remains an unresolved challenge. A new paper posted to arXiv proposes \"alignment plausibility\" as a standard for evaluating whether medical AI reliably acts in accordance with clinical goals, framing it as a practical criterion that regulators and ethics boards could adopt.\n\nThe core idea is to shift the question from whether a model is accurate to whether its behavior is defensibly aligned with the intentions of the people deploying it. Conventional validation in medical AI leans heavily on statistical performance metrics such as sensitivity, specificity, and area under the curve. Those numbers describe how often a system is correct on a benchmark dataset, but they say little about why the system reaches its conclusions or whether it would continue to pursue the right objective when confronted with unfamiliar cases. The paper's authors argue that this gap matters most in high-stakes clinical settings, where a model that is right for the wrong reasons can fail unpredictably once deployed.\n\nAlignment plausibility, as described, appears to function as a structured argument rather than a single score. It asks evaluators to assemble evidence that a system's decisions, internal representations, and failure modes are consistent with an explicitly stated clinical goal. This resembles the logic of a safety case, a documentation method long used in aviation and other safety-critical industries, where developers must build a reasoned, evidence-backed claim that a system is acceptably safe for a defined context of use. Applying that mindset to healthcare AI would mean treating assurance as an ongoing justification, subject to challenge and revision, rather than a one-time certification.\n\nThe proposal sits within a broader research conversation about AI alignment, a term that originated largely in discussions of advanced and general-purpose systems but is now being adapted to narrower, domain-specific tools. In the medical context, misalignment can take subtle forms. A model trained to predict which patients need intervention might latch onto spurious correlations, such as which hospital department ordered a test, instead of the underlying disease signal. It might optimize a proxy target that diverges from the true clinical aim, or it might perform well on average while systematically underserving particular patient subgroups. The plausibility framework is intended to surface these risks by demanding explanations that hold up to scrutiny, not just aggregate accuracy.\n\nThis work connects to several parallel efforts in the field. Regulators including the U.S. Food and Drug Administration have been developing guidance for adaptive and machine-learning-based medical devices, and international standards bodies have published frameworks for AI risk management, such as the approach outlined in ISO/IEC 42001 and the NIST AI Risk Management Framework. Techniques from explainable AI, uncertainty quantification, and rigorous external validation are all candidate sources of the evidence that an alignment plausibility case would draw upon. The paper appears to position its contribution as a way to organize these disparate methods around a coherent question rather than to replace them.\n\nFor clinicians and ethics reviewers, the practical appeal is that plausibility offers a vocabulary for interrogating a system before and during deployment. Instead of accepting a vendor's headline accuracy figure, a review board could ask what clinical objective the model is meant to serve, what evidence supports the claim that its behavior tracks that objective, and under what conditions the argument would break down. This is likely to be especially relevant as generative and foundation models enter clinical workflows, since their broad capabilities make it harder to anticipate every behavior through testing alone.\n\nAs an academic proposal, the framework has not yet been validated across real-world clinical deployments, and its effectiveness will depend on how consistently different reviewers can apply it and how much evidence is enough to consider a case persuasive. The authors present it as a starting point for standardization rather than a finished protocol. Even so, the paper reflects a notable trend: assurance for medical AI is moving beyond raw predictive performance toward reasoned, auditable arguments about intent and behavior, an approach that could shape how future regulatory and ethical review processes are designed.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:05:45.213Z"
+      "generatedAt": "2026-09-05T01:05:45.213Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "心の健康を支えるAIを使う場面で、普段のやり取りは何が変わるの？",
+          "en": "When people use AI for mental health support, what could change in their everyday conversations?"
+        },
+        {
+          "s": "b",
+          "ja": "この提案が評価に使われるなら、利用継続を促す目標に偏らず、AIの挙動が臨床目標に沿うかを確かめる視点が加わるよ。",
+          "en": "If adopted for evaluation, this proposal would add a way to check whether AI behavior follows clinical goals rather than favoring continued engagement."
+        },
+        {
+          "s": "a",
+          "ja": "前は、そういう確認ができなかったの？",
+          "en": "Wasn’t that something reviewers could check before?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていないよ。従来の安全対応は目立つ深刻な害への反応が中心で、依存や境界の崩れなど長期的なリスクは注目が薄かったとしている。",
+          "en": "The paper doesn’t say it was impossible. It says safety responses were largely reactive, focusing on visible acute harms while longer-term risks such as dependency and boundary erosion received less attention."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、危ない返答だけでなく、AIの振る舞いが臨床目標に合うかを見る基準を提案したことなんだね。",
+          "en": "So the key takeaway is a proposed standard for checking whether AI behavior aligns with clinical goals, not just whether a reply looks harmful."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、この枠組みが規制や倫理審査で、依存や歪んだ信念の増幅までどう検証するかに注目したいね。",
+          "en": "Right. Next, it’s worth watching how the framework could assess dependency and the amplification of distorted beliefs in regulatory and ethical review."
+        }
+      ]
     },
     "ea454ae86aca2fda": {
       "bodyJa": "## 1.6.6の公開\n\nlangchain-core 1.6.6が2026年9月29日に公開された。Claude Sonnet 5.5との互換性に関する修正を導入したパッチリリースで、AnthropicモデルをLangChainアプリケーションへ統合する開発者を支える更新と位置付けられている。\n\n## 互換性の修正\n\n今回の変更は「fix(anthropic): support Claude Sonnet 5.5 compatibility」とされ、Claude Sonnet 5.5への対応に焦点を当てている。新しい機能群を追加するというより、Anthropicモデルとlangchain-coreの組み合わせにおける互換性を修正する内容だ。LangChainでClaude Sonnet 5.5を利用する際の円滑な連携を支えるものと説明されている。\n\n## 1.6.5からの変更\n\n公開内容では、langchain-core 1.6.5以降の変更として、1.6.6のリリースとClaude Sonnet 5.5の互換性修正が示されている。リリース項目には「#40906」、互換性修正には「#40882」が対応している。バージョン番号の更新と、Anthropic向けの修正が今回の差分となる。\n\n## 署名付きコミット\n\nこのリリースに関するコミットはGitHub.com上で作成され、GitHubの検証済み署名が付与されている。langchain-core 1.6.6の中心的な技術変更は、Claude Sonnet 5.5との互換性を支える修正に絞られている。",
@@ -11221,6 +11285,158 @@
       "bodyEn": "## Clean up worktree storage\n\nVisual Studio Code 1.141 focuses on making agent sessions easier to manage while helping developers reclaim capacity and protect agent workflows. The release adds controls for cleaning up worktree storage associated with inactive agent sessions.\n\nDevelopers can reclaim disk space from these worktrees either on demand or automatically. This provides a direct way to manage storage created by agent sessions without requiring every cleanup to be initiated manually.\n\n## Cross-platform sandboxing\n\nTerminal sandboxing is available across Windows, macOS, and Linux. It can limit an agent’s access to files and network resources, providing additional protection for workflows that use agents through the terminal.\n\nThe cross-platform support means the same type of access restriction is provided on all three listed operating systems. Together with worktree cleanup, this feature is intended to help developers manage agents safely and efficiently.\n\n## Arrange sessions\n\nThe release also introduces a grid layout for multiple agent sessions. Developers can arrange sessions side by side, making it easier to compare and monitor them within Visual Studio Code.\n\nThis arrangement capability is aimed at workflows involving several concurrent sessions. Rather than treating each session in isolation, the grid presents them together for direct comparison and monitoring.\n\n## Continue external sessions\n\nVisual Studio Code 1.141 can pick up local external Copilot and Codex conversations without losing their context. This allows an external conversation to continue inside Visual Studio Code while preserving the existing session context.\n\nThe release additionally makes it easier to edit columnar text and work across GitHub Enterprise instances. It is available in .deb, .rpm, and .tar.gz formats, with Arm instructions and Snap also listed. Existing installations can use Check for Updates in Visual Studio Code, while upcoming features are available through the Insiders build.",
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T14:37:57.183Z"
+    },
+    "07fbf1326fda8940": {
+      "bodyJa": "## 1.7.3の変更\n\nlangchain-anthropic 1.7.3では、FableとOpus 5.5の構造化出力に関する自動振り分けと、会話途中のSystemMessageの送信方法が更新された。モデルプロファイル、文書、依存パッケージの更新も含まれ、Anthropic連携の利用者に関係するリリースとなっている。\n\n## 構造化出力\n\nFableとOpus 5.5でwith_structured_outputを利用する際、method=\"json_schema\"へ自動的に振り分ける修正が加えられた。構造化出力に対してjson_schemaを使う処理が自動ルーティングの対象となる。あわせて、Opus 5.5向けの文書も更新されている。\n\n## SystemMessage\n\n会話途中に置かれたSystemMessageを、その位置のまま送信できる機能が追加された。会話の先頭だけでなく、途中に存在するSystemMessageについても、配置された位置を保ってAnthropic側へ渡せるようになったことが今回の変更点である。\n\n## モデル情報とanyio\n\nAnthropicのモデルプロファイルデータが更新されたほか、libs/partners/anthropic内の依存パッケージanyioが4.11.0から4.14.2へ引き上げられた。今回の1.7.3は、これらの更新と機能追加、修正を1.7.2以降の変更としてまとめている。",
+      "bodyEn": "## langchain-anthropic 1.7.3\n\nlangchain-anthropic 1.7.3 updates structured-output routing and the handling of SystemMessage entries during a conversation. These changes help Anthropic users adopt Fable and Opus 5.5 reliably while preserving messages that appear in the middle of a chat.\n\nThe release contains changes made since langchain-anthropic 1.7.2. Alongside the two behavior changes, it refreshes model profile data, updates documentation, and changes a dependency version.\n\n## Structured output\n\nFor Fable and Opus 5.5, with_structured_output now automatically routes to method=\"json_schema\". This fix makes json_schema the selected method for structured output with those models, rather than requiring that routing to be handled separately.\n\nThe structured-output change is listed as fix #40766. It specifically applies to Fable and Opus 5.5.\n\n## Mid-conversation SystemMessage\n\nThe release adds support for sending mid-conversation SystemMessage entries in place. A SystemMessage that occurs during a conversation can therefore remain at that position when it is sent, preserving its placement within the chat.\n\nThis capability is included as feature #40622. Together with the structured-output routing fix, it forms one of the release’s main functional changes for Anthropic integration users.\n\n## Model profiles and dependencies\n\nThe package refreshes Anthropic model profile data under change #40772 and updates the documentation for Opus 5.5 under change #40765.\n\nIt also bumps anyio from 4.11.0 to 4.14.2 in /libs/partners/anthropic. The dependency update is recorded as change #40643, while the 1.7.3 release entry is identified as #40773.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Anthropic連携で、会話の途中に指示を入れたり、決まった形のJSONを受け取る仕事はどう変わるの？",
+          "en": "How does this change workflows that add instructions mid-chat or need JSON in a set format through Anthropic?"
+        },
+        {
+          "s": "b",
+          "ja": "途中のSystemMessageをその位置で送れます。FableとOpus 5.5では、構造化出力がjson_schemaへ自動で振り分けられます。",
+          "en": "Mid-chat SystemMessages can now be sent in place. For Fable and Opus 5.5, structured output is automatically routed to json_schema."
+        },
+        {
+          "s": "a",
+          "ja": "前の1.7.2では、どちらもできなかったってこと？",
+          "en": "So were both unavailable in version 1.7.2?"
+        },
+        {
+          "s": "b",
+          "ja": "そこまでは断定できないよ。1.7.2からの変更点として、自動振り分けの修正と途中のSystemMessage送信が挙げられています。",
+          "en": "We can’t say that definitively. The listed changes from 1.7.2 are a routing fix and support for sending SystemMessages mid-conversation."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。出力形式と会話途中の指示を、より意図どおり扱いやすくした更新なんだね。",
+          "en": "Got it. The main gain is more reliable handling of output formats and instructions added during a conversation."
+        },
+        {
+          "s": "b",
+          "ja": "そう読めるね。あわせて更新されたモデル情報、Opus 5.5の文書、anyioも確認しておきたいところです。",
+          "en": "That’s a fair takeaway. It’s also worth checking the refreshed model data, updated Opus 5.5 documentation, and the anyio dependency update."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:58:22.559Z"
+    },
+    "fd70582195d56117": {
+      "bodyJa": "## 1.6.4リリース\n\nlangchain-core 1.6.4が2026年9月21日に公開された。今回示されている主な変更は、コアライブラリ内で利用する2つの依存関係の更新であり、langchain-core 1.6.3以降の変更として整理されている。\n\n## anyio更新\n\nanyioは4.12.0から4.14.2へ更新された。変更項目には「chore(deps)」として記載され、対象は「/libs/core」とされている。つまり、langchain-core本体のバージョン更新に合わせて、コアライブラリが依存するanyioの基準となるバージョンが引き上げられた形だ。変更には#40634が対応している。\n\n## soupsieve更新\n\nsoupsieveについては、2.8.4から2.9への更新が行われた。こちらも「chore(deps)」に分類された依存関係の変更で、対象は同じく「/libs/core」。変更項目には#40574が付されている。anyioとsoupsieveの更新はいずれも、機能名を伴う追加ではなく、コアライブラリ内の依存バージョンを更新する内容として示されている。\n\n## 依存関係の基盤\n\nリリース項目には「release(core): 1.6.4」として#40718が記載されている。langchain-core 1.6.4は、anyio 4.14.2とsoupsieve 2.9を採用することで、コアライブラリ利用者に更新された依存関係の基盤を提供するリリースと位置付けられる。リリースに対応するコミットはGitHub.com上で作成され、GitHubの検証済み署名で署名されている。",
+      "bodyEn": "## langchain-core 1.6.4\n\nlangchain-core 1.6.4 updates two dependencies used by the core library, giving users an updated dependency baseline. Published on September 21, 2026, the release moves anyio and soupsieve to newer listed versions while identifying the preceding langchain-core 1.6.3 release as the comparison point.\n\nThe release entry is associated with release(core): 1.6.4 and reference #40718. Its listed changes focus on dependency maintenance within /libs/core.\n\n## Changes since langchain-core==1.6.3\n\nThe anyio dependency moves from version 4.12.0 to 4.14.2. This change is recorded as chore(deps): bump anyio from 4.12.0 to 4.14.2 in /libs/core, with reference #40634.\n\nThe soupsieve dependency moves from version 2.8.4 to 2.9. It is recorded as chore(deps): bump soupsieve from 2.8.4 to 2.9 in /libs/core, with reference #40574.\n\nTogether, these entries define the dependency changes listed for langchain-core 1.6.4 compared with langchain-core 1.6.3. Both updates apply to the core library path identified in the release information.\n\n## Updated dependency baseline\n\nFor core library users, the practical change described by the release is the new pair of dependency versions: anyio 4.14.2 and soupsieve 2.9. These replace anyio 4.12.0 and soupsieve 2.8.4 in the stated baseline.\n\nThe source also says the commit was created on GitHub.com and signed with GitHub’s verified signature. The dependency updates and the release entry are linked through their respective references, #40634, #40574, and #40718.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "langchain-core 1.6.4で、anyioとsoupsieveは何が変わったの？",
+          "en": "What changed for anyio and soupsieve in langchain-core 1.6.4?"
+        },
+        {
+          "s": "b",
+          "ja": "anyioが4.12.0から4.14.2へ、soupsieveが2.8.4から2.9へ更新されたよ。どちらもコアが利用する依存関係だね。",
+          "en": "anyio moved from 4.12.0 to 4.14.2, while soupsieve moved from 2.8.4 to 2.9. Both are dependencies used by the core library."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、langchain-coreを使う人が、更新された依存関係を基盤にできるってこと？",
+          "en": "So langchain-core users get an updated dependency baseline to build on?"
+        },
+        {
+          "s": "b",
+          "ja": "そう。コアライブラリの利用者に、新しい依存関係の基盤を提供する更新としてまとめられているよ。",
+          "en": "Yes. The release presents these changes as an updated dependency baseline for core library users."
+        },
+        {
+          "s": "a",
+          "ja": "今回は、コア本体を支える2つのライブラリのバージョン更新なんだね。",
+          "en": "Got it—this release updates two libraries that the core depends on."
+        },
+        {
+          "s": "b",
+          "ja": "うん。更新するなら、anyioとsoupsieveのバージョンも一緒に変わる点を押さえておこう。",
+          "en": "Right. When updating, keep in mind that the anyio and soupsieve versions change along with it."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:59:57.537Z"
+    },
+    "7bd2dfc660ae2be4": {
+      "bodyJa": "## 1.4.2リリース\n\nLangChain 1.4.2がリリースされた。主な変更は、人手確認を伴うHITLのワークフローでツール呼び出しを編集する際、モデルが生成した呼び出し情報を保持する修正と、ToolMessageへの通知追加である。LangChain 1.4.1以降の変更として示されている。\n\n## HITLでの編集\n\nHITLでモデル生成のツール呼び出しを人が確認し、内容を編集した場合でも、モデルが生成した分のツール呼び出しが保持されるようになった。人手による確認や修正を挟む処理では、編集の過程で呼び出し情報が失われないことが重要になる。今回の修正は、そうしたHITLのツール呼び出し編集時に、元のモデル生成分を維持するものだ。\n\n## ToolMessage通知\n\nもう一つの変更として、ToolMessageに通知が追加された。ツール呼び出し情報を保持する修正と通知の追加を組み合わせることで、人手確認中に呼び出しデータが欠落することを防ぎやすくなると説明されている。HITLを取り入れたエージェント開発において、モデルが作成したツール呼び出しを編集後も扱えるようにする修正が中心となる。",
+      "bodyEn": "## LangChain 1.4.2\n\nLangChain 1.4.2 focuses on preserving model-generated tool calls when those calls are edited in HITL workflows. This matters for agent development involving human review because it helps prevent call information from being lost during revisions.\n\nThe release was published on September 18, 2026. Its listed changes are presented relative to LangChain 1.4.1 and center on a fix for HITL tool-call editing rather than a broader set of additions.\n\n## HITL Tool Call Edits\n\nThe main change ensures that AI-created tool calls remain available when they are revised through HITL. Before this fix, editing a tool call during human review could result in the model-generated portion of the call information not being preserved.\n\nLangChain 1.4.2 addresses that behavior by retaining the original model-generated calls through the editing process. Developers working with human confirmation or revision steps can therefore keep the relevant call data while making HITL edits.\n\nThe release identifies this fix as “preserve model-generated tool calls in HITL tool call edits,” associated with change #40463. The overall LangChain 1.4.2 release is associated with #40621.\n\n## Notice to ToolMessage\n\nThe same fix also adds a notice to ToolMessage. Together, the notice and the preservation of AI-created tool calls are intended to make HITL revisions less likely to discard call data during human review.\n\nThe release information does not describe further changes beyond this fix. It also states that the commit was created on GitHub.com and signed with GitHub’s verified signature. Overall, LangChain 1.4.2 is a targeted update for maintaining tool-call information when model-generated calls pass through HITL editing.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1.4.2では、人が編集してもモデル生成のツール呼び出しが残るんだね。これって大きい変化？",
+          "en": "In 1.4.2, model-generated tool calls remain even after human edits. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "人手確認の途中で呼び出し情報が欠けるのを防げる変更だよ。ToolMessageへの通知も追加されたんだ。",
+          "en": "It helps prevent call data from being lost during human review. The update also adds a notice to ToolMessage."
+        },
+        {
+          "s": "a",
+          "ja": "HITLって、ここではどんな仕組みなの？",
+          "en": "What does HITL mean here?"
+        },
+        {
+          "s": "b",
+          "ja": "人が処理の途中に入り、内容を確認したり直したりする仕組みだよ。今回はツール呼び出しの編集が対象だね。",
+          "en": "It means a person steps into the workflow to review or revise something. Here, the focus is editing tool calls."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、エージェントの呼び出し内容を確認してから直す流れで使ってみたいな。",
+          "en": "I’d try it in a workflow where I review an agent’s tool call before revising it."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方なら今回の変更に合いそうだね。対象はHITLでのツール呼び出し編集で、保持されるのはモデル生成分だよ。",
+          "en": "That sounds aligned with this update. It specifically covers HITL tool-call edits and preserves the model-generated calls."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T15:00:35.789Z"
+    },
+    "58ec06aaca550a69": {
+      "bodyJa": "## v0.0.32\n\nCline Desktop v0.0.32は、v0.0.31への更新後にアプリが起動できなくなる問題を修正した。アプリとバックグラウンドで動作する内蔵のCline Hubについて、ビルド識別に使うコードを共通化したことが修正の中心となる。\n\n## 起動失敗\n\nv0.0.31では、起動時に「desktop backend exited before publishing its endpoint」と表示され、ワークスペース選択画面へ到達できない場合があった。さらに、起動処理がタイムアウトし、「No compatible hub runtime is available」と報告される状態になっていた。\n\n## ビルド識別\n\nClineは、独自のCline Hubをバックグラウンドで動かしている。問題が発生した版では、アプリとHubという二つの構成部分が、同じコードの異なるコピーからビルドされていた。このため、Hubが通知するビルド識別情報と、アプリが期待する識別情報が一致しなかった。\n\nその結果、アプリは自ら起動したHubを停止し、起動処理を完了できなくなっていた。v0.0.32では、両方が同じコードのコピーを読み込むように変更され、識別処理の食い違いを解消している。\n\n## CIで検証\n\n再発防止のため、変更のたびにCI上で実際にコンパイルされたバックエンドを起動し、処理全体を通して検証する仕組みも導入された。アプリ側とHub側が再びずれないことを継続的に確認し、起動後にワークスペース選択画面へ進める状態を検証する。",
+      "bodyEn": "## Cline starts again\n\nCline Desktop v0.0.32 fixes a launch failure introduced in v0.0.31. The issue mattered because affected users could not reach the workspace picker after updating.\n\nIn v0.0.31, the application could fail during launch with the message “desktop backend exited before publishing its endpoint.” Rather than continuing to the workspace picker, startup stopped before the application became usable. The failure could also produce the message “No compatible hub runtime is available.”\n\n## Different copies of code\n\nCline runs its own copy of the Cline Hub in the background. The application and this embedded Hub had been built from different copies of the same code, creating a mismatch in how the two halves identified their builds.\n\nAs a result, the Hub announced one build identity while the application expected another. The application then shut down the Hub that it had just started. With that background component no longer available, the startup process timed out and reported that no compatible Hub runtime was available.\n\nThe problem therefore came from the application and Hub disagreeing about build identity, rather than from the workspace picker itself. Because the mismatch occurred during startup, the application never progressed far enough to display that picker.\n\n## Same copy of code\n\nIn v0.0.32, both halves load the same copy of the build-identity code. Sharing that code removes the mismatch that caused the application to reject and terminate its own background Hub.\n\nThe release is intended to restore startup after updating and allow Cline Desktop to proceed to workspace selection. It directly addresses the launch behavior seen in v0.0.31 rather than introducing a separate workflow.\n\n## Booted end-to-end in CI\n\nThe compiled backend is now booted end-to-end in CI on every change. This check uses the real compiled backend and is designed to prevent the application and Hub from drifting apart again.\n\nBy validating the two halves together on each change, the CI process checks the startup path that previously failed. The full changelog covers the changes from desktop-v0.0.31 to desktop-v0.0.32.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "更新したら起動しなくなって、仕事の画面にも入れないことがあったの？今回は何が変わるの？",
+          "en": "Could an update leave Cline unable to start, blocking access to the work screen? What changes this time?"
+        },
+        {
+          "s": "b",
+          "ja": "v0.0.32では起動できない問題が修正され、ワークスペース選択画面まで安定して進めるようになります。",
+          "en": "Version 0.0.32 fixes the launch failure and should reliably reach the workspace picker."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？アプリと内蔵Hubがうまくつながらなかったのかな。",
+          "en": "Was that broken before? Maybe the app and its built-in Hub weren’t connecting properly?"
+        },
+        {
+          "s": "b",
+          "ja": "v0.0.31では両者のビルド識別が食い違い、アプリが起動したHubを終了させてタイムアウトすることがありました。",
+          "en": "In v0.0.31, their build identities could differ, causing the app to shut down the Hub it had launched and eventually time out."
+        },
+        {
+          "s": "a",
+          "ja": "そっか。今回はアプリとHubが同じ識別用コードを使うようになって、起動の食い違いを直したんだね。",
+          "en": "Got it. The app and Hub now share the same build-identity code, fixing that startup mismatch."
+        },
+        {
+          "s": "b",
+          "ja": "うん。変更のたびにCIで実際のコンパイル済みバックエンドを起動し、両者のずれを継続的に確かめる点にも注目です。",
+          "en": "Yes. CI now boots the compiled backend on every change, continuously checking that the two sides don’t drift apart."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T15:01:07.437Z"
     }
   }
 }

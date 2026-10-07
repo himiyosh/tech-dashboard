@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T14:31:29.088Z",
-  "count": 321,
+  "generatedAt": "2026-10-07T14:54:45.890Z",
+  "count": 325,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -11564,19 +11564,115 @@
       "bodyJa": "OpenHandsの開発チームは、クラウド版「OpenHands cloud」のバージョン1.42.0を公開した。今回のリリースは、クラウドホスト型のAIコーディングアシスタントに対する漸進的な機能改善とバグ修正を中心とした更新で、既存の利用者が安定した環境を維持できるようにすることを狙ったものと見られる。\n\nOpenHandsは、もともと「OpenDevin」として知られたオープンソースのAIコーディングエージェントを起点とするプロジェクトで、開発元のAll Hands AIが中心となって開発を進めている。自然言語による指示を受けてコードの記述や修正、コマンドの実行、リポジトリの操作などを自律的に進める点が特徴で、ローカル環境に自分で導入するセルフホスト型と、環境構築の手間を省けるクラウド型の双方が提供されている。今回更新されたのは、このうちクラウド型のサービスにあたる。\n\nバージョン番号が示すように、OpenHandsはマイナーバージョンを短い間隔で重ねており、機能追加と不具合修正を継続的に取り込む開発スタイルをとっている。1.42.0のような小刻みなリリースは、大規模な仕様変更よりも、日々の利用で顕在化した課題への対応や細かな使い勝手の向上を積み上げる性格が強いと考えられる。具体的な変更点については、公式のリリースノートで確認する必要がある。\n\n背景として、AIコーディング支援ツールの分野は競争が激しさを増している。コード補完に強みを持つGitHub CopilotやCursor、自律型エージェントを掲げるCognitionのDevin、コマンドライン志向のClaude CodeやAiderなど、アプローチの異なる製品が相次いで登場している。オープンソースを基盤とするOpenHandsは、透明性の高さやカスタマイズ性を重視する開発者にとって選択肢の一つとなっており、クラウド版の継続的な改善はこうした利用者層の裾野を広げる要素になり得る。\n\n利用者にとっては、こまめなアップデートによって不具合が早期に解消され、生産性や安定性の面で恩恵を受けやすい。一方で、自律型エージェントを実務に組み込む際には、コードレビューや実行権限の管理といった運用面の配慮も引き続き求められる。導入や更新を検討する場合は、公式のリリースノートで個々の変更内容を把握したうえで判断することが望ましい。",
       "bodyEn": "OpenHands Cloud has reached version 1.42.0, the latest in a steady cadence of updates to the hosted edition of the open-source AI coding platform. For teams that rely on autonomous and semi-autonomous agents to write, review, and modify code, keeping the managed service current matters because the platform version determines which agent behaviors, model integrations, and guardrails are available without any self-hosting effort. Point releases like this one are generally about maintenance and refinement rather than sweeping change, but they are how a fast-moving project stays reliable in day-to-day use.\n\nOpenHands, formerly known as OpenDevin, is a framework for building AI software-engineering agents that can perform many of the tasks a human developer would: reading a repository, editing files, running shell commands, executing tests, and browsing documentation. The cloud offering packages that capability as a managed service, removing the need to provision sandboxes, manage runtime containers, or maintain the orchestration layer yourself. A release numbered 1.42.0 typically bundles incremental feature improvements alongside bug fixes and stability work, which aligns with the summary describing it as delivering improvements and fixes that keep the platform current.\n\nBecause the published notes for this build are brief, the specific contents are best treated cautiously. Releases in this range commonly touch areas such as the agent's planning and tool-use loop, the fidelity of file editing, handling of long-running or failed commands, and the responsiveness of the web interface. Cloud updates also frequently address account, billing, and session management, along with the integrations that connect OpenHands to source hosts like GitHub and GitLab. Without a detailed changelog it is reasonable to assume the update focuses on these routine dimensions of quality and correctness rather than introducing a headline capability.\n\nA key part of the value proposition is the execution environment. OpenHands runs agent actions inside an isolated runtime, so that generated code and shell commands execute in a sandbox rather than directly on a user's machine. This separation is central to both safety and reproducibility, and it is one of the main reasons a hosted version appeals to teams that would rather not operate the infrastructure themselves. The platform is also model-agnostic: it can be pointed at different large language models, including offerings from providers such as Anthropic and OpenAI, which lets organizations balance cost, latency, and capability. Updates to the cloud service often quietly improve how these models are invoked or how their outputs are validated.\n\nThe broader context is a crowded and rapidly evolving market for AI-assisted development. At one end sit inline code-completion tools such as GitHub Copilot, and editor-centric assistants like Cursor and the various IDE plugins that suggest code as a developer types. At the other end are more agentic systems that aim to complete whole tasks with limited supervision, a category that includes Cognition's Devin and command-line tools like Aider and Claude Code. OpenHands occupies the agentic side of that spectrum, and its open-source foundation distinguishes it from closed commercial products by letting users inspect, extend, or self-host the underlying system. The cloud edition is essentially a convenience layer over that same open core.\n\nFor anyone evaluating the platform, a few prerequisite concepts are worth understanding. Agentic coding tools work best when given clear, well-scoped tasks and access to a repository they can read and modify; results still require human review, because agents can misinterpret requirements or produce plausible-looking but incorrect changes. Costs are driven largely by underlying model usage, so heavier automation can translate into higher token consumption. And as with any tool that executes code and touches source control, sensible permissions and secret management remain the user's responsibility.\n\nIn practical terms, most users of the hosted service will receive version 1.42.0 automatically, since cloud platforms upgrade centrally rather than requiring a manual install. That is one of the main advantages of the managed model over self-hosting, where operators must track releases and apply updates themselves. Teams that want the precise list of changes should consult the official release notes, but the overall trajectory is clear: OpenHands continues to ship frequent, incremental updates aimed at steadily improving stability and developer productivity as the surrounding AI coding landscape keeps shifting.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T13:15:24.983Z"
+      "generatedAt": "2026-09-05T13:15:24.983Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「super-admin管理エンドポイント」って、何をできるようにしたの？",
+          "en": "What does the new super-admin management endpoint let people do?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、権限の付与・取り消し・一覧取得に対応したよ。エンドポイントは、機能を操作するための接続口という意味だね。",
+          "en": "It supports granting, revoking, and listing super-admin access. An endpoint is essentially a doorway for interacting with a feature."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、開発チームがsuper-adminの権限を管理しやすくなる、ってことかな？",
+          "en": "So it could make super-admin access easier for development teams to manage?"
+        },
+        {
+          "s": "b",
+          "ja": "そう読めるね。組織の設定画面では、サイドバーをスクロールしてSkillsに届くようにする修正も入ったよ。",
+          "en": "That’s a fair reading. There’s also a fix that makes Skills reachable by scrolling the settings sidebar in organizations."
+        },
+        {
+          "s": "a",
+          "ja": "今回は、管理機能や使い勝手、安定性を少しずつ整えた更新なんだね。",
+          "en": "Got it—this update gradually improves management, usability, and stability rather than changing just one thing."
+        },
+        {
+          "s": "b",
+          "ja": "うん。生産性向上と安定性強化を図る更新だけど、内容は段階的な改善とバグ修正が中心だよ。",
+          "en": "Right. It aims to improve productivity and stability, but the release mainly consists of incremental improvements and bug fixes."
+        }
+      ]
     },
     "4bda66b3eacd0b69": {
       "bodyJa": "## 洪水予測\n\nGoogleのAI技術は、各国の政府や組織による危機対応に活用されている。洪水予測などを通じ、緊急事態による被害の軽減と社会的レジリエンスの強化に役立てられていると説明されている。\n\n## 災害対応\n\n活用例には、洪水予測に加えて災害対応モデルが含まれる。Googleは政府、国際機関、地域コミュニティーと協力し、世界的な危機へのレジリエンスを高める3つの方法を紹介している。",
       "bodyEn": "## Global crisis resilience\n\nGovernments and organizations worldwide are applying Google’s AI tools to strengthen crisis resilience and reduce harm from emergencies. The technology is being used in crisis-management areas involving flood forecasting and disaster response.\n\n## Flood forecasting and disaster response\n\nExamples include AI tools for flood forecasting and models for disaster response. According to the source excerpt, Google collaborates with governments, international organizations and communities in three ways to support global crisis resilience. The provided information does not specify those three methods, but it says the technology’s contribution to stronger social resilience is expanding.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T13:15:59.519Z"
+      "generatedAt": "2026-09-05T13:15:59.519Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIの活用が、洪水予測から被災建物の発見まで広がってるんだね。これって大きいこと？",
+          "en": "AI is being used for everything from flood forecasts to spotting damaged buildings. Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、早期警報と災害後の支援の両方に役立つ広がりが示されているよ。被害を減らすのが目的なんだ。",
+          "en": "The article shows AI helping both with early warnings and post-disaster relief. The aim is to reduce harm during emergencies."
+        },
+        {
+          "s": "a",
+          "ja": "「マルチハザード早期警報システム」って、いろんな災害をまとめて知らせる仕組み？",
+          "en": "Does a “multi-hazard early warning system” mean one setup that warns people about different kinds of disasters?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、複数の災害リスクを早めに捉えて知らせる仕組み、くらいの意味だよ。避難につなげるための警報だね。",
+          "en": "Yes, it broadly means a system that detects and warns about multiple disaster risks early, giving people time to get to safety."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、衛星画像から被害が見つかった場所を知って、物資を届ける手助けに使いたいな。",
+          "en": "I’d use it to find damaged areas in satellite images and help get supplies where they’re needed."
+        },
+        {
+          "s": "b",
+          "ja": "記事でも、被災建物を素早く見つけ、支援を早める使い方が紹介されているよ。AIは試験的な面もあると示されているね。",
+          "en": "That use is described here: spotting damaged buildings quickly to speed up aid. The piece also notes that generative AI is experimental."
+        }
+      ]
     },
     "e01a775dc94669da": {
       "bodyJa": "Microsoft が開発する AI オーケストレーション SDK「Semantic Kernel」の Python 版 1.44.0 がリリースされた。今回の更新はエージェントフレームワークやコネクタ周りの改善とバグ修正を中心とした漸進的なもので、大規模言語モデル（LLM）を組み込んだアプリケーションを構築する開発者にとって安定性の向上が見込まれる。\n\nSemantic Kernel は、LLM を既存のコードやデータ、外部サービスと結び付けるための開発フレームワークである。プロンプトを関数として扱う「プラグイン」や、複数の処理を連鎖させるオーケストレーション機構を備え、自然言語による指示とアプリケーションのロジックを橋渡しする役割を担う。近年は自律的にタスクを分解・実行する「エージェント」機能の整備が進んでおり、今回の 1.44.0 でもエージェントフレームワークが改善対象に含まれている点は、この方向性の継続を示すものと見られる。\n\nコネクタは、OpenAI や Azure OpenAI をはじめとする各種モデルプロバイダーやベクトルデータベースなどの外部サービスと接続するための層にあたる。LLM を取り巻くエコシステムはモデルの更新やAPI仕様の変更が頻繁に発生するため、コネクタの継続的な保守は実運用における信頼性に直結する。こうした地道な修正の積み重ねが、SDK 全体の実用性を支えていると言える。\n\nSemantic Kernel は Python のほか、.NET や Java 版も提供されており、マイクロソフトはマルチ言語での展開を進めている。同社は別途、複数エージェントの協調を扱う「AutoGen」も開発しており、両者の技術的な統合や役割整理も進められてきた経緯がある。エージェント指向の開発フレームワークという領域では、LangChain や LlamaIndex といったオープンソースのライブラリも活発に開発されており、選択肢は多様化している。\n\nバージョン番号がマイナー更新である点からも、今回のリリースは大きな機能追加よりも品質の底上げを狙ったものと位置づけられる。頻繁なリリースサイクルは、変化の速い LLM 分野で開発者が最新の環境に追随しやすくする狙いがあると考えられる。実際の変更点や非互換の有無については、公式のリリースノートを確認したうえで導入を検討することが望ましい。",
       "bodyEn": "Microsoft has released version 1.44.0 of Semantic Kernel for Python, the latest incremental update to its open-source software development kit for orchestrating large language models within applications. While point releases like this rarely introduce sweeping changes, they matter to developers who depend on a stable foundation for production systems, and the 1.44.0 release focuses on refining the agent framework and connector ecosystem alongside routine bug fixes.\n\nSemantic Kernel is Microsoft's SDK designed to help developers integrate LLMs such as those from OpenAI, Azure OpenAI, and other providers into conventional software. It sits in a category often described as LLM orchestration, where the goal is to coordinate model calls, manage prompts, invoke external tools or functions, and maintain state across multi-step interactions. The framework is available across multiple languages, including Python, .NET, and Java, though feature parity and release cadence can differ between them. The Python edition, in particular, tends to track rapid iteration given the language's prominence in AI and data science workflows.\n\nAccording to the release summary, version 1.44.0 delivers improvements and bug fixes centered on the agent framework and connectors. The agent framework is the portion of Semantic Kernel that enables developers to build autonomous or semi-autonomous agents, which are software components capable of reasoning over a task, selecting tools, and executing sequences of actions with varying degrees of human oversight. Connectors, meanwhile, are the integration points that link the kernel to specific model providers, vector databases, and other external services. Strengthening these layers is consistent with the broader industry trend toward agentic applications, where reliability and predictable behavior become increasingly important as systems move from prototypes to deployment.\n\nThe emphasis on stability rather than new headline features appears typical of Semantic Kernel's release pattern, which favors frequent, smaller updates over infrequent major overhauls. For teams already building on the SDK, this approach reduces the risk of breaking changes while allowing steady refinement. Developers are generally advised to review the official changelog and release notes before upgrading, since even incremental versions can adjust behavior in connectors or agent orchestration logic that downstream code relies upon.\n\nSemantic Kernel operates within a crowded and fast-moving field of agent and orchestration frameworks. Comparable and sometimes competing tools include LangChain and LlamaIndex, both widely used in the Python ecosystem, as well as Microsoft's own AutoGen project, which focuses on multi-agent conversation patterns. Microsoft has signaled interest in aligning some of its agent-related efforts, and observers have noted an ongoing convergence between Semantic Kernel and AutoGen concepts, though the two projects retain distinct identities and use cases. This landscape means developers frequently evaluate trade-offs around abstraction level, provider support, and long-term maintenance when choosing a framework.\n\nUnderstanding the context requires a grasp of a few prerequisite concepts. Function calling, sometimes referred to as tool use, allows an LLM to request that the host application execute a defined function and return the result, enabling agents to interact with real data and services rather than relying solely on the model's internal knowledge. Retrieval-augmented generation, or RAG, is another common pattern that Semantic Kernel supports through its connector architecture, pairing a language model with a searchable knowledge base to ground responses in external information. Improvements to connectors can therefore have practical implications for how effectively these patterns perform.\n\nFor organizations invested in Microsoft's broader AI stack, Semantic Kernel serves as a bridge between the company's Azure AI services and custom application logic, and it is positioned as an enterprise-oriented option with attention to considerations such as observability and extensibility. The Python 1.44.0 release does not appear to alter that positioning but rather continues the maintenance work that underpins it.\n\nDevelopers interested in the specifics of what changed should consult the project's GitHub repository, where release artifacts, version tags, and detailed notes are published. As with any dependency update, testing in a controlled environment before rolling changes into production remains a prudent step, particularly for applications that lean heavily on the agent framework or on connectors to third-party model providers whose own APIs continue to evolve.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T13:17:18.448Z"
+      "generatedAt": "2026-09-05T13:17:18.448Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Python版1.44.0で、エージェントフレームワークとコネクタは何が変わったの？",
+          "en": "What changed in the agent framework and connectors in Python 1.44.0?"
+        },
+        {
+          "s": "b",
+          "ja": "改善とバグ修正が加わり、安定性が向上したと説明されているよ。依存ライブラリの更新も並んでいる。",
+          "en": "The release describes bug fixes and improvements that increase stability. It also lists several dependency updates."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、Semantic KernelでAIアプリを作る開発者が、より安定して組み立てやすくなる更新なのかな？",
+          "en": "So is this meant to help developers build AI apps with Semantic Kernel more reliably?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、そうした開発者向けの安定性向上が中心だよ。AIオーケストレーションSDKの土台を整える更新と読めるね。",
+          "en": "Yes, the focus here is greater stability for those developers. It reads as an update that strengthens the foundation of the AI orchestration SDK."
+        },
+        {
+          "s": "a",
+          "ja": "大きな新機能というより、エージェントや接続部分を少しずつ安定させた版なんだね。",
+          "en": "Got it—rather than a big new feature, it gradually improves stability around agents and connections."
+        },
+        {
+          "s": "b",
+          "ja": "うん。段階的な改善と修正が中心なので、大規模な機能追加として受け取らないのがよさそうだね。",
+          "en": "Right. Since it centers on incremental fixes and improvements, it’s better not to read it as a major feature release."
+        }
+      ]
     },
     "acd120c358fe3f86": {
       "bodyJa": "## 巨大出力の再取得\n\nCline SDK v0.0.89では、サイズが大きいMCPおよびComposioのツール出力を、セッション内キャッシュから完全に再取得できるようになった。大きな結果を一度に渡すのではなく、必要な範囲を行単位で読み進められる仕組みである。\n\n## セッション内キャッシュ\n\nCoreは巨大な出力をセッションごとのインメモリキャッシュに保存し、モデルにはサイズを制限したプレビューと「cline://cache/...」形式のURIを送る。read_filesはこのURIを使い、行範囲を指定してキャッシュ内容をページ単位で取得できる。これにより、モデルはプレビューを確認したうえで、必要な部分を選んで読み込める。\n\nキャッシュ容量の上限はセッション当たり16 MiB。各エントリーは、読み取りがない状態でモデルの反復が5回続くと期限切れになる。元の出力は履歴とツールイベントに残る。\n\n## カスタムツール\n\nカスタムツールも、createToolでresultPolicyに「cache-oversized」を指定することで、この巨大出力のキャッシュ処理を利用できる。MCPやComposioだけでなく、独自ツールから返される大きな結果にも、同じ取得方式を明示的に適用できる。\n\n## カスタムプロバイダー\n\nproviders.jsonまたはmodels.jsonで設定したカスタムプロバイダーは、エージェント経路で動作するようになった。従来は選択画面に表示されても、「Unknown or disabled provider \"<id>\"」として失敗していた。createAgentModelFromConfigがゲートウェイに組み込みプロバイダーだけを登録していたことが原因と説明されている。今回の変更により、設定済みの独自プロバイダーをエージェント経路で利用できる。",
@@ -11975,6 +12071,158 @@
       "bodyEn": "## UE5.8 Toolset\n\nUE5.8 expands the Toolset available for AI agents, making it possible to connect AI tools such as Claude Code and Cursor to the editor through MCP. The article takes a hands-on approach, using actual instruction examples to organize what the expanded Toolset can do.\n\n## MCP support\n\nMCP, or Model Context Protocol, support was introduced with UE5.8. At the initial release, roughly 14 Toolsets were available. The formal UE5.8 release increases that selection to 26 Toolsets and adds the AllToolsets meta-plugin.\n\nThe expanded configuration includes Toolsets for PCG, Niagara, and UMG. The article examines these additions in the context of connecting AI agents to Unreal Engine and automating editor operations.\n\n## AllToolsets\n\nThe walkthrough starts by enabling AllToolsets. This meta-plugin sits alongside the 26 individual Toolsets and provides the starting point for exploring the expanded set of AI-agent capabilities described in the article.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:04:25.052Z"
+    },
+    "26af4a3e40494144": {
+      "bodyJa": "## v1.22.0-pre\n\nZedエディターのv1.22.0-preでは、複数のAIモデルに対するBYOK対応や、サブエージェントごとのモデル選択、自動圧縮などが追加された。モデルの利用方法とサブエージェントの構成を、より細かく制御できるリリースとなっている。\n\n## BYOK対応\n\nOpenAI APIキーを使ったBYOKでは、GPT-6 Astra、GPT-6 Sol、GPT-6 Lunaが新たにサポートされた。Anthropic APIキーでは、Claude Opus 5.5を利用できるようになった。これにより、対象モデルをそれぞれのAPIキーで利用する構成が可能になる。\n\nまた、Grok 4.7がSuperGrokおよびxAIのプロバイダーに追加され、両プロバイダーの推奨デフォルトに設定された。OpenCodeのモデルについては、動的に取得される仕組みが盛り込まれている。\n\n## モデル指定\n\nspawn_agentには、任意のmodelパラメーターが追加された。新しいサブエージェントを生成する呼び出しごとにモデルを選択でき、設定済みのサブエージェント用モデルを使う方法や、親エージェントのモデルを継承する方法とは別に指定できる。\n\n選択中のモデルは、生成されたサブエージェントのカード上に表示される。どのモデルで動作しているかを画面上で確認できるため、呼び出し単位の指定と表示が対応する形になる。\n\n## 自動圧縮\n\nサブエージェントには自動圧縮も追加された。今回の更新では、呼び出し時のモデル選択、自動圧縮、OpenCodeモデルの動的取得が組み合わされ、AI開発環境の構成を柔軟に調整できるとされている。",
+      "bodyEn": "## This week's release\n\nZed v1.22.0-pre expands its AI configuration options with additional bring-your-own-key support, per-call model selection for new subagents, automatic subagent compaction, and dynamically fetched OpenCode models. Together, these changes give AI users finer control over model access and subagent behavior.\n\n## Added BYOK support\n\nThe release adds BYOK support for Claude Opus 5.5 through an Anthropic API key. It also adds BYOK support for three OpenAI models through an OpenAI API key: GPT-6 Astra, GPT-6 Sol, and GPT-6 Luna.\n\nThese additions allow the listed models to be used with the corresponding provider API keys. The release therefore broadens the set of models available through Zed’s BYOK configuration while retaining separate key requirements for Anthropic and OpenAI models.\n\nGrok 4.7 has also been added to the SuperGrok and xAI providers. The release makes Grok 4.7 the recommended default for those providers.\n\n## On-the-fly model selection\n\nThe spawn_agent function now has an optional model parameter. This parameter can select a model specifically for an individual spawn rather than always using the configured subagent model or inheriting the parent model.\n\nWhen a model is selected for that spawn, the active model is displayed in the subagent’s card. This makes the model choice visible while allowing individual subagent calls to use a different model where specified.\n\n## Automatic subagent compaction\n\nZed v1.22.0-pre also adds automatic subagent compaction. Alongside per-call model choice, this changes how subagents can be configured and managed during AI-assisted work.\n\nOpenCode models are now fetched dynamically as well. The release combines that dynamic model fetching with expanded BYOK options, visible active-model information, and more flexible model selection for newly spawned agents.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIを使ってコードを書くとき、普段の作業は何が変わるの？モデル選びが細かくなるのかな。",
+          "en": "When I use AI for coding, what changes in my day-to-day work? Do I get more control over which model handles each task?"
+        },
+        {
+          "s": "b",
+          "ja": "この版では、自分のAPIキーを使うBYOKがClaude Opus 5.5とGPT-6各種に対応し、サブエージェントごとにもモデルを選べるよ。",
+          "en": "This release adds BYOK—using your own API key—for Claude Opus 5.5 and several GPT-6 models. You can also choose a model for each new subagent."
+        },
+        {
+          "s": "a",
+          "ja": "前はサブエージェントごとに選べなかったの？親と同じモデルになる感じ？",
+          "en": "Couldn’t I choose per subagent before? Did it just use the same model as the parent?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は設定済みのサブエージェント用モデルか、親のモデルを引き継いでいたよ。今回はspawn_agentの呼び出しごとに指定できる。",
+          "en": "Previously, spawn_agent used the configured subagent model or inherited the parent model. Now an optional parameter lets each call select its own model."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ一番の収穫は、作業ごとに使うAIを分けやすくなって、構成を細かく調整できることだね。",
+          "en": "So the big takeaway is that it’s easier to assign different AI models to different tasks and tune the setup more precisely."
+        },
+        {
+          "s": "b",
+          "ja": "うん。選んだモデルはカードに表示され、サブエージェントの自動圧縮やOpenCodeモデルの動的取得も加わっているよ。",
+          "en": "Yes. The active model appears on its card, and the release also adds automatic subagent compaction and dynamically fetched OpenCode models."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:38:29.411Z"
+    },
+    "2835af2044a289da": {
+      "bodyJa": "## 1.6.5リリース\n\nlangchain-core 1.6.5が、2026年9月24日に公開された。1.6.4から1.6.5へ進むパッチリリースであり、利用者が依存関係の更新要否を判断する際に確認できる版情報となる。\n\n## 1.6.4から更新\n\n今回示されている変更は、直前のlangchain-core 1.6.4を基準とした1.6.5への更新だ。公開された記載には「Changes since langchain-core==1.6.4」とあり、続いて「release(core): 1.6.5（#40816）」が示されている。確認できる中心的な情報は、対象となるlangchain-coreと更新前後の版番号である。\n\n## 個別の変更\n\n個別の機能追加や修正項目は示されていない。そのため、1.6.5という新しい版が公開されたことは確認できる一方、どの機能が追加されたのか、どの挙動が修正されたのかといった具体的な変更内容までは明らかにされていない。パッチリリースという位置付けを超えて、変更の範囲や内容を細分化して説明できる情報はない。\n\n## 依存関係の更新\n\n利用者にとって直接確認できるのは、langchain-coreの依存関係を1.6.5へ更新するか検討するための版情報だ。個別項目が列挙されていないため、リリース情報は更新の存在と版の移行を把握する手掛かりとして扱える。なお、このコミットはGitHub.comで作成され、GitHubの検証済み署名が付いていると表示されている。",
+      "bodyEn": "## langchain-core 1.6.5\n\nlangchain-core has advanced from version 1.6.4 to 1.6.5 in a patch release published on September 24, 2026. The release matters primarily as version information that users can consult when deciding whether their dependencies should be updated.\n\nThe published release is identified as “release(core): 1.6.5” and is associated with #40816.\n\n## Changes since langchain-core==1.6.4\n\nThe release information explicitly presents version 1.6.5 as the change following langchain-core 1.6.4. This establishes the version progression from 1.6.4 to 1.6.5, rather than describing a separate product or a newly introduced package.\n\nThe available information classifies the update as a patch release. It does not provide a breakdown of changes beyond the version update itself.\n\n## No individual changes detailed\n\nNo individual feature additions or fixes are specified for langchain-core 1.6.5. As a result, the release information does not identify particular behavior changes, resolved issues, or newly added capabilities.\n\nThe source page also displayed loading errors and requests to reload the page. It included session-related notices about signing in, signing out, or switching accounts in another tab or window. These notices do not provide additional details about what changed between versions 1.6.4 and 1.6.5.\n\n## Update dependencies\n\nUsers can use the confirmed version progression when assessing whether to update dependencies that reference langchain-core. The information available supports identifying 1.6.5 as the patch release after 1.6.4, but it does not provide individual change details to inform that assessment further.\n\nThe source also states that the associated commit was created on GitHub.com and signed with GitHub’s verified signature.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でlangchain-coreを使っていたら、普段の作業は何が変わるの？",
+          "en": "If I use langchain-core at work, what changes in my day-to-day tasks?"
+        },
+        {
+          "s": "b",
+          "ja": "今回は1.6.4から1.6.5へのパッチリリースだよ。個別の追加や修正は示されていないので、具体的な変化までは分からないんだ。",
+          "en": "This is a patch release from 1.6.4 to 1.6.5. No specific additions or fixes are listed, so we can’t tell what changes in daily use."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、前の1.6.4ではできなかったことが増えたのかも分からない？",
+          "en": "So we don’t know whether it can do anything that 1.6.4 couldn’t?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、確認できる違いは版が1.6.5になったことまで。新機能や個別の修正内容は公開情報からは判断できないよ。",
+          "en": "Right. The confirmed difference is the version moving to 1.6.5. The available details don’t identify new features or individual fixes."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、新機能を探すより、依存関係を更新するか考えるための版情報だと分かったことかな。",
+          "en": "My main takeaway is that this is version information for deciding whether to update a dependency, not a list of new features."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、自分の環境で依存関係を1.6.5へ更新する必要があるかに注目するとよさそうだよ。",
+          "en": "Exactly. Next, focus on whether your own environment needs its langchain-core dependency updated to 1.6.5."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:40:18.809Z"
+    },
+    "b4cbef6dbf68e7c5": {
+      "bodyJa": "## ローカルモデル\n\nCline CLI v3.0.65では、ローカルモデルを使った長時間セッションで、回答が出力トークンの上限に達した際の処理が改善された。回答途中で実行全体が失敗する問題を抑えるため、会話の圧縮と再試行が追加されている。\n\nllama.cpp、Ollama、LM Studioでは、残っているコンテキスト量や設定された出力予算に応じて生成量が制限される。このため、テキストのみの回答でも途中で切れ、実行が失敗する場合があった。CLIは上限到達時に会話を圧縮し、そのターンを1回だけ再試行する。\n\nこの再試行でも解決しなければ、既存の簡潔な回答による再試行処理へ移る。いずれの方法でも完了できなかった場合には、途中まで生成された回答が保持される。\n\n## Hub起動\n\nHubを起動できなかった場合のエラー表示も改められた。従来の「No compatible hub runtime is available」という表示だけではなく、起動に失敗した理由を示すようになった。\n\n新たに起動したHubを待つ時間は、従来の8秒から最大15秒へ延長された。Windowsでは、インストールまたは更新後の初回起動に8〜13秒かかる場合があるため、この待機時間によって起動完了を待てるようにしている。\n\n## セッション再開\n\nセッション内で表示されたエラーメッセージは、再開後も保持されるようになった。実行中に発生して表示された失敗内容を、セッションを再開した後にも確認できる。",
+      "bodyEn": "## Long sessions on local models\n\nCline CLI v3.0.65 addresses cases in which long sessions using local models can stop in the middle of an answer. The change matters because reaching the output-token limit could previously cut off a text-only reply and cause the run to fail.\n\nllama.cpp, Ollama, and LM Studio limit generation according to the remaining context and the configured output budget. When that available capacity is exhausted, a response may end before it is complete.\n\n## Compacts the conversation and retries\n\nWhen a local model reaches its output limit, the CLI now compacts the conversation and retries the same turn once. This gives the model another opportunity to complete the response with a reduced conversation context.\n\nIf that retry does not resolve the problem, the CLI falls back to its existing concise-retry recovery. If neither approach helps, the partial answer is retained rather than discarded. The recovery sequence therefore preserves the response already generated while attempting two ways to complete the interrupted turn.\n\n## When the hub fails\n\nHub startup handling has also changed. When the hub cannot start, the CLI now reports the reason for the failure instead of showing only “No compatible hub runtime is available.”\n\nThe CLI also allows more time for a newly started hub to become available. Its startup wait has increased from 8 seconds to as much as 15 seconds. This accommodates the first launch after an install or update, which can take between 8 and 13 seconds on Windows.\n\n## Error messages in a session\n\nError messages shown during a session are now retained when that session is resumed. A failure displayed during the original run therefore remains available after resuming, rather than disappearing with the end of the initial session.\n\nTogether, these changes focus on preserving information and recovery state: partial local-model answers can survive unsuccessful retries, hub failures provide a reason, startup receives additional time, and session errors remain visible after resumption.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Hubの待ち時間が8秒から15秒に？ 7秒の差って、けっこう大きいの？",
+          "en": "The Hub wait jumped from 8 to 15 seconds? Does that extra 7 seconds really matter?"
+        },
+        {
+          "s": "b",
+          "ja": "Windowsでは、インストールや更新後の初回起動に8〜13秒かかる場合があるんだ。15秒なら待ち切れる可能性が上がるね。",
+          "en": "On Windows, the first launch after an install or update can take 8–13 seconds. A 15-second wait is more likely to cover it."
+        },
+        {
+          "s": "a",
+          "ja": "会話を「圧縮する」って、ぎゅっと短くすること？",
+          "en": "When it “compacts” a conversation, does that mean squeezing it into a shorter form?"
+        },
+        {
+          "s": "b",
+          "ja": "そう、長くなった会話を短くまとめるイメージだよ。出力上限に達したとき、圧縮して同じターンを再試行するんだ。",
+          "en": "Yes—think of it as condensing a long conversation. When the output limit is reached, the CLI compacts it and retries the same turn."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、ローカルモデルで長く相談するときに使いたいな。途中で答えが切れても続けられるのかな？",
+          "en": "I’d use this for long chats with a local model. Could it keep going even if an answer gets cut off?"
+        },
+        {
+          "s": "b",
+          "ja": "再試行は1回で、その後は既存の短い再試行に移るよ。それでも解決しなければ、途中までの回答は残る。",
+          "en": "It retries once, then falls back to the existing concise retry. If that still doesn’t help, the partial answer is preserved."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:41:27.464Z"
+    },
+    "36d0b0127456d57d": {
+      "bodyJa": "## ルール共有\n\nCursorとClaude Codeを同じrepoで併用する場合、プロジェクトルールをsymlinkで共有すると、見かけ上は似ている両者の形式差によって挙動が静かに壊れる。安全に管理するには、1つのsource of truthから各ツール向けのファイルを生成し、同期する方法が提案されている。\n\n## 2つの形式\n\nどちらも、YAML frontmatter付きmarkdownをプロジェクト内のディレクトリに置き、永続的な指示を常時、またはファイルパスに応じてAIへ読み込ませる形式を採る。Cursorでは.cursor/rules/*.mdcを使用し、globsでextensions/app/**/*.{ts,tsx,js}のように適用範囲を指定できる。ルールの種別は、3つのフィールドの組み合わせで決まる。\n\nClaude Codeでは.claude/rules/*.mdを使用する。pathsのリストを持つルールは、マッチするファイルを読んだときだけロードされる。pathsを持たないルールは毎セッション常時ロードされ、.claude/CLAUDE.mdと同じ優先度になる。Cursorにある、descriptionからagentが判断するモードに相当する仕組みはない。\n\n## symlinkの問題\n\n.claude/rulesを.cursor/rulesへsymlinkで結び、1つの物理ディレクトリを両ツールから参照させても共有は成立しない。まず拡張子の扱いが異なるためだ。Cursorのルールローダーは.mdcだけを読み、通常の.mdは無視する。一方、Claude Codeは.mdを探し、.mdcを無視する。\n\n## 生成と同期\n\n同一ファイル群をそのまま参照させるのではなく、共通のsource of truthを用意し、小さなスクリプトでCursor用とClaude Code用の両形式を生成・同期する。これにより、拡張子やルールモデルの違いを保ったまま、指示内容を一元管理できる。",
+      "bodyEn": "## Cursor and Claude Code\n\nCursor and Claude Code each support project rule files when used in the same repository. These files hold persistent instructions in Markdown and can be loaded either continuously or according to file paths, making their compatibility important when maintaining instructions for both tools.\n\nAlthough their rule systems initially appear compatible, their formats differ in ways that can cause silent breakage. Sharing one physical rules directory through a symlink therefore does not provide a reliable common configuration.\n\n## YAML frontmatter\n\nBoth systems place Markdown files with YAML frontmatter in project directories. Rules can apply continuously or be scoped with glob patterns, but the tools represent and interpret that behavior differently.\n\nCursor reads rules from .cursor/rules/*.mdc. A rule can use a globs value such as extensions/app/**/*.{ts,tsx,js}, and Cursor determines the rule’s type through a combination of three fields. It also has a mode in which the agent makes a decision based on the description.\n\nClaude Code reads rules from .claude/rules/*.md. Its model is simpler: a rule containing a paths list is loaded only when a matching file is read. A rule without paths is loaded during every session, with the same priority as .claude/CLAUDE.md. Claude Code has no equivalent to Cursor’s description-based agent decision mode.\n\n## Symlinks cause breakage\n\nA setup such as linking .cursor/rules to .claude/rules may seem to let both tools use one directory. However, the arrangement breaks along independent compatibility axes.\n\nOne explicit incompatibility is the filename extension. Cursor’s rule loader reads only .mdc files and ignores ordinary .md files. Claude Code looks for .md files and ignores .mdc files. Consequently, a shared directory cannot make one unchanged set of files visible to both rule loaders.\n\n## Generate and sync\n\nThe proposed alternative is to maintain one source of truth and use a small script to generate both required formats. The generated rules can then be synchronized into the directories and extensions expected by each tool.\n\nThis approach avoids relying on superficial similarities between the two rule systems. It preserves separate Cursor and Claude Code outputs while allowing their shared instructions to be managed from one source.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "同じrepoでCursorとClaude Codeを使う仕事だと、普段のルール管理は何が変わるの？ symlinkでつなげば終わりじゃないのかな。",
+          "en": "When using Cursor and Claude Code in the same repo, what changes in everyday rule management? Can’t we just connect them with a symlink?"
+        },
+        {
+          "s": "b",
+          "ja": "symlink共有ではなく、1つの元データから各形式のルールをスクリプトで生成・同期する形になるよ。挙動が壊れるのを避ける提案なんだ。",
+          "en": "The proposed approach is to generate and sync each tool’s rule format from one source using a script, rather than sharing files through a symlink. That avoids the unexpected breakage described."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ 見た目が似ているなら、そのまま共有できそうに思えるけど。",
+          "en": "Was that not possible before? If the formats look similar, I’d expect direct sharing to work."
+        },
+        {
+          "s": "b",
+          "ja": "実は形式が少し違うんだ。Cursorは.mdcだけを読み、Claude Codeは.mdを探すので、symlinkで同じ場所を見せても互いのファイルを無視するよ。",
+          "en": "The formats differ in small but important ways. Cursor reads only .mdc files, while Claude Code looks for .md, so each ignores the other format even through a shared symlink."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。1か所で管理しつつ、同じファイルを無理に共有せず、それぞれ向けに生成するのが収穫なんだね。",
+          "en": "Got it. The key is to manage rules from one place without forcing both tools to share the exact same files, then generate the right version for each."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、常時適用とファイル範囲の指定が、生成後の各形式で正しく表現されるかに注目したいね。",
+          "en": "Exactly. Next, watch whether always-on rules and file-scoped rules are represented correctly in each generated format."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:42:46.616Z"
     }
   }
 }

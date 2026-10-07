@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T14:31:29.088Z",
-  "count": 306,
+  "generatedAt": "2026-10-07T14:54:45.890Z",
+  "count": 313,
   "bodies": {
     "d9b0da9f34ed444d": {
       "bodyJa": "Metaは、Ray-Ban MetaやOakley Meta VanguardsといったAIスマートグラスに搭載する超細型バッテリーの設計・製造プロセスを、自社のエンジニアリングブログで明らかにした。カメラやスピーカー、AI処理、さらにはディスプレイまでを動かすための電力を、メガネのテンプル（つる）という極めて限られた空間に収める技術は、ウェアラブル端末の使い勝手を左右する重要な要素となっている。\n\nスマートグラスが抱える最大の制約は、形状そのものにある。一般的なスマートフォンが平たく比較的大きな空間を確保できるのに対し、メガネのつるは細く湾曲しており、装着感や重量バランスを損なわずに電池を組み込む必要がある。Metaによれば、こうした条件下では従来型の角張ったセルをそのまま流用することが難しく、細長い形状に最適化したバッテリーをゼロから設計する必要があったとされる。\n\nカメラ撮影やオンデバイスでのAI処理、音声アシスタントの応答といった機能は、瞬間的に大きな電力を要求する。限られた容量の中でこれらをこなしつつ、一日を通じた実用的な駆動時間を確保するには、セルの素材選定から内部構造、製造工程までを一体で見直すアプローチが求められたと見られる。同社は安全性や発熱、繰り返し充電による劣化への対応も、設計段階から織り込んでいると説明している。\n\nスマートグラス分野では、Metaのほかにもさまざまな企業が参入を模索しており、ディスプレイ搭載モデルの登場によって消費電力はさらに増す傾向にある。バッテリー技術はカメラやチップの性能と並び、製品の差別化を左右する基盤になりつつある。小型化が進むほど熱設計や安全マージンの確保は難しくなるため、各社にとって電源まわりの作り込みは今後いっそう重要性を増す可能性がある。\n\n今回の解説は、完成品の見た目からは分かりにくいハードウェア開発の舞台裏を示すものだ。Metaは近年、Ray-Banブランドとの協業を通じてスマートグラスのラインアップを広げており、こうした基盤技術の積み重ねが、より高機能な次世代モデルへの布石になっていくと考えられる。エンジニアリング情報の公開は、同領域における技術的な課題と方向性を理解するうえでの手がかりにもなりそうだ。",
@@ -11405,6 +11405,240 @@
       "bodyEn": "## Unity MCP and Codex CLI\n\nThis article explains how to connect the official Unity MCP to Codex CLI so an AI agent can operate Unity directly. The setup matters because a connection may appear approved, yet later be rejected with a “Connection revoked” error.\n\n## Unity Editor Package Manager\n\nThe configuration uses Codex CLI to call the Unity MCP server. On the Unity side, preparation begins in the Unity Editor’s Package Manager, where the package is installed by specifying its technical name. According to the source, the installation itself was not especially difficult.\n\n## Connection revoked\n\nThe main troubleshooting focus is what happens after connection: despite approval apparently having just been granted, the connection is rejected. The article records the installation procedure alongside the results of investigating this behavior. According to the summary, it identifies the causes of the “Connection revoked” error and provides practical troubleshooting steps and countermeasures for integrating AI agents into Unity workflows.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:05:14.795Z"
+    },
+    "ee674aa9b8fa559a": {
+      "bodyJa": "## Aboutページ\n\nCline Desktop v0.0.37では、更新操作やリリース履歴をまとめて確認できる新しいAboutページがSettingsに追加された。更新内容の把握から問題報告までを一つの画面に集約した点が主な変更となる。\n\nAboutページには、現在使用しているバージョンとチャンネルが表示される。「Check for updates」と「Restart to update」の各ボタンも用意され、更新の確認と、更新を適用するための再起動を実行できる。さらに、最近のバージョンのリリースノートが並び、各GitHubリリースと完全な変更履歴へのリンクも掲載される。「Report an issue」も同じページから利用可能だ。\n\n## What's new\n\n更新後には、一度だけ「What's new」ダイアログが表示され、最近追加された機能を確認できる。最初のダイアログでは、SSH remotes、worktrees、composer内のpull request status、parallel sub-agentsが取り上げられる。\n\nこのダイアログを再び確認したい場合は、Aboutページの「Highlights」を使用する。更新直後に閉じた場合でも、同じ内容へ戻れる構成となっている。\n\n## 診断情報\n\nmacOSでは、「Help → Export Diagnostics…」から診断情報の書き出しを直接開けるようになった。診断情報を書き出すためにSettings内を探す必要がなくなり、メニューから直接操作できる。Aboutページの「Report an issue」とあわせ、問題報告に関係する操作へアクセスしやすくなった。\n\n## Amazon Bedrock\n\nAmazon Bedrockでは、推論プロファイル経由で利用するOpenAIモデルに関する不具合が修正された。対象には「us.openai.…」および「global.openai.…」が含まれる。reasoning effortの利用時に「Unknown parameter: 'reasoningConfig'」というエラーで失敗する問題が解消されている。",
+      "bodyEn": "## About page\n\nCline Desktop v0.0.37 adds a central place for update controls, release history, and support options. The change matters because users can check their installed version, review recent changes, update the application, and report problems from the same page.\n\nThe new About page in Settings displays the current version and channel. It includes Check for updates and Restart to update buttons, bringing both update discovery and the restart required to complete an update into that page.\n\nRecent release notes are also listed there. Each entry links to its corresponding GitHub release, while a separate link provides access to the full changelog. Report an issue is available from the About page as well.\n\n## What's new\n\nAfter an update, a one-time What's new dialog summarizes recent features. The first dialog covers SSH remotes, worktrees, pull request status in the composer, and parallel sub-agents.\n\nAlthough the dialog is presented once after an update, its contents remain accessible. Users can open Highlights on the About page to see the information again.\n\n## Export Diagnostics\n\nOn macOS, the Help menu now provides a more direct route to diagnostics export. Choosing Help → Export Diagnostics… opens the diagnostics export directly.\n\nThis removes the previous need to locate the export option within Settings. Together with Report an issue on the About page, the change makes the relevant diagnostic and reporting actions easier to reach.\n\n## Amazon Bedrock\n\nThe release also addresses an Amazon Bedrock failure involving OpenAI models reached through inference profiles. Profiles using us.openai.… or global.openai.… no longer fail with the message “Unknown parameter: 'reasoningConfig'” when reasoning effort is involved.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "更新の操作と履歴がAboutページにまとまったんだね。これって大きいこと？",
+          "en": "Update controls and release history are now together on the About page. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "更新確認や再起動、最近のリリースノートを一か所で見られる変化だよ。変更を追いやすくなりそうだね。",
+          "en": "It puts update checks, restart controls, and recent release notes in one place. That should make changes easier to follow."
+        },
+        {
+          "s": "a",
+          "ja": "「診断情報の書き出し」って、何をするの？",
+          "en": "What does “export diagnostics” mean?"
+        },
+        {
+          "s": "b",
+          "ja": "不具合を調べるための情報を外に出すことだよ。macOSではHelpメニューから直接開けるようになったんだ。",
+          "en": "It means exporting information used to investigate problems. On macOS, you can now open that export directly from the Help menu."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら調子が悪いとき、まず診断情報を書き出して、それから問題報告を開くかな。",
+          "en": "If something went wrong, I’d export the diagnostics first, then open the issue report."
+        },
+        {
+          "s": "b",
+          "ja": "その流れで使えそうだね。ただ、診断情報を直接書き出せる変更はmacOS向けで、問題報告はAboutページにあるよ。",
+          "en": "That workflow sounds practical. Just note that direct diagnostics export is for macOS, while the issue-report option is on the About page."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:38:40.439Z"
+    },
+    "11814c13f8eb0837": {
+      "bodyJa": "固定された画面に作業を合わせるのではなく、望むワークフローに沿ってインターフェースを形作れるのが、GitHub Copilot appの「キャンバス」です。利用者とエージェントが同じカスタム画面を双方向に操作し、用途に合った作業環境を構成できます。\n\n## キャンバス\n\nキャンバスは「canvas extension」とも呼ばれ、利用者とエージェントが共有するカスタマイズ可能なインターフェースです。カンバンボード、課題整理用のボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などとして構成できます。決められた種類の画面に作業を当てはめるのではなく、実際の作業方法に合わせてUIを形作るという考え方です。独自の作業手順を効率化したいチームに役立つとされています。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できるため、エージェントは作業を進めながら画面の内容を更新できます。一方、利用者もボタン、カード、フィルターなどの操作要素を使って変更を加えられます。エージェントからの更新を表示するだけの画面ではなく、双方が同じ画面に働きかけられる仕組みです。これは、共有されたライブホワイトボードを一緒に使うような操作感として説明されています。\n\n## 作成方法\n\nキャンバスを作る際に、利用者がコードを書いたり、画面を手作業でデザインしたりする必要はありません。まずエージェントのセッションを開き、「/create-canvas」スキルを入力します。そのうえで、作りたい画面や実現したい内容を平易な英語で説明します。これにより、目的とするワークフローを起点として、必要なインターフェースを構成できます。",
+      "bodyEn": "## GitHub Copilot app canvases\n\nCanvases in the GitHub Copilot app offer a way to build an interface around the workflow a user wants, rather than fitting that work into a fixed set of screens. This matters for teams that want to tailor custom workflows to their own needs.\n\nA canvas, also called a canvas extension, is a customizable interface shared by the user and the agent. Its structure can reflect the work being performed instead of requiring the user to adapt that work to a predetermined interface.\n\n## A customizable interface\n\nA canvas can take several forms, including a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet. These options allow the interface to be shaped according to how the user or team works.\n\nThe canvas is bidirectional. The agent can update the interface while it works, while the user can also make changes through buttons, cards, filters, and other controls. The result is comparable to using a live shared whiteboard: both sides interact with the same customizable space rather than working through separate views.\n\nThis shared editing model means that a canvas is not simply a static display of information. It is an interface in which the agent’s updates and the user’s direct actions can both affect the workflow.\n\n## Create a canvas\n\nCreating a canvas does not require coding or manual interface design. The user starts by opening an agent session and entering the /create-canvas skill.\n\nThe next step is to describe the desired canvas in plain English. That description can specify the workflow and the kind of interface needed, such as a board, checklist, dashboard, form, or spreadsheet. The GitHub Copilot app then uses that request to create a canvas shaped around the described work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "キャンバスって、どうして人とエージェントの両方が同じ画面を動かせるの？",
+          "en": "How can both a person and the agent work with the same canvas?"
+        },
+        {
+          "s": "b",
+          "ja": "双方向の共有画面だから、エージェントが更新しつつ、人もボタンやカード、フィルターで変更できるんだ。",
+          "en": "It’s a two-way shared interface: the agent can update it, while people make changes with buttons, cards, filters, and other controls."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、決まった画面に作業を合わせたくないチームが、自分たち向けの手順を作れるってこと？",
+          "en": "So teams that don’t want to fit their work into fixed screens can shape a workflow around their own needs?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。カンバンや課題整理、リリース確認、表計算などを用途に合わせ、独自の作業手順を効率化できる。",
+          "en": "Yes. Teams can tailor kanban boards, issue triage, release checklists, spreadsheets, and more to streamline their own workflows."
+        },
+        {
+          "s": "a",
+          "ja": "作業に画面を合わせて、人とエージェントで一緒に更新できるんだね。作るのもコード不要なんだ。",
+          "en": "Got it—the interface follows the work, and people and agents update it together. And creating one doesn’t require coding."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただし作成時は、エージェントのセッションで「/create-canvas」を入力し、欲しいものを平易な英語で説明する流れだよ。",
+          "en": "Right. One detail: creation starts in an agent session with /create-canvas, followed by a plain-English description of what you want."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:39:00.023Z"
+    },
+    "96ef50bfed738de0": {
+      "bodyJa": "## 1.6.3リリース\n\nlangchain-fireworks 1.6.3が、2026年9月25日に公開された。前版の1.6.2から更新されたパッチリリースであり、依存関係を固定したり、更新履歴を追跡したりする際の明確な基準となるバージョンだ。\n\n公開された変更記録には「release(fireworks): 1.6.3」とあり、1.6.2以降の更新として示されている。対応する記録には「#40834」も付されている。\n\n## 1.6.2から更新\n\n今回の位置付けは、langchain-fireworksを1.6.2から1.6.3へ進めるパッチリリースである。バージョン番号によって更新前後を明確に区別できるため、利用者は採用している版を1.6.3として固定し、管理対象を特定できる。\n\nまた、更新履歴を確認する場合も、1.6.2と1.6.3を境界として追跡できる。どの時点の版を利用しているか、どのリリースまで更新したかを記録するための基準になる。\n\n## 変更記録\n\n変更記録には、個別機能に関する説明は掲載されていない。そのため、特定の機能追加や挙動変更、修正内容までを今回の記録から確認することはできない。1.6.3について明示されている中心的な内容は、1.6.2から更新されたパッチ版であることだ。\n\nコミットはGitHub.com上で作成され、GitHubの検証済み署名で署名されたものとして表示されている。一方、ページには読み込み時のエラーと再読み込みを促す表示も含まれている。",
+      "bodyEn": "## langchain-fireworks 1.6.3\n\nlangchain-fireworks 1.6.3 has been released as a patch update from version 1.6.2. The release matters primarily because it establishes a clear package version that users can reference when pinning dependencies and tracking upgrades.\n\nThe release was published on September 25, 2026. Its record identifies the update as “release(fireworks): 1.6.3” under entry #40834.\n\n## Changes Since 1.6.2\n\nThe change record explicitly positions version 1.6.3 as the release following langchain-fireworks 1.6.2. However, it does not list individual features or provide details about specific changes included in the patch.\n\nAs a result, the release should be understood strictly as a versioned package update. There is no stated basis for attributing new functionality or any particular technical modification to version 1.6.3.\n\n## Dependency Pinning\n\nEven without a feature-level change list, the new version provides a defined reference for dependency pinning. Users who need to identify the package version in their dependency records can use 1.6.3 rather than treating the update as an unspecified revision.\n\nThe same version marker also supports upgrade tracking by distinguishing this patch release from 1.6.2. This makes the progression between the two recorded versions explicit, while leaving the nature of the underlying changes unstated.\n\n## Verified Signature\n\nThe associated commit was created on GitHub.com and signed with GitHub’s verified signature. The page also displayed loading and session-related messages, including prompts to reload after an error or after account activity in another tab or window.\n\nThose messages do not add technical details about the package update. The central release information remains that langchain-fireworks advanced from 1.6.2 to the 1.6.3 patch version, with no specific features listed.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "普段の開発では何が変わるの？ すぐ使い方が変わる更新なのかな。",
+          "en": "What changes in everyday development? Does this update change how people use it right away?"
+        },
+        {
+          "s": "b",
+          "ja": "今回は依存関係を1.6.3に固定でき、更新履歴を追う基準になるよ。個別機能の変更は記載されていないんだ。",
+          "en": "This release gives users version 1.6.3 for dependency pinning and upgrade tracking. No specific feature changes are listed."
+        },
+        {
+          "s": "a",
+          "ja": "前の1.6.2では、依存関係の固定や履歴の追跡ができなかったの？",
+          "en": "Couldn’t users pin dependencies or track updates with version 1.6.2?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとは書かれていないよ。確認できる違いは、1.6.2から1.6.3へ進んだパッチリリースという点だね。",
+          "en": "It doesn’t say those were impossible before. The confirmed difference is simply that the patch release moved from 1.6.2 to 1.6.3."
+        },
+        {
+          "s": "a",
+          "ja": "つまり一番の収穫は、新機能よりも「どの版を使うか」を明確にできることなんだね。",
+          "en": "So the main takeaway isn’t a new feature—it’s having a clear version to use and track, right?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。更新時は1.6.3という版を基準にしつつ、個別機能の記載がない点も押さえておこう。",
+          "en": "Right. When updating, use 1.6.3 as the reference point while keeping in mind that no specific feature changes are listed."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:39:11.332Z"
+    },
+    "93db8516427cde42": {
+      "bodyJa": "## チャット中心\n\nLLMの登場から3年を経ても、主要な操作画面にはチャットが使われ続けている。ここで示されるのは、広く定着した対話形式を当然の前提とせず、扱うタスクに適したUIかどうかを問い直す視点だ。\n\nチャットでは、利用者がテキスト入力欄に言葉を記し、AIとの対話を重ねる。しかし、LLMを使う場面の多くで、常に会話そのものが目的になるとは限らない。著者は、チャットが誤ったUIである可能性があり、少なくとも大半の場面では最適とは限らないと提起している。\n\n## 用途に合うUI\n\n焦点は、AIを搭載することと、チャット欄を設けることを同一視しない点にある。対話欄に依存するのではなく、用途に合うUIを選ぶ必要があるという考え方だ。開発者にとっては、LLMとのやり取りを会話として設計する前に、利用者が実行したい内容を見極め、その内容に沿った操作方法を検討することが重要になる。\n\nこれはチャットを全面的に否定する主張ではない。チャットが適する場合を残しつつ、主要な操作画面として機械的に採用する前提へ疑問を投げかけている。\n\n## タスク指向\n\n著者は、AIにはタスク指向で設計した場合に大きな可能性があると述べている。中心に置くのは、AIと会話を続ける体験ではなく、特定のタスクに取り組む体験だ。\n\n最初の大規模なAI実装が一人称のチャットボットという形式だったことについて、著者は仕掛け的なものだったと評している。その形式をそのまま引き継ぐのではなく、個々の用途を起点に操作面を選ぶことが、AI体験を設計する際の判断軸として示されている。",
+      "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The article questions that default because developers designing AI experiences need to choose interactions that fit the task rather than automatically placing every capability behind a conversational interface.\n\nThe concern is not that chat can never work. Instead, it is that continued reliance on chat may turn one interface pattern into an assumption, even when another UI would be more appropriate for what the user is trying to accomplish.\n\n## Chat Is the Wrong UI\n\nThe author proposes that chat may be the wrong UI most of the time. This is framed as a challenge to the first large-scale implementation of AI as a first-person chatbot, which the author characterizes as something of a gimmick.\n\nThat distinction matters to the argument: an AI experience does not necessarily need to present itself as a conversation. The interface can instead be selected according to its intended use. The article therefore shifts the design question away from how to build another chat interaction and toward whether chat belongs in the interaction at all.\n\n## A Textarea Component\n\nThe article uses the textarea as an example of how deeply the chat model shapes interaction with AI. The author recounts asking AI, through a textarea, who first argued for a textarea component in the HTML specification. The anecdote highlights the circularity of using the same input pattern both as the default interface and as the means of examining that interface.\n\nThe broader point is not about the textarea itself, but about questioning an established interaction surface rather than treating it as inevitable.\n\n## Task Oriented\n\nThe article sees tremendous promise for AI when it is task oriented. In that model, the task guides the interaction design instead of requiring users to express every need through an open-ended conversation.\n\nNo single replacement interface is prescribed. The practical direction for developers is to evaluate each use case on its own terms and select a UI suited to that task, without assuming that an LLM must always appear as chat.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIの波が始まって3年たっても、中心の操作画面はまだチャットなんだね。これって大きいこと？",
+          "en": "Three years into this AI wave, chat is still the main way we interact with LLMs. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事は、チャットが当たり前という前提を問い直しているよ。用途に合う画面なら、AIの可能性をもっと生かせるかもしれないんだ。",
+          "en": "The piece questions why chat remains the default. It suggests AI may have more potential when the interface is shaped around the task."
+        },
+        {
+          "s": "a",
+          "ja": "「タスク指向」って、チャットとどう違うの？",
+          "en": "What does “task-oriented” mean? How is that different from chat?"
+        },
+        {
+          "s": "b",
+          "ja": "会話そのものより、やりたい作業を中心に設計する考え方だよ。入力欄だけに頼らず、用途に合う操作方法を選ぶイメージだね。",
+          "en": "It means designing around the job someone wants to complete, rather than around conversation itself. The interface can use whatever interaction best fits that task."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、やることが決まっているときは、毎回チャットせず、その作業に合う画面を使いたいな。",
+          "en": "If I already know what I want to do, I’d rather use a screen built for that job than explain it in chat every time."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただし、チャットがいつも不向きだと断定しているわけではないよ。作業ごとに合うUIを選ぶ、という受け止め方が現実的だね。",
+          "en": "Right. The author isn’t saying chat is always wrong, though. The practical takeaway is to choose the UI that fits each task."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:39:53.940Z"
+    },
+    "5e3f99e5cfa30c6f": {
+      "bodyJa": "Cline v4.1.21では、OpenAI互換プロバイダーの追加、モデルカタログの更新、ローカルモデル利用時の再試行処理などが行われた。プロバイダーを選ぶ際の既定モデルも一部変更されており、モデルを固定していない利用環境では確認が必要になる。\n\n## ai&を追加\n\n新たなプロバイダーとして、日本発のai&が追加された。ai&はOpenAI互換のエンドポイントで、オープンウェイトモデルを提供する。あわせてモデルカタログが刷新され、209プロバイダーにわたる6,386モデルが掲載される構成となった。\n\n## 既定モデルの変更\n\nモデルを明示的に固定していない19プロバイダーでは、解決される既定モデルが変更された。このうち11プロバイダーはClaude Opus 5.5へ切り替わり、GitHub CopilotとVertexも含まれる。該当するプロバイダーでモデルを固定せずに利用している場合、従来とは異なるモデルが既定で選ばれることになる。\n\n## ローカルモデル修正\n\nllama.cpp、Ollama、LM Studioでは、長い応答が出力トークン上限に達した際の処理が修正された。従来のようにタスクを終了するのではなく、会話を圧縮してから1回だけ再試行する。これらのサーバーは、設定した出力予算にかかわらず、残っているコンテキストに応じて生成量を制限するため、上限到達による作業中断を減らす変更となる。\n\n## js-yaml更新\n\njs-yamlの最低バージョンは4.3.2へ引き上げられた。これは、ルールおよびスキルのフロントマターを読み取るパーサーに関するセキュリティ修正を取り込むための変更と説明されている。",
+      "bodyEn": "## New provider: ai&\n\nCline v4.1.21 adds a provider, refreshes its model catalog, changes some resolved default models, and improves how long replies from local models are handled. The release matters for users who rely on unpinned defaults or local models, because their selected model or task behavior may change.\n\nThe new provider is ai&, an OpenAI-compatible endpoint serving open-weight models from Japan.\n\n## Refreshed model catalog\n\nThe refreshed catalog contains 6,386 models across 209 providers. Alongside that expansion, the resolved default model changes for 19 providers that do not pin a model.\n\nOf those 19 providers, 11 now resolve to Claude Opus 5.5. The affected group includes GitHub Copilot and Vertex. Users who access one of these providers without explicitly pinning a model should therefore expect a different default model after updating.\n\nThese changes concern providers without a pinned model. Pinning a model avoids relying on the provider’s resolved default.\n\n## Long replies on local models\n\nThe release also changes what happens when long replies on local models reach the output-token limit. This applies to llama.cpp, Ollama, and LM Studio.\n\nInstead of ending the task at that point, Cline now compacts the conversation and retries once. According to the release, these servers cap generation according to the context that remains, regardless of the output budget configured by the user. The single retry is intended to reduce task interruptions when a reply reaches that limit.\n\n## Minimum js-yaml version\n\nCline v4.1.21 raises the minimum js-yaml version to 4.3.2. This update picks up a security fix in the parser used to read rule and skill frontmatter.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ローカルモデルの長い返事が上限に達しても、そこで止まらなくなったの？",
+          "en": "If a local model’s long reply hits the limit, does it no longer stop there?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。llama.cpp、Ollama、LM Studioでは、会話を圧縮して1回だけ再試行するようになったよ。",
+          "en": "Right. With llama.cpp, Ollama, and LM Studio, Cline now compacts the conversation and retries once."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、ローカルモデルで長い作業をする人が、中断を減らせるかもしれないんだね？",
+          "en": "So people doing longer tasks with local models may run into fewer interruptions?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。残りのコンテキストで生成が制限されても、すぐ終了せず再試行できるのがポイントだよ。",
+          "en": "Yes. Even when generation is capped by the remaining context, the task can retry instead of ending immediately."
+        },
+        {
+          "s": "a",
+          "ja": "v4.1.21は、ローカル作業を続けやすくしつつ、モデルの選択肢も増やしたんだね。",
+          "en": "So v4.1.21 helps local tasks keep going while expanding the model choices."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、モデルを固定していない19プロバイダーでは既定モデルが変わるので、利用者は確認が必要だよ。",
+          "en": "One caution: the default model changes for 19 providers that don’t pin one, so users should check their setup."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:40:22.338Z"
+    },
+    "2720d05187170c6b": {
+      "bodyJa": "## 1.6.6公開\n\nlangchain-openai 1.6.6が、2026年9月24日に公開された。1.6.5に続く更新版であり、langchain-openaiを依存関係に含めている利用者が、バージョンを更新するか判断するためのリリースとなる。\n\n## 1.6.5から更新\n\nリリースページでは「Changes since langchain-openai==1.6.5」と示され、1.6.6が直前の1.6.5を基準とした更新であることを確認できる。あわせて「release(openai): 1.6.6」と記載され、参照番号として「#40800」が表示されている。一方で、具体的な変更項目や機能追加、修正内容を示す説明は掲載されていないため、確認できる中心的な情報はバージョンの更新そのものとなる。\n\n## 検証済み署名\n\n1.6.6のコミットはGitHub.com上で作成され、GitHubの検証済み署名が付いていると表示されている。リリースページには読み込み時のエラーや、ページを再読み込みするよう促す表示も含まれるほか、別のタブやウィンドウでのサインイン、サインアウト、アカウント切り替えに関する通知も示されている。利用者は公開されたバージョンと署名の表示を確認し、依存バージョンを1.6.6へ更新するかを判断できる。",
+      "bodyEn": "## langchain-openai 1.6.6\n\nlangchain-openai 1.6.6 was published on September 24, 2026, as an update following version 1.6.5. The release matters to users deciding whether to update the version specified in their dependencies.\n\nThe release is identified as “release(openai): 1.6.6” and is associated with #40800. Beyond identifying the new version and its relationship to the previous release, the available release text does not describe individual changes.\n\n## Changes since 1.6.5\n\nThe release page frames 1.6.6 as the version that follows langchain-openai 1.6.5. This establishes the relevant comparison point for users reviewing whether their dependency should move from 1.6.5 to 1.6.6.\n\nNo specific additions, fixes, behavioral changes, or other technical modifications are stated. The concrete release information is therefore limited to the version progression and the release identifier.\n\n## GitHub’s verified signature\n\nThe commit for the release was created on GitHub.com and signed with GitHub’s verified signature. This verified-signature status is part of the information presented alongside the release.\n\nUsers evaluating the dependency update can take that commit status into account together with the stated move from 1.6.5 to 1.6.6. The announcement does not provide further technical details about the commit’s contents.\n\n## Reload this page\n\nThe release page also displayed loading and session-related messages. It instructed users to reload after signing in, signing out, or switching accounts in another tab or window, and separately reported an error while loading.\n\nBecause parts of the page failed to load, the visible information centers on the 1.6.6 release label, its position after 1.6.5, #40800, and the GitHub-verified commit.",
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:40:53.968Z"
+    },
+    "fc5ae9be70c108b0": {
+      "bodyJa": "## Bugs4Q\n\n大規模言語モデル（LLM）を使って、バグを含むQiskit量子プログラムを自動修復し、その性能をBugs4Qで評価した研究である。量子ソフトウェア開発におけるLLMベースの修復について、可能性と現時点での限界を明らかにしている。\n\n## 評価の前提\n\nBugs4Qは、実在する量子プログラムの欠陥を収録した、広く利用されているベンチマークとされる。一方、その評価では、ベンチマークに付けられたラベルが引き続き有効であることと、生成された修正が対象環境で実行できることが前提になる。本研究は、LLMが修正案を生成できるかだけでなく、こうした評価上の前提も含めて検証している。\n\n## 67件の欠陥\n\n評価対象はBugs4Qの2つのバージョンで、重複を除いた実在のQiskit欠陥67件が含まれる。実行可能なテストが欠けている項目にはテストを追加し、各項目を実際に再実行できる形で扱った。これにより、ラベルだけに依存せず、生成された修正が対象となるQiskit環境で動作するかを確認する構成となっている。\n\n## 6つのリリース\n\n全項目は、固定した6つのQiskitリリースで再実行された。対象は0.25.0、0.45.0、1.0.0、1.1.1、2.0.0、2.3.1である。複数のリリースを明示して検証することで、Bugs4Qを用いたLLMの修復性能を、実行環境と結び付けて評価している。研究は、量子プログラムの自動修復にLLMを適用する可能性を示す一方、現在の修復には限界もあるとしている。",
+      "bodyEn": "## Repairing Qiskit Programs\n\nThe study evaluates large language models on automatically repairing buggy Qiskit quantum programs with the Bugs4Q benchmark. The work matters because it examines both the promise and the current limitations of LLM-based repair for quantum software, rather than treating generated fixes as correct without checking benchmark and execution conditions.\n\n## Bugs4Q Benchmark\n\nBugs4Q contains real quantum defects and is widely used for evaluating repair approaches. The researchers assess two versions of Bugs4Q that together contain 67 unique real Qiskit defects. Their evaluation addresses an important assumption in the benchmark: that its labels remain valid when the entries are evaluated.\n\nThe study also considers whether generated fixes actually execute in the intended target environment. This makes execution part of the evaluation rather than relying only on benchmark labels.\n\n## Executable Tests\n\nThe researchers add executable tests for Bugs4Q entries where such tests are missing. These tests support an evaluation of the defects and generated repairs through execution.\n\nBy combining the benchmark’s real Qiskit defects with executable tests, the study evaluates LLM-based repair against the programs themselves. Its methodology therefore covers both the benchmark labels and the ability to run fixes in the relevant Qiskit environment.\n\n## Six Pinned Qiskit Releases\n\nAll benchmark entries are rerun across six pinned Qiskit releases: 0.25.0, 0.45.0, 1.0.0, 1.1.1, 2.0.0, and 2.3.1. Using pinned releases provides defined target environments for checking the Bugs4Q entries and the execution of generated fixes.\n\nThrough this evaluation across two Bugs4Q versions, 67 unique defects, added executable tests, and six specified Qiskit releases, the study presents evidence on the potential and present constraints of using large language models for automatic quantum-program repair.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "67件の実在するQiskitの欠陥を、6つのリリースで調べ直したんだね。これって大きいこと？",
+          "en": "They rechecked 67 real Qiskit defects across six releases. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "数だけでは決められないけど、全項目を複数環境で再実行し、ラベルや修正結果が有効か確かめた点が重要だね。",
+          "en": "The number alone doesn’t decide that, but rerunning every entry across multiple environments helps test whether the labels and generated fixes remain valid."
+        },
+        {
+          "s": "a",
+          "ja": "Bugs4Qって、そもそも何？ バグを集めた箱みたいなもの？",
+          "en": "What exactly is Bugs4Q? Is it like a box of bugs?"
+        },
+        {
+          "s": "b",
+          "ja": "近いよ。実在する量子プログラムの欠陥を集め、修復方法を同じ条件で比べるためのベンチマークだよ。",
+          "en": "Pretty close. It’s a benchmark—a shared set of real quantum-program defects used to compare repair methods under common conditions."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくならQiskitのバグを見つけたら、LLMに修正案を考えてもらいたいな。すぐ使えるのかな？",
+          "en": "If I found a Qiskit bug, I’d want an LLM to suggest a fix. Could I use it right away?"
+        },
+        {
+          "s": "b",
+          "ja": "修正の可能性はあるけど、ラベルが正しいか、生成した修正が対象環境で動くかの確認が必要だよ。そこが示された限界だね。",
+          "en": "There’s promise, but you’d still need to verify the label and confirm the generated fix runs in the target environment. Those are key limitations highlighted here."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:42:05.134Z"
     }
   }
 }

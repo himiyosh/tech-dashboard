@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T14:31:29.088Z",
-  "count": 323,
+  "generatedAt": "2026-10-07T14:54:45.890Z",
+  "count": 327,
   "bodies": {
     "5f96978a8cfa6f21": {
       "bodyJa": "Anthropicは2025年4月23日に発生したClaudeの応答品質低下に関する事後分析(ポストモーテム)を公開した。サービスの完全な停止ではなく、ユーザー体験の質に影響する形での障害であり、生成AI事業者にとって検出と説明責任が難しい類型の事象として注目される。\n\n同社の説明によれば、原因はインフラ層で行われた複数の変更が重なり、一部のリクエストが本来とは異なる構成のサーバや推論パスへルーティングされたことにある。その結果、対象となったユーザーのリクエストでは応答の品質が通常より低下し、モデル自体の重みやバージョンに変更がないにもかかわらず、回答精度や一貫性が劣化して見える状態が一定期間継続したと見られる。\n\nこの種の「サイレント・デグラデーション」は、HTTPステータスやレイテンシなど従来型の可観測性指標では検知しづらい。Anthropicは事後分析の中で、品質メトリクスの常時モニタリングや、ロールアウト時のカナリア評価の強化、影響範囲の特定を高速化するためのトレーサビリティ改善といった再発防止策に言及している。\n\n背景として、LLM推論基盤は量子化・投機的デコーディング・複数ハードウェア(NVIDIA GPU、AWS Trainium、Google TPUなど)の混在運用といった最適化が進んでおり、構成ミスが品質に直結しやすい構造になっている。OpenAIやGoogleも過去に同種の品質劣化やレイテンシ悪化のインシデントを報告しており、業界全体で「モデル挙動そのもののSLO」をどう定義し監視するかが課題となっている。\n\nAnthropicが詳細なポストモーテムを公開する姿勢は、エンタープライズ顧客向けの透明性確保という観点でも重要であり、Claude APIやAmazon Bedrock経由で本番運用する開発者にとって、信頼性評価の参考資料となる可能性がある。",
@@ -11596,7 +11596,39 @@
       "bodyJa": "## NVIDIA Vera\n\n複数のAI企業がNVIDIAのVera CPUを採用し、大規模なAIワークロードでシングルスレッド性能を最大化する重要性が示されている。特に、大規模推論・学習のボトルネック解消の鍵として注目される。\n\n## クリティカルパス\n\n「スケール時の最大シングルスレッドCPU」は、エージェント型AI時代に向けて構築された新しいCPUカテゴリーと説明されている。エージェント型システムの作成から展開まで、CPUは推論、応答時間、学習のクリティカルパスに位置する。そのため、規模を拡大した環境でも単一スレッドの性能を最大化することが、大きなAI処理のボトルネックを取り除くうえで重要とされる。",
       "bodyEn": "## NVIDIA Vera\n\nLeading AI companies are adopting NVIDIA’s Vera CPU, drawing attention to maximum single-threaded CPU performance at scale. This matters because the supplied summaries identify that performance as critical to eliminating bottlenecks in large AI workloads, including large-scale inference and learning.\n\nThe source describes “max single-threaded CPUs at scale” as a new category of CPUs built for the agentic AI era. NVIDIA Vera’s adoption by AI innovators highlights the importance placed on this category for scaled AI systems.\n\n## Critical Path\n\nAcross the creation and deployment of an agentic system, the CPU is on the critical path for reasoning, response time, and learning, according to the source excerpt. CPU performance therefore affects several stages and functions identified as central to these systems.\n\nThe main technical point is that single-threaded performance remains important at scale. Maximizing it is presented as a way to address CPU bottlenecks in large AI workloads, where reasoning, responsiveness, and learning depend on work executed by the CPU.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T13:17:52.682Z"
+      "generatedAt": "2026-09-05T13:17:52.682Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "最大シングルスレッドCPUが新しいカテゴリーって驚いたよ。複数のAI企業がVeraを採用するのは、大きいこと？",
+          "en": "Max single-threaded CPUs are a new category? That surprised me. Is it a big deal that several AI companies are adopting Vera?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、CPUは推論や応答、学習の重要な経路にあります。処理が遅いとGPUも待つため、採用が注目されているんだ。",
+          "en": "The piece puts CPUs on the critical path for reasoning, responses, and learning. A slow CPU can leave GPUs waiting, which is why these adoptions matter here."
+        },
+        {
+          "s": "a",
+          "ja": "シングルスレッド性能って、一本だけで動くCPUなの？",
+          "en": "Does single-threaded performance mean the CPU only runs one thing?"
+        },
+        {
+          "s": "b",
+          "ja": "CPU全体が一本だけ、という意味ではないよ。一つの処理の流れをどれだけ速く進められるか、という性能なんだ。",
+          "en": "Not that the whole CPU runs only one thing. It means how quickly the CPU can move one stream of work forward."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、AIエージェントにコード実行やデータ処理をどんどん頼みたいな。Veraなら待たずに進められるのかな？",
+          "en": "I’d want an AI agent to run code and process data for me. Could Vera keep it moving without the wait?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、狙いは大規模なAI環境でCPU待ちを減らすこと。まったく待たないとはしていないから、そこは分けて考えよう。",
+          "en": "The stated goal is to reduce CPU-related waiting in large-scale AI environments. It doesn’t claim all waiting disappears, so it’s worth keeping that distinction clear."
+        }
+      ]
     },
     "52190b9367f98b0c": {
       "bodyJa": "## v0.35.1公開\n\nOllama v0.35.1が2026年10月2日に公開された。v0.35.0からの具体的な変更点としてllama.cppの更新が示されており、基盤ランタイムの更新を追うローカルLLM利用者にとって確認対象となる保守リリースである。\n\n## llama.cpp更新\n\n今回示された変更は、llama.cppをb11232へ更新するバージョンバンプだ。Ollama自体のバージョンがv0.35.1となる一方、その中で扱われるllama.cppの更新先はb11232と明記されている。機能追加や設定変更などではなく、基盤ランタイムの更新が具体的な変更内容として掲げられた形になる。\n\nこの変更は@dhiltgenによるもので、参照番号は#18652と記載されている。また、対象のコミットはGitHub.com上で作成され、GitHubの検証済み署名によって署名されたものとされている。\n\n## 変更範囲\n\nフルチェンジログの比較範囲としては、v0.35.0からv0.35.1-rc0までが示されている。したがって、更新内容を確認する際には、Ollamaの直前のv0.35.0と、比較先として記載されたv0.35.1-rc0の差分が基準となる。\n\n今回のリリースで明示されている中心点は、llama.cppをb11232へ進めたことに集約される。複数の新機能を列挙する内容ではなく、ランタイムの版を追跡する利用者が更新内容を把握しやすい、限定的な保守更新として位置付けられている。",
@@ -11923,6 +11955,158 @@
       "bodyEn": "## Sandbox Architecture\n\nThis article presents a comprehensive sandbox architecture for AI agents running in Claude Code. The design matters because allowing an AI agent to execute commands and modify code directly on a local machine creates serious practical risks, including damage to the host environment.\n\nThe source describes a development style in which an LLM handles design, implementation, testing, and review rather than the human writing programs directly.\n\n## Local Environment Protection\n\nThe article focuses on preventing AI agents from damaging the local environment. It notes that powerful tools such as Claude Code can execute commands and rewrite code directly on the host operating system.\n\nHuman-in-the-loop approval before execution is part of the operating context discussed, but the article frames direct local execution itself as a significant concern requiring a dedicated sandbox.\n\n## Egress Proxy\n\nThe proposed architecture combines sandboxing with egress proxy filtering and access controls optimized for LLMs. According to the summary, these elements form an environment intended to support safe autonomous execution while protecting the local machine and controlling external access.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-09-05T01:03:40.911Z"
+    },
+    "ae7a7c93349ccb2b": {
+      "bodyJa": "## 起動と表示の修正\n\nCline Desktop v0.0.36では、システムHTTP(S)プロキシを設定した環境での起動不具合と、小型または表示倍率を高めた画面でのウィンドウ表示が修正された。プロキシ利用時にアプリが自身のハブを検出できない問題を解消し、設定やアカウントの操作項目にもアクセスしやすくしている。\n\n## ローカル接続\n\n従来は、バックエンドによるローカル接続の確認までシステムプロキシを経由していた。このため、自身のハブを見つけられず、「No compatible hub runtime is available.」というエラーで起動に失敗することがあった。\n\nv0.0.36ではローカル接続がプロキシを迂回する。Clash、v2ray、企業プロキシなどを設定したマシンでもアプリが起動できるようになり、利用者がすでに設定しているプロキシ除外も維持される。\n\n## ウィンドウ調整\n\n小型ディスプレイや表示倍率を変更した環境では、メインウィンドウが画面内に収まるようになった。従来、1080pのノートPCで表示倍率を150％にすると、ウィンドウが画面より大きく開き、設定やアカウントの操作項目が画面外へ押し出される場合があった。\n\n大きすぎるウィンドウは、タスクバーを除いた表示領域に収まるサイズまで縮小され、中央に配置された状態で開く。\n\n## スラッシュコマンド\n\nプラグインのスラッシュコマンドに関する挙動も修正された。「/goal」のようなコマンドを初めて使用した際、スラッシュメニューから消えてしまう問題が解消され、利用後もメニュー上で扱えるようになった。",
+      "bodyEn": "## Cline Desktop v0.0.36\n\nCline Desktop v0.0.36 addresses startup failures on machines using system HTTP(S) proxies, improves window sizing on small or scaled displays, and fixes the initial behavior of plugin slash commands. The changes help users behind corporate proxies or working with high display scaling access and operate the app more smoothly.\n\n## System HTTP(S) proxy\n\nThe app can now start on machines configured to use a system HTTP(S) proxy, including Clash, v2ray, or a corporate proxy. Previously, the backend routed its local connection checks through the configured proxy. As a result, it could not locate its own hub and startup failed with the message “No compatible hub runtime is available.”\n\nLocal connections now bypass the system proxy. Existing proxy exemptions are preserved rather than replaced, allowing the new local-connection behavior to work alongside exemptions that users have already configured.\n\n## Small or scaled displays\n\nThe main window now adjusts when its initial size would be larger than the available display area. Previously, on a 1080p laptop set to 150% scaling, the window could open larger than the screen. This pushed settings and account controls outside the reachable area.\n\nAn oversized window now shrinks to fit the usable display, excluding the taskbar, and opens centered. This keeps the main interface and its controls within the visible area on small screens or displays using higher scaling.\n\n## Plugin slash commands\n\nPlugin slash commands such as /goal no longer disappear from the slash menu the first time they are used. This keeps plugin commands available in the menu after their initial use.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "会社のプロキシや表示倍率を使っている人は、起動や設定で何が変わるの？",
+          "en": "If someone uses a company proxy or display scaling, what changes when they launch or configure the app?"
+        },
+        {
+          "s": "b",
+          "ja": "ローカル接続はプロキシを避け、大きすぎる画面は表示領域に収まるよう縮小して中央に開くよ。",
+          "en": "Local connections now bypass the proxy, while oversized windows shrink to the usable display area and open centered."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ プロキシや小さい画面だと困っていたのかな。",
+          "en": "Couldn’t it do that before? Were proxies and smaller screens causing trouble?"
+        },
+        {
+          "s": "b",
+          "ja": "前はローカル確認までプロキシを通って起動に失敗することがあり、高倍率表示では設定やアカウント操作が画面外に出ていたよ。",
+          "en": "Previously, local checks could go through the proxy and prevent startup. With high display scaling, settings and account controls could also end up off-screen."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、使っている通信設定や表示倍率のままでも、起動して操作しやすくなったことだね。",
+          "en": "So the biggest gain is smoother startup and access to controls without changing your proxy or display scaling setup."
+        },
+        {
+          "s": "b",
+          "ja": "うん。加えて、プラグインのスラッシュコマンドが初回使用後にメニューから消えなくなった点にも注目だね。",
+          "en": "Yes. Also worth noting: plugin slash commands no longer disappear from the slash menu after their first use."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:39:32.561Z"
+    },
+    "e8e1e3436a921b03": {
+      "bodyJa": "## Linux対応\n\nCline Desktop v0.0.35ではLinux対応が追加され、x64向けの.debパッケージと.rpmパッケージが提供される。デスクトップ版でプラグインのスラッシュコマンドも実行可能になり、Linux環境と拡張機能に関する変更が盛り込まれた。\n\n## GTKと更新\n\n各リリースでは、macOS版およびWindows版と並んでLinux向けパッケージが配布される。ただし、現時点でAppImageは用意されていない。「Open folder…」ではネイティブのGTKピッカーが使われる。更新はバックグラウンドでダウンロードされ、利用者が「Restart now」を選んだときにインストールされるため、予期しないタイミングでパスワード入力を求められることはないと説明されている。\n\n## スラッシュコマンド\n\nプラグインが登録する「/goal」のようなコマンドは、従来は通常のテキストとしてモデルへ送信されていた。v0.0.35ではプラグイン側のハンドラーが実行され、その応答が表示される。コマンドが要求した場合に限ってターンを開始する仕組みとなった。\n\n## ワークスペース\n\n有効なプラグインコマンドはスラッシュメニューに表示される。メニュー内のスキルとワークフローは、worktreeを含め、会話ごとのワークスペースから取得されるようになった。また、破損したプラグインが存在しても、すべてのスラッシュプロンプトが失敗することはなくなった。",
+      "bodyEn": "## Cline Desktop now runs\n\nCline Desktop v0.0.35 adds Linux support and enables plugin slash commands in the desktop app. The changes are intended to help Linux users and people who rely on extensions work more smoothly.\n\nEach release now ships x64 .deb and .rpm packages alongside the macOS and Windows builds. There is no AppImage for now.\n\n## Open folder and updates\n\nOn Linux, Open folder… uses the native GTK picker. This gives the desktop app a native folder-selection path when opening a workspace.\n\nUpdates download in the background rather than interrupting the user immediately. Installation happens when the user chooses Restart now, avoiding a surprise password prompt during the update process.\n\n## Plugin slash commands\n\nCommands registered by a plugin, such as /goal, now work in the desktop app. Previously, those commands were sent to the model as plain text. They now run the plugin’s handler and display its reply. A turn starts only when the command asks for one.\n\nEnabled plugin commands also appear in the slash menu. Skills and workflows shown in that menu now come from the conversation’s own workspace, including worktrees. This ties the available menu entries to the workspace associated with the current conversation.\n\nThe release also changes how failures are handled. A broken plugin no longer causes every slash prompt to fail, so a problem with one plugin does not stop all slash prompts from working.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Linux対応が加わって、.debと.rpmも出るんだね。これって大きいこと？",
+          "en": "Linux support is here, along with .deb and .rpm packages. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "Linux利用者もCline Desktopを動かせるようになったのは大きな変化だね。各リリースでx64向けパッケージが提供されるよ。",
+          "en": "It’s a meaningful change for Linux users: they can now run Cline Desktop, with x64 packages shipping in each release."
+        },
+        {
+          "s": "a",
+          "ja": "「プラグインのスラッシュコマンド」って、どんな仕組み？",
+          "en": "What exactly is a plugin slash command?"
+        },
+        {
+          "s": "b",
+          "ja": "「/goal」のように、スラッシュからプラグインの処理を呼ぶ仕組みだよ。以前のような普通の文字列ではなく、登録された処理が動くんだ。",
+          "en": "It’s a command like /goal that triggers a plugin’s registered action. Instead of being sent as plain text, it now runs the plugin handler."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくならLinuxで作業しながら、メニューからコマンドを選んで使ってみたいな。",
+          "en": "I’d try working on Linux and picking plugin commands right from the slash menu."
+        },
+        {
+          "s": "b",
+          "ja": "有効なコマンドはメニューに表示されるよ。ただしLinux用はx64の.debと.rpmで、今のところAppImageはない点に注意だね。",
+          "en": "Enabled commands appear in the menu. Just note that Linux builds currently come as x64 .deb and .rpm packages, with no AppImage for now."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:40:54.952Z"
+    },
+    "2d88986f3a7b3d5b": {
+      "bodyJa": "## Cline SDK\n\nCline SDK v0.0.86では、出力トークン上限によってテキスト応答が途中で切れた場合の復旧処理が変更された。既存のnudge-and-retryを実行する前に、コンテキストを圧縮して再試行する機会が、1回の実行につき1度追加される。\n\n## 圧縮と再試行\n\n対象となるのは、ツール呼び出しを含まないテキストのみのターンだ。ランタイムは出力上限による終了を、prepareTurnがコンテキストウィンドウ超過時に使用するものと同じ強制圧縮経路へ送る。圧縮後に改めて応答生成を試みることで、長いセッション中に回答が途中で終了した場合の復旧を図る。\n\n## ローカルサーバー\n\nllama.cpp、Ollama、LM StudioなどのローカルOpenAI互換サーバーは、要求された出力予算にかかわらず、残っているコンテキストの範囲内に生成量を制限する。このため、妥当な上限を設定していても、長時間のセッションでは回答の途中で処理が止まることがあった。今回の変更は、そうした終了に対して圧縮を挟み、再試行できるようにするものだ。\n\n## 部分回答の保持\n\n圧縮しても削除できる内容がない場合や、再試行した応答も再び途中で切れた場合は、既存のnudge-and-retryが引き継ぐ。その後も元のmax-tokensエラーは表面化するが、途中まで生成された回答は保持される。なお、ツール呼び出しを生成したターンや、プロバイダー側でツール処理が実行されたターンは再実行されない。",
+      "bodyEn": "## Compact-and-retry attempt\n\nCline SDK v0.0.86 changes how the runtime handles text-only turns truncated at the output-token limit. The change matters for long sessions using local OpenAI-compatible servers such as llama.cpp, Ollama, and LM Studio, where generation can stop in the middle of an answer.\n\nEach affected run now receives one compact-and-retry attempt before the existing nudge-and-retry recovery begins. This gives the runtime an opportunity to reduce the context and repeat the interrupted text-only turn rather than immediately moving to the previous recovery behavior.\n\n## Context remains\n\nThe listed local servers cap generation according to the context space that remains, regardless of the requested output budget. As a session grows longer, the available context can therefore cause an answer to end early even when the configured limits are otherwise sensible.\n\nTo address that behavior, the runtime routes the relevant finish through the same forced-compaction path that prepareTurn uses for context-window overflow. The compaction step is attempted once per run, keeping the additional recovery bounded rather than repeatedly replaying the turn.\n\n## Existing recovery\n\nIf compaction finds nothing that can be removed, the loop hands control to the existing nudge-and-retry mechanism. The same fallback also takes over if the compacted retry is truncated again.\n\nWhen recovery still cannot complete the response, the original max-tokens error continues to surface. The partial answer is persisted, so text produced before truncation is retained rather than discarded.\n\n## Turns never replayed\n\nThe compact-and-retry behavior applies specifically to text-only replies. Turns that produced tool calls are never replayed, and the same restriction applies when tool activity was executed by the provider.\n\nThis boundary prevents the new recovery path from repeating turns that involved tool operations. Cline SDK v0.0.86 also adds a task.max_tokens_recovery lifecycle event associated with this max-tokens recovery behavior.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "長いやり取りの途中で返事が切れたとき、仕事では何が変わるの？",
+          "en": "If a reply gets cut off during a long work session, what changes for me?"
+        },
+        {
+          "s": "b",
+          "ja": "テキスト回答なら、従来の復旧前にコンテキストを1回圧縮して再試行するよ。途中までの回答も残るんだ。",
+          "en": "For text-only replies, it now compacts the context once and retries before the existing recovery step. It also keeps the partial answer."
+        },
+        {
+          "s": "a",
+          "ja": "前も再試行はあったの？ それだけじゃ足りなかったのかな。",
+          "en": "Was there already a retry? I’m wondering why that wasn’t enough."
+        },
+        {
+          "s": "b",
+          "ja": "従来は再試行があったけど、llama.cpp、Ollama、LM Studioでは長い会話が回答途中で止まることがあったんだ。",
+          "en": "There was already a retry, but on llama.cpp, Ollama, and LM Studio, long sessions could still stop mid-answer."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、長い会話でも途中の回答を残しつつ、復旧しやすくなったことなんだね。",
+          "en": "So the big takeaway is that long chats are easier to recover while preserving the partial reply."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただし圧縮できない場合や再び途切れた場合は従来の復旧へ進み、ツール呼び出しのあるターンは再実行されないよ。",
+          "en": "Right. If compaction cannot help or the retry is cut off again, the old recovery takes over, while turns involving tool calls are never replayed."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:41:27.397Z"
+    },
+    "dc981676b9c2cb6e": {
+      "bodyJa": "## v0.34.4\n\nOllama v0.34.4がリリースされた。思考モデルの構造化出力を高速かつ信頼性の高い処理に改めたほか、ローカルライブラリやmacOSアプリで発生していた問題を修正し、Apple Silicon上のモデル処理も改善している。\n\n## 構造化出力\n\n思考モデルで構造化出力を利用する際、出力への適用が1回の処理で完結するようになった。これにより処理が高速化され、結果の信頼性も高まったと説明されている。構造化された形式を求める処理において、速度と安定性の両方に関わる変更となる。\n\n## エラー修正\n\n大規模なローカルライブラリを利用している環境で、断続的に発生していた「model not found」エラーが修正された。また、ChatGPTまたはCodexが実行中かどうかを確認する際、macOSアプリが応答しなくなる問題も解消された。ローカルモデルの検出とmacOSアプリの動作に関する修正が含まれる。\n\n## Apple Silicon\n\nApple Siliconでは、Qwen 3.8のプロンプト処理が高速化された。Gemma 4については、画像ごとに最適な解像度を選択するようになり、高解像度画像でより多くの詳細を維持できるとされる。あわせて、llama.cpp、MLX、XGrammarも更新された。変更範囲はv0.34.3からv0.34.4までの更新として示されている。",
+      "bodyEn": "## What’s Changed\n\nOllama v0.34.4 focuses on faster and more reliable structured outputs, fixes affecting local model libraries and the macOS app, and improvements for Qwen 3.8 and Gemma 4 on Apple Silicon. The release also updates llama.cpp, MLX, and XGrammar.\n\n## Structured Outputs\n\nStructured outputs on thinking models now apply in a single pass. This change is intended to make processing faster and more reliable, while improving consistency when reasoning models produce structured output.\n\nPreviously intermittent “model not found” errors could occur when using a large local library. Version 0.34.4 fixes those lookup failures, improving model detection for users with many local models.\n\n## macOS App\n\nThe release resolves an issue that could cause the macOS app to become unresponsive while checking whether ChatGPT or Codex was running. The fix addresses the app hang during that specific check.\n\nQwen 3.8 also receives faster prompt processing on Apple Silicon. The stated improvement is limited to prompt processing performance for that model and hardware combination.\n\n## Gemma 4\n\nGemma 4 behavior on Apple Silicon has been updated for images. The model now selects the best image resolution separately for each image, allowing it to retain more detail in high-resolution images rather than applying a less suitable resolution choice.\n\nAlongside these model- and platform-specific changes, Ollama v0.34.4 includes updated versions of llama.cpp, MLX, and XGrammar. The full changelog covers the differences between v0.34.3 and v0.34.4.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ローカルで思考モデルを使うとき、普段の作業はどう変わるの？待ち時間やアプリの停止に関係ある？",
+          "en": "When I use a reasoning model locally, what changes in my day-to-day work? Does this affect waiting or app freezes?"
+        },
+        {
+          "s": "b",
+          "ja": "v0.34.4では、決まった形式で答える構造化出力が1回の処理になり、より速く安定します。モデルの検出エラーや、確認中にmacOSアプリが停止する問題も修正されました。",
+          "en": "In v0.34.4, structured output—answers in a set format—runs in one pass, making it faster and more reliable. It also fixes model lookup errors and a macOS hang while checking for ChatGPT or Codex."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？それとも、構造化出力そのものが新しく始まったのかな。",
+          "en": "Couldn’t it do that before? Or is structured output itself brand-new?"
+        },
+        {
+          "s": "b",
+          "ja": "変わったと確認できるのは、思考モデルの構造化出力が1回の処理になった点です。機能自体がいつ始まったかまでは触れられていません。",
+          "en": "The confirmed change is that reasoning-model structured output now runs in one pass. The article doesn’t say when structured output itself was introduced."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくの一番の収穫は、答えの形を整える処理が速く安定して、ローカルモデルやmacOSのつまずきも減ったことかな。",
+          "en": "My main takeaway is that formatting answers is now faster and more reliable, with fewer snags around local model lookup and the macOS app. Is that right?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。次はApple SiliconでのQwen 3.8の処理速度と、Gemma 4が画像ごとに解像度を選んで細部を保つ改善に注目です。",
+          "en": "Yes. Next, watch the Apple Silicon improvements: faster Qwen 3.8 prompt processing, and Gemma 4 choosing the best resolution per image to preserve more detail in high-resolution images."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:42:13.132Z"
     }
   }
 }

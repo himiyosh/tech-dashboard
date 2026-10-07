@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T07:55:01.299Z",
-  "count": 304,
+  "generatedAt": "2026-10-07T11:31:30.749Z",
+  "count": 309,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -11553,6 +11553,164 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:38:19.736Z"
+    },
+    "0f57fbcde8833a72": {
+      "bodyJa": "## マルチモーダル\n\nOllama v0.40.0-rc6では、モデルにマルチモーダル埋め込みが追加された。埋め込みの出力方式と、/api/embedへメディアを渡す単位が明示されており、項目単位でマルチモーダル処理を扱える点が中心となる。\n\n## 平均プーリング\n\n埋め込みの出力には平均プーリングが採用された。モデル内で得られる情報を平均化してまとめ、埋め込みとして出力する構成である。今回の変更では、この平均プーリングがL2正規化と組み合わされている。\n\n## L2正規化\n\n平均プーリングに加え、出力にはL2正規化が適用される。したがって、単にマルチモーダル埋め込みを追加するだけでなく、その出力を平均プーリングとL2正規化によって整えるところまでが変更内容に含まれる。\n\n## /api/embed\n\n/api/embedは、入力辞書ごとにメディアを受け取れるようになった。メディアの指定を入力全体に一括で持たせるのではなく、それぞれの入力辞書に関連付けられるため、各項目を単位としてマルチモーダルな入力を構成できる。これにより、埋め込みAPI上で項目ごとのメディアを扱うワークフローが可能になる。",
+      "bodyEn": "## Multimodal embeddings\n\nOllama v0.40.0-rc6 adds multimodal embeddings to the model. The change matters because the embedding API can now associate media with individual inputs, enabling item-level multimodal workflows rather than treating media only at a broader request level.\n\nThe release identifies this model change as issue #18820. Its scope is focused on how multimodal embedding inputs are accepted and how the resulting output is produced.\n\n## Mean pooling and L2 normalization\n\nThe multimodal embedding output uses mean pooling followed by L2 normalization. These are the two specified output-processing steps in the release.\n\nMean pooling is applied as part of producing the embedding output, while L2 normalization is used for the resulting representation. The release summarizes this sequence as “mean-pool + L2 output,” making both operations part of the newly added multimodal embedding behavior.\n\nNo separate output mode is described: mean pooling and L2 normalization are presented together as the output approach for this change.\n\n## Media per input dictionary\n\nThe /api/embed endpoint now accepts media through input dictionaries. Media can be specified separately for each dictionary, tying it to an individual input item.\n\nThis per-item structure is the key API detail. A request can contain input dictionaries whose media is assigned at the item level, allowing multimodal processing to follow the organization of those individual inputs. The media association is therefore carried by each relevant input dictionary rather than described as one undifferentiated setting.\n\nCombined with the model’s new multimodal embedding support, this makes /api/embed the interface for item-level multimodal workflows in v0.40.0-rc6. The release’s stated changes are limited to the addition of multimodal embeddings, the use of mean pooling and L2 normalization for output, and per-input media handling through dictionaries.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "これで普段の開発作業は何が変わるの？入力ごとにメディアを扱えるってこと？",
+          "en": "What changes in day-to-day development with this? Does it mean each input can carry its own media?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。/api/embedで入力辞書ごとにメディアを指定し、項目単位でマルチモーダル埋め込みを扱えるよ。",
+          "en": "Yes. /api/embed can now take media in each input dictionary, enabling item-level multimodal embeddings."
+        },
+        {
+          "s": "a",
+          "ja": "前は入力ごとにメディアを渡せなかったの？どこが新しくなったんだろう。",
+          "en": "Couldn’t it pass media per input before? I’m wondering what exactly changed."
+        },
+        {
+          "s": "b",
+          "ja": "この版でマルチモーダル埋め込みが追加され、入力辞書ごとのメディア指定に対応したよ。以前の詳しい仕様までは示されていないんだ。",
+          "en": "This release adds multimodal embeddings and per-input-dictionary media. It doesn’t spell out the earlier behavior in detail."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ一番の収穫は、種類の違う入力を項目ごとに埋め込みへ回せることなんだね。",
+          "en": "So the big takeaway is that different kinds of input can be sent for embedding item by item, right?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。あわせて、出力に平均プーリングとL2正規化が採用された点も押さえておきたいね。",
+          "en": "Right. Also note that the output now uses mean pooling and L2 normalization."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T10:39:26.858Z"
+    },
+    "95dd7d391e478da9": {
+      "bodyJa": "## ポータブル版\n\nVS Codeには、通常のインストール版とは別に、ダウンロードしたZIPを解凍して実行できるポータブル版があります。新しいアプリのインストールや管理者権限の利用が禁止されている会社や学校の端末でも、VS Codeを使える方法です。\n\nVS Code Zip版やVS Code exe版など呼び方は異なりますが、ここではポータブル版を指します。インストールを必要とせず、USBメモリに入れて移すことも可能です。\n\n## ZIPの展開\n\nまず公式ページで「.zip」を選び、zipファイルをダウンロードして解凍します。続いて、解凍したフォルダ内にあるCode.exeと同じ階層へ、dataという名前の空フォルダを作成します。\n\nこのdataフォルダには、VS Codeの設定や拡張機能のデータが保存されます。dataフォルダを作らずに起動すると、通常版と同様に、設定がPC本体のAppData内へ保存されてしまいます。フォルダを用意した後、Code.exeを起動すればVS Codeが立ち上がります。\n\n## 拡張機能\n\n拡張機能もポータブル版へ導入できます。日本語化する場合は、サイドバーの「Extensions」アイコンから「Japanese Language Pack for Visual Studio Code」を検索します。\n\n対象を右クリックして「Download VSIX」を選ぶと、VSIXファイルをダウンロードできます。保存先を尋ねられる場合がありますが、後から取り込むため、ダウンロードする場所は任意です。\n\n## 手動更新\n\nポータブル版では自動更新ができないため、アップデートは手動で行う必要があります。この点を踏まえつつ、インストールできない端末で利用したり、USBメモリで設定や拡張機能を含む環境を移したりできます。",
+      "bodyEn": "## Portable Version of VS Code\n\nThe portable version of VS Code provides a way to run the editor without installing it. This matters on company PCs, school devices, and other environments where security restrictions prohibit installing new applications or using administrator privileges.\n\nVS Code Portable can also be placed on a USB drive and moved easily. Settings and extension data can remain in the extracted location, while VS Code extensions can also be added to the portable version. One limitation is that automatic updates are unavailable, so updates must be performed manually.\n\n## Download and Extract\n\nFrom the official page, select the “.zip” option and download the ZIP file. Extract the downloaded file to the location where the portable copy of VS Code will be kept.\n\nThe portable version is sometimes described as the VS Code ZIP version or VS Code exe version. Regardless of the name, the setup described here uses the extracted ZIP rather than the regular installed version.\n\n## The data Folder\n\nOpen the extracted folder and locate Code.exe. At the same folder level as Code.exe, create a new empty folder named data.\n\nThis folder is essential to the portable setup because VS Code stores its settings and extension data inside it. If VS Code is launched without creating the data folder, its settings will instead be saved on the PC itself, under AppData, in the same way as the regular version.\n\nAfter the data folder has been created beside Code.exe, launch Code.exe to start VS Code.\n\n## Japanese Language Pack\n\nJapanese support requires downloading a localization extension. Open the “Extensions” icon shown in the sidebar and search for “Japanese Language Pack for Visual Studio Code.”\n\nRight-click the extension and select “Download VSIX” to download the VSIX file. A download location may be requested, but the file can be saved anywhere because it will be imported later.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "会社や学校のPCでアプリを入れられないとき、何が変わるの？USBでいつもの環境も持ち歩ける？",
+          "en": "What changes if I can’t install apps on a work or school PC? Can I carry my usual setup on a USB drive?"
+        },
+        {
+          "s": "b",
+          "ja": "ZIPを解凍して起動できるので、インストール制限のある端末でも使えます。設定や拡張機能ごとUSBで移せます。",
+          "en": "You can extract the ZIP and run it on PCs where installation is restricted. Your settings and extensions can travel with it on a USB drive."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？いつものVS Codeとは、どこが違うんだろう。",
+          "en": "Wasn’t that possible before? How is this different from the usual VS Code?"
+        },
+        {
+          "s": "b",
+          "ja": "通常版はインストールしますが、ポータブル版は不要です。ただし、自動更新はできず、アップデートは手動になります。",
+          "en": "The regular version is installed, while the portable version doesn’t require installation. The tradeoff is that updates aren’t automatic; you handle them manually."
+        },
+        {
+          "s": "a",
+          "ja": "Code.exeの横にdataフォルダを作れば、設定や拡張機能がそこにまとまるんだね。これなら移しやすそう。",
+          "en": "So if I create a data folder beside Code.exe, the settings and extensions stay there. That sounds easy to move around."
+        },
+        {
+          "s": "b",
+          "ja": "そうですね。dataフォルダを作り忘れると設定がPC本体のAppData内に保存されるので、起動前の確認が大切です。",
+          "en": "Right. If you forget the data folder, settings are saved in the PC’s AppData instead, so check for it before launching."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T10:40:33.047Z"
+    },
+    "b7bbe1ab449bbdeb": {
+      "bodyJa": "## 転記を減らす構成\n\nブラウザーのChatGPTで設計を相談し、VS CodeのCodexで実装する流れでは、作業結果をChatGPTへ戻す転記が必要になります。そこで、CodexがMCP経由で結果を未公開保存し、人間が確認した本文だけをChatGPT Workから読める構成が検証されました。\n\n## MCPで未公開保存\n\nCodex専用STDIO MCPは、標準入出力でCodexと通信するローカルのMCPサーバーです。Codexは実装結果を、まず未公開領域のpendingへ保存します。保存対象は、Codexがtoolへ明示的に渡した本文であり、Codex画面に表示される最終回答を自動取得する仕組みではありません。\n\nこの処理によって、ChatGPTへ戻すための結果ファイルを人間が手動で用意する操作を減らせます。テストでは、結果を未公開で保存するところまで動作しています。\n\n## 人間確認と公開\n\nReporterは、Locolisu AI Task Monitorで使う自作のVS Code拡張です。Reporterが元の指示とCodexの結果を表示し、人間が内容を確認したものだけをconfirmedへ保存します。\n\nここでいう「公開」とは、Work向けMCPから読み取れる状態にすることです。インターネット上への一般公開を意味しません。Codexによる保存とWorkによる読取りの間に人間の確認を置くことで、確認済みの本文だけが受渡しの対象になります。\n\n## 読取りと残る操作\n\nChatGPT Workは、ブラウザーで使うChatGPTのWork画面を指します。新しいWork会話から指示IDと結果IDを指定し、confirmedに保存された結果を読み取ります。テストでは、人間による確認と公開、その後の新しい会話での読取りまで成功しました。\n\n一方、同じ指示に結果が2件あり、一覧から対象を選べない場面もありました。本文のコピーと貼り付けは減らせても、複数の結果からどれをChatGPTへ戻すかを指定する操作は人間に残ります。",
+      "bodyEn": "## Reducing Manual Transfers\n\nWhen design discussions happen in browser-based ChatGPT and implementation happens with Codex in VS Code, the resulting work still has to be transferred back to ChatGPT. The tested configuration reduces that copying by storing Codex results through MCP and allowing ChatGPT Work to read only text that a person has reviewed.\n\nWork here means the ChatGPT Work screen used in a browser. Reporter is a custom VS Code extension used with Locolisu AI Task Monitor.\n\n## MCP and Human Review\n\nThe workflow separates storage, review, and retrieval. A Codex-specific STDIO MCP first saves a result to an unpublished pending area. STDIO MCP is a local MCP server that communicates with Codex through standard input and output.\n\nReporter then displays the original instruction and the result. After a person reviews the result, Reporter saves the approved material to confirmed. ChatGPT Work can subsequently retrieve it by specifying both the instruction ID and the result ID.\n\nIn this configuration, “publishing” means making the approved result readable through the MCP for Work. It does not mean making the material generally available on the internet.\n\n## Unpublished and Confirmed Results\n\nTesting succeeded across the full sequence: unpublished storage, human review and publication, and retrieval from a new ChatGPT Work conversation. This reduced the need to prepare result files manually.\n\nThe stored material is specifically the text that Codex explicitly passes to the tool. The configuration does not automatically capture the final answer displayed in the Codex interface. Human confirmation therefore controls which submitted text becomes readable from ChatGPT Work.\n\n## Instruction and Result IDs\n\nThe workflow did not remove every manual decision. In one situation, the same instruction had two results, and there was no way to select the intended one from a list.\n\nAlthough copying the result body was reduced, a person still had to specify which result should be returned. The tested setup therefore reduces text transfer between design and implementation while retaining human responsibility for selecting and confirming the relevant output.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ブラウザーで設計してVS Codeで実装するとき、普段の作業は何が変わるの？ 結果を戻す手間が減るのかな。",
+          "en": "When I plan in the browser and implement in VS Code, what changes in my day-to-day work? Does it cut the effort of bringing results back?"
+        },
+        {
+          "s": "b",
+          "ja": "Codexの結果をMCP経由で未公開保存し、人が確認した内容だけをChatGPT Workで読めます。本文を転記する作業を減らせます。",
+          "en": "Codex stores output privately through MCP, and ChatGPT Work reads only what a person approves. That reduces manual copying of the output."
+        },
+        {
+          "s": "a",
+          "ja": "前は、Codexの結果をChatGPTへ自分でコピペするしかなかったの？",
+          "en": "Before this, did I have no choice but to copy and paste Codex’s results into ChatGPT myself?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事の作業では転記が残っていました。検証した構成では、未公開保存から人の確認、新しいWork会話での読取りまで成功しています。",
+          "en": "In the workflow described here, that copying remained. The tested setup successfully went from private storage and human review to reading the result in a new Work chat."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ収穫は、コピペは減らせても、同じ指示の結果が複数なら最後に人が選ぶってことだね？",
+          "en": "So the big takeaway is less copy-pasting, but if one instruction has multiple results, a person still has to choose which one to return, right?"
+        },
+        {
+          "s": "b",
+          "ja": "そうです。同じ指示で結果が2件あり一覧から選べない場面があったので、指示IDと結果IDでどれを戻すかの指定に注目です。",
+          "en": "Right. There was a case with two results for one instruction and no way to choose from the list, so specifying the right instruction and result IDs is the point to watch."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T10:40:59.191Z"
+    },
+    "b6e650943536e41b": {
+      "bodyJa": "## MLX処理\n\nOllama v0.40.0-rc1では、MLXのトークナイザー処理が配布元の仕様に合うよう修正された。モデルとの互換性に関わる文字列の分割や結合だけでなく、処理順序や境界判定まで対象となっている。\n\n## 前処理と境界\n\n前処理では、プリトークナイザーの各段階を適用する順序と、文字列を分割する際の挙動が配布元の仕様に合わせられた。Unicode境界の扱いも修正され、文字の境界を踏まえたトークン化が行われる。空のMetaspace入力についても、一貫した処理になるよう対応している。\n\n## 追加トークン\n\n追加トークンでは、正規化の扱いが見直されたほか、空の追加トークンも処理できるようになった。BPE結合については、順位付けされたマージ規則を反映するよう修正された。バイトフォールバックや設定の優先順位、並列エンコードには、個別の回帰テストが追加されている。\n\n## GoとPython\n\n公開済みのトークナイザーを使うGoとPythonの共通参照テストも加わった。不足しているモデルは直接取得し、エラーが起きた場合はテストを失敗させる構成となる。両言語で参照ケースを共有することで、今回のトークナイザー処理とモデル互換性を検証しやすくしている。",
+      "bodyEn": "## Publisher Tokenizer Semantics\n\nOllama v0.40.0-rc1 aligns MLX tokenizer processing with publisher behavior. The changes matter for model compatibility because tokenization now follows the published semantics more closely across several processing stages.\n\n## Pretokenizer Stage Order\n\nThe update honors pretokenizer stage order, split behavior, and Unicode boundaries. It also adjusts added-token normalization and applies ranked BPE merges.\n\nThese details determine how input is divided and processed by the tokenizer. Matching the publisher’s ordering and boundary behavior helps ensure that MLX tokenization produces results consistent with the relevant tokenizer specifications.\n\n## Added Tokens and Metaspace\n\nEmpty added tokens are now handled consistently. The same applies to empty Metaspace input.\n\nThe release also includes focused regression coverage for configuration precedence and byte fallback. Additional regression cases cover parallel encoding, allowing these specific behaviors to be checked against future changes.\n\n## Go and Python Cases\n\nShared Go and Python reference cases have been added using published tokenizers. When required models are missing, the reference process pulls them directly and fails when errors occur rather than continuing without them.\n\nTogether, the shared reference cases and focused regressions provide checks for the corrected tokenizer behavior across both implementations. They cover the stage-order, splitting, Unicode, added-token, BPE, configuration, fallback, and parallel-encoding changes included in v0.40.0-rc1.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "前処理順序からBPE結合まで直して、GoとPythonの共通テストも追加されたんだ。これって大きいこと？",
+          "en": "They fixed everything from stage order to BPE merges, then added shared Go and Python tests. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "MLXの分割結果を配布元の仕様にそろえる変更だよ。モデル互換性を確かめやすくする、まとまった修正だね。",
+          "en": "It aligns MLX tokenization with the publisher’s behavior. That’s a substantial set of fixes aimed at making model compatibility easier to verify."
+        },
+        {
+          "s": "a",
+          "ja": "そもそも、トークナイザーって何をしてるの？",
+          "en": "What does a tokenizer actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "文章を、モデルが扱う小さな単位に分ける仕組みだよ。Unicodeの境界や追加トークンの扱いでも結果が変わるんだ。",
+          "en": "It splits text into smaller units a model can handle. Unicode boundaries and added-token handling can change the result."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、同じモデルをGoとPythonで試して、分け方がそろうか確かめてみたいな。",
+          "en": "I’d try the same model in Go and Python and see whether they split the text consistently."
+        },
+        {
+          "s": "b",
+          "ja": "共通の参照ケースが追加されたから、その確認には合いそう。足りないモデルは直接取得し、エラー時は失敗として扱う条件だよ。",
+          "en": "The new shared reference cases should help with that. Missing models are pulled directly, and errors are treated as test failures."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T10:41:24.606Z"
+    },
+    "ca9409e431f709f7": {
+      "bodyJa": "## WeatherNext\n\nGoogleのAI気象予報システムWeatherNextは、米国立ハリケーンセンターによるハリケーン・メリッサの歴史的なジャマイカ上陸予測を支援した。AI予報が実際の災害対応に貢献できることを示したとされる。\n\n## 進路予測\n\nWeatherNextは、メリッサの進路予測の改善に寄与した。予報担当者が地域社会に対し、上陸前の備えに従来にない時間を確保できるよう支えたと説明されている。",
+      "bodyEn": "## WeatherNext AI forecasting system\n\nGoogle’s WeatherNext supported the National Hurricane Center’s predictions for Hurricane Melissa’s historic landfall in Jamaica. The case matters because it shows how AI-based weather forecasting can contribute to operational meteorology and disaster response.\n\nWeatherNext helped forecasters improve track predictions for the hurricane. According to the source excerpt, the model enabled forecasters to give communities unprecedented time to prepare ahead of the storm.\n\n## Hurricane Melissa’s Jamaica landfall\n\nThe existing summary describes WeatherNext as improving the accuracy of predictions for the historic Jamaica landfall. Its contribution connected AI-generated forecasting with preparations for an actual hurricane, supporting the National Hurricane Center’s forecasting work.",
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-09-05T15:35:28.688Z"
     }
   }
 }

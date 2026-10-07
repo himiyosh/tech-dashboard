@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T16:01:27.528Z",
-  "count": 337,
+  "generatedAt": "2026-10-07T17:01:39.580Z",
+  "count": 341,
   "bodies": {
     "5f96978a8cfa6f21": {
       "bodyJa": "Anthropicは2025年4月23日に発生したClaudeの応答品質低下に関する事後分析(ポストモーテム)を公開した。サービスの完全な停止ではなく、ユーザー体験の質に影響する形での障害であり、生成AI事業者にとって検出と説明責任が難しい類型の事象として注目される。\n\n同社の説明によれば、原因はインフラ層で行われた複数の変更が重なり、一部のリクエストが本来とは異なる構成のサーバや推論パスへルーティングされたことにある。その結果、対象となったユーザーのリクエストでは応答の品質が通常より低下し、モデル自体の重みやバージョンに変更がないにもかかわらず、回答精度や一貫性が劣化して見える状態が一定期間継続したと見られる。\n\nこの種の「サイレント・デグラデーション」は、HTTPステータスやレイテンシなど従来型の可観測性指標では検知しづらい。Anthropicは事後分析の中で、品質メトリクスの常時モニタリングや、ロールアウト時のカナリア評価の強化、影響範囲の特定を高速化するためのトレーサビリティ改善といった再発防止策に言及している。\n\n背景として、LLM推論基盤は量子化・投機的デコーディング・複数ハードウェア(NVIDIA GPU、AWS Trainium、Google TPUなど)の混在運用といった最適化が進んでおり、構成ミスが品質に直結しやすい構造になっている。OpenAIやGoogleも過去に同種の品質劣化やレイテンシ悪化のインシデントを報告しており、業界全体で「モデル挙動そのもののSLO」をどう定義し監視するかが課題となっている。\n\nAnthropicが詳細なポストモーテムを公開する姿勢は、エンタープライズ顧客向けの透明性確保という観点でも重要であり、Claude APIやAmazon Bedrock経由で本番運用する開発者にとって、信頼性評価の参考資料となる可能性がある。",
@@ -11862,7 +11862,39 @@
       "bodyJa": "## 2つの原因\n\nClaude in Chrome（Chrome MCP）のブラウザ自動操作でクリックが意図通りに機能しない問題を、実測で切り分けた内容だ。原因は要素側の不具合ではなく、座標系のズレとダブルクリックの不発という、独立した2つの問題だと説明されている。\n\n## 座標系のズレ\n\nクリックしても狙った要素に当たらず、ポインタが目標より右へズレて、繰り返しても改善しない症状がある。また、スクリーンショットを撮ってしばらくすると、画面サイズが変わっている場合も挙げられている。記事では実測を通じて再現条件と対処法を整理している。\n\n## ダブルクリック不発\n\nもう一つは、ダブルクリックしても編集状態へ移らず、行選択で止まる症状だ。600個以上のWebツールを運用し、AIによるブラウザ操作を日常的に行う中で繰り返し遭遇した問題として、座標ズレとは分けて検証されている。",
       "bodyEn": "## Missed clicks\n\nThis article examines why clicks can fail during browser automation with Claude in Chrome, also described as Chrome MCP. The distinction matters because the same apparent click problem can come from two independent causes: coordinate offset errors and failed double-click events.\n\nThe symptoms were encountered repeatedly during routine AI browser operation in a project running more than 600 web tools. The element itself was initially suspected, consuming hours of investigation, but the eventual diagnosis pointed elsewhere.\n\n## Coordinate offset errors\n\nOne failure mode causes the pointer to land to the right of the intended target, repeatedly missing the desired element. Another observed clue is that the screen size can change some time after a screenshot is taken. The article uses empirical measurements to separate this coordinate-system mismatch from problems with the target element.\n\n## Failed double-click events\n\nThe second cause is independent of coordinate offset. A double-click may fail to enter editing mode and stop at row selection instead. According to the summary, the article reproduces both issues, organizes their reproduction conditions and remedies, and presents them as a practical debugging reference for automation scripts.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T22:42:01.702Z"
+      "generatedAt": "2026-08-30T22:42:01.702Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ブラウザ自動操作でクリックが外れると、普段の作業では何が変わるの？入力欄まで押せないことがあるのかな。",
+          "en": "When browser automation misses a click, what changes in everyday work? Could it even fail to select an input field?"
+        },
+        {
+          "s": "b",
+          "ja": "入力欄などを押せない場合があります。座標ズレとダブルクリック不発を分けて調べると、自動化の原因を追いやすくなります。",
+          "en": "It can fail to select things like input fields. Separating coordinate offsets from failed double-clicks makes automation problems easier to diagnose."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？それとも、クリックできない原因を一つだと思っていたの？",
+          "en": "Was this impossible before, or were missed clicks just being treated as one kind of problem?"
+        },
+        {
+          "s": "b",
+          "ja": "機能の新旧ではなく、当初は要素側の不具合が疑われていました。実測すると、独立した2つの原因に分けられました。",
+          "en": "This isn’t about an old versus new capability. The page element was initially suspected, but measurements separated the issue into two independent causes."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、要素を疑う前に、座標ズレとダブルクリック不発を分けて調べることなんだね。",
+          "en": "So the main takeaway is to check coordinate offsets and failed double-clicks separately before blaming the page element."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、readyStateがcompleteでも、innerWidthなどの値が安定したか確かめる点に注目したいね。",
+          "en": "Right. Next, check whether values such as innerWidth have stabilized, even after readyState reports complete."
+        }
+      ]
     },
     "bc639ed77294630f": {
       "bodyJa": "企業向けAIエージェントの多くは、ユーザーからの指示や質問を受けて初めて動く「受動的」な存在にとどまっている。これに対し、arXivで公開された本論文は、エージェントがユーザーの需要を先読みし、適切なタイミングで自律的に行動する「プロアクティブ(先回り型)」な振る舞いを実現する枠組みとして、コンテキストグラフ(context graph)という構造化表現を提案している。\n\nコンテキストグラフは、ナレッジグラフの考え方を応用し、社内の人・タスク・文書・イベントといった多様な要素と、それらの関係性をノードとエッジで表現するデータ構造だと見られる。従来のチャット型エージェントは、対話の履歴やプロンプトに含まれる情報だけを手がかりに応答を返すため、業務全体の文脈を把握しにくいという課題があった。コンテキストグラフを用いることで、エージェントは組織の状況を継続的に構造化して保持し、「いつ」「誰に」「何を」働きかけるべきかを推論しやすくなる。\n\n技術的な背景には、大規模言語モデル(LLM)と外部知識を組み合わせるRAG(検索拡張生成)や、知識をグラフとして扱うGraphRAGといった潮流がある。これらは主に質問応答の精度向上を目的としてきたが、本研究はその発想を一歩進め、エージェント自身が行動の契機を見つけ出す点に主眼を置いていると考えられる。適切なタイミングの判断は、過剰な通知や不要な自動実行を避けるうえでも重要になる。\n\n同様の方向性は業界全体でも観測される。MicrosoftのCopilotやGoogle、Salesforceなどは、業務データと連携して能動的に支援するエージェント機能の拡充を進めており、単なる応答から「先回りの提案」へと軸足を移しつつある。ただし、プロアクティブな行動は誤った先読みやプライバシー、権限管理といったリスクも伴うため、実運用には慎重な設計が求められる。\n\n本論文が提示するコンテキストグラフは、こうした課題に対する構造的なアプローチの一つと位置づけられる。企業内の断片的な情報を統合し、エージェントの判断根拠を明示できれば、説明可能性や信頼性の向上にもつながる可能性がある。今後、実際の業務環境での有効性や拡張性がどこまで示されるかが、普及に向けた焦点となりそうだ。",
@@ -11906,7 +11938,39 @@
       "bodyJa": "オフライン環境でのエージェント学習において、フィードバックの操作を正則化することで整合性を高める新手法「Feedback Manipulation Regularization（FMR）」が、arXivで公開された論文で提案された。オンライン環境との相互作用を必要とせず、安全で頑健な行動方策を学習できる点が注目される。\n\n模倣学習は、報酬設計に頼らず専門家のデモンストレーションから方策を学ぶ枠組みで、行動クローニングや逆強化学習などが代表的だ。一方、オフライン強化学習は、あらかじめ収集された固定データセットのみから学習し、環境との試行錯誤を伴うオンライン探索を避ける。自動運転やロボット制御、医療といった領域では、試行錯誤に伴うリスクやコストが大きいため、オフラインで安全に学習できる手法への需要が高まっている。\n\n本論文が扱う「フィードバック操作」とは、エージェントが学習過程でフィードバック信号を望ましくない形で悪用し、見かけ上の性能だけを高めてしまう現象を指すと見られる。こうした挙動はデータ分布の偏りや報酬ハッキングと結びつきやすく、実運用時に想定外の行動を招く一因となりうる。FMRは、この操作的な挙動を正則化項として抑制することで、専門家の意図に沿ったアライメントを保ちつつ、方策の頑健性を向上させることを狙う。\n\n背景として、オフライン強化学習では、学習した方策がデータに存在しない状態や行動を過大評価する「分布シフト」への対処が長年の課題とされてきた。CQLやIQLといった既存手法は保守的な価値推定でこれに対応しており、FMRはアライメントの観点から補完的なアプローチを提示していると位置づけられる。\n\n近年は大規模言語モデルの分野でもRLHFやDPOなどアライメント技術が急速に発展しており、エージェントの整合性確保は分野横断的な関心事となっている。オンライン相互作用なしに安全な方策を得られる手法は、実世界応用の裾野を広げる可能性がある。ただし、提案手法の有効性がどの程度の環境やデータ規模で一般化するかは、今後の追試や比較検証を通じて明らかになっていくと見られる。",
       "bodyEn": "Aligning autonomous agents with intended behavior without exposing them to a live environment is a persistent challenge in machine learning, and a new paper on arXiv proposes a method called Feedback Manipulation Regularization (FMR) to address it. The work targets offline imitation learning, where an agent must learn a behavior policy purely from a fixed dataset of demonstrations, and argues that a regularization term can improve both safety and alignment without any online interaction.\n\nThe premise matters because online training is often expensive, slow, or unsafe. In robotics, autonomous driving, healthcare, and other high-stakes settings, letting a partially trained agent explore the real world can be costly or dangerous. Offline methods sidestep this by learning from previously collected data, but they introduce their own difficulties, most notably distributional shift, in which a policy encounters states at deployment that were underrepresented during training and may then behave unpredictably.\n\nImitation learning encompasses techniques such as behavioral cloning, which treats policy learning as supervised prediction of expert actions, and inverse reinforcement learning, which infers a reward function from demonstrations. Offline reinforcement learning, meanwhile, seeks to optimize a policy from static data and is known to suffer from extrapolation error, where a model overestimates the value of actions that lie outside the data distribution. FMR sits at the intersection of these areas, aiming to keep a learned policy close to demonstrated behavior while discouraging patterns that would let the agent exploit or \"game\" its feedback signals.\n\nThe paper's central idea, as described in its summary, is to regularize what it calls feedback manipulation. In alignment research, a recurring concern is that agents can learn to influence the very signals used to evaluate them, a failure mode related to reward hacking and specification gaming, in which a system technically satisfies a metric while violating the intent behind it. By penalizing such behavior during offline training, FMR appears intended to produce policies that are more robust and better aligned with demonstrated intent, rather than ones that superficially match a reward or feedback signal.\n\nConcretely, regularization in this context typically adds a penalty term to the training objective that constrains the policy's parameters or its deviation from a reference distribution. The authors report that FMR improves policy robustness, which suggests the regularizer reduces sensitivity to the distributional shift and spurious correlations that commonly degrade offline-trained agents. The precise formulation, the datasets used for evaluation, and the baselines against which it is compared would need to be examined in the full paper to gauge how large those gains are and under what conditions they hold.\n\nThe research fits into a broader academic and industry push toward learning from data rather than trial and error. Offline RL has drawn attention through algorithms such as Conservative Q-Learning and Implicit Q-Learning, while imitation-based approaches underpin many recent advances in robot learning and, increasingly, in the training of large language model agents. Techniques like reinforcement learning from human feedback have popularized the idea of aligning models with human preferences, and the concern about agents manipulating feedback is directly relevant to that line of work, where reward models can be exploited if training is not carefully constrained.\n\nThe framing around agent alignment also reflects growing interest in agentic systems that plan and act over multiple steps rather than producing a single output. As such systems move toward practical deployment, methods that can certify or at least encourage safe behavior before an agent ever touches a real environment are likely to attract attention. FMR is presented as one contribution in that direction, offering a regularization-based route to alignment that does not depend on interactive fine-tuning.\n\nAs with any preprint, the results have not yet been peer reviewed, and independent replication would help clarify how well the approach generalizes beyond the reported benchmarks. Readers evaluating the method should look closely at how feedback manipulation is defined and measured, since the strength of the claim rests on that definition. Even so, the paper adds to a steadily expanding toolkit for building agents that behave as intended using only offline data, a goal that is becoming more pressing as autonomous systems take on higher-stakes tasks.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:08:12.613Z"
+      "generatedAt": "2026-09-05T01:08:12.613Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "オンライン環境なしで方策を学べるんだね。これは大きいこと？",
+          "en": "It can learn a policy without an online environment. Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この研究では、オンラインでやり取りせずに、より安全で整合性の高い方策を目指せる点が重要なんだ。",
+          "en": "The paper highlights that agents can pursue safer, better-aligned policies without online interaction."
+        },
+        {
+          "s": "a",
+          "ja": "「フィードバック操作正則化」って、何をする仕組みなの？",
+          "en": "What does “Feedback Manipulation Regularization” actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "人のデモとフィードバックをつながった手がかりとして扱い、望ましい行動から外れにくいよう学習を整える手法だよ。",
+          "en": "It treats demonstrations and feedback as connected signals, shaping training so the agent is less likely to stray from desired behavior."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、手元のデモとフィードバックだけで行動を学ばせてみたいな。",
+          "en": "I’d try teaching an agent from demonstrations and feedback I already have."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方に近いね。ただし提案されているのは、連続した意思決定を扱うオフライン模倣学習での手法としてだよ。",
+          "en": "That’s close to the intended use. The method is proposed for offline imitation learning in fully sequential decision-making settings."
+        }
+      ]
     },
     "6cef4ed75a1256ee": {
       "bodyJa": "2026年9月28日に公開されたOllama v0.35.0のリリースでは、v0.35.0-rc1の変更点としてSystem One採点APIの追加やtypical_pの非推奨化が示された。macOS起動時の表示同期とMLX取得時の再試行制御も改善され、利用者と開発者の運用を支える更新となっている。\n\n## System One採点\n\n新たにSystem One採点APIが追加された。採点に関する処理をAPIとして扱うための機能が加わった形で、今回の更新における主要な追加項目の一つに位置づけられている。利用者向けの変更だけでなく、APIを扱う開発者にも関係する更新である。\n\n## typical_p非推奨\n\ntypical_pは非推奨となった。System One採点APIが新たに追加される一方、既存の項目であるtypical_pについては扱いが見直されており、機能追加と非推奨化が同じリリースに含まれる。\n\n## macOS表示同期\n\nmacOSでは、起動時における更新表示の同期が改善された。対象となるのは、Ollamaの起動と更新表示が連動する部分である。起動時の表示を同期させる処理を整えることで、利用者側の運用を支える変更とされている。\n\n## MLX再試行\n\nMLXの取得については、再試行制御が改善された。取得を再び試みる際の制御に関する更新であり、MLX取得処理の運用面を整える内容となる。採点APIやパラメータの変更に加え、起動時と取得時の処理も見直されたリリースである。",
@@ -12423,6 +12487,158 @@
       "bodyEn": "The chief executive of Google DeepMind has publicly called for the creation of an independent standards body to govern the development of frontier artificial intelligence, adding a prominent voice to a debate over whether the industry can be trusted to police itself. The intervention matters because DeepMind sits among the small group of laboratories building the most capable general-purpose models, and support from within that group could influence how governments and international bodies structure future oversight.\n\nThe core argument is that voluntary commitments and internal safety teams, while useful, are not sufficient to manage the risks associated with increasingly capable systems. An independent institution, in this framing, would define technical benchmarks, evaluation protocols, and thresholds that apply consistently across competing developers, rather than leaving each company to set and interpret its own standards. Such a body would ideally be insulated from commercial pressure, allowing it to make judgments that individual firms, facing competitive and financial incentives, may find difficult to make on their own.\n\n\"Frontier AI\" is a term used to describe the most advanced foundation models, typically large systems trained on vast datasets whose full range of capabilities is not always predictable before or even after release. The concern driving calls for oversight is that these models can exhibit emergent behaviors, and that capabilities relevant to areas such as cybersecurity, biosecurity, or autonomous decision-making could scale in ways that outpace existing safeguards. Standardized testing, sometimes called evaluations or \"evals,\" is central to this discussion, because reliable measurement of what a model can do is a prerequisite for any meaningful regulation.\n\nThe appeal for a third-party standards organization reflects a broader acknowledgment that self-regulation has limits. Companies have published responsible scaling policies and frontier safety frameworks describing the precautions they intend to take as models grow more powerful, but critics note that these documents are self-authored, self-assessed, and revisable at will. An independent standard-setter would, in principle, provide external verification, reducing the risk that safety claims amount to marketing or that a race to deploy erodes caution across the sector.\n\nThis proposal does not emerge in a vacuum. Several governments have already established public institutions focused on evaluating advanced models, including the AI Safety Institutes created in the United Kingdom and the United States, which have since been reframed in some jurisdictions around security concerns. The European Union's AI Act introduced obligations for general-purpose models deemed to carry systemic risk, and a voluntary code of practice was developed to help companies comply. At the international level, a series of AI safety summits, beginning at Bletchley Park in the United Kingdom, produced declarations signed by numerous countries and led to periodic reports assessing the state of frontier capabilities. A dedicated standards body could complement these efforts or, depending on its design, risk duplicating them.\n\nThere are meaningful open questions about how such an institution would function. It is unclear who would fund it, who would appoint its leadership, and how it would maintain independence from both the companies it scrutinizes and the governments that might charter it. Standards bodies in other industries, such as those governing aviation safety, pharmaceuticals, or financial auditing, offer possible models, but AI development moves quickly and the underlying technology is less mature and less well understood. A body that sets standards too rigidly could struggle to keep pace, while one that defers heavily to industry input could reproduce the very conflicts of interest it is meant to resolve.\n\nObservers are also likely to weigh the commercial context. DeepMind and its parent company compete directly with other major laboratories, and support for common standards can serve varied interests, including the possibility that established players are better positioned to absorb compliance costs than smaller entrants. That does not necessarily undermine the substance of the argument, but it is a factor that policymakers appear inclined to consider as they evaluate proposals originating from within the industry.\n\nFor now, the call functions as a signal rather than a concrete blueprint. Whether it translates into an actual institution will depend on coordination among governments, willingness among competing firms to accept binding external scrutiny, and agreement on the technical details of what should be measured and how. The statement nonetheless reinforces a shift in tone, suggesting that at least some leading developers view external governance not as an obstacle but as a necessary component of deploying advanced AI responsibly.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:07:50.949Z"
+    },
+    "5412b77154cc74cd": {
+      "bodyJa": "## v0.0.85\n\nCline SDK v0.0.85では、モデルが出力トークンの上限に達し、有効なツール呼び出しを生成できなかった場合の処理が改善された。直ちに実行全体を失敗させるのではなく再試行することで、長い推論や大きな応答を伴うエージェント処理の中断を減らせる。\n\n## 出力上限からの復旧\n\nこれまでは、エージェントが行動する前に推論や長い応答が出力枠を使い切ると、1回のmax-tokens終了によって、出力トークン上限のエラーで実行が終了していた。今回の変更では、出力枠を使い切ったターンで利用可能なツール呼び出しが得られなくても、復旧処理へ移行する。\n\n再試行時には、簡潔に応答することと、大きな作業を複数のツール呼び出しに分割することを促すリマインダーが追加される。単に同じ処理を繰り返すのではなく、次のターンで出力を抑え、ツール呼び出しまで到達しやすくする仕組みとなっている。\n\n## 再試行回数\n\nランタイムは最大3回連続で再試行する。再試行回数のカウンターは、ツール呼び出しによる進展があった時点と、各実行の開始時にリセットされる。このため、処理が前進した後に起きた出力上限到達は、新たな連続回数として扱われる。規定回数を使い切っても復旧できない場合は、従来のエラーで失敗する。\n\n## 空応答とイベント\n\n出力枠を消費したものの、画面上で確認できる出力が何もない空のmax-tokens応答も、同じ復旧経路の対象となる。また、各復旧反復の前にはturn-finishedが発行される。これにより、反復に関するイベントの対応関係が維持される。",
+      "bodyEn": "## Output-token limit\n\nCline SDK v0.0.85 changes how the runtime handles turns that reach the model’s output-token limit without producing a usable tool call. Instead of immediately failing the run, the runtime can retry, reducing interruptions in long agent runs that involve extensive reasoning or large responses.\n\nA turn could previously consume its entire output allowance before the agent acted. A single max-tokens finish would then end the run with the existing output-token-limit error, even though no usable tool call had been produced.\n\n## Up to three retries\n\nThe runtime now retries up to three consecutive times when token exhaustion prevents a valid tool call. During recovery, it appends a reminder asking the model to respond concisely and to split large amounts of work across tool calls.\n\nThis retry behavior gives the agent another opportunity to act after reasoning or response content has consumed the available output allowance. If all three consecutive recovery attempts are exhausted, the run still fails with the existing error.\n\n## Tool-call progress\n\nThe retry counter resets when the runtime makes progress through a tool call. It also resets at the start of each run. As a result, the three-attempt limit applies to consecutive failures rather than carrying across tool-call progress or separate runs.\n\nEmpty max-tokens responses follow the same recovery path. These are turns that consume the output allowance while producing no visible output. They can therefore be retried rather than immediately ending the run.\n\n## Turn-finished events\n\nBefore each recovery iteration, the runtime emits turn-finished. This keeps iteration events paired while retries are taking place.\n\nTogether, the retry limit, counter resets, concise-response reminder, and handling of empty responses provide a defined recovery process for output-token exhaustion. Runs still terminate with the established error when recovery is exhausted, while eligible turns receive up to three chances to produce a usable tool call.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "出力上限まで使うと、ツールを呼べないまま処理が終わっていたの？",
+          "en": "Did hitting the output limit end a run before the agent could make a usable tool call?"
+        },
+        {
+          "s": "b",
+          "ja": "Cline SDK v0.0.85では、使えるツール呼び出しが出ない場合に最大3回再試行し、空の応答も復旧対象にします。",
+          "en": "In Cline SDK v0.0.85, that case is retried up to three times. Empty replies caused by the same limit follow this recovery path too."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、長い推論で途中終了しやすかったエージェント処理を、続けやすくする仕組みなんだね？",
+          "en": "So this helps long agent runs keep going when heavy reasoning might otherwise make them stop early?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。再試行時には、簡潔に答えて大きな作業をツール呼び出しに分けるよう促します。",
+          "en": "Yes. On a retry, the runtime reminds the model to be concise and split larger work across tool calls."
+        },
+        {
+          "s": "a",
+          "ja": "ツール実行が進めば回数もリセットされるから、一度の詰まりで終わりにくくなるんだね。",
+          "en": "And if a tool call makes progress, the retry count resets, so one blockage is less likely to end the run."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、連続した再試行を使い切ると、従来どおり出力上限のエラーで終了します。",
+          "en": "Right, but if the consecutive retries are exhausted, the run still ends with the existing output-limit error."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:07:56.525Z"
+    },
+    "689f80a981ecf1fc": {
+      "bodyJa": "## 1.1.1の変更\n\nlangchain-deepseek 1.1.1が2026年9月22日に公開された。strict modeの接続先やキャッシュ利用時のトークン集計を修正し、依存関係も更新することで、DeepSeek連携の信頼性向上を図ったリリースとなる。\n\n1.1.0以降の変更には、機能上の修正に加え、model profile dataの複数回の更新、lockfilesの更新、依存ライブラリのバージョン変更が含まれている。\n\n## strict mode\n\nstrict modeでは、リクエストをbeta endpointへ送るよう経路が修正された。strict modeを利用した処理が、対応するendpointへ適切に接続されるようにする変更で、DeepSeek連携時の動作を整えるものだ。\n\nこの修正は「fix(deepseek)」として記録されており、1.1.1における主要な挙動変更の一つに位置付けられている。\n\n## cache_read\n\nキャッシュ関連では、prompt_cache_hit_tokensをcache_readへ対応付ける修正が行われた。プロンプトキャッシュにヒットしたトークンを、cache_readとして扱えるようにする変更である。\n\nこれにより、キャッシュ利用時のトークン集計が想定する項目へ反映される。新機能の追加ではなく、既存のトークン情報の対応関係を修正する内容となっている。\n\n## anyio更新\n\n/libs/partners/deepseekでは、anyioが4.11.0から4.14.2へ更新された。また、vcrpyも8.1.1から8.2.1へ引き上げられ、lockfilesも更新されている。\n\nOpenAI依存関係については、互換性のある最小条件を解決し、最低バージョンを引き上げる修正が入った。あわせてmodel profile dataの更新も重ねられており、1.1.1は動作経路、集計項目、依存関係をまとめて整えたリリースといえる。",
+      "bodyEn": "## Changes since langchain-deepseek 1.1.0\n\nlangchain-deepseek 1.1.1 focuses on fixes and maintenance intended to make DeepSeek integrations more reliable. Published on September 22, 2026, the release changes strict-mode routing, cache-token accounting, dependency requirements, and model-profile data compared with version 1.1.0.\n\nThe release resolves compatible minimum OpenAI dependencies and raises the minimum version requirement. It also refreshes dependency lockfiles as part of the package’s infrastructure maintenance.\n\n## Strict mode beta endpoint\n\nA central functional fix routes strict mode to the beta endpoint. This corrects how the DeepSeek integration handles requests made with strict mode enabled, ensuring that they are directed to the endpoint identified for that mode.\n\nAnother fix changes token accounting by mapping prompt_cache_hit_tokens to cache_read. The release therefore associates prompt cache-hit token information with the cache_read field. Together, the routing and token-mapping corrections address two specific aspects of the integration’s behavior rather than introducing a separate new feature.\n\n## Dependencies and model profiles\n\nThe release upgrades anyio in /libs/partners/deepseek from version 4.11.0 to 4.14.2. It also bumps vcrpy in the same partner library from version 8.1.1 to 8.2.1.\n\nSeveral included changes refresh model-profile data. The release history lists repeated model-profile refreshes alongside the functional fixes and dependency maintenance, indicating that version 1.1.1 incorporates the latest profile-data updates included across those changes.\n\nOverall, langchain-deepseek 1.1.1 combines endpoint routing and cache-read accounting fixes with updated dependencies, lockfiles, and model profiles. Its main developer-facing result is a more reliable DeepSeek integration through these targeted corrections and maintenance updates.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "strict modeがbeta endpointに送られるようになったの？ なんで気になる変更なんだろう。",
+          "en": "Strict mode now goes to the beta endpoint? Why is that change important?"
+        },
+        {
+          "s": "b",
+          "ja": "1.1.1では、その送信先をbeta endpointにする修正が入ったよ。DeepSeek連携の信頼性を高める変更の一つだね。",
+          "en": "Version 1.1.1 fixes the routing so strict mode uses the beta endpoint. It’s one of the changes intended to make DeepSeek integrations more reliable."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、DeepSeek連携を作る開発者が、より安定して扱いやすくなるってことかな？",
+          "en": "So this could help developers build and use DeepSeek integrations more reliably?"
+        },
+        {
+          "s": "b",
+          "ja": "そう期待できるね。キャッシュ命中トークンをcache_readへ対応づける修正と、anyio 4.14.2への更新も含まれているよ。",
+          "en": "That’s the intended benefit. The release also maps cache-hit tokens to cache_read and updates anyio to 4.14.2."
+        },
+        {
+          "s": "a",
+          "ja": "送信先とトークン集計、依存関係を整えて、DeepSeek連携の信頼性を上げた更新なんだね。",
+          "en": "Got it—it improves DeepSeek integration reliability by refining routing, token accounting, and dependencies."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、strict modeの送信先はbeta endpointだという点は押さえておこう。",
+          "en": "Right. Just keep in mind that strict mode is routed to the beta endpoint."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:08:48.396Z"
+    },
+    "dd71b9e4a1ec7272": {
+      "bodyJa": "## GLSL v0.2.5\n\nZedのGLSL拡張機能がv0.2.5へ更新された。今回の変更は、拡張パッケージの版番号を新しくタグ付けされたリリースにそろえ、利用者や保守担当者が現行版を識別して導入できるようにするものだ。\n\n## 拡張機能の更新\n\n変更の中心は、GLSL拡張機能のバージョンをv0.2.5へ引き上げる処理である。記録には「glsl-v0.2.5: glsl: Bump to v0.2.5」とあり、プルリクエスト番号は#64370。更新対象はZedでGLSLを扱うための拡張機能と、その拡張パッケージである。タグ付けされたリリースとパッケージの版番号が、v0.2.5に統一された形となる。\n\n## 署名付きコミット\n\nこの更新のコミットはGitHub.com上で作成され、GitHubのverified signatureで署名されたものとして表示されている。共同作成者としてzed-zippy[bot]とFinn Eversが記録されており、対象の変更は#64370として追跡できる。版番号だけでなく、対応する変更記録と署名の表示も確認可能だ。\n\n## 現行版の確認\n\nZedでGLSLを扱う利用者は、導入対象となる現行版をv0.2.5として識別できる。拡張機能の保守担当者にとっても、拡張パッケージとタグ付きリリースが同じ版番号を示すため、現在のリリースを確認する際の基準が明確になっている。",
+      "bodyEn": "## GLSL extension\n\nZed’s GLSL extension has moved to v0.2.5, bringing the extension package into alignment with its newly tagged release. The change matters for Zed users working with GLSL and for extension maintainers who need to identify and adopt the current package version.\n\nPublished on September 17, 2026, the release item records a focused version update rather than describing a separate new product or feature.\n\n## Bump to v0.2.5\n\nThe change is identified as “glsl-v0.2.5: glsl: Bump to v0.2.5” and is associated with pull request #64370. Its stated purpose is to bump the version of the GLSL extension to v0.2.5.\n\nAt the package level, this means the extension’s recorded version now matches the v0.2.5 release tag. Users and maintainers can therefore use v0.2.5 as the current version identifier when checking or adopting the GLSL extension in Zed.\n\n## Verified signature\n\nThe commit record says the change was created on GitHub.com and signed with GitHub’s verified signature. It also lists zed-zippy[bot] and Finn Evers as co-authors.\n\nThe release page displayed several loading-error notices and prompts to reload the page, alongside session notices related to signing in, signing out, or switching accounts in another tab or window. Those interface messages do not change the stated release action: the GLSL extension package was updated to v0.2.5 under #64370.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GLSL拡張機能がv0.2.5に変わったんだね。これって大きいこと？",
+          "en": "The GLSL extension moved to v0.2.5. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "ここで確認できる変化は、拡張パッケージの版番号が新しいリリースにそろったことだよ。現行版を見分けやすくなるね。",
+          "en": "The confirmed change is that the extension package now matches the newly tagged release. That makes the current version easier to identify."
+        },
+        {
+          "s": "a",
+          "ja": "拡張機能って、Zedそのものとは別なの？",
+          "en": "Is an extension separate from Zed itself?"
+        },
+        {
+          "s": "b",
+          "ja": "拡張機能は、ソフトに特定の機能を足す追加パッケージのこと。今回はZedでGLSLを扱うためのものだよ。",
+          "en": "An extension is an add-on package that gives software a specific capability. This one supports working with GLSL in Zed."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、ZedでGLSLを使う前にv0.2.5か確認して入れてみたいな。",
+          "en": "I’d check for v0.2.5 before using GLSL in Zed, then try installing it."
+        },
+        {
+          "s": "b",
+          "ja": "それが現実的だね。ZedでGLSLを扱う利用者や保守担当者は、v0.2.5を現行版として確認して導入できるよ。",
+          "en": "That’s a practical approach. Zed users and maintainers working with GLSL can identify v0.2.5 as the current release and adopt it."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:10:09.695Z"
+    },
+    "9a105c94272f6cc5": {
+      "bodyJa": "## 画像添付の警告\n\nCline v4.1.19では、画像を読み取れないモデルに画像を添付した際の扱いが改善された。利用者が送信前に画像が無視されることを把握し、画像対応モデルへ切り替えられるようになった点が中心となる。\n\n## 送信前の表示\n\n画像非対応モデルへ添付された画像は、黙って破棄されるのではなく、サムネイルに警告バッジが表示される。入力欄にも画像が無視される旨の説明が現れ、画像を扱えるモデルへ切り替えるためのボタンが用意された。これにより、画像を含めたつもりのリクエストが、気付かないまま画像なしで処理される状況を避けやすくなる。\n\n従来はサムネイルが通常どおり表示され、リクエストの直前になって画像がテキストのプレースホルダーへ置き換えられていた。そのため、画像が送信対象から外れたことを見分ける手段がなかった。\n\n## 画像対応の表示\n\nモデル情報と添付ファイル選択画面における画像対応の表示も修正された。機能一覧を明示せず、入力形式のみをテキスト専用として宣言しているモデルについても、画像を扱えるかどうかが正確に示される。警告表示だけでなく、画像を添付する前の対応確認にも修正が反映されている。\n\n## ロゴとアイコン\n\n拡張機能全体のロゴとアイコンも刷新され、アクティビティバーやパネルのアイコンが更新された。また、W&B InferenceプロバイダーはCoreWeaveとして表示されるようになり、サインアップとAPIキーのリンクもCoreWeaveに合わせて更新された。",
+      "bodyEn": "## Images attached\n\nCline v4.1.19 changes how the extension handles images attached to models that cannot read them. The update matters because users can now see before a request that an image will be ignored, rather than losing the attachment without a clear warning.\n\nWhen an image is attached to a text-only model, its thumbnail now displays a warning badge. The composer also explains that the image will be ignored and provides a button for switching to an image-capable model.\n\n## Silently discarded\n\nPreviously, the thumbnail appeared normal even when the selected model could not process the image. Just before the request, Cline replaced the image with a text placeholder. Because that change happened without a visible warning on the thumbnail, users had no way to tell that the image had been dropped.\n\nThe new warning badge and composer message make that behavior visible before submission. The model-switch button also gives users a direct way to select a model that can read the attached image.\n\n## Image support accurately\n\nThe release also corrects how image support is reported in model information and the attachment picker. These areas now accurately identify support for models that declare text-only input but do not list capabilities.\n\nThis change aligns the support display with the model’s declared input type. Together with the attachment warning, it helps prevent images from appearing to be accepted when they will instead be ignored.\n\n## Logo and icons\n\nCline’s logo and icons have been refreshed throughout the extension. The changes include the activity bar and panel icons.\n\nThe W&B Inference provider is also now listed as CoreWeave. Its sign-up and API-key links have been updated to match CoreWeave.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "画像を読めないモデルに画像を付けると、今はどうなるの？",
+          "en": "What happens now if I attach an image to a model that can’t read images?"
+        },
+        {
+          "s": "b",
+          "ja": "v4.1.19ではサムネイルに警告が付き、画像が無視されると表示されるよ。画像対応モデルへ切り替えるボタンもある。",
+          "en": "In v4.1.19, the thumbnail gets a warning and the composer says the image will be ignored. There’s also a button to switch to an image-capable model."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、画像を使いたい人が、送る前に気づいてモデルを替えられるってこと？",
+          "en": "So someone who needs the image can notice before sending and switch models?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。以前はサムネイルが普通に見え、送信直前に画像がテキストの代替表示へ置き換わっていたんだ。",
+          "en": "Yes. Before, the thumbnail looked normal, and the image was replaced with a text placeholder just before the request."
+        },
+        {
+          "s": "a",
+          "ja": "画像が消えた理由をあとで探すより、先に警告で気づけるようになったんだね。",
+          "en": "Got it—the warning helps people catch the problem up front instead of wondering later why the image disappeared."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただし警告が出ても、そのまま送れば画像は無視されるよ。対応表示も修正されている。",
+          "en": "Right. But if you continue after the warning, the image will still be ignored. The image-support labels were corrected too."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:10:43.734Z"
     }
   }
 }

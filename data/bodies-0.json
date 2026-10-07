@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T16:01:27.528Z",
-  "count": 306,
+  "generatedAt": "2026-10-07T17:01:39.580Z",
+  "count": 307,
   "bodies": {
     "17f496c665a12174": {
       "bodyJa": "Metaは、AIネイティブ時代に向けたプライバシー対応インフラの中核として、社内の膨大なデータアセットを正確に分類する取り組みをエンジニアリングブログで公開した。データ保持期間やアクセス制御、利用目的の制限、第三者への共有可否、匿名化といったプライバシー制御は、対象となるデータの性質を正しく把握して初めて機能するためだ。\n\n同社の出発点はシンプルである。あらゆるプライバシーコントロールは「どこに、どのようなデータが存在するか」という信頼できる理解を前提とする。たとえば特定の個人情報を一定期間で削除する保持ポリシーを適用するには、まずそのデータがどのテーブルやログ、ストレージのどこに含まれているかを機械的に判別できなければならない。分類が曖昧なままでは、制御そのものが空回りしてしまう。\n\nしかし、この前提を大規模に満たすことは容易ではない。Meta規模のサービスでは、データは無数のシステムを横断して生成・変換・複製され、形式やスキーマも多様だ。さらに生成AIや機械学習パイプラインの普及により、学習用データセットや派生データが増え、データの流れはいっそう複雑になっている。こうした環境で分類の精度と網羅性を保つには、自動化された分類基盤と継続的な検証の仕組みが欠かせない。\n\nこの課題は業界共通のものでもある。EUのGDPRや米カリフォルニア州のCCPAをはじめとする各国の規制は、データの利用目的や保持に厳格な要件を課しており、データガバナンスの基盤整備は大手テック各社にとって避けて通れない。GoogleやMicrosoftなども独自のデータ分類・カタログ化の仕組みを整えてきたとされ、Metaの今回の公開はその一つの実装例と位置づけられる。\n\nAIの普及はデータ活用の幅を広げる一方で、プライバシー保護の難度を押し上げている。データを正確に「知る」ための分類基盤は、派手さこそないが、信頼できるAIサービスを支える土台になると見られる。Metaの事例は、プライバシーを後付けではなく設計段階から組み込む「プライバシー・バイ・デザイン」の実践として参考になりそうだ。",
@@ -11437,6 +11437,44 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T15:01:07.437Z"
+    },
+    "0446cfcb4b4df7c3": {
+      "bodyJa": "## 0.2.9リリース\n\nlangchain-openrouter 0.2.9が2026年9月22日に公開された。モデルプロファイルデータの継続的な更新と、依存関係に含まれるanyioの更新をまとめた保守リリースであり、OpenRouter連携を最新のモデル情報と依存関係で運用したい開発者に向けた内容となっている。\n\n## モデルプロファイル\n\n変更の中心は、モデルプロファイルデータの更新である。変更履歴には「refresh model profile data」が複数回記録されており、該当する変更として#40705、#40685、#40665、#40600、#40541、#40500、#40452、#40436、#40416、#40399が並んでいる。単一の更新ではなく、0.2.8のリリース後に積み重ねられた複数のデータ更新が0.2.9へ反映された形だ。\n\n## anyio更新\n\n依存関係では、/libs/partners/openrouter内のanyioが4.13.0から4.14.2へ引き上げられた。この変更は#40627として記録されている。0.2.9ではモデルプロファイルだけでなく、OpenRouter向けライブラリが利用する依存パッケージも更新対象になった。\n\n## OpenRouter連携\n\nリリース自体は#40736として記録されている。0.2.8以降の変更を取り込んだ0.2.9は、モデルプロファイルデータの複数回の更新とanyioのバージョン更新を一つにまとめ、OpenRouter連携を現在のモデル情報と依存関係に合わせるための保守更新と位置付けられる。",
+      "bodyEn": "## langchain-openrouter 0.2.9\n\nlangchain-openrouter 0.2.9 is a maintenance release that refreshes model profile data and updates the anyio dependency. The changes help developers keep OpenRouter integrations current with the latest model information and dependency version included in this release.\n\nThe release records changes made since langchain-openrouter 0.2.8. Its two stated areas of maintenance are repeated model profile updates and an anyio version increase within the OpenRouter partner library.\n\n## Model profile data\n\nModel profile data was refreshed multiple times across the changes included in version 0.2.9. The release notes associate these refreshes with changes #40705, #40685, #40665, #40600, #40541, #40500, #40452, #40436, #40416, and #40399.\n\nThese repeated updates make model profile maintenance the largest group of entries recorded for the release. The release information characterizes version 0.2.9 as useful for developers who want to operate OpenRouter integrations with current model information.\n\nThe release itself is identified by change #40736. Beyond the model profile refreshes, the notes do not describe additional model-profile behavior or separate feature additions.\n\n## anyio 4.14.2\n\nThe dependency maintenance changes anyio from version 4.13.0 to version 4.14.2. This update applies in /libs/partners/openrouter and is associated with change #40627.\n\nTogether, the anyio increase and the refreshed model profiles define the maintenance scope presented for langchain-openrouter 0.2.9. Developers updating from 0.2.8 receive the newer anyio dependency alongside the accumulated profile-data refreshes, keeping the OpenRouter integration aligned with the model information and dependency level recorded in this release.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "モデルプロファイルが何度も更新されてるね。何が変わったの？",
+          "en": "I noticed several model profile updates. What changed?"
+        },
+        {
+          "s": "b",
+          "ja": "モデル情報をまとめたプロファイルデータが複数回更新されたよ。あわせてanyioも4.13.0から4.14.2になったんだ。",
+          "en": "The model profile data was refreshed several times. The release also moves anyio from 4.13.0 to 4.14.2."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、OpenRouter連携を動かしている開発者が、モデル情報や依存関係を新しく保つのに役立つのかな？",
+          "en": "So this helps developers running OpenRouter integrations keep their model information and dependencies current?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、この記事ではその用途に役立つ保守リリースとして紹介されているよ。",
+          "en": "Yes. It’s presented as a maintenance release for keeping those OpenRouter integrations current."
+        },
+        {
+          "s": "a",
+          "ja": "新機能が主役というより、モデル情報とanyioを更新したリリースなんだね。",
+          "en": "Got it—this release is more about refreshing model information and anyio than introducing a major new feature."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。確認できる主な変更点は、プロファイルデータの更新とanyioのバージョン変更だよ。",
+          "en": "Right. The listed changes center on refreshed profile data and the anyio version update."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:08:50.106Z"
     }
   }
 }

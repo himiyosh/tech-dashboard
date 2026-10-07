@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T16:01:27.528Z",
-  "count": 331,
+  "generatedAt": "2026-10-07T17:01:39.580Z",
+  "count": 336,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -12020,7 +12020,39 @@
       "bodyJa": "大規模言語モデル(LLM)の実用化が世界的に進む一方で、学習データが英語や特定の産業分野に偏っているという課題は依然として大きい。こうしたなか、ナイジェリアの機械産業に焦点を当てた低リソース向けデータセット「Nigeria Machinery」を提案する論文が、arXivのAIカテゴリで公開された。データが乏しい産業領域におけるAI応用の底上げを狙う取り組みとして注目される。\n\nこの研究の中心は、テキストデータが限られる分野でも実用に耐える精度を確保するための工夫にある。論文によれば、ナイジェリアの機械関連の産業データを収集・整備したうえで、ドメイン知識に基づく「推論層(reasoning layer)」を付加したとされる。これは、単に生のテキストを大量に与えるのではなく、その分野特有の知識や論理関係をモデルに橋渡しする中間的な仕組みと見られる。データ量そのものを補いにくい低リソース環境では、こうしたドメイン接地(domain grounding)の設計が性能を左右する鍵になりうる。\n\n背景には、いわゆる「低リソース言語・低リソースドメイン」の問題がある。英語や中国語などデータが豊富な言語・分野に比べ、アフリカ地域の言語や地場産業に関するデータは圧倒的に少なく、既存の汎用モデルをそのまま適用しても十分な精度が出にくい。ナイジェリアはアフリカ有数の人口・経済規模を持ち、製造や機械分野のデジタル化余地も大きいと指摘されるが、その現場に即したデータ基盤は整っていないのが実情だ。\n\n関連する動きとして、アフリカの自然言語処理を推進する研究者コミュニティ「Masakhane」や、多言語ベンチマークの整備が近年活発化している。産業応用に目を向ければ、保守記録や部品情報といった専門テキストを扱う産業AIの需要も高まっており、本研究はその交差点に位置づけられる。汎用の大規模モデルが取りこぼしがちな領域を、専門データと構造化された推論で補うアプローチと言える。\n\nもっとも、データセットの規模や評価の一般化可能性については、今後の追試や他分野への展開を通じた検証が求められるだろう。それでも、資源の乏しい産業・地域を明示的に対象に据えた本研究は、AIの恩恵をより広い現場へ届けるうえで一つの参照点になる可能性がある。",
       "bodyEn": "A new research paper posted to arXiv describes a dataset called Nigeria Machinery, which targets a corner of artificial intelligence that rarely receives sustained attention: industrial data from underrepresented economies. The work matters because most modern natural language processing systems are trained on high-resource languages and well-documented domains, leaving sectors such as machinery, manufacturing, and maintenance in emerging markets poorly served. By assembling a focused dataset and pairing it with what the authors describe as a domain-grounded reasoning layer, the paper aims to make AI systems more useful in settings where clean, abundant training data does not exist.\n\nThe term \"low-resource\" in this context refers to two overlapping problems. First, there is limited textual data available for the specific domain, in this case Nigerian machinery, its terminology, maintenance practices, and operational conditions. Second, the linguistic and contextual patterns of the region are underrepresented in the large corpora that power general-purpose models. Systems trained predominantly on data from North America, Europe, and East Asia often struggle with local vocabulary, informal phrasing, and domain-specific shorthand. A dataset built directly from Nigerian industrial contexts is intended to narrow that gap, giving models grounding they would otherwise lack.\n\nThe distinguishing feature of the paper appears to be the reasoning layer that sits on top of the raw data. Rather than treating the dataset as a flat collection of text for pattern matching, the authors introduce structured domain knowledge that guides how a model interprets and connects information. In practice, this likely means encoding relationships between machines, components, faults, and corrective actions, so that a system can reason about a query rather than simply retrieve surface-level matches. This kind of hybrid approach, combining learned representations with explicit domain structure, is a recurring theme in applied AI when data is scarce. When you cannot rely on sheer volume, injecting expert knowledge can compensate for what statistical learning alone cannot infer.\n\nThis method connects to a broader set of techniques in the field. Retrieval-augmented generation, knowledge graphs, and ontology-based reasoning all attempt to constrain and inform model outputs with curated information. Industrial AI has long used structured representations for tasks such as predictive maintenance, fault diagnosis, and equipment monitoring, where errors carry real operational and safety costs. The Nigeria Machinery paper appears to bring these ideas together for a domain that has seen comparatively little dedicated dataset work, positioning itself at the intersection of low-resource NLP and industrial applications.\n\nThe regional focus also reflects a growing movement in the research community to broaden the geographic scope of AI. Initiatives such as Masakhane, which builds NLP resources for African languages, and various efforts to create localized benchmarks have highlighted how much of the world remains data-poor from a machine learning perspective. Datasets like this one contribute to that agenda, though the industrial angle is less common than language-focused work. If effective, such resources could support practical tools for technicians, engineers, and businesses that currently have few AI systems tailored to their environment.\n\nSeveral caveats are worth noting. The paper is a preprint, meaning it has not yet completed formal peer review, and its claims should be read accordingly. The real-world value of any dataset depends heavily on its size, quality, annotation consistency, and how well it generalizes beyond the specific examples it contains. A reasoning layer built on curated domain knowledge can improve accuracy, but it also introduces maintenance overhead and may embed the assumptions of its creators. Independent evaluation and reproduction will be needed to assess how robust the approach is across different machinery types and use cases.\n\nEven so, the contribution is a useful data point in an important trend. As organizations increasingly seek to deploy AI in specialized industrial settings, the shortage of relevant, high-quality training data is becoming a central obstacle. Efforts that combine locally sourced datasets with structured reasoning offer one path forward, particularly for regions and sectors that mainstream models overlook. Whether the Nigeria Machinery dataset becomes widely adopted will depend on its accessibility, documentation, and the willingness of others to build on it, but the underlying problem it addresses is likely to grow more pressing as industrial AI expands.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:08:54.711Z"
+      "generatedAt": "2026-09-05T01:08:54.711Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "機械の故障や使われ方を調べる仕事では、普段の何が変わるの？データ探しが楽になるのかな。",
+          "en": "For people studying machinery use and failures, what changes in their day-to-day work? Does finding usable data get easier?"
+        },
+        {
+          "s": "b",
+          "ja": "公開元とコードブック付きの89件を使えるので、ナイジェリアの製造業や石油・ガス分野を分析する土台が増える、という話だよ。",
+          "en": "They now have 89 records with public sources and a codebook, providing a stronger base for analyzing Nigeria’s manufacturing and oil and gas sectors."
+        },
+        {
+          "s": "a",
+          "ja": "前は、そういう分析やAIの学習ができなかったの？",
+          "en": "So was that kind of analysis or AI training impossible before?"
+        },
+        {
+          "s": "b",
+          "ja": "できなかったとまでは書かれていないよ。ただ、公開され、モデルに使えるデータが比較的少なく、数値分析や学習が難しかったんだ。",
+          "en": "Not impossible, as far as the paper says. But public, model-ready data was relatively scarce, making quantitative analysis and training on numeric tasks difficult."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、出典つきの産業データと、その分野に沿ってAIが考えるための層をまとめたことなんだね。",
+          "en": "My main takeaway is that it pairs sourced industrial data with a layer meant to help AI reason within that domain."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、ドメイン根拠推論層が数値課題でどう使われる設計なのかに注目したいね。",
+          "en": "Right. Next, it’s worth examining how that domain-grounded reasoning layer is designed to support numeric tasks."
+        }
+      ]
     },
     "479cd672c9bf984e": {
       "bodyJa": "## 1.7.5の要点\n\nlangchain-anthropic 1.7.5が2026年9月29日に公開された。Claude Sonnet 5.5との互換性を支える修正を追加したパッチリリースで、LangChain経由でAnthropicモデルを利用する開発者が、新モデルとの連携を円滑に保つための更新と位置付けられている。\n\n## 互換性の修正\n\n今回示されている技術的な変更は、Claude Sonnet 5.5への互換性対応である。新機能を幅広く追加するリリースではなく、同モデルとlangchain-anthropicの組み合わせを扱うための修正に焦点が置かれている。変更記録では「support Claude Sonnet 5.5 compatibility」と記載され、該当する修正には#40882が関連付けられている。\n\nこの対応により、LangChainを通じたAnthropicモデルとの連携を、新しいClaude Sonnet 5.5でも円滑に維持できると説明されている。ただし、修正された具体的な処理や変更箇所、利用時に必要となる設定については示されていない。\n\n## 1.7.4からの変更\n\n1.7.5は、langchain-anthropic 1.7.4以降の変更として公開されている。リリース項目には「release(anthropic): 1.7.5」があり、#40912が付されている。確認できる変更点はClaude Sonnet 5.5との互換性修正であり、1.7.4から更新する際の中心的な差分となる。\n\n対象のコミットはGitHub.com上で作成され、GitHubの検証済み署名によって署名されている。今回の更新は、バージョン番号上も1.7.4から1.7.5へのパッチ更新として提供される。",
@@ -12102,7 +12134,39 @@
       "bodyJa": "## MCP対応\n\nUE5.8ではMCP（Model Context Protocol）への対応が加わり、Claude CodeやCursorなどのAIをエディタへ接続できるようになりました。記事では、AIエージェント向けToolsetを実際に試し、Unreal Engineの操作を自動化できる可能性と、開発ワークフローの効率化につながる機能として紹介しています。\n\n## Toolsetの拡充\n\n最初のリリース時点では14種ほどだったToolsetが、UE5.8正式版では26種へ増えています。PCG、Niagara、UMGなどが追加され、さらにAllToolsetsメタプラグインを含む構成です。記事はまずAllToolsetsを有効にし、増えたToolsetで何ができるようになったのかを、実際の指示例を交えて整理しています。",
       "bodyEn": "## UE5.8 Toolset\n\nUE5.8 expands the Toolset available for AI agents, making it possible to connect AI tools such as Claude Code and Cursor to the editor through MCP. The article takes a hands-on approach, using actual instruction examples to organize what the expanded Toolset can do.\n\n## MCP support\n\nMCP, or Model Context Protocol, support was introduced with UE5.8. At the initial release, roughly 14 Toolsets were available. The formal UE5.8 release increases that selection to 26 Toolsets and adds the AllToolsets meta-plugin.\n\nThe expanded configuration includes Toolsets for PCG, Niagara, and UMG. The article examines these additions in the context of connecting AI agents to Unreal Engine and automating editor operations.\n\n## AllToolsets\n\nThe walkthrough starts by enabling AllToolsets. This meta-plugin sits alongside the 26 individual Toolsets and provides the starting point for exploring the expanded set of AI-agent capabilities described in the article.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:04:25.052Z"
+      "generatedAt": "2026-09-05T01:04:25.052Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AllToolsetsを1つ有効にすれば、26種を全部まとめて使えるの？",
+          "en": "If I enable AllToolsets, do I get all 26 Toolsets at once?"
+        },
+        {
+          "s": "b",
+          "ja": "まとめて使えるのは21種だよ。個別に有効化せず、AllToolsetsだけで利用できる構成なんだ。",
+          "en": "It bundles 21 Toolsets. You can use those by enabling AllToolsets instead of turning them on one by one."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、Unreal Engineで調整を繰り返す開発者が、AIに作業を任せやすくなるんだね？",
+          "en": "So this could help Unreal Engine developers hand repetitive adjustment work over to AI?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。MCPでAIをつなぎ、マテリアルやパーティクルの数値変更、PCGのグラフ操作などを任せられるよ。",
+          "en": "Yes. Through MCP, AI can handle tasks like changing material or particle parameters and operating PCG graphs."
+        },
+        {
+          "s": "a",
+          "ja": "変えたいパラメータを具体的に伝えるほど、AIに調整を任せやすいってことだね。",
+          "en": "Got it—the more specific I am about the parameter to change, the easier it is to delegate the adjustment to AI."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、BPのノードグラフを読み書きするToolsetはないよ。渡すなら別のプラグインでMarkdown形式に変換する方法がある。",
+          "en": "One caveat: no Toolset can read or write BP node graphs. A separate plugin can convert a BP to Markdown so it can be shared with AI."
+        }
+      ]
     },
     "26af4a3e40494144": {
       "bodyJa": "## v1.22.0-pre\n\nZedエディターのv1.22.0-preでは、複数のAIモデルに対するBYOK対応や、サブエージェントごとのモデル選択、自動圧縮などが追加された。モデルの利用方法とサブエージェントの構成を、より細かく制御できるリリースとなっている。\n\n## BYOK対応\n\nOpenAI APIキーを使ったBYOKでは、GPT-6 Astra、GPT-6 Sol、GPT-6 Lunaが新たにサポートされた。Anthropic APIキーでは、Claude Opus 5.5を利用できるようになった。これにより、対象モデルをそれぞれのAPIキーで利用する構成が可能になる。\n\nまた、Grok 4.7がSuperGrokおよびxAIのプロバイダーに追加され、両プロバイダーの推奨デフォルトに設定された。OpenCodeのモデルについては、動的に取得される仕組みが盛り込まれている。\n\n## モデル指定\n\nspawn_agentには、任意のmodelパラメーターが追加された。新しいサブエージェントを生成する呼び出しごとにモデルを選択でき、設定済みのサブエージェント用モデルを使う方法や、親エージェントのモデルを継承する方法とは別に指定できる。\n\n選択中のモデルは、生成されたサブエージェントのカード上に表示される。どのモデルで動作しているかを画面上で確認できるため、呼び出し単位の指定と表示が対応する形になる。\n\n## 自動圧縮\n\nサブエージェントには自動圧縮も追加された。今回の更新では、呼び出し時のモデル選択、自動圧縮、OpenCodeモデルの動的取得が組み合わされ、AI開発環境の構成を柔軟に調整できるとされている。",
@@ -12419,6 +12483,132 @@
       "bodyEn": "Google has released Gemma 4 E2B, a compact open-weight language model, alongside a beta version of its Tensor SDK, giving Android developers a more direct path to running generative AI inference on Pixel 10 hardware. The move matters because it shifts capable models off the cloud and onto the device itself, which can lower latency, improve privacy by keeping data local, and allow AI features to function even without a network connection.\n\nThe \"E2B\" designation appears to indicate an effective parameter count of roughly two billion. This follows a naming convention Google established with the earlier Gemma 3n family, which distinguished between a model's raw parameters and the smaller number actively used during inference through techniques such as per-layer embeddings and selective activation. The intent is to fit within the memory and thermal limits of a smartphone while retaining enough capability for tasks like summarization, text rewriting, structured extraction, and conversational features. Smaller variants like this are typically distributed with quantized weights, often in 4-bit or 8-bit formats, to reduce their memory footprint further.\n\nThe Tensor SDK beta is the second half of the story. Pixel phones use Google's custom Tensor system-on-chip, which includes a neural processing unit designed to accelerate machine learning workloads. Until now, developers targeting on-device inference have generally relied on more general frameworks such as MediaPipe's LLM Inference API and LiteRT, the runtime formerly known as TensorFlow Lite. A dedicated Tensor SDK suggests Google is exposing lower-level access to the Pixel 10's accelerator, which is likely built around the newer Tensor G5 silicon. In principle, this could let applications offload model execution to specialized hardware rather than the CPU or GPU, improving throughput and energy efficiency, though real-world gains will depend on how the SDK is implemented and how well specific models map to the hardware.\n\nFor developers, the practical significance is a reduced barrier to entry. Building advanced AI features has often meant sending user input to a remote server, which carries recurring inference costs, adds round-trip delay, and raises data-handling questions. Running a model such as Gemma 4 E2B locally sidesteps much of that, at the expense of being constrained by the device's compute and memory. On-device models are generally less capable than the largest cloud-hosted systems, so many applications are likely to adopt hybrid approaches, handling routine or privacy-sensitive requests locally while routing more demanding queries to larger models in the cloud.\n\nThis release fits into a broader industry trend toward on-device AI. Apple has pushed its Apple Intelligence stack using on-device foundation models with server-based fallback, while Qualcomm and MediaTek have promoted their own AI engines for running language and image models on mobile chips. Samsung's Galaxy AI similarly blends local and cloud processing. Gemma itself sits within Google's open-model strategy, offering weights that developers can inspect, fine-tune, and deploy under a permissive license, in contrast to the fully closed Gemini models that power many of Google's consumer services. The combination of an open model and a hardware-specific SDK positions Google to encourage a developer ecosystem around Pixel devices specifically.\n\nSome caveats are worth noting. As a beta, the Tensor SDK may change before a stable release, and its most optimized paths appear tied to recent Pixel hardware, which limits portability across the wider Android landscape. Fragmentation remains a persistent challenge for on-device AI, since Android devices vary widely in their accelerators and available memory, and code tuned for Tensor silicon will not automatically translate to other chipsets. Developers will also need to weigh app size, since bundling model weights can add substantially to a download.\n\nAnyone interested in experimenting will likely find the model available through Google's usual distribution channels, with the Tensor SDK offered under its developer program. Details on supported operations, benchmarks, and licensing terms should clarify how the pieces fit together, but the overall direction is clear: Google is making on-device generative AI a more first-class part of the Pixel development experience.",
       "model": "chat-backfill:gpt-5.6-sol",
       "generatedAt": "2026-08-30T17:06:33.608Z"
+    },
+    "b374d6c0f582b8d4": {
+      "bodyJa": "## 1.6.2リリース\n\nlangchain-fireworks 1.6.2が2026年9月22日に公開された。今回の変更は、LLMテストで使用する補完モデルの選択、モデルプロファイルの更新、依存関係の刷新が中心となっている。\n\n## LLMテスト\n\nLLMテストに関しては、現在の補完モデルを使用する修正と、利用可能なモデルを使用するホットフィックスが含まれる。いずれもテスト時のモデル選択に関する変更であり、利用できる補完モデルを選ぶことで、連携を保守する開発者が信頼性の高い検証を実行しやすくすると説明されている。これらは#40740と#40737として反映され、1.6.2のリリース自体は#40735で行われた。\n\n## モデルプロファイル\n\nモデルプロファイルのデータも更新された。変更一覧には、モデルプロファイルを更新する作業が複数回記録されており、LLMテストのモデル選択に関する修正とあわせて、モデル関連の情報が刷新されている。\n\n## 依存関係\n\n/libs/partners/fireworksでは複数の依存関係が更新された。anyioは4.11.0から4.14.2、urllib3は2.7.0から2.8.0、langsmithは0.12.1から0.12.6へ変更された。さらに、pygmentsは2.20.0から2.21.0、idnaは3.19から3.20へ引き上げられている。1.6.2は、テストで使うモデルの見直しと関連データ、依存関係の更新をまとめたリリースとなる。",
+      "bodyEn": "## Changes since langchain-fireworks==1.6.1\n\nlangchain-fireworks 1.6.2 was published on September 22, 2026, with changes focused on LLM tests, model profiles, and dependencies. The release matters for developers maintaining the integration because its test fixes are intended to help them run reliable checks.\n\nThe release entry itself is tracked as change #40735. The other listed changes include two fixes for Fireworks LLM tests, two model-profile refreshes, and several dependency upgrades under /libs/partners/fireworks.\n\n## Available completions model\n\nThe main test-related change makes LLM tests select an available completions model. One fix, #40740, updates the tests to use the current completions model, while hotfix #40737 changes them to use an available model.\n\nTogether, these changes address which model is selected when the LLM tests run. The release notes characterize this selection update as a way to improve the reliability of checks performed by maintainers.\n\n## Model profile data\n\nModel profile data was also refreshed. The listed changes include refreshes under #40665 and #40541, along with another model-profile entry whose identifier is not shown in the published text.\n\nThese updates accompany the LLM test fixes in version 1.6.2. The release does not describe additional behavior changes associated with the refreshed profile data.\n\n## Key dependencies\n\nThe release upgrades five dependencies in /libs/partners/fireworks. anyio moves from 4.11.0 to 4.14.2 under #40639, while urllib3 moves from 2.7.0 to 2.8.0 under #40587.\n\nlangsmith is upgraded from 0.12.1 to 0.12.6 under #40586. pygments moves from 2.20.0 to 2.21.0 under #40585, and idna moves from 3.19 to 3.20 under #40584.\n\nOverall, langchain-fireworks 1.6.2 combines targeted LLM test-model selection fixes with refreshed model profiles and dependency maintenance.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "LLMテストで「利用可能な補完モデル」を選ぶ修正って、なんで必要だったの？",
+          "en": "Why did the LLM tests need to select an available completions model?"
+        },
+        {
+          "s": "b",
+          "ja": "1.6.2では、LLMテストが現在利用できる補完モデルを使うよう修正されたよ。補完モデルは、入力に続く文章を生成するモデルという意味だね。",
+          "en": "Version 1.6.2 updates the LLM tests to use a currently available completions model—a model that generates text following an input."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、Fireworks連携を保守する開発者が、テスト結果を信頼しやすくなるってこと？",
+          "en": "So this helps developers maintaining the Fireworks integration trust their test results more?"
+        },
+        {
+          "s": "b",
+          "ja": "そう、利用できるモデルを選ぶことで、検証の信頼性を高める更新だよ。モデルプロファイルと主要な依存関係も更新されたんだ。",
+          "en": "Yes. Selecting an available model makes those checks more reliable. Model profiles and key dependencies were updated too."
+        },
+        {
+          "s": "a",
+          "ja": "使えるモデルでLLMテストを回して、保守時のチェックを信頼しやすくする更新なんだね。",
+          "en": "Got it—it runs LLM tests with an available model, making maintenance checks easier to trust."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、anyioやurllib3なども更新されていて、テスト修正だけのリリースではない点は押さえたいね。",
+          "en": "Right. One detail to note: this release also updates dependencies such as anyio and urllib3, so it isn’t limited to the test fix."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:09:24.738Z"
+    },
+    "7ea935dbb27017c0": {
+      "bodyJa": "Cline SDK v0.0.84では、機能フラグ照会の競合処理が修正され、実行開始フックからコンテキストを追加できるようになった。同一アカウントでの同時照会を一つの通信にまとめつつ、既存実装との互換性を保った拡張となる。\n\n## 同時照会の集約\n\n同じアカウントに対して機能フラグの照会が並行して発生した場合、進行中の一つのリクエストを共有する。呼び出しごとに別々の照会として扱うのではなく、同一アカウント単位で処理を集約する形だ。\n\n一方、アカウントを切り替えた場合は、切り替え前のアカウントに対するリクエストの完了を待たない。共有の対象を同一アカウントに限定し、別アカウントの処理を前の照会から分離している。\n\n## 競合時の誤判定\n\n従来は、ネットワークリクエストが完了する前にキャッシュが最新として扱われていた。このため、最初の照会と競合した呼び出しが既定値を即座に返し、実際には有効なフラグを無効と読む場合があった。その状態は、後続の更新が何らかのきっかけで実行されるまで続いていた。\n\nv0.0.84では失敗も呼び出し側へ伝播する。これにより、失敗後の呼び出しは改めて照会を試せる。\n\n## beforeRunの拡張\n\n実行開始時のフックは、コンテキストを注入できるようになった。beforeRunは新しいAgentRunStartResultを返し、従来のstopとreasonに加えてappendContextチャネルを持つ。\n\nAgentStopControlは引き続き代入可能で、既存の実装者は変更せずにコンパイルできるとされる。ランタイムはフックから集めた内容を、source属性が「RunStart」の単一のhook_contextメッセージとして注入する。",
+      "bodyEn": "## Concurrent feature-flag polls\n\nCline SDK v0.0.84 changes how concurrent feature-flag polls and run-start hooks behave. The update matters because it prevents race-induced false default values while allowing beforeRun to add context without breaking existing implementors.\n\nConcurrent feature-flag polls for the same account now share one in-flight request. Previously, the cache could be marked fresh before the associated network request had finished. If another caller raced the initial poll, it could return immediately with the default value rather than waiting for the result.\n\nThat race meant a flag that was enabled could temporarily be read as disabled. The incorrect value remained until another action triggered a later refresh. Sharing the in-flight request ensures concurrent lookups for the same account use the same pending operation instead of treating an unfinished request as a fresh cached result.\n\n## Failures now propagate\n\nRequest failures now propagate rather than leaving subsequent calls unable to recover through another attempt. As a result, a later call can retry after a failed feature-flag poll.\n\nThe account handling also separates requests more clearly. Switching accounts does not wait for the previous account’s request, while concurrent polls belonging to the same account continue to share their in-flight request.\n\n## Run-start hooks\n\nRun-start hooks can now inject context through beforeRun. The method returns a new AgentRunStartResult that includes an appendContext channel alongside stop and reason.\n\nAgentStopControl remains assignable to the new result type, so existing implementors compile unchanged. This preserves compatibility while extending the information that a run-start hook can provide.\n\nThe runtime collects the appended context and injects it as a single <hook_context source=\"RunStart\"> message. This gives beforeRun a defined channel for contributing context at run start, while retaining the existing stop and reason controls.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "開発中、同じアカウントで機能フラグを同時確認したり、実行前に情報を足したりすると、何が変わるの？",
+          "en": "When developers check feature flags for the same account at once or add information before a run, what changes in their day-to-day work?"
+        },
+        {
+          "s": "b",
+          "ja": "同時確認は進行中の1リクエストを共有し、競合による誤判定を防ぐよ。beforeRunから実行コンテキストも追加できる。",
+          "en": "Concurrent checks now share one in-flight request, preventing race-related misreads. beforeRun can also append context for the run."
+        },
+        {
+          "s": "a",
+          "ja": "前は、同時確認も実行前の情報追加もうまくできなかったの？",
+          "en": "Couldn’t it handle concurrent checks or add that pre-run context before?"
+        },
+        {
+          "s": "b",
+          "ja": "前は通信完了前にキャッシュが新鮮扱いされ、競合側が既定値を返して、有効なフラグを無効と読むことがあった。今回はbeforeRunにappendContextも加わったよ。",
+          "en": "Previously, the cache could look fresh before the request finished, so a racing caller returned the default and read an enabled flag as disabled. appendContext is now part of beforeRun."
+        },
+        {
+          "s": "a",
+          "ja": "いちばん大きいのは、同時確認の取り違えを防ぎつつ、既存実装を変えずに実行前の文脈も足せることなんだね。",
+          "en": "So the biggest gain is avoiding mix-ups during concurrent checks while adding pre-run context without breaking existing implementations, right?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。次は、失敗後に後続の呼び出しが再試行できる点と、アカウント切替時に前のリクエストを待たない点にも注目だね。",
+          "en": "Right. Also note that calls can retry after failures, and switching accounts no longer waits for the previous account’s request."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:09:34.567Z"
+    },
+    "0f8d82df25f3c359": {
+      "bodyJa": "## Proto v0.3.4\n\nZedのProto拡張機能がv0.3.4へ更新され、2026年9月17日に公開された。今回示されている変更はバージョンの引き上げであり、新機能や機能変更についての記載はない。更新内容を広く追加するリリースではなく、Proto拡張機能の版をv0.3.4として明確にする保守的な更新と位置付けられる。\n\n## PR #64372\n\nこの更新はPR #64372として扱われ、内容は「Proto extension」のバージョンをv0.3.4へ引き上げるものと説明されている。対象はZedのProto拡張機能であり、別の機能や製品の更新を示すものではない。利用者にとっては、現在の最新リリースをv0.3.4として識別し、導入している版を追跡しやすくなる点が、このバージョン更新の意味となる。\n\n共同作成者として、zed-zippy[bot]とFinn Eversの名前が記録されている。変更の識別子には「proto-v0.3.4」が使われ、更新対象と更新後の版が対応する形で示されている。\n\n## verified signature\n\nこのコミットはGitHub.com上で作成され、GitHubのverified signatureで署名されたものとして表示されている。一方、ページ上には読み込み時のエラーや、再読み込みを求める表示も含まれている。また、別のタブやウィンドウでのサインイン、サインアウト、アカウント切り替えに伴い、セッションを更新するため再読み込みが必要になる旨も表示されている。",
+      "bodyEn": "## Proto v0.3.4\n\nZed’s Proto extension has been updated to v0.3.4 through PR #64372. The release matters primarily as a clearly identified version change, allowing users to recognize the latest Proto release and track whether that version has been introduced.\n\nThe published change is described as a bump of the Proto extension’s version to v0.3.4. No feature changes are listed alongside the update.\n\n## PR #64372\n\nThe version change was published as PR #64372 under the description “proto-v0.3.4: proto: Bump to v0.3.4.” This connects the v0.3.4 identifier directly with the pull request responsible for updating the extension version.\n\nThe associated commit was created on GitHub.com and carries GitHub’s verified signature. The published material also credits zed-zippy[bot] and Finn Evers as co-authors.\n\n## Version bump\n\nThe scope presented for this release is narrow: the Proto extension moves to v0.3.4. Because no feature additions or other feature changes are listed, the update is characterized as a maintenance-oriented version bump rather than an announcement of new functionality.\n\nThe version number is therefore the central technical detail. It provides a specific release identifier that can be used when checking which Proto extension release is involved.\n\n## Latest Proto release\n\nFor users following Proto updates, v0.3.4 is the latest release identified by this announcement. The explicit version and PR number provide two references for tracking the change: the extension release is v0.3.4, and the corresponding pull request is #64372.\n\nThe announcement was published on September 17, 2026. Beyond the version increase itself, it does not list feature changes.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Proto拡張機能がv0.3.4になったんだね。これって大きいこと？",
+          "en": "The Proto extension moved to v0.3.4. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "今回はバージョンを引き上げた更新で、機能追加は記載されていないよ。最新リリースや導入状況を追いやすくする変化だね。",
+          "en": "This update only bumps the version, with no feature additions listed. It makes the latest release and rollout status easier to track."
+        },
+        {
+          "s": "a",
+          "ja": "「バージョンを引き上げる」って、どういうこと？",
+          "en": "What does “bumping the version” mean?"
+        },
+        {
+          "s": "b",
+          "ja": "ソフトウェアの版を示す番号を更新することだよ。今回はProto拡張機能の番号がv0.3.4になったんだ。",
+          "en": "It means updating the number that identifies a software release. Here, the Proto extension’s version became v0.3.4."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、入っているProtoが最新か確かめる目印にしたいな。新しい機能も試せるのかな？",
+          "en": "I’d use it to check whether my Proto release is current. Does it bring anything new to try?"
+        },
+        {
+          "s": "b",
+          "ja": "確認の目印には使えそうだね。ただ、機能追加は記載されていないので、新機能が増えたとは受け取らないほうがよさそう。",
+          "en": "It should work as a release marker. But since no feature additions are listed, it’s best not to assume there are new capabilities."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T16:10:08.290Z"
+    },
+    "95adeab00e505e70": {
+      "bodyJa": "Hugging Faceのブログで公開された研究「MosaicLeaks」は、AIリサーチエージェントが単体では無害に見える情報を積み重ねることで、結果的に機密情報を漏洩させてしまうリスクを検証したものだ。ローカルLLM（オープンモデル）を用いたエージェント設計において、情報セキュリティが看過できない論点であることを浮き彫りにしている。\n\nMosaicLeaksという名称は、安全保障分野で知られる「モザイク理論」に由来すると見られる。個々の断片は取るに足らない情報でも、複数を組み合わせて全体像を再構成すると、本来秘匿すべき事実が浮かび上がる、という考え方だ。リサーチエージェントは複数の情報源を横断し、収集した内容を要約・統合して回答を生成するため、この種の集約による漏洩と構造的に相性が悪いとされる。\n\n背景には、LLMエージェントの急速な普及がある。Web検索やドキュメント参照、コード実行などのツールを自律的に呼び出すエージェントは、単なるチャットボットを超えて調査業務を代替しつつある。一方で、エージェントが複数のタスクやユーザーをまたいで動作する場合、あるコンテキストで得た情報が別の出力に紛れ込む可能性が以前から指摘されてきた。\n\n特にローカルLLMを用いる構成では、データを外部に送らずに完結できる点がプライバシー保護の観点から評価される。しかし今回の研究は、モデルをローカルに置くだけでは集約型の漏洩を防ぎきれない可能性を示唆している。エージェントの記憶（メモリ）や検索インデックス、ログの扱い次第では、断片的な情報がモザイク状につなぎ合わされる余地が残るためだ。\n\nこうした課題は、OpenAIやAnthropicなどが提供するエージェント基盤でも共通の関心事となっている。出力のフィルタリング、コンテキストの分離、アクセス権限の最小化といった対策が議論されているが、決定的な解決策はまだ確立されていない。MosaicLeaksは、エージェントを安全に運用するうえで、個別の応答だけでなく累積的な情報流出まで評価する必要があることを改めて提起した研究と言えるだろう。",
+      "bodyEn": "Research agents — autonomous AI systems that browse the web, query databases, and synthesize findings — are increasingly built on locally hosted open-weight language models. A new study published on the Hugging Face blog, called MosaicLeaks, examines a subtle but consequential risk in these systems: how such agents can inadvertently disclose sensitive information not through a single obvious mistake, but by aggregating many individually harmless outputs into a revealing whole. The work matters because agent architectures are moving from experimental demos into production workflows where they handle proprietary documents, internal knowledge bases, and personal data.\n\nThe name MosaicLeaks appears to draw on the long-standing \"mosaic theory\" from intelligence analysis and privacy law, which holds that fragments of non-sensitive information, when combined, can expose something confidential. Applied to language-model agents, the concern is that a system may be carefully guarded against directly repeating a secret, yet still leak it piece by piece across multiple steps, tool calls, or responses. Each fragment passes local checks, but the accumulated trail can reconstruct what should have stayed private.\n\nThis aggregation problem is distinct from more familiar failure modes such as prompt injection, in which an attacker embeds malicious instructions in content the agent reads, or straightforward data exfiltration, where a model is coaxed into reproducing protected data verbatim. MosaicLeaks focuses instead on emergent disclosure: the way an agent's planning, retrieval, and summarization loop can surface correlations and inferences that no single output was meant to reveal. Because research agents are designed to gather and connect information, the very capability that makes them useful also makes them prone to this class of leak.\n\nThe study's focus on open models and local deployment is notable. Running models such as those in the Llama, Mistral, or Qwen families on private infrastructure is often promoted as a privacy-preserving alternative to sending data to third-party APIs. The MosaicLeaks framing suggests that local hosting alone does not eliminate information-security risk; it shifts the boundary. Even when data never leaves an organization's servers, an agent with broad access can still aggregate and expose sensitive material to the wrong internal user, log it in intermediate reasoning traces, or embed it in a shared report.\n\nThe findings are relevant to the growing ecosystem of agent tooling. Hugging Face maintains smolagents, a lightweight framework for building tool-using agents, while libraries such as LangChain and LlamaIndex, and orchestration patterns built around retrieval-augmented generation, have popularized multi-step reasoning over external data. In these systems, an agent typically decomposes a task, issues queries, calls tools, and iteratively refines an answer. Each of those intermediate stages is a potential surface for the kind of gradual disclosure MosaicLeaks describes.\n\nMitigating aggregated leakage is likely harder than blocking single-shot disclosures. Approaches under discussion in the field include output-level auditing that considers an agent's cumulative history rather than individual messages, access controls scoped to the sensitivity of retrieved data, and guardrail models that evaluate whether a synthesized conclusion crosses a confidentiality threshold. The value of a benchmark or evaluation methodology, which MosaicLeaks appears to provide, is that it gives developers a repeatable way to measure how much sensitive information an agent design leaks under realistic conditions, rather than relying on ad hoc testing.\n\nThe research arrives amid broader industry attention to agent security. Groups such as OWASP have published risk taxonomies for LLM applications, and enterprises are increasingly scrutinizing how autonomous systems handle confidential data. For teams deploying local-LLM research agents, the practical takeaway is that privacy should be evaluated at the level of the whole agent workflow, not just the base model. As agents take on more autonomous, multi-step work, studies like MosaicLeaks underscore that keeping secrets is not only about what a model says once, but about what its full pattern of behavior reveals over time. Readers should note that the study's specific results and threat models are best assessed from the original publication, since the significance of any leakage metric depends heavily on the assumptions and datasets used.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-12T08:04:17.364Z"
+    },
+    "7e8199c202ca8536": {
+      "bodyJa": "OpenAIは、医師による小児の希少遺伝性疾患の診断をAIで支援する取り組みを発表した。診断までに長い時間を要しがちなこの領域で、早期発見と患者の予後改善につながる可能性がある。\n\n希少疾患は世界で7,000種類以上が知られ、その多くが遺伝的な要因を持つとされる。患者数が少ないうえ症状が多様なため、確定診断までに複数の医療機関を渡り歩き、数年を費やす「診断オデッセイ」と呼ばれる状況に陥ることが少なくない。とりわけ小児では、早期の診断が治療方針や発達支援に直結するため、迅速さの意義は大きい。\n\n近年はゲノム解析技術の低コスト化により、全エクソーム解析や全ゲノム解析が診断に活用されるようになった。ただし、検出される遺伝子変異は膨大で、症状(表現型)との対応づけや、どの変異が病因かの評価には高度な専門知識と時間がかかる。今回の取り組みは、こうした症状の記述や検査データ、医学文献の照合をAIが補助し、医師が候補疾患を絞り込む作業を効率化することを狙うと見られる。\n\n同種の試みは他社や研究機関でも進んでいる。顔写真から特徴を解析するFace2Geneや、遺伝子変異の病原性を予測するGoogle DeepMindの「AlphaMissense」、症例を国際的に照合する仕組みなど、AIやデータ共有を軸にした支援ツールが相次いで登場してきた。OpenAIの参入は、大規模言語モデルの文脈理解力を臨床の現場に応用する動きの一つと位置づけられる。\n\n一方で、医療応用には慎重さも求められる。AIが誤った情報を生成する「ハルシネーション」や、遺伝情報という機微なデータの取り扱い、規制当局の承認といった課題が残る。あくまで最終判断は医師が担い、AIは補助にとどまる設計が前提となる。実際の診断精度や安全性は、今後の臨床評価を通じて検証されていくことになりそうだ。",
+      "bodyEn": "OpenAI has announced an initiative to apply its artificial intelligence models to one of medicine's most persistent challenges: diagnosing rare genetic diseases in children. The effort matters because rare conditions, though individually uncommon, collectively affect millions of children worldwide, and many patients endure years of uncertainty before receiving an accurate diagnosis.\n\nAccording to the announcement, the project is designed to support physicians rather than replace them, helping clinicians identify hard-to-recognize conditions earlier in the diagnostic process. Earlier detection is significant because for many genetic disorders, timely intervention can meaningfully alter a child's trajectory, whether through targeted therapies, dietary management, or closer monitoring for known complications. The stated goal is to improve outcomes for patients whose conditions are difficult to identify through conventional means.\n\nRare genetic diseases present a distinctive diagnostic problem. Clinicians often describe the patient experience as a \"diagnostic odyssey,\" in which families visit multiple specialists over several years, undergo repeated testing, and sometimes receive incorrect or incomplete diagnoses along the way. There are thought to be more than 7,000 recognized rare diseases, the majority of them genetic in origin, and a large share affect children. Because any single physician may encounter a given condition only a handful of times in a career, subtle or overlapping symptom patterns are easy to miss. Tools that can help synthesize complex clinical information appear well suited to this setting.\n\nThe technical approach for such systems typically involves analyzing a combination of clinical notes, reported symptoms, family history, and, in many cases, genomic data. Large language models can process unstructured text, such as a physician's description of a patient's presentation, and relate it to documented disease patterns and medical literature. When paired with structured genetic information, these models may help surface candidate diagnoses or flag findings that warrant further testing. OpenAI has not, in this summary, detailed the specific datasets, model architecture, or validation methods involved, so the precise mechanics of the initiative remain to be clarified.\n\nThis work sits alongside a broader set of tools already used in genetic medicine. Whole-genome and whole-exome sequencing have become far more affordable over the past decade, generating vast amounts of data that must be interpreted against reference databases. Standardized frameworks such as the Human Phenotype Ontology help encode patient symptoms in a machine-readable form, and existing software platforms attempt to rank likely genetic variants. Specialized systems, including tools that analyze facial features associated with certain syndromes, have also been developed. AI models that reason over clinical narratives could complement these resources rather than duplicate them.\n\nThe announcement also reflects a wider industry trend of applying advanced AI to healthcare. Technology companies and research groups have pursued models aimed at medical question answering, radiology interpretation, and clinical documentation, and several have reported strong performance on standardized medical examinations. Pediatric rare disease diagnosis is a comparatively narrow but high-impact application, where the combination of scarce expertise and high stakes makes decision support particularly attractive.\n\nImportant caveats accompany any deployment of AI in clinical care. Medical AI systems can reflect biases present in their training data, may perform unevenly across different populations, and can produce confident but incorrect outputs, a tendency sometimes called hallucination. For these reasons, keeping a qualified physician responsible for final decisions is widely regarded as essential. Regulatory oversight, patient privacy protections for sensitive genetic information, and rigorous clinical validation are likely to shape how broadly such tools can be used. It is not yet clear from the announcement whether the initiative has undergone peer-reviewed evaluation or regulatory review.\n\nThe practical value of the project will likely depend on how well it performs in real clinical settings and how smoothly it integrates into existing diagnostic workflows. If the system can reliably shorten the path to a correct diagnosis without introducing new risks, it could reduce the burden on families and specialists alike. As with many AI healthcare efforts, the coming months of testing, transparency about results, and independent scrutiny will be central to understanding its true impact. For now, the initiative represents a notable attempt to direct large-scale AI toward a domain where expert knowledge is thin and the consequences of delay can be substantial.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-12T00:51:04.222Z"
     }
   }
 }

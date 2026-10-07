@@ -72,10 +72,13 @@ import {
 } from "./body-cache.ts";
 import {
   bodiesPresentSet,
+  buildCanonicalBodyAliases,
+  mapCanonicalBodyIds,
   mergeBodiesWithGuards,
   parseBodies,
   pruneInvalidBodyRecords,
   readBodyStorage,
+  reconcileBodyIdentity,
   isRealBody,
   type BodiesPayload,
   type NewBody,
@@ -1448,30 +1451,41 @@ export async function runHarness(
   // fetch spent here would be thrown away — and re-attempted every hour for
   // rows that keep being re-tiered as dropped.
   const liveForBodies = sorted.filter((entry) => entry.archiveTier !== "dropped");
+  const bodyRetentionDays = Math.max(
+    1,
+    Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
+  );
+  const retainedEarly = liveForBodies.filter((entry) =>
+    isBodyRetentionEligible(entry, bodySelectionNowMs, bodyRetentionDays),
+  );
+  const earlyBodyAliases = buildCanonicalBodyAliases(priorEntries, retainedEarly);
+  // Identity conflicts stop the run before any Queue work. The same pure
+  // reconciliation runs again on the final entries before shard writes.
+  const earlyBodyIdentity = reconcileBodyIdentity(
+    existingBodyStorage.payload,
+    earlyBodyAliases,
+    new Set(retainedEarly.map((entry) => entry.id)),
+    collectedAt,
+    priorEntries,
+    retainedEarly,
+  );
   let bodyBound: BodyBoundExcerptPriority = { rank: new Map(), bodyBatchIds: [], bodyBatchJobs: [] };
   // KV records already looked up for the pinned batch (reused by
   // runBodyPipeline so the pre-lookup costs no extra bridge requests).
   let prefetchedBodyLookup: { hits: Map<string, BodyCacheEntry> } | undefined;
   if (env.ENABLE_BODY_QUEUE === "1") {
     try {
-      const bodyRetentionDays = Math.max(
-        1,
-        Number(env.BODY_RETENTION_DAYS ?? DEFAULT_BODY_RETENTION_DAYS),
-      );
-      const retainedEarly = liveForBodies.filter((entry) =>
-        isBodyRetentionEligible(entry, bodySelectionNowMs, bodyRetentionDays),
-      );
       const presentEarly = bodiesPresentSet(
         pruneInvalidBodyRecords(
-          existingBodyStorage.payload,
+          earlyBodyIdentity.payload,
           retainedEarly,
           new Date(bodySelectionNowMs).toISOString(),
         ).payload,
       );
       bodyBound = bodyBoundExcerptPriority(liveForBodies, presentEarly, {
         lookupCap: Math.max(0, Number(env.BODY_LOOKUP_CAP ?? 10)),
-        previousPendingIds: previousBodyPendingIds,
-        excludeBudgetEvictedIds: previousBodyBudgetEvictedIds,
+        previousPendingIds: mapCanonicalBodyIds(previousBodyPendingIds, earlyBodyAliases),
+        excludeBudgetEvictedIds: mapCanonicalBodyIds(previousBodyBudgetEvictedIds, earlyBodyAliases),
         retentionDays: bodyRetentionDays,
         nowMs: bodySelectionNowMs,
         publisherContractFingerprint,
@@ -1865,7 +1879,7 @@ export async function runHarness(
   // Merge generated bodies into the sharded storage and enqueue body-less
   // entries. Summary jobs keep priority within the
   // shared Queue write allowance; body jobs consume only the unused capacity.
-  // No-op unless ENABLE_BODY_QUEUE=1.
+  // Identity transfers are persisted even if the Queue is unavailable.
   const bodyGeneratedAt = new Date().toISOString();
   const configuredBodyEnqueueCap = Math.max(
     0,
@@ -1889,6 +1903,7 @@ export async function runHarness(
     {
       existingBodyPayload: existingBodyStorage.payload,
       existingStorageMode: existingBodyStorage.mode,
+      previousEntries: priorEntries,
       previousPendingIds: previousBodyPendingIds,
       previousChatRepairIds,
       previousBudgetEvictedIds: previousBodyBudgetEvictedIds,
@@ -1898,7 +1913,7 @@ export async function runHarness(
       prefetchedBodyLookup,
     },
   );
-  const nextShardFiles = bodyPipeline.health.bodyQueueMode === "enabled"
+  const nextShardFiles = bodyPipeline.health.bodyQueueMode === "enabled" || bodyPipeline.changed
     ? serializeBodyShards(bodyPipeline.payload)
     : [];
   const bodyShardChanges = nextShardFiles
@@ -2524,9 +2539,9 @@ export function selectBodyJobsToEnqueue(
  *      bodies whose entry is no longer live.
  *   2. Enqueue live entries that have a real summary but no body yet.
  *
- * Fully gated behind ENABLE_BODY_QUEUE so the collector can ship this code
- * before the body queue + worker exist (no-op until activated). Best-effort:
- * never throws into the publish path.
+ * Queue lookup/enqueue is gated behind ENABLE_BODY_QUEUE. Canonical ID
+ * inheritance is not: a conflict must stop the publish, and a safe transfer
+ * must reach the shards even when the Queue is unavailable.
  */
 export async function runBodyPipeline(
   env: PublisherEnv,
@@ -2537,6 +2552,7 @@ export async function runBodyPipeline(
   options: {
     existingBodyPayload?: BodiesPayload;
     existingStorageMode?: BodyStorageMode;
+    previousEntries?: readonly NormalizedEntry[];
     previousPendingIds?: readonly string[];
     previousChatRepairIds?: readonly string[];
     previousBudgetEvictedIds?: readonly string[];
@@ -2573,59 +2589,71 @@ export async function runBodyPipeline(
     DEFAULT_BODY_BUDGET_TARGET_BYTES,
   );
   const parsedExistingForFallback = options.existingBodyPayload ?? parseBodies(existingBodiesContent);
+  const bodyAliases = buildCanonicalBodyAliases(options.previousEntries ?? [], retainedEntries);
+  const bodyIdentity = reconcileBodyIdentity(
+    parsedExistingForFallback,
+    bodyAliases,
+    new Set(retainedEntries.map((entry) => entry.id)),
+    generatedAt,
+    options.previousEntries,
+    retainedEntries,
+  );
+  const previousPendingIds = mapCanonicalBodyIds(options.previousPendingIds ?? [], bodyAliases);
+  const previousChatRepairIds = mapCanonicalBodyIds(options.previousChatRepairIds ?? [], bodyAliases);
+  const previousBudgetEvictedIds = mapCanonicalBodyIds(options.previousBudgetEvictedIds ?? [], bodyAliases);
   const existingStorageMode = options.existingStorageMode ?? "legacy";
-  const existingShardBytes = existingStorageMode === "shards-v1"
-    ? serializedShardByteLengths(parsedExistingForFallback)
-    : [];
-  const existingBytes = existingStorageMode === "shards-v1"
-    ? existingShardBytes.reduce((total, bytes) => total + bytes, 0)
-    : serializedByteLength(parsedExistingForFallback);
-  // Present set used to carry forward budget-evicted ids even in the
-  // disabled/missing-binding/error paths below, where no merge/enforcement
-  // runs this invocation -- otherwise a transient mode change (e.g. the
-  // Queue binding is briefly missing) would silently forget which ids are
-  // budget-excluded and let them be regenerated wastefully once the pipeline
-  // resumes (LL-411 follow-up).
-  const existingBodiesPresentForFallback = bodiesPresentSet(parsedExistingForFallback);
-  const disabled = (mode: string): BodyPipelineResult => ({
-    payload: parsedExistingForFallback,
-    changed: false,
-    enqueued: 0,
-    health: {
-      bodyQueueMode: mode,
-      bodyEnqueueCap: 0,
-      bodyEnqueueCandidates: 0,
-      bodyEnqueued: 0,
-      bodyBacklog: 0,
-      bodyQueueDrainEstimateHours: 0,
-      bodyLookupCount: 0,
-      chatLookupCount: 0,
-      chatCompatibilityRejected: 0,
-      chatRepairBlocked: 0,
-      chatRepairCandidates: 0,
-      chatRepairEnqueued: 0,
-      chatRepairPendingIds: [],
-      bodyPendingLookupCount: 0,
-      bodyMergePendingIds: [],
-      bodyMerged: 0,
-      bodyPruned: 0,
-      bodiesTotal: parsedExistingForFallback.count,
-      bodyRetentionDays: retentionDays,
-      bodyRetentionEligible: retainedEntries.length,
-      bodyBudgetTargetBytes: existingStorageMode === "legacy"
-        ? LEGACY_BODY_BUDGET_TARGET_BYTES
-        : budgetTargetBytes,
-      bodyBudgetBytes: existingBytes,
-      bodyShardBytes: existingShardBytes,
-      bodyStorageMode: existingStorageMode,
-      bodyBudgetPruned: 0,
-      bodyBudgetEvictedIds: carryForwardBudgetEvictedIds(
-        options.previousBudgetEvictedIds ?? [],
-        retainedEntries,
-        existingBodiesPresentForFallback,
-      ),
-    },
-  });
+  const disabled = (mode: string): BodyPipelineResult => {
+    const budget = bodyIdentity.changed && existingStorageMode === "shards-v1"
+      ? enforceShardedBodiesBudget(bodyIdentity.payload, retainedEntries, budgetTargetBytes)
+      : null;
+    const payload = budget?.payload ?? bodyIdentity.payload;
+    const shardBytes = existingStorageMode === "shards-v1"
+      ? serializedShardByteLengths(payload)
+      : [];
+    const bytes = existingStorageMode === "shards-v1"
+      ? shardBytes.reduce((total, size) => total + size, 0)
+      : serializedByteLength(payload);
+    return {
+      payload,
+      changed: bodyIdentity.changed || Boolean(budget?.changed),
+      enqueued: 0,
+      health: {
+        bodyQueueMode: mode,
+        bodyEnqueueCap: 0,
+        bodyEnqueueCandidates: 0,
+        bodyEnqueued: 0,
+        bodyBacklog: 0,
+        bodyQueueDrainEstimateHours: 0,
+        bodyLookupCount: 0,
+        chatLookupCount: 0,
+        chatCompatibilityRejected: 0,
+        chatRepairBlocked: 0,
+        chatRepairCandidates: 0,
+        chatRepairEnqueued: 0,
+        chatRepairPendingIds: [],
+        bodyPendingLookupCount: 0,
+        bodyMergePendingIds: [],
+        bodyMerged: 0,
+        bodyPruned: bodyIdentity.pruned,
+        bodiesTotal: payload.count,
+        bodyRetentionDays: retentionDays,
+        bodyRetentionEligible: retainedEntries.length,
+        bodyBudgetTargetBytes: existingStorageMode === "legacy"
+          ? LEGACY_BODY_BUDGET_TARGET_BYTES
+          : budgetTargetBytes,
+        bodyBudgetBytes: bytes,
+        bodyShardBytes: shardBytes,
+        bodyStorageMode: existingStorageMode,
+        bodyBudgetPruned: budget?.prunedIds.length ?? 0,
+        bodyBudgetEvictedIds: carryForwardBudgetEvictedIds(
+          previousBudgetEvictedIds,
+          retainedEntries,
+          bodiesPresentSet(payload),
+          budget?.prunedIds ?? [],
+        ),
+      },
+    };
+  };
 
   if (env.ENABLE_BODY_QUEUE !== "1") return disabled("disabled");
   if (!env.BODY_QUEUE) {
@@ -2634,7 +2662,7 @@ export async function runBodyPipeline(
   }
 
   try {
-    const parsedBodies = parsedExistingForFallback;
+    const parsedBodies = bodyIdentity.payload;
     const sanitizedBodies = pruneInvalidBodyRecords(
       parsedBodies,
       retainedEntries,
@@ -2661,11 +2689,11 @@ export async function runBodyPipeline(
     const selection = selectBodyPipelineJobs(
       retainedEntries,
       present,
-      options.previousPendingIds ?? [],
+      previousPendingIds,
       lookupCap,
       {
         publisherContractFingerprint,
-        excludeBudgetEvictedIds: options.previousBudgetEvictedIds ?? [],
+        excludeBudgetEvictedIds: previousBudgetEvictedIds,
         preferredCandidateIds: options.preferredCandidateIds ?? [],
         ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
       },
@@ -2732,7 +2760,7 @@ export async function runBodyPipeline(
     // chatLookupCount, since chat grafts also increment mergeBodies' added.
     let chatLookupCount = 0;
     const chatRepairCandidates: BodyJob[] = [];
-    const previousChatRepairSet = new Set(options.previousChatRepairIds ?? []);
+    const previousChatRepairSet = new Set(previousChatRepairIds);
     if (chatLookupCap > 0) {
       const alreadyLookedUp = new Set(selection.lookupJobs.map((job) => job.entry.id));
       const missingChat = retainedEntries
@@ -2845,7 +2873,7 @@ export async function runBodyPipeline(
         }
       }
     }
-    const totalPruned = sanitizedBodies.pruned + merge.pruned;
+    const totalPruned = bodyIdentity.pruned + sanitizedBodies.pruned + merge.pruned;
     if (chatCompatibilityRejected || chatRepairBlocked) {
       console.warn(
         `[worker] chat cache compatibility: rejected=${chatCompatibilityRejected}, unrepairable=${chatRepairBlocked}, repairJobs=${repairJobs.length}`,
@@ -2862,14 +2890,14 @@ export async function runBodyPipeline(
       needsBody(entry, finalBodiesPresent)
     ).length;
     const persistedBudgetEvictedIds = carryForwardBudgetEvictedIds(
-      options.previousBudgetEvictedIds ?? [],
+      previousBudgetEvictedIds,
       retainedEntries,
       finalBodiesPresent,
       budget.prunedIds,
     );
     return {
       payload: budget.payload,
-      changed: sanitizedBodies.changed || merge.changed || budget.changed,
+      changed: bodyIdentity.changed || sanitizedBodies.changed || merge.changed || budget.changed,
       enqueued,
       health: {
         bodyQueueMode: "enabled",

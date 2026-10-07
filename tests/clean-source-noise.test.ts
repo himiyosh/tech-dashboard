@@ -22,6 +22,7 @@ import {
   writeJsonTransaction,
 } from "../scripts/clean-source-noise.mjs";
 import { carryForwardBudgetEvictedIds } from "../worker/src/bodies-budget.ts";
+import type { ArticleChatTurn } from "../worker/src/article-chat.ts";
 
 function entry(overrides: Partial<NormalizedEntry> = {}): NormalizedEntry {
   return {
@@ -786,19 +787,27 @@ describe("clean-source-noise bodies reconciliation", () => {
     expect(merge.payload.bodies.orphan).toBeUndefined();
   });
 
-  it("transfers a real body from a canonical loser to the winning live id", () => {
-    const dedupe = dedupeByCanonical([
+  it("transfers a real body and six-turn chat from a canonical loser to the winning live id", () => {
+    const chat: ArticleChatTurn[] = Array.from({ length: 6 }, (_, index) => ({
+      s: index % 2 === 0 ? "a" : "b",
+      ja: `元の記事を確認する発言 ${index}。`,
+      en: `A validated bilingual turn ${index}.`,
+    }));
+    const original = [
       entry({
         id: "loser",
         url: "https://example.com/story",
         collectedAt: "2026-06-29T01:00:00.000Z",
+        contentSnippet: "The source explains the new model's capabilities, the rollout for developers, and the change in supported usage with concrete details.",
       }),
       entry({
         id: "winner",
         url: "https://example.com/story?utm_source=feed",
         collectedAt: "2026-07-01T01:00:00.000Z",
+        contentSnippet: "The source explains the new model's capabilities, the rollout for developers, and the change in supported usage with concrete details.",
       }),
-    ]);
+    ];
+    const dedupe = dedupeByCanonical(original);
     expect(dedupe.entries.map((item) => item.id)).toEqual(["winner"]);
     expect(dedupe.aliases).toEqual(new Map([["loser", "winner"]]));
 
@@ -810,6 +819,7 @@ describe("clean-source-noise bodies reconciliation", () => {
           loser: {
             bodyJa: "負けたIDの日本語本文。",
             bodyEn: "English body from the losing id.",
+            chat,
             model: "claude-opus-4.8",
             generatedAt: "2026-06-30T00:00:00.000Z",
           },
@@ -818,25 +828,28 @@ describe("clean-source-noise bodies reconciliation", () => {
       new Set(["winner"]),
       "2026-07-02T00:00:00.000Z",
       dedupe.aliases,
+      original,
+      dedupe.entries,
     );
 
     expect(merge.payload.bodies.loser).toBeUndefined();
     expect(merge.payload.bodies.winner).toEqual({
       bodyJa: "負けたIDの日本語本文。",
       bodyEn: "English body from the losing id.",
+      chat,
       model: "claude-opus-4.8",
       generatedAt: "2026-06-30T00:00:00.000Z",
     });
   });
 
-  it("preserves an existing real winner body during canonical alias reconciliation", () => {
+  it("rejects a different real winner body rather than silently discarding an alias", () => {
     const winnerBody = {
       bodyJa: "勝者IDの既存日本語本文。",
       bodyEn: "Existing English body on the winner.",
       model: "winner-model",
       generatedAt: "2026-07-01T00:00:00.000Z",
     };
-    const merge = reconcileBodiesPayload(
+    expect(() => reconcileBodiesPayload(
       {
         generatedAt: "2026-07-01T00:00:00.000Z",
         count: 2,
@@ -853,10 +866,58 @@ describe("clean-source-noise bodies reconciliation", () => {
       new Set(["winner"]),
       "2026-07-02T00:00:00.000Z",
       new Map([["loser", "winner"]]),
-    );
+    )).toThrow(/conflicting stored body records for canonical winner winner/);
+  });
 
-    expect(merge.payload.bodies.winner).toEqual(winnerBody);
-    expect(merge.payload.bodies.loser).toBeUndefined();
+  it("keeps an identical destination with its own validated chat", () => {
+    const chat: ArticleChatTurn[] = Array.from({ length: 6 }, (_, index) => ({
+      s: index % 2 === 0 ? "a" : "b",
+      ja: `保存済みの会話 ${index}。`,
+      en: `A preserved stored chat turn ${index}.`,
+    }));
+    const body = {
+      bodyJa: "同じ日本語本文を二つのIDで保存していた。",
+      bodyEn: "The same English body is stored under both ids.",
+      model: "claude-opus-4.8",
+      generatedAt: "2026-06-30T00:00:00.000Z",
+    };
+    const result = reconcileBodiesPayload(
+      {
+        generatedAt: "2026-07-01T00:00:00.000Z",
+        count: 2,
+        bodies: {
+          loser: { ...body },
+          winner: { ...body, chat },
+        },
+      },
+      new Set(["winner"]),
+      "2026-07-02T00:00:00.000Z",
+      new Map([["loser", "winner"]]),
+    );
+    expect(result.payload.bodies).toEqual({ winner: { ...body, chat } });
+    expect(result.changed).toBe(true);
+  });
+
+  it("does not transfer a canonical loser outside the final body-retention set", () => {
+    const merge = reconcileBodiesPayload(
+      {
+        generatedAt: "2026-07-01T00:00:00.000Z",
+        count: 1,
+        bodies: {
+          loser: {
+            bodyJa: "保持期限を過ぎた日本語本文。",
+            bodyEn: "An expired English body.",
+            model: "legacy",
+            generatedAt: "2026-06-30T00:00:00.000Z",
+          },
+        },
+      },
+      new Set(),
+      "2026-07-02T00:00:00.000Z",
+      new Map([["loser", "winner"]]),
+    );
+    expect(merge.payload.bodies).toEqual({});
+    expect(merge.pruned).toBe(1);
   });
 
   it("transfers a body from a filtered canonical loser but not from a different URL", () => {

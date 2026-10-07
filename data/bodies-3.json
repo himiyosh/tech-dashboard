@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T17:01:39.580Z",
-  "count": 341,
+  "generatedAt": "2026-10-07T18:01:36.847Z",
+  "count": 350,
   "bodies": {
     "5f96978a8cfa6f21": {
       "bodyJa": "Anthropicは2025年4月23日に発生したClaudeの応答品質低下に関する事後分析(ポストモーテム)を公開した。サービスの完全な停止ではなく、ユーザー体験の質に影響する形での障害であり、生成AI事業者にとって検出と説明責任が難しい類型の事象として注目される。\n\n同社の説明によれば、原因はインフラ層で行われた複数の変更が重なり、一部のリクエストが本来とは異なる構成のサーバや推論パスへルーティングされたことにある。その結果、対象となったユーザーのリクエストでは応答の品質が通常より低下し、モデル自体の重みやバージョンに変更がないにもかかわらず、回答精度や一貫性が劣化して見える状態が一定期間継続したと見られる。\n\nこの種の「サイレント・デグラデーション」は、HTTPステータスやレイテンシなど従来型の可観測性指標では検知しづらい。Anthropicは事後分析の中で、品質メトリクスの常時モニタリングや、ロールアウト時のカナリア評価の強化、影響範囲の特定を高速化するためのトレーサビリティ改善といった再発防止策に言及している。\n\n背景として、LLM推論基盤は量子化・投機的デコーディング・複数ハードウェア(NVIDIA GPU、AWS Trainium、Google TPUなど)の混在運用といった最適化が進んでおり、構成ミスが品質に直結しやすい構造になっている。OpenAIやGoogleも過去に同種の品質劣化やレイテンシ悪化のインシデントを報告しており、業界全体で「モデル挙動そのもののSLO」をどう定義し監視するかが課題となっている。\n\nAnthropicが詳細なポストモーテムを公開する姿勢は、エンタープライズ顧客向けの透明性確保という観点でも重要であり、Claude APIやAmazon Bedrock経由で本番運用する開発者にとって、信頼性評価の参考資料となる可能性がある。",
@@ -12032,25 +12032,153 @@
       "bodyJa": "## caveman\n\nClaudeに「原始人」のような短い文体で応答させる「caveman skill」により、通常の応答と比べてトークン消費を最大65%削減できたとされる。コスト削減と応答速度の向上を狙うプロンプト最適化手法だ。\n\n## 少ない言葉\n\nコンセプトは「why use many token when few do trick（少ない言葉で済むなら、なぜ多く使う？）」の一行。プロンプトで簡潔な返答を促し、出力に使う言葉を抑える。Claude Codeに入れたさまざまなスキルを数日で消してきた中でも、このスキルは残ったと説明されている。",
       "bodyEn": "## Caveman speech style\n\nThe author describes prompting Claude to answer in a terse “caveman” speech style. The technique matters because it can reduce token consumption, cut API costs, and improve response speed.\n\n## Token optimization\n\nIn the reported experiment, caveman-style responses used up to 65% fewer tokens than normal responses. The Claude Code skill is named “caveman,” and its one-line concept is: “why use many token when few do trick.” The author says many skills are installed and removed after a few days, but this one remained, presenting it as a practical prompt-engineering technique for token optimization.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T00:52:04.912Z"
+      "generatedAt": "2026-09-05T00:52:04.912Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "10件の開発タスクで、トークンが平均65%も減ったの？ これって大きいこと？",
+          "en": "Tokens dropped by 65% on average across 10 development tasks? Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "実際のClaude APIで測り、削減幅は22〜87%だったよ。コスト削減や応答速度の向上を狙える変化だね。",
+          "en": "The benchmark used actual Claude API token counts, with reductions ranging from 22% to 87%. That could help lower costs and improve response speed."
+        },
+        {
+          "s": "a",
+          "ja": "でも「出力トークンだけ」ってどういうこと？ 思考トークンとは別なの？",
+          "en": "But what does “output tokens only” mean? Are those separate from reasoning tokens?"
+        },
+        {
+          "s": "b",
+          "ja": "出力トークンは、返事として外に出る言葉の量だよ。cavemanは考える部分を縮めず、答えの言葉だけを短くする。",
+          "en": "Output tokens are the words shown in the reply. Caveman shortens what the model says, not the reasoning behind it."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、バグの理由を急いで知りたいときに使いたいな。前置きなしで答えだけ読めるかも。",
+          "en": "I’d use it when I need a quick explanation for a bug. Maybe I could get the answer without all the lead-in."
+        },
+        {
+          "s": "b",
+          "ja": "短い答えが合う場面なら使いやすそうだね。ただ、削減幅はタスクで変わり、減るのは出力トークンだけだよ。",
+          "en": "It seems practical when a short answer fits. Just remember that savings vary by task, and only output tokens are reduced."
+        }
+      ]
     },
     "10af899566f745cb": {
       "bodyJa": "## MCP連携構成\n\nAmazon Bedrock AgentCoreとDatabricks GenieをMCPで連携し、AIエージェントからデータ分析基盤を自然言語で操作する構成を扱う。中核となるのは、AgentCore HarnessからAgentCore Gatewayを経由し、DatabricksのManaged MCPサーバーであるGenieを呼び出す流れだ。\n\n## 構築手順と注意点\n\n記事では、この構成を実際に検証したうえで、構築手順を解説している。MCPを標準化されたツールインターフェースとして用い、AgentCore側のHarnessとGatewayからGenieへ接続する実装方法が焦点となる。\n\nDatabricks Managed MCPサーバーは、執筆時点の2026年7月ではPublic Previewとされる。また、AgentCoreコンソールのUIや設定項目は今後変わる可能性があると説明されている。",
       "bodyEn": "## Amazon Bedrock AgentCore\n\nThis article explains how to integrate Amazon Bedrock AgentCore with Databricks Genie via MCP. The configuration matters because it enables AI agents to query data platforms using natural language through a standardized tool interface.\n\n## AgentCore Gateway\n\nThe tested configuration starts from the Amazon Bedrock AgentCore Harness and reaches Databricks Genie through AgentCore Gateway. Genie is provided as a Databricks Managed MCP server in this setup.\n\nThe source focuses on the implementation method and explains the steps required to construct the integration. Its scope is specifically the connection between AgentCore and Genie over MCP, rather than a broader introduction to either service.\n\n## Public Preview\n\nDatabricks Managed MCP servers were in Public Preview when the article was written in July 2026. The source also cautions that the AgentCore console user interface and its configuration options may change in the future. Readers following the tutorial should therefore be aware that the displayed interface or available settings may differ from those described in the article.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T00:53:27.183Z"
+      "generatedAt": "2026-09-05T00:53:27.183Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "OAuthクライアントを2つ、別々に登録するんだね。1つじゃなくて2つって、大きな違いなの？",
+          "en": "You register two separate OAuth clients, not just one. Is that a big difference?"
+        },
+        {
+          "s": "b",
+          "ja": "この構成では、Harness→GatewayとGateway→Databricksで認証を分けているんだ。それぞれにOAuthクライアントが必要になるよ。",
+          "en": "In this setup, authentication is split between Harness-to-Gateway and Gateway-to-Databricks. Each path needs its own OAuth client."
+        },
+        {
+          "s": "a",
+          "ja": "MCPって、ここでは何をそろえる仕組みなの？",
+          "en": "What does MCP standardize here?"
+        },
+        {
+          "s": "b",
+          "ja": "AIエージェントとツールのやり取りを共通の形にする仕組みだよ。GatewayはGenieへ初期化やツール呼び出しのリクエストを送るんだ。",
+          "en": "It gives AI agents and tools a shared way to communicate. The Gateway sends requests to Genie for initialization, tool discovery, and tool calls."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、データについて自然な言葉で聞けるエージェントを試してみたいな。会話みたいに分析を頼めるのかも。",
+          "en": "I’d try an agent that lets me ask about data in everyday language. Maybe analysis could feel more like a conversation."
+        },
+        {
+          "s": "b",
+          "ja": "この構成で試すには、Databricks側のサービスプリンシパルや、入口と出口それぞれのOAuth認証を用意する必要があるよ。",
+          "en": "To try this setup, you need a Databricks service principal and separate OAuth authentication for the inbound and outbound connections."
+        }
+      ]
     },
     "a0e8736986a6b4aa": {
       "bodyJa": "## .claude活用\n\nこの記事は、.claudeディレクトリを使い、Claude Codeで「自己進化するデザインナレッジベース」を構築する手法を解説する。チームのデザイン資産をAIと連携させ、継続的に更新できる点が焦点だ。\n\n## 知見の自動蓄積\n\nClaude Codeを単なる「デザインレビュアー」ではなく、「Design Systems Architect」として運用するプロンプトを用いる。デザイン知見を自動で蓄積し、時間とともに更新・洗練し続けるナレッジベースとして扱う方法が説明されている。",
       "bodyEn": "## Self-evolving design knowledge base\n\nThe article explains how to use the .claude directory with Claude Code to build a self-evolving design knowledge base. The approach matters because it enables design insights to be accumulated and refined over time, keeping AI-assisted design assets continuously up to date.\n\n## Design Systems Architect\n\nThe method uses a prompt that positions Claude Code as a “Design Systems Architect” rather than a “design reviewer.” According to the summary, the knowledge base automatically stores and updates design knowledge through the .claude directory. This allows a team’s design assets to work with AI and continue evolving, instead of remaining a fixed collection of information.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T00:53:54.218Z"
+      "generatedAt": "2026-09-05T00:53:54.218Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "デザインレビューの仕事で、普段の何が変わるの？毎回、同じ前提を伝えなくてよくなるのかな。",
+          "en": "What changes in day-to-day design reviews? Would we no longer need to explain the same context every time?"
+        },
+        {
+          "s": "b",
+          "ja": ".claudeに設計原則や判断履歴を蓄積し、Claude Codeがそれを踏まえてレビューできる構造になります。",
+          "en": "The .claude setup stores design principles and past decisions, giving Claude Code project context for future reviews."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？Claude Codeが前の判断を覚えていたわけじゃないんだね。",
+          "en": "Couldn’t it do that before? So Claude Code wasn’t already carrying earlier decisions into each review?"
+        },
+        {
+          "s": "b",
+          "ja": "従来は質問ごとに独立した回答で、前回の判断やプロジェクトの文脈を持っていませんでした。使い方の設計を変えたんです。",
+          "en": "Previously, each answer stood alone without prior decisions or project context. The change is in how the workflow is designed."
+        },
+        {
+          "s": "a",
+          "ja": "判断の履歴や大事な原則を残して、次のレビューにつなげられるのが一番の収穫なんだね。",
+          "en": "The biggest gain is keeping key principles and decision history so they can inform the next review."
+        },
+        {
+          "s": "b",
+          "ja": "そうですね。次は、共通のレビュー観点とプロジェクト固有の判断基準を分け、知識を育て続けられるかに注目です。",
+          "en": "Exactly. Next, watch how shared review criteria stay separate from project-specific rules, while the knowledge continues to grow."
+        }
+      ]
     },
     "8348089011514f66": {
       "bodyJa": "## ローカル破壊防止\n\nClaude Codeなど、ローカル環境でコマンドを実行してコードを書き換えるAIエージェントには、ホストOSを破壊する深刻なリスクがある。この記事は、設計・実装・テスト・レビューをLLMに担わせる開発を前提に、安全な自律実行環境としてのサンドボックス設計を解説している。\n\n## Egress Proxy\n\n構成の柱は、AIエージェントをローカルマシン上で直接動かさず、作業環境をサンドボックスへ隔離することだ。さらにEgress Proxyによるフィルタリングを組み合わせ、エージェントの外部アクセスを制御する全体像が示されている。\n\n## LLM向け制御\n\n実行前に人間の承認を挟むHITLだけでなく、LLM向けに最適化したアクセス制御も扱う。ローカル環境の保護、外向き通信の制御、LLM向けアクセス制御を一体として設計し、安全な自律実行を可能にする構成と説明されている。",
       "bodyEn": "## Sandbox Architecture\n\nThis article presents a comprehensive sandbox architecture for AI agents running in Claude Code. The design matters because allowing an AI agent to execute commands and modify code directly on a local machine creates serious practical risks, including damage to the host environment.\n\nThe source describes a development style in which an LLM handles design, implementation, testing, and review rather than the human writing programs directly.\n\n## Local Environment Protection\n\nThe article focuses on preventing AI agents from damaging the local environment. It notes that powerful tools such as Claude Code can execute commands and rewrite code directly on the host operating system.\n\nHuman-in-the-loop approval before execution is part of the operating context discussed, but the article frames direct local execution itself as a significant concern requiring a dedicated sandbox.\n\n## Egress Proxy\n\nThe proposed architecture combines sandboxing with egress proxy filtering and access controls optimized for LLMs. According to the summary, these elements form an environment intended to support safe autonomous execution while protecting the local machine and controlling external access.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T01:03:40.911Z"
+      "generatedAt": "2026-09-05T01:03:40.911Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "設計・実装・テスト・レビューの4つ全部をAIに任せるの？ これって大きい変化？",
+          "en": "AI handles all four—design, implementation, testing, and review? Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "作業範囲はかなり広いね。この記事では、AIがローカルで直接コマンドを実行するぶん、誤消去や設定変更への対策が必要だとしているよ。",
+          "en": "That’s a broad scope. The article says direct local command execution also makes safeguards essential against accidental deletion or system changes."
+        },
+        {
+          "s": "a",
+          "ja": "Egress Proxyって何？ 外に出るところを見張る仕組み？",
+          "en": "What’s an egress proxy? Does it watch what goes out?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、外向きの通信をいったん通し、許可するかを制御する関所のようなものだよ。AIの通信を絞る役割だね。",
+          "en": "Yes. It’s like a checkpoint for outbound traffic, deciding what may pass and limiting the AI’s external connections."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、AIに全部任せるとき、sunabaでローカルを散らかさず試してみたいな。",
+          "en": "If I handed the whole job to AI, I’d want to try sunaba so my local environment stays clean."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方は狙いに合うね。ただし、サンドボックスだけでなく、Egress ProxyやLLM向けアクセス制御を組み合わせる設計が前提だよ。",
+          "en": "That fits the goal. But the setup assumes a sandbox combined with egress filtering and LLM-focused access controls, rather than relying on isolation alone."
+        }
+      ]
     },
     "ae7a7c93349ccb2b": {
       "bodyJa": "## 起動と表示の修正\n\nCline Desktop v0.0.36では、システムHTTP(S)プロキシを設定した環境での起動不具合と、小型または表示倍率を高めた画面でのウィンドウ表示が修正された。プロキシ利用時にアプリが自身のハブを検出できない問題を解消し、設定やアカウントの操作項目にもアクセスしやすくしている。\n\n## ローカル接続\n\n従来は、バックエンドによるローカル接続の確認までシステムプロキシを経由していた。このため、自身のハブを見つけられず、「No compatible hub runtime is available.」というエラーで起動に失敗することがあった。\n\nv0.0.36ではローカル接続がプロキシを迂回する。Clash、v2ray、企業プロキシなどを設定したマシンでもアプリが起動できるようになり、利用者がすでに設定しているプロキシ除外も維持される。\n\n## ウィンドウ調整\n\n小型ディスプレイや表示倍率を変更した環境では、メインウィンドウが画面内に収まるようになった。従来、1080pのノートPCで表示倍率を150％にすると、ウィンドウが画面より大きく開き、設定やアカウントの操作項目が画面外へ押し出される場合があった。\n\n大きすぎるウィンドウは、タスクバーを除いた表示領域に収まるサイズまで縮小され、中央に配置された状態で開く。\n\n## スラッシュコマンド\n\nプラグインのスラッシュコマンドに関する挙動も修正された。「/goal」のようなコマンドを初めて使用した際、スラッシュメニューから消えてしまう問題が解消され、利用後もメニュー上で扱えるようになった。",
@@ -12639,6 +12767,348 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T16:10:43.734Z"
+    },
+    "44eabdac2a4c5ed0": {
+      "bodyJa": "## Windows更新\n\nCline Desktop v0.0.30では、Windowsで更新時に発生していた「Error opening file for writing」が解消された。特にx64環境でv0.0.25〜v0.0.28から更新する際、インストール先のファイルを使用中のプロセスを適切に終了できるよう修正されている。\n\n## WOW64の影響\n\n従来のインストーラーフックは、実行中のバックエンドを停止する目的で組み込まれていたが、実際には対象プロセスを終了できていなかった。TauriのNSISインストーラーは32ビットであるため、PowerShellもWOW64上で動作する。この環境では、Get-Processが64ビットプロセスのパスを空として返すため、フィルターがx64マシン上のsidecarに一致しなかった。\n\nその結果、切り離されて動作しているHubデーモンが実行ファイルを開いたまま、インストーラーがそのファイルを上書きしようとしていた。これが、v0.0.25〜v0.0.28からの更新がv0.0.24と同様に失敗していた理由と説明されている。\n\n## Restart Manager\n\nv0.0.30のインストーラーは、Windows Restart Managerに対し、対象のインストール先ファイルを保持しているプロセスを問い合わせ、それらを終了する方式へ変更された。この方法はプロセスのビット数に依存せず、Hubが起動するconnectorプロセスも対象に含む。一方、並行して配置されたCline Betaには干渉しない。\n\n## RetryとCancel\n\nWindows Restart Manager自体が処理に失敗した場合は、RetryまたはCancelを選択するプロンプトが表示される。これにより、プロセスを終了できないまま書き込みを進めるのではなく、再試行か中止を選べるようになった。",
+      "bodyEn": "## Windows updates\n\nCline Desktop v0.0.30 addresses a Windows update failure that produced the message “Error opening file for writing.” The change prevents write failures when users on x64 machines upgrade from versions 0.0.25 through 0.0.28.\n\n## The installer hook\n\nThe previous installer hook was intended to stop the running backend, but it did not terminate any processes. Tauri ships a 32-bit NSIS installer, so the installer’s PowerShell ran under WOW64.\n\nIn that environment, Get-Process reported an empty path for every 64-bit process. As a result, the hook’s filter did not match a sidecar process on any x64 machine.\n\nThe installer then attempted to overwrite an executable that the detached Hub daemon still held open. This caused updates from versions 0.0.25 through 0.0.28 to fail in the same way as updates from version 0.0.24.\n\n## Windows Restart Manager\n\nCline Desktop v0.0.30 changes how the installer identifies and closes processes that are using installation files. Instead of relying on the previous PowerShell process-path filter, the installer now asks Windows Restart Manager which processes hold files belonging to the installation.\n\nThe installer then shuts down those processes before writing the updated files. This approach is independent of process bitness, avoiding the WOW64 behavior that prevented the earlier hook from finding 64-bit processes.\n\nRestart Manager also covers connector processes spawned by the Hub. At the same time, the process handling leaves a side-by-side Cline Beta installation alone.\n\n## Retry/Cancel prompt\n\nIf Windows Restart Manager itself fails, the installer displays a Retry/Cancel prompt. This gives the user an explicit choice rather than proceeding while installation files may still be locked.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "x64でv0.0.25〜v0.0.28から更新するとき、書き込みエラーを防げるようになったんだね。これって大きいこと？",
+          "en": "So updates from v0.0.25–v0.0.28 on x64 can now avoid that write error. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、更新を止めていた原因への直接的な修正だね。ファイルをつかんでいるプロセスを特定して終了するようになったよ。",
+          "en": "Yes, it directly addresses what was blocking those updates. The installer now finds and closes processes holding the installation files."
+        },
+        {
+          "s": "a",
+          "ja": "Windows Restart Managerって、どんな仕組みなの？",
+          "en": "What does Windows Restart Manager actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "Windowsで、ファイルを使用中のプロセスを調べる仕組みだよ。今回はインストール先を使っているプロセスの特定と終了に使っているんだ。",
+          "en": "It’s a Windows mechanism for finding processes using particular files. Here, it identifies and shuts down processes locking the installation files."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、x64で対象の旧版を使っていたら、v0.0.30への更新を試してみたいな。",
+          "en": "If I were on one of those older versions on x64, I’d want to try updating to v0.0.30."
+        },
+        {
+          "s": "b",
+          "ja": "現実的だね。ただしRestart Manager自体が失敗するとRetry/Cancelが表示され、併設のCline Betaは終了されないよ。",
+          "en": "That’s reasonable. If Restart Manager itself fails, though, you’ll see Retry/Cancel, and a side-by-side Cline Beta will be left running."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:08:38.360Z"
+    },
+    "fe4fc7138d3023c4": {
+      "bodyJa": "## model.go\n\nOllama v0.34.2-rc1では、mlxrunnerのモデル関連ファイルが、契約、チェックポイント、レイヤー構築という役割に沿って整理された。処理内容を変えるのではなく、各ファイルが担う範囲を明確にし、保守担当者が変更しやすくするための再編となっている。\n\n## 三つの役割\n\nmodelパッケージは、ランナーと各アーキテクチャ間の契約、開かれたチェックポイント、チェックポイントのテンソルからnnレイヤーを構築する処理という三つの役割を持つ。しかし従来のファイル構成では、どのファイルがどの役割を担うのかが名前から明確ではなかった。インターフェースとレジストリを収めていたbase.goは、内容に合わせてmodel.goへ改名された。\n\n## quant.go\n\nroot.goにはRootとOpenを残し、TensorQuantInfoとsafetensorsのヘッダースキャンをquant.goへ移した。これにより、チェックポイントに記録された量子化情報の読み取りと、量子化パラメータの解決が一つのファイルに集約された。従来はroot.goにヘッダースキャンがあり、quant.goには量子化パラメータの解決とnvfp4のグローバルスケール用ヘルパーが混在していた。\n\n## globalscale.go\n\nnvfp4のグローバルスケール用ヘルパーは、関連するテストとともにglobalscale.goへ移された。また、呼び出し元が一つだけで処理を行わないRoot.Closeは削除された。これら以外にコード上の変更はなく、モデルの契約、チェックポイント、レイヤー構築の境界をファイル構成に反映した整理である。",
+      "bodyEn": "## Three jobs\n\nOllama v0.34.2-rc1 reorganizes mlxrunner’s model package to make its responsibilities clearer. The change matters for maintainers because it separates the boundaries between the runner contract, checkpoint handling, and layer construction without otherwise changing the code.\n\nThe package has three jobs: defining the contract between the runner and the architectures, representing the opened checkpoint, and building nn layers from checkpoint tensors. Previously, its files did not clearly indicate which responsibility belonged where.\n\n## base.go becomes model.go\n\nThe former base.go carried the folded package’s name across the interfaces and registry. It is renamed model.go to describe what the file contains more directly.\n\nThis naming change makes the model contract easier to distinguish from the package’s checkpoint and layer-building responsibilities. The interfaces and registry remain associated with that file under its new name.\n\n## Quantization in one file\n\nPreviously, root.go placed the safetensors header scan next to Root, while quant.go combined nvfp4 global-scale helpers with quantization parameter resolution. The new organization keeps Root and Open in root.go.\n\nTensorQuantInfo and the safetensors header scan move into quant.go. As a result, everything the checkpoint states about quantization is now read and resolved in one file.\n\nThe nvfp4 global-scale helpers move out of quant.go and into globalscale.go. Their tests move with them, separating global-scale handling from the reading and resolution of checkpoint quantization information.\n\n## No code changes otherwise\n\nRoot.Close is removed. It was a no-op and had one caller.\n\nBeyond the file renaming, movement of quantization-related code, separation of the global-scale helpers, and removal of Root.Close, there are no other code changes. The release is therefore focused on organizing mlxrunner’s model responsibilities so maintainers can more easily identify where contract, checkpoint, quantization, and layer-building concerns belong.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1つのmodelパッケージが3つの役割を抱えてたんだね。分け目がはっきりするのって、大きいこと？",
+          "en": "One model package was handling three jobs. Is making those boundaries clearer a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "契約、チェックポイント、レイヤー構築の担当が見分けやすくなったよ。保守する人が変更箇所を追いやすくなる整理だね。",
+          "en": "The contract, checkpoint, and layer-building roles are now easier to tell apart. That should help maintainers find where to make changes."
+        },
+        {
+          "s": "a",
+          "ja": "チェックポイントって、ここでは何を指すの？途中で止まる場所？",
+          "en": "What does “checkpoint” mean here? Is it a place where something pauses?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、保存されたモデルデータを開いたものだよ。そこにあるテンソルから、ニューラルネットのレイヤーを組み立てるんだ。",
+          "en": "Here, it means opened, saved model data. Its tensors are used to build the neural network layers."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくが保守するなら、量子化まわりはquant.goを見ればよさそう。迷子になりにくいかもね。",
+          "en": "If I were maintaining it, I’d start with quant.go for quantization details. I might get lost less often."
+        },
+        {
+          "s": "b",
+          "ja": "量子化情報の読み取りと解決はquant.goにまとまったよ。今回はファイル整理が中心で、それ以外のコード変更はないとされているよ。",
+          "en": "Quantization metadata reading and resolution now live in quant.go. This release candidate focuses on file organization, with no other code changes stated."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:09:12.255Z"
+    },
+    "f1392990a056062c": {
+      "bodyJa": "## Enterで送信\n\nCline Desktop v0.0.29では、エージェントの作業中でも、待機列にあるメッセージをEnterキーで進行中の処理へ送れるようになった。タスク全体の完了を待たず、次のターンへ指示を反映できる点が主な変更となる。\n\n## 次のターンへ反映\n\nエージェントが作業している間、入力欄が空の状態でEnterキーを押すと、待機列の先頭メッセージが進行中のターンへ送られる。そのメッセージはタスク終了後まで待機するのではなく、次のターン境界で取り込まれる仕組みだ。待機列が空でない場合は、入力欄のプレースホルダーにも、この操作が可能であることが表示される。\n\n## 待機列の制御\n\n待機列の先頭メッセージはアトミックに確保される。このため、素早く2回目のEnterキーを押しても、すでに待機列から取り出されたメッセージを重ねて送ることはない。また、進行中の処理への送信に失敗した場合、何も起きないまま終わるのではなく、トースト通知で失敗が示されるようになった。\n\n## Dockの余白\n\nmacOSでは、Dockアイコンにほかのアプリと同様の標準的な余白が追加された。従来は同梱アイコンと、選択可能なClassic、Chip、Hologram、Midnightの各ランタイムアイコンが端まで描画されていたため、Dock上でClineが隣接するアイコンより目立って大きく表示されていた。Windowsの既存アートワークは維持される。",
+      "bodyEn": "## Queued messages\n\nCline Desktop v0.0.29 changes how queued messages can be sent while the agent is working, allowing the first queued message to reach the next turn sooner. This matters because the message no longer has to wait for the entire task to finish before it is picked up.\n\nPressing Enter with an empty composer steers the first message in the queue into the running turn. The agent then picks it up at the next turn boundary. When the queue contains at least one message, the composer placeholder indicates that this Enter action is available.\n\n## The queue head\n\nThe queue head is claimed atomically when a queued message is steered. As a result, pressing Enter again quickly cannot steer a message that has already left the queue.\n\nThe release also makes steering failures visible. If an attempt to steer a queued message fails, Cline Desktop now surfaces the failure as a toast instead of silently doing nothing. Together, the atomic claim and failure notification make the state of the first queued message clearer during an active task.\n\n## macOS Dock icon\n\nThe release also adjusts the Cline Desktop icon shown in the macOS Dock. The bundled icon and the selectable runtime icons previously used edge-to-edge artwork, which caused Cline to appear visibly larger than neighboring applications in the Dock.\n\nThe affected selectable runtime icons are Classic, Chip, Hologram, and Midnight. They now use the standard margin used by other applications, correcting their apparent size in the Dock.\n\nWindows keeps its existing artwork, so the icon-spacing change applies to the macOS Dock rather than replacing the Windows design.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "エージェントが作業している途中でも、追加のお願いをすぐ差し込めるようになったの？",
+          "en": "Can I add another request right away, even while the agent is still working?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。入力欄が空のときにEnterを押すと、待機列の先頭メッセージが次のターンへ送られるよ。",
+          "en": "Yes. With an empty composer, pressing Enter sends the first queued message into the next turn."
+        },
+        {
+          "s": "a",
+          "ja": "前は次のターンに送れなかったの？ タスクが終わるまで待っていたのかな。",
+          "en": "Couldn’t it be sent into the next turn before? Did it have to wait until the task finished?"
+        },
+        {
+          "s": "b",
+          "ja": "これまではタスク全体の終了まで待機していたよ。今回は次のターンの区切りで受け取られ、失敗時も通知が出るんだ。",
+          "en": "Previously, it waited for the whole task to finish. Now it’s picked up at the next turn boundary, and a failed attempt shows a notification."
+        },
+        {
+          "s": "a",
+          "ja": "作業を止めず、待機中の指示を次の区切りですばやく渡せるのが一番の収穫だね。",
+          "en": "So the biggest gain is quickly passing a queued instruction at the next boundary without stopping the task."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。待機列があると入力欄の案内も変わる点と、macOSのDockアイコンの余白調整にも注目だよ。",
+          "en": "Right. Also note that the composer hint changes when the queue isn’t empty, and the macOS Dock icon spacing has been adjusted."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:09:33.370Z"
+    },
+    "4826ee699d26c88e": {
+      "bodyJa": "## MLXモデル作成\n\nOllama v0.34.1では、MLX safetensorsからのモデル作成が実験的な扱いではなくなり、正式機能となった。ローカルモデルの作成に関わる変更に加え、メモリ処理やモデルライブラリの読み出しも改善されている。\n\n一方、GGUFモデルの作成では手順が変更された。safetensorの変換と量子化には、llama.cppのツールを使用する必要がある。あわせてMLXとllama.cppも更新された。\n\n## Apple Silicon\n\nApple Silicon上でのMLXのメモリ処理が改善された。MLX safetensorsからのモデル作成の正式機能化とともに、Apple Silicon環境でMLXを利用する際の処理に手が加えられた形だ。\n\n## /api/tags\n\n大規模なモデルライブラリに対する/api/tagsの処理が高速化された。テスト時のコールド状態では、処理時間が3.1秒から294ミリ秒へ短縮されたとされる。多数のローカルモデルを扱う利用者にとって、待ち時間の削減につながる変更となる。\n\nまた、モデルのcapabilitiesが一貫して報告されるようになった。モデル一覧の取得速度だけでなく、返される能力情報の扱いも整えられている。\n\n## typical_p\n\n暴走したrepeat tokenを検出する条件は、100個の反復トークンが必要となるよう変更された。OCRなどでの誤検出を減らすことが目的と説明されている。\n\ntypical_pは非推奨となり、新しいモデルの作成時には設定できなくなった。ただし、既存のGGUFモデルでは引き続きサポートされる。",
+      "bodyEn": "## MLX safetensors model creation\n\nOllama v0.34.1 makes model creation from MLX safetensors a generally available feature rather than an experimental one. The release also changes the process for creating GGUF models, improves memory handling on Apple Silicon, and reduces waiting time when accessing large local model libraries.\n\nGGUF model creation now requires llama.cpp tooling for safetensor conversion and quantization. This requirement distinguishes the GGUF workflow from the newly formalized MLX safetensors model-creation feature.\n\n## Improved MLX memory handling\n\nThe release improves MLX memory handling on Apple Silicon. It also includes MLX and llama.cpp updates, alongside the changes to model creation and GGUF conversion.\n\nRunaway repeat-token detection has also been adjusted. Detection now requires 100 repeated tokens, a threshold intended to reduce false positives in cases such as OCR. The change means shorter sequences of repeated tokens will not meet the new detection requirement.\n\n## Faster /api/tags\n\nThe /api/tags endpoint is now much faster when used with large model libraries. In testing, a cold request fell from 3.1 seconds to 294 milliseconds.\n\nModel capabilities are also now reported consistently through the endpoint. Together, the speed and reporting changes address both response time and capability information for users managing large local collections.\n\n## Deprecated typical_p\n\nThe typical_p setting is deprecated. It can no longer be set when creating new models, although existing GGUF models retain support for it.\n\nThis creates a clear distinction between new and existing models: new model creation cannot configure typical_p, while previously created GGUF models that use the setting remain supported. The release’s full changelog is identified as covering v0.34.0 through v0.34.1-rc1.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "/api/tagsがテストで3.1秒から294ミリ秒に？ ずいぶん速そうだけど、これって大きいこと？",
+          "en": "/api/tags went from 3.1 seconds to 294 milliseconds in testing? That sounds much faster—is it a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな短縮だね。大規模なローカルモデルライブラリで、待ち時間を減らす変更として紹介されているよ。",
+          "en": "It’s a substantial reduction. The release presents it as a way to cut waiting time for users with large local model libraries."
+        },
+        {
+          "s": "a",
+          "ja": "「MLX safetensorsからモデルを作る」って、何をしてるの？",
+          "en": "What does it mean to create a model from MLX safetensors?"
+        },
+        {
+          "s": "b",
+          "ja": "safetensorsはモデルの重みを保存する形式だよ。そこからモデルを作る機能が、実験扱いではなくなったんだ。",
+          "en": "safetensors is a format for storing model weights. Creating models from MLX safetensors is no longer treated as experimental."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくならApple Siliconでモデルをたくさん置いて、さっと選びたいな。メモリも楽になるのかな？",
+          "en": "I’d keep lots of models on Apple Silicon and pick one quickly. Would memory use feel smoother too?"
+        },
+        {
+          "s": "b",
+          "ja": "その使い方には合いそう。ただし速度の数値は大規模ライブラリのコールドテストで、メモリ改善はApple SiliconのMLXが対象だよ。",
+          "en": "That could fit. But the speed figure came from a cold test on a large library, while the memory improvement specifically targets MLX on Apple Silicon."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:11:17.914Z"
+    },
+    "bbc58b6f6f07975d": {
+      "bodyJa": "## SDK移行完了\n\nCline v4.1.18では、SDK移行の完了に合わせ、拡張機能の公開手順が全面的に改訂された。安定版と夜間版の実際の公開経路や実行条件を文書へ正しく反映し、リリース時の誤操作や不整合を防ぐ内容となっている。\n\n## 安定版ビルド\n\next-sdk-bundle-rolloutフラグが100％に達したため、安定版リリースでは、従来のlegacyとnextを組み合わせたA/B VSIXではなく、mainの単独ビルドを公開する。公開にはext-vscode-publish-stable.ymlが使われる。この経路に沿うよう拡張機能公開のskillが書き直され、今後廃止すべきものとして残っている項目も記録された。\n\n## 夜間版の実行\n\n夜間版は手動実行のみであり、定期実行ではない。以前はcronによる実行があったが、PublishNightlyに必須レビュアーが設定されたことで、無人実行が承認待ちのまま停止し、後続の実行を滞らせる状態になったため、cronは削除された。今回の改訂では、旧文書にあったこの点の誤りが修正されている。\n\n## ビルド前タグ\n\n安定版のワークフローでは、ビルドより先にタグ付けを行う。これによりタグのpushに失敗した場合は処理が早い段階で失敗し、公開済みであるにもかかわらずタグが存在しないリリースが残る事態を避けられる。旧文書ではこの順序も誤っていたため、実際のワークフローに合わせて訂正された。",
+      "bodyEn": "## Standalone stable SDK build\n\nCline v4.1.18 revises the extension publishing guidance to match the completed SDK migration. The change matters because the documented release process now reflects the standalone stable build and corrects details that could otherwise cause release errors or inconsistencies.\n\nThe ext-sdk-bundle-rollout flag has reached 100%. As a result, stable releases now ship a standalone build of main through ext-vscode-publish-stable.yml. This replaces the previous combined legacy+next A/B VSIX path.\n\nThe skill has been rewritten around the standalone publishing path. It also records what remains to be retired, keeping the current procedure separate from the remaining cleanup work associated with the earlier release approach.\n\n## Manual-only nightlies\n\nThe revised guidance clarifies that nightly releases run through manual dispatch only. The previous text did not accurately describe this behavior.\n\nThe cron schedule was removed after PublishNightly gained required reviewers. Under that setup, unattended runs remained waiting for review and starved the runs that followed them. Removing the cron means the documented process now presents nightly publishing as a manual action rather than an automatically scheduled one.\n\nThis correction is intended to help release operators follow the actual nightly workflow and avoid relying on an automation path that is no longer in use.\n\n## Pre-build tagging\n\nThe stable workflow also tags the release before starting the build. This ordering corrects another error in the old documentation.\n\nBecause tagging happens first, a tag-push failure causes the stable workflow to fail early. The process therefore stops before the build and publication stages instead of creating a release that has been published without its corresponding tag.\n\nTogether, the standalone stable build path, manual-only nightly process, and pre-build tagging order bring the publishing guidance into line with the current release workflow and reduce opportunities for operator mistakes or mismatched release state.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "SDK移行が完了すると、拡張機能の公開手順はなんで全面的に変わるの？",
+          "en": "Why did completing the SDK cutover mean rewriting the extension publishing steps?"
+        },
+        {
+          "s": "b",
+          "ja": "移行フラグが100%に達し、安定版は従来の混合VSIXではなく、mainの単独ビルドを公開する流れになったからだよ。",
+          "en": "The rollout flag reached 100%, so stable releases now publish a standalone build of main instead of the old combined A/B VSIX."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、リリース担当者が今の流れを迷わず進めて、誤操作を減らすための改訂なんだね？",
+          "en": "So this update helps release staff follow the current path without confusion and avoid mistakes?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。夜間版は手動実行だけ、安定版はビルド前にタグ付けすると明確にして、不整合も防ぎやすくしているよ。",
+          "en": "Right. It clarifies that nightlies are manual-only and stable releases are tagged before building, helping prevent inconsistent releases."
+        },
+        {
+          "s": "a",
+          "ja": "公開方法を一本化して、実際の実行順も正しく書き直したんだね。",
+          "en": "Got it—the publishing path was streamlined, and the actual execution order was corrected."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、廃止に向けて残っている項目も記録されていて、整理がすべて終わったとは書かれていないよ。",
+          "en": "Yes. One caveat: it also records items still left to retire, so it doesn’t say every cleanup task is finished."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:11:33.642Z"
+    },
+    "2e62a5fb1b7afb28": {
+      "bodyJa": "## 健康関連の回答\n\nOpenAIは、GPT-5.5 InstantによってChatGPTの健康・ウェルネス分野の回答を強化した。医療情報の精度と安全性を高め、日常的な健康管理に関わる情報の信頼性を向上させる取り組みだ。\n\n## 推論と文脈理解\n\n強化点は、より高度な推論、文脈の把握、明確な伝え方にある。さらに、医師の知見を取り入れた評価を通じて、健康や医療に関する応答の質を改善すると説明されている。",
+      "bodyEn": "## Health intelligence capabilities\n\nOpenAI announced improvements to ChatGPT’s health intelligence capabilities, aimed at increasing the accuracy and safety of responses involving medical information. Reliable health guidance in AI assistants matters because it directly affects users’ everyday well-being and health management.\n\n## Stronger reasoning and context\n\nGPT-5.5 Instant improves ChatGPT’s health and wellness responses through stronger reasoning, better use of context, and clearer communication. The announcement also highlights physician-informed evaluations as part of the effort to improve response quality. Together, these changes are intended to make health-related information more reliable while strengthening the safety of ChatGPT’s answers.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-5.5 Instantで、健康の答えはどう良くなるの？",
+          "en": "How are health answers getting better with GPT-5.5 Instant?"
+        },
+        {
+          "s": "b",
+          "ja": "推論や文脈の理解を強め、説明を明確にし、医師の知見を取り入れた評価で改善するそうだよ。",
+          "en": "It’s described as using stronger reasoning, better context, clearer communication, and evaluations informed by physicians."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、日々の健康を気にする人が、より信頼しやすく分かりやすい答えを得られるのかな？",
+          "en": "So could people managing everyday health get answers that are easier to understand and trust?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、医療情報の精度と安全性を高め、日常の健康管理に役立てる狙いが示されているよ。",
+          "en": "The piece frames the changes as improving accuracy and safety, with a direct impact on everyday health management."
+        },
+        {
+          "s": "a",
+          "ja": "なるほど。正しさだけじゃなく、文脈や伝え方も健康の答えには大切なんだね。",
+          "en": "I see. For health answers, context and clear wording matter alongside accuracy."
+        },
+        {
+          "s": "b",
+          "ja": "うん。今回は健康・ウェルネス回答の改善として、推論、文脈、説明、医師の知見を取り入れた評価が示されているよ。",
+          "en": "Right. The announced improvements focus on reasoning, context, communication, and physician-informed evaluation for health and wellness responses."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:13:51.202Z"
+    },
+    "13f2fd2b5cd9971f": {
+      "bodyJa": "## 統合ブラウザー\n\nVisual Studio Code 1.125は、AIコーディング支援やエディター機能を改善する月次アップデートだ。統合ブラウザーの強化、拡張機能の更新制御、Copilotの企業向け管理機能など、日常的に利用する開発者の生産性に関わる変更が盛り込まれている。\n\n統合ブラウザーでは、VS Codeを離れることなくWebを検索できる。さらに、リモート接続を介した環境でも安全にブラウジングできると説明されており、エディター内で検索と閲覧を継続できる。\n\n## モデルプロバイダー\n\n追加のモデルを見つけて導入するための機能も加わった。モデルプロバイダーはMarketplaceから検索してインストールでき、利用したいモデルをVS Code上で追加する流れが用意されている。AIコーディング支援の強化を構成する変更の一つとなる。\n\n## 自動更新の遅延\n\n拡張機能の更新については、自動更新をインストールするまでにVS Codeが待機する時間を選択できるようになった。更新そのものを受け取るだけでなく、適用までの遅延を設定可能にすることで、拡張機能の更新タイミングを利用者側で調整できる。\n\n## Copilotポリシー\n\nCopilotでは、管理された設定を既存のデバイス管理ツール経由で配布できるポリシー機能が提供される。企業環境でCopilotの設定を管理し、端末へ届けるための仕組みが強化された形だ。\n\nダウンロードはWindowsのx64とArm64、MacのUniversal、Intel、silicon、Linuxのdeb、rpm、tarball、Arm、snap向けに案内されている。また、1.125.1では複数の問題に対処する更新が行われた。",
+      "bodyEn": "## Welcome to the 1.125 release\n\nVisual Studio Code 1.125 is a monthly update focused on enhanced AI coding assistance and editor refinements. It matters for developers who use the editor daily because it adds a smarter integrated browser, more control over extension updates, and stronger enterprise management for Copilot.\n\nThe release is accompanied by update 1.125.1, which addresses reported issues. Downloads are available for Windows on x64 and Arm64, Mac as Universal and Intel silicon builds, and Linux through deb, rpm, tarball, Arm, and snap options.\n\n## Install model providers\n\nVisual Studio Code can now discover and install additional model providers through the Marketplace. This expands the model installation options available from within the editor and forms part of the release’s improvements to AI coding assistance.\n\nThe release material also points to a blog about enabling persistent, portable agent sessions with the Agent Host. It additionally promotes The Story of VS Code and a live GitHub Copilot Day scheduled for September 10.\n\n## Integrated browser\n\nThe integrated browser adds the ability to search the web without leaving Visual Studio Code. It can also browse securely over remote connections, keeping this activity inside the editor rather than requiring users to move elsewhere.\n\nThis browser improvement is one of the principal editor refinements in version 1.125, alongside the release’s changes to model access and extension management.\n\n## Configurable auto-update delay\n\nThe update provides more control over extension updates through a configurable auto-update delay. Users can choose how long Visual Studio Code waits before installing extension updates.\n\nFor managed environments, Copilot policies can deliver managed Copilot settings through existing device management tooling. This is the release’s main enterprise management change, giving organizations a way to distribute those settings using tooling they already have.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "コードを書きながら調べものをするとき、普段の作業はどう変わるの？",
+          "en": "When I’m coding and need to look something up, how does my usual workflow change?"
+        },
+        {
+          "s": "b",
+          "ja": "VS Codeを離れずにWeb検索でき、リモート接続でも安全に閲覧できるよ。追加モデルもMarketplaceから探して導入できる。",
+          "en": "You can search the web without leaving VS Code and browse securely over remote connections. Extra models are also available through the Marketplace."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ それとも、使いやすくなった感じ？",
+          "en": "Couldn’t it do that before, or is the experience just better now?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は不可能だったとは書かれていないよ。1.125では統合ブラウザーが賢くなり、拡張機能の更新待ち時間も選べるようになった。",
+          "en": "The release notes don’t say it was impossible before. In 1.125, the integrated browser is smarter, and you can choose how long extension updates wait before installing."
+        },
+        {
+          "s": "a",
+          "ja": "いちばんの収穫は、調べものとコーディングを同じ場所で続けやすくなったことかな。更新のタイミングも選べるんだね。",
+          "en": "My biggest takeaway is that research and coding can stay in one place more easily. And I get some control over update timing too."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。あわせて、既存の端末管理ツールからCopilot設定を管理できるポリシーにも注目したいね。",
+          "en": "Right. Also worth watching are the Copilot policies, which let organizations deliver managed settings through their existing device management tools."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:14:41.524Z"
+    },
+    "ed204fd38e64c798": {
+      "bodyJa": "固定された画面に作業を合わせるのではなく、望むワークフローに沿ってインターフェースを形作れるのが、GitHub Copilot appの「キャンバス」です。利用者とエージェントが同じカスタム画面を双方向に操作し、用途に合った作業環境を構成できます。\n\n## キャンバス\n\nキャンバスは「canvas extension」とも呼ばれ、利用者とエージェントが共有するカスタマイズ可能なインターフェースです。カンバンボード、課題整理用のボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などとして構成できます。決められた種類の画面に作業を当てはめるのではなく、実際の作業方法に合わせてUIを形作るという考え方です。独自の作業手順を効率化したいチームに役立つとされています。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できるため、エージェントは作業を進めながら画面の内容を更新できます。一方、利用者もボタン、カード、フィルターなどの操作要素を使って変更を加えられます。エージェントからの更新を表示するだけの画面ではなく、双方が同じ画面に働きかけられる仕組みです。これは、共有されたライブホワイトボードを一緒に使うような操作感として説明されています。\n\n## 作成方法\n\nキャンバスを作る際に、利用者がコードを書いたり、画面を手作業でデザインしたりする必要はありません。まずエージェントのセッションを開き、「/create-canvas」スキルを入力します。そのうえで、作りたい画面や実現したい内容を平易な英語で説明します。これにより、目的とするワークフローを起点として、必要なインターフェースを構成できます。",
+      "bodyEn": "## GitHub Copilot app canvases\n\nCanvases in the GitHub Copilot app offer a way to build an interface around the workflow a user wants, rather than fitting that work into a fixed set of screens. This matters for teams that want to tailor custom workflows to their own needs.\n\nA canvas, also called a canvas extension, is a customizable interface shared by the user and the agent. Its structure can reflect the work being performed instead of requiring the user to adapt that work to a predetermined interface.\n\n## A customizable interface\n\nA canvas can take several forms, including a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet. These options allow the interface to be shaped according to how the user or team works.\n\nThe canvas is bidirectional. The agent can update the interface while it works, while the user can also make changes through buttons, cards, filters, and other controls. The result is comparable to using a live shared whiteboard: both sides interact with the same customizable space rather than working through separate views.\n\nThis shared editing model means that a canvas is not simply a static display of information. It is an interface in which the agent’s updates and the user’s direct actions can both affect the workflow.\n\n## Create a canvas\n\nCreating a canvas does not require coding or manual interface design. The user starts by opening an agent session and entering the /create-canvas skill.\n\nThe next step is to describe the desired canvas in plain English. That description can specify the workflow and the kind of interface needed, such as a board, checklist, dashboard, form, or spreadsheet. The GitHub Copilot app then uses that request to create a canvas shaped around the described work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "キャンバスって、どうして人とエージェントの両方が同じ画面を動かせるの？",
+          "en": "How can both a person and the agent work with the same canvas?"
+        },
+        {
+          "s": "b",
+          "ja": "双方向の共有画面だから、エージェントが更新しつつ、人もボタンやカード、フィルターで変更できるんだ。",
+          "en": "It’s a two-way shared interface: the agent can update it, while people make changes with buttons, cards, filters, and other controls."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、決まった画面に作業を合わせたくないチームが、自分たち向けの手順を作れるってこと？",
+          "en": "So teams that don’t want to fit their work into fixed screens can shape a workflow around their own needs?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。カンバンや課題整理、リリース確認、表計算などを用途に合わせ、独自の作業手順を効率化できる。",
+          "en": "Yes. Teams can tailor kanban boards, issue triage, release checklists, spreadsheets, and more to streamline their own workflows."
+        },
+        {
+          "s": "a",
+          "ja": "作業に画面を合わせて、人とエージェントで一緒に更新できるんだね。作るのもコード不要なんだ。",
+          "en": "Got it—the interface follows the work, and people and agents update it together. And creating one doesn’t require coding."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただし作成時は、エージェントのセッションで「/create-canvas」を入力し、欲しいものを平易な英語で説明する流れだよ。",
+          "en": "Right. One detail: creation starts in an agent session with /create-canvas, followed by a plain-English description of what you want."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T14:39:00.023Z"
+    },
+    "655fd12194d5c751": {
+      "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に書き換えられた。80万行を超える本番用Rustコードへの移行であり、ランタイムの性能は複数桁の規模で向上したと説明されている。\n\n## エージェント基盤\n\nこのランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。現在のGitHub Copilot cloud agent（CCA）のために、当初はNode.jsとV8 JavaScriptエンジン上のTypeScriptで実装された。その後、ランタイムと機能が急速に拡大する間も、同じ技術スタックが維持されていた。今回の変更では、その基盤自体がRustへ置き換えられた。\n\n## 128件のPR\n\n書き換えにはGitHub Copilot appとCopilot CLIが使われ、AIエージェントがコードの大半を作成した。成果は128件のプルリクエストに分けてmainへ取り込まれた。単一の切り替え時点まで完成を待つ方式ではなく、変更を段階的に出荷しながら移行が進められた点が特徴となる。\n\n## 回帰への対応\n\n段階的な導入の過程では、避けられない少数の回帰が発見されたものの、その都度すばやく修正されたという。書き換えたランタイムを途中から継続的に出荷しつつ、性能改善も進められた。Rustへ移行した共通基盤により、CLI、app、SDKの利用者が性能向上の恩恵を受ける形となった。",
+      "bodyEn": "## Copilot agent runtime\n\nGitHub rewrote the Copilot agent runtime from TypeScript on Node.js into Rust. The change matters because this runtime backs the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK, while its performance improved by orders of magnitude during the migration.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the rewrite benefits users of the CLI, app, and SDK rather than applying to only one Copilot interface.\n\n## TypeScript on Node.js\n\nThe runtime was originally written in TypeScript on Node.js and the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nAs the runtime and its capabilities grew rapidly, it remained on that original stack. The completed rewrite replaces that implementation with production Rust while retaining the runtime’s place behind the Copilot CLI, app, and SDK.\n\n## More than 800,000 lines\n\nThe new implementation comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI to carry out the complete rewrite.\n\nAI agents wrote most of the code. Their work was spread across 128 pull requests, making the runtime migration a large production effort performed through a sequence of changes rather than a single final replacement.\n\n## Shipped incrementally\n\nThe 128 pull requests landed in main and shipped incrementally. The team did not wait for one cutover at the end before putting the rewritten runtime into use.\n\nA few regressions occurred during the process, but they were discovered and fixed quickly along the way. At the same time, the runtime’s performance improved by orders of magnitude. The result is a Rust-based agent runtime now supporting the GitHub Copilot CLI, app, and SDK.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "80万行超をRustで書き直して、AIが128件のPRで大半を作ったの？ これって大きいこと？",
+          "en": "Over 800,000 lines rewritten in Rust, with AI producing most of it across 128 PRs? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "大きな移行だね。この記事では、Node.js上のTypeScriptから全面的に書き直し、性能も桁違いに向上したとしているよ。",
+          "en": "It’s a major migration. The runtime was fully rewritten from TypeScript on Node.js, and the article says performance improved by orders of magnitude."
+        },
+        {
+          "s": "a",
+          "ja": "そもそも「エージェントランタイム」って何をするもの？",
+          "en": "What does an “agent runtime” actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "AIエージェントを動かす土台、くらいの意味だよ。アプリやサービスに組み込めて、CLIやアプリ、SDKもこれを使っているんだ。",
+          "en": "Think of it as the foundation that runs AI agents. It can be embedded in apps and services, and it powers the CLI, app, and SDK."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、自分のアプリに組み込んでエージェントを動かしてみたいな。Rust版なら変化も感じられるかも？",
+          "en": "I’d want to embed it in my own app and run an agent. Maybe I’d notice a difference with the Rust version?"
+        },
+        {
+          "s": "b",
+          "ja": "そうかもね。移行は一度に切り替えず、128件のPRで段階的に進め、途中で起きた不具合もすばやく直しているよ。",
+          "en": "Maybe. The migration wasn’t one big cutover: it shipped incrementally through 128 PRs, with the few regressions found and fixed quickly along the way."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:09:01.252Z"
     }
   }
 }

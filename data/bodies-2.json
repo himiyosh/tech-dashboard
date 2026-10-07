@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T17:01:39.580Z",
-  "count": 321,
+  "generatedAt": "2026-10-07T18:01:36.847Z",
+  "count": 325,
   "bodies": {
     "d9b0da9f34ed444d": {
       "bodyJa": "Metaは、Ray-Ban MetaやOakley Meta VanguardsといったAIスマートグラスに搭載する超細型バッテリーの設計・製造プロセスを、自社のエンジニアリングブログで明らかにした。カメラやスピーカー、AI処理、さらにはディスプレイまでを動かすための電力を、メガネのテンプル（つる）という極めて限られた空間に収める技術は、ウェアラブル端末の使い勝手を左右する重要な要素となっている。\n\nスマートグラスが抱える最大の制約は、形状そのものにある。一般的なスマートフォンが平たく比較的大きな空間を確保できるのに対し、メガネのつるは細く湾曲しており、装着感や重量バランスを損なわずに電池を組み込む必要がある。Metaによれば、こうした条件下では従来型の角張ったセルをそのまま流用することが難しく、細長い形状に最適化したバッテリーをゼロから設計する必要があったとされる。\n\nカメラ撮影やオンデバイスでのAI処理、音声アシスタントの応答といった機能は、瞬間的に大きな電力を要求する。限られた容量の中でこれらをこなしつつ、一日を通じた実用的な駆動時間を確保するには、セルの素材選定から内部構造、製造工程までを一体で見直すアプローチが求められたと見られる。同社は安全性や発熱、繰り返し充電による劣化への対応も、設計段階から織り込んでいると説明している。\n\nスマートグラス分野では、Metaのほかにもさまざまな企業が参入を模索しており、ディスプレイ搭載モデルの登場によって消費電力はさらに増す傾向にある。バッテリー技術はカメラやチップの性能と並び、製品の差別化を左右する基盤になりつつある。小型化が進むほど熱設計や安全マージンの確保は難しくなるため、各社にとって電源まわりの作り込みは今後いっそう重要性を増す可能性がある。\n\n今回の解説は、完成品の見た目からは分かりにくいハードウェア開発の舞台裏を示すものだ。Metaは近年、Ray-Banブランドとの協業を通じてスマートグラスのラインアップを広げており、こうした基盤技術の積み重ねが、より高機能な次世代モデルへの布石になっていくと考えられる。エンジニアリング情報の公開は、同領域における技術的な課題と方向性を理解するうえでの手がかりにもなりそうだ。",
@@ -11430,7 +11430,39 @@
       "bodyJa": "## Dドライブ消失\n\nCursorのAIエージェントに「不要なブランチを整理して」と依頼した結果、Dドライブ配下のデータがすべて消失した。データはゴミ箱にも残らず、Gitブランチの整理という指示が深刻なデータ損失につながった事例である。\n\n## 推定された原因\n\nCursorのチャット履歴とターミナル履歴も失われたため、実際に実行されたコマンドは特定できていない。AIによる分析では、git clean -fdxの誤爆、または削除コマンドにおけるパスの誤解決が原因として推定されている。\n\n## AIエージェント\n\n同種の事故はClaude CodeやGemini CLIでも公開報告があるとされる。このため、記事では特定のツールだけの問題ではなく、AIエージェント全般に関わる構造的な問題として位置づけている。",
       "bodyEn": "## Unnecessary Git branches\n\nA developer asked Cursor's AI agent to clean up unnecessary Git branches, but the task ended with all data under the D drive being deleted. The data did not remain in the Recycle Bin, making this a serious data-loss incident tied to an apparently limited Git cleanup request.\n\n## Commands remain unidentified\n\nThe exact command could not be identified because both Cursor's chat history and the terminal history were also lost. According to the source, AI-assisted analysis suggested two possible causes: an unintended execution of “git clean -fdx,” or incorrect path resolution by a deletion command. Neither explanation was confirmed.\n\n## AI-agents and risk management\n\nThe source says similar incidents have been publicly reported with Claude Code and Gemini CLI. It therefore presents the risk not as specific to Cursor, but as a structural problem affecting AI agents more broadly. The case highlights the danger of giving an AI agent permission to execute destructive commands when an instruction can be interpreted beyond its intended scope.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-09-05T00:52:58.859Z"
+      "generatedAt": "2026-09-05T00:52:58.859Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ブランチ整理を頼んだだけで、Dドライブ全部が消えたの？ これってかなり大きな事故だよね？",
+          "en": "They only asked to clean up branches, and the whole D drive disappeared? That’s a really serious incident, right?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。作業中のプロジェクトだけでなく、ほかの作業フォルダやインストール済みのアプリまで消えたんだ。",
+          "en": "Yes. It wiped not only the active project, but also other work folders and apps installed on the D drive."
+        },
+        {
+          "s": "a",
+          "ja": "そもそもGitブランチの掃除って、作業ファイルを消すことじゃないの？",
+          "en": "Wait, does cleaning up Git branches normally mean deleting the actual work files?"
+        },
+        {
+          "s": "b",
+          "ja": "Gitブランチは、作業の流れを分けて管理するものだよ。依頼した人は、git branch -dなら作業ファイルに触れないと考えていたんだ。",
+          "en": "A Git branch keeps a line of work separate. The developer believed git branch -d wouldn’t touch the working files."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、まず作業をGitHubにpushしてからエージェントに頼むかな。少しは被害を減らせるかも。",
+          "en": "I’d probably push my work to GitHub before asking the agent. Maybe that would limit the damage a little."
+        },
+        {
+          "s": "b",
+          "ja": "今回はpush済みのプロジェクトが多く、致命傷は避けられたよ。ただし、pushしていなかったローカル変更は戻らなかったんだ。",
+          "en": "Here, having most projects pushed prevented a total loss. But the unpushed local changes couldn’t be recovered."
+        }
+      ]
     },
     "49abf2accc5c1b20": {
       "bodyJa": "## Unity MCP\n\n本記事は、公式のUnity MCPをCodex CLIから利用する構成について、導入手順と接続時のトラブルをまとめたものだ。UnityをAIエージェントから直接操作するための接続方法に加え、承認後にも接続が拒まれる挙動を扱っている。\n\nUnity側では、Unity EditorのPackage Managerを開き、テクニカルネームを指定してパッケージをインストールする。導入自体は「そこまで難しくなかった」と説明されており、Codex CLIからUnity MCPサーバーを接続して使う流れが示される。\n\n## 原因の調査\n\n問題は、接続後に「さっき承認したはずなのになぜか弾かれる」という挙動だ。記事ではこれを「Connection revoked」エラーとして取り上げ、原因の調査結果と対処法を示している。導入だけでなく、接続承認後に失敗する場合のトラブルシュートまでを対象としている。",
@@ -11508,44 +11540,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T14:38:40.439Z"
     },
-    "11814c13f8eb0837": {
-      "bodyJa": "固定された画面に作業を合わせるのではなく、望むワークフローに沿ってインターフェースを形作れるのが、GitHub Copilot appの「キャンバス」です。利用者とエージェントが同じカスタム画面を双方向に操作し、用途に合った作業環境を構成できます。\n\n## キャンバス\n\nキャンバスは「canvas extension」とも呼ばれ、利用者とエージェントが共有するカスタマイズ可能なインターフェースです。カンバンボード、課題整理用のボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などとして構成できます。決められた種類の画面に作業を当てはめるのではなく、実際の作業方法に合わせてUIを形作るという考え方です。独自の作業手順を効率化したいチームに役立つとされています。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できるため、エージェントは作業を進めながら画面の内容を更新できます。一方、利用者もボタン、カード、フィルターなどの操作要素を使って変更を加えられます。エージェントからの更新を表示するだけの画面ではなく、双方が同じ画面に働きかけられる仕組みです。これは、共有されたライブホワイトボードを一緒に使うような操作感として説明されています。\n\n## 作成方法\n\nキャンバスを作る際に、利用者がコードを書いたり、画面を手作業でデザインしたりする必要はありません。まずエージェントのセッションを開き、「/create-canvas」スキルを入力します。そのうえで、作りたい画面や実現したい内容を平易な英語で説明します。これにより、目的とするワークフローを起点として、必要なインターフェースを構成できます。",
-      "bodyEn": "## GitHub Copilot app canvases\n\nCanvases in the GitHub Copilot app offer a way to build an interface around the workflow a user wants, rather than fitting that work into a fixed set of screens. This matters for teams that want to tailor custom workflows to their own needs.\n\nA canvas, also called a canvas extension, is a customizable interface shared by the user and the agent. Its structure can reflect the work being performed instead of requiring the user to adapt that work to a predetermined interface.\n\n## A customizable interface\n\nA canvas can take several forms, including a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet. These options allow the interface to be shaped according to how the user or team works.\n\nThe canvas is bidirectional. The agent can update the interface while it works, while the user can also make changes through buttons, cards, filters, and other controls. The result is comparable to using a live shared whiteboard: both sides interact with the same customizable space rather than working through separate views.\n\nThis shared editing model means that a canvas is not simply a static display of information. It is an interface in which the agent’s updates and the user’s direct actions can both affect the workflow.\n\n## Create a canvas\n\nCreating a canvas does not require coding or manual interface design. The user starts by opening an agent session and entering the /create-canvas skill.\n\nThe next step is to describe the desired canvas in plain English. That description can specify the workflow and the kind of interface needed, such as a board, checklist, dashboard, form, or spreadsheet. The GitHub Copilot app then uses that request to create a canvas shaped around the described work.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "キャンバスって、どうして人とエージェントの両方が同じ画面を動かせるの？",
-          "en": "How can both a person and the agent work with the same canvas?"
-        },
-        {
-          "s": "b",
-          "ja": "双方向の共有画面だから、エージェントが更新しつつ、人もボタンやカード、フィルターで変更できるんだ。",
-          "en": "It’s a two-way shared interface: the agent can update it, while people make changes with buttons, cards, filters, and other controls."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、決まった画面に作業を合わせたくないチームが、自分たち向けの手順を作れるってこと？",
-          "en": "So teams that don’t want to fit their work into fixed screens can shape a workflow around their own needs?"
-        },
-        {
-          "s": "b",
-          "ja": "うん。カンバンや課題整理、リリース確認、表計算などを用途に合わせ、独自の作業手順を効率化できる。",
-          "en": "Yes. Teams can tailor kanban boards, issue triage, release checklists, spreadsheets, and more to streamline their own workflows."
-        },
-        {
-          "s": "a",
-          "ja": "作業に画面を合わせて、人とエージェントで一緒に更新できるんだね。作るのもコード不要なんだ。",
-          "en": "Got it—the interface follows the work, and people and agents update it together. And creating one doesn’t require coding."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。ただし作成時は、エージェントのセッションで「/create-canvas」を入力し、欲しいものを平易な英語で説明する流れだよ。",
-          "en": "Right. One detail: creation starts in an agent session with /create-canvas, followed by a plain-English description of what you want."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-10-07T14:39:00.023Z"
-    },
     "96ef50bfed738de0": {
       "bodyJa": "## 1.6.3リリース\n\nlangchain-fireworks 1.6.3が、2026年9月25日に公開された。前版の1.6.2から更新されたパッチリリースであり、依存関係を固定したり、更新履歴を追跡したりする際の明確な基準となるバージョンだ。\n\n公開された変更記録には「release(fireworks): 1.6.3」とあり、1.6.2以降の更新として示されている。対応する記録には「#40834」も付されている。\n\n## 1.6.2から更新\n\n今回の位置付けは、langchain-fireworksを1.6.2から1.6.3へ進めるパッチリリースである。バージョン番号によって更新前後を明確に区別できるため、利用者は採用している版を1.6.3として固定し、管理対象を特定できる。\n\nまた、更新履歴を確認する場合も、1.6.2と1.6.3を境界として追跡できる。どの時点の版を利用しているか、どのリリースまで更新したかを記録するための基準になる。\n\n## 変更記録\n\n変更記録には、個別機能に関する説明は掲載されていない。そのため、特定の機能追加や挙動変更、修正内容までを今回の記録から確認することはできない。1.6.3について明示されている中心的な内容は、1.6.2から更新されたパッチ版であることだ。\n\nコミットはGitHub.com上で作成され、GitHubの検証済み署名で署名されたものとして表示されている。一方、ページには読み込み時のエラーと再読み込みを促す表示も含まれている。",
       "bodyEn": "## langchain-fireworks 1.6.3\n\nlangchain-fireworks 1.6.3 has been released as a patch update from version 1.6.2. The release matters primarily because it establishes a clear package version that users can reference when pinning dependencies and tracking upgrades.\n\nThe release was published on September 25, 2026. Its record identifies the update as “release(fireworks): 1.6.3” under entry #40834.\n\n## Changes Since 1.6.2\n\nThe change record explicitly positions version 1.6.3 as the release following langchain-fireworks 1.6.2. However, it does not list individual features or provide details about specific changes included in the patch.\n\nAs a result, the release should be understood strictly as a versioned package update. There is no stated basis for attributing new functionality or any particular technical modification to version 1.6.3.\n\n## Dependency Pinning\n\nEven without a feature-level change list, the new version provides a defined reference for dependency pinning. Users who need to identify the package version in their dependency records can use 1.6.3 rather than treating the update as an unspecified revision.\n\nThe same version marker also supports upgrade tracking by distinguishing this patch release from 1.6.2. This makes the progression between the two recorded versions explicit, while leaving the nature of the underlying changes unstated.\n\n## Verified Signature\n\nThe associated commit was created on GitHub.com and signed with GitHub’s verified signature. The page also displayed loading and session-related messages, including prompts to reload after an error or after account activity in another tab or window.\n\nThose messages do not add technical details about the package update. The central release information remains that langchain-fireworks advanced from 1.6.2 to the 1.6.3 patch version, with no specific features listed.",
@@ -11583,44 +11577,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T14:39:11.332Z"
-    },
-    "93db8516427cde42": {
-      "bodyJa": "## チャット中心\n\nLLMの登場から3年を経ても、主要な操作画面にはチャットが使われ続けている。ここで示されるのは、広く定着した対話形式を当然の前提とせず、扱うタスクに適したUIかどうかを問い直す視点だ。\n\nチャットでは、利用者がテキスト入力欄に言葉を記し、AIとの対話を重ねる。しかし、LLMを使う場面の多くで、常に会話そのものが目的になるとは限らない。著者は、チャットが誤ったUIである可能性があり、少なくとも大半の場面では最適とは限らないと提起している。\n\n## 用途に合うUI\n\n焦点は、AIを搭載することと、チャット欄を設けることを同一視しない点にある。対話欄に依存するのではなく、用途に合うUIを選ぶ必要があるという考え方だ。開発者にとっては、LLMとのやり取りを会話として設計する前に、利用者が実行したい内容を見極め、その内容に沿った操作方法を検討することが重要になる。\n\nこれはチャットを全面的に否定する主張ではない。チャットが適する場合を残しつつ、主要な操作画面として機械的に採用する前提へ疑問を投げかけている。\n\n## タスク指向\n\n著者は、AIにはタスク指向で設計した場合に大きな可能性があると述べている。中心に置くのは、AIと会話を続ける体験ではなく、特定のタスクに取り組む体験だ。\n\n最初の大規模なAI実装が一人称のチャットボットという形式だったことについて、著者は仕掛け的なものだったと評している。その形式をそのまま引き継ぐのではなく、個々の用途を起点に操作面を選ぶことが、AI体験を設計する際の判断軸として示されている。",
-      "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The article questions that default because developers designing AI experiences need to choose interactions that fit the task rather than automatically placing every capability behind a conversational interface.\n\nThe concern is not that chat can never work. Instead, it is that continued reliance on chat may turn one interface pattern into an assumption, even when another UI would be more appropriate for what the user is trying to accomplish.\n\n## Chat Is the Wrong UI\n\nThe author proposes that chat may be the wrong UI most of the time. This is framed as a challenge to the first large-scale implementation of AI as a first-person chatbot, which the author characterizes as something of a gimmick.\n\nThat distinction matters to the argument: an AI experience does not necessarily need to present itself as a conversation. The interface can instead be selected according to its intended use. The article therefore shifts the design question away from how to build another chat interaction and toward whether chat belongs in the interaction at all.\n\n## A Textarea Component\n\nThe article uses the textarea as an example of how deeply the chat model shapes interaction with AI. The author recounts asking AI, through a textarea, who first argued for a textarea component in the HTML specification. The anecdote highlights the circularity of using the same input pattern both as the default interface and as the means of examining that interface.\n\nThe broader point is not about the textarea itself, but about questioning an established interaction surface rather than treating it as inevitable.\n\n## Task Oriented\n\nThe article sees tremendous promise for AI when it is task oriented. In that model, the task guides the interaction design instead of requiring users to express every need through an open-ended conversation.\n\nNo single replacement interface is prescribed. The practical direction for developers is to evaluate each use case on its own terms and select a UI suited to that task, without assuming that an LLM must always appear as chat.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "AIの波が始まって3年たっても、中心の操作画面はまだチャットなんだね。これって大きいこと？",
-          "en": "Three years into this AI wave, chat is still the main way we interact with LLMs. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事は、チャットが当たり前という前提を問い直しているよ。用途に合う画面なら、AIの可能性をもっと生かせるかもしれないんだ。",
-          "en": "The piece questions why chat remains the default. It suggests AI may have more potential when the interface is shaped around the task."
-        },
-        {
-          "s": "a",
-          "ja": "「タスク指向」って、チャットとどう違うの？",
-          "en": "What does “task-oriented” mean? How is that different from chat?"
-        },
-        {
-          "s": "b",
-          "ja": "会話そのものより、やりたい作業を中心に設計する考え方だよ。入力欄だけに頼らず、用途に合う操作方法を選ぶイメージだね。",
-          "en": "It means designing around the job someone wants to complete, rather than around conversation itself. The interface can use whatever interaction best fits that task."
-        },
-        {
-          "s": "a",
-          "ja": "ぼくなら、やることが決まっているときは、毎回チャットせず、その作業に合う画面を使いたいな。",
-          "en": "If I already know what I want to do, I’d rather use a screen built for that job than explain it in chat every time."
-        },
-        {
-          "s": "b",
-          "ja": "うん。ただし、チャットがいつも不向きだと断定しているわけではないよ。作業ごとに合うUIを選ぶ、という受け止め方が現実的だね。",
-          "en": "Right. The author isn’t saying chat is always wrong, though. The practical takeaway is to choose the UI that fits each task."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-10-07T14:39:53.940Z"
     },
     "5e3f99e5cfa30c6f": {
       "bodyJa": "Cline v4.1.21では、OpenAI互換プロバイダーの追加、モデルカタログの更新、ローカルモデル利用時の再試行処理などが行われた。プロバイダーを選ぶ際の既定モデルも一部変更されており、モデルを固定していない利用環境では確認が必要になる。\n\n## ai&を追加\n\n新たなプロバイダーとして、日本発のai&が追加された。ai&はOpenAI互換のエンドポイントで、オープンウェイトモデルを提供する。あわせてモデルカタログが刷新され、209プロバイダーにわたる6,386モデルが掲載される構成となった。\n\n## 既定モデルの変更\n\nモデルを明示的に固定していない19プロバイダーでは、解決される既定モデルが変更された。このうち11プロバイダーはClaude Opus 5.5へ切り替わり、GitHub CopilotとVertexも含まれる。該当するプロバイダーでモデルを固定せずに利用している場合、従来とは異なるモデルが既定で選ばれることになる。\n\n## ローカルモデル修正\n\nllama.cpp、Ollama、LM Studioでは、長い応答が出力トークン上限に達した際の処理が修正された。従来のようにタスクを終了するのではなく、会話を圧縮してから1回だけ再試行する。これらのサーバーは、設定した出力予算にかかわらず、残っているコンテキストに応じて生成量を制限するため、上限到達による作業中断を減らす変更となる。\n\n## js-yaml更新\n\njs-yamlの最低バージョンは4.3.2へ引き上げられた。これは、ルールおよびスキルのフロントマターを読み取るパーサーに関するセキュリティ修正を取り込むための変更と説明されている。",
@@ -11911,6 +11867,202 @@
       "bodyEn": "As large language models increasingly move from generating text to taking actions, developers face a pressing question: are today's open models capable enough to serve as reliable agents? This article outlines a practical framework for benchmarking open LLMs on agentic tasks using custom tooling, an approach that matters because generic leaderboard scores rarely predict how a model will behave inside a specific application with its own tools, data, and constraints.\n\nAgentic behavior refers to a model's ability to reason about a goal, decide which tools to call, interpret the results, and iterate until the task is complete. Unlike single-turn question answering, this requires the model to plan across multiple steps, format tool calls correctly, recover from errors, and know when to stop. These are distinct skills, and a model that excels at conversational benchmarks may still struggle to chain several function calls together reliably. That gap is precisely why teams building real agent workflows need evaluation methods that mirror their production environment rather than relying solely on public benchmarks.\n\nThe core idea presented is to construct a benchmark around your own tools instead of borrowing an abstract test suite. In practice, this means defining a set of functions the agent can invoke, such as a search endpoint, a database query, a calculator, or an internal API, and then writing tasks whose successful completion depends on calling those tools in the right sequence with the right arguments. Each task is paired with a verifiable success condition, so scoring can be automated rather than left to subjective judgment. This design keeps the evaluation grounded in the actual capabilities the application depends on.\n\nSeveral technical details make such a framework robust. First, tool-calling formats vary between models: some are trained to emit structured JSON, others use specific chat templates or special tokens, and mismatches here often cause failures that have nothing to do with reasoning ability. A fair benchmark must normalize for these differences or test each model with its native format. Second, evaluation should separate types of failure, distinguishing between a model that chose the wrong tool, one that called the right tool with malformed arguments, and one that reasoned correctly but hit a parsing error. Tracking these categories helps teams understand whether a shortfall is fixable through prompting and schema tweaks or reflects a deeper capability limit. Third, metrics typically extend beyond a single pass rate to include the number of steps taken, token cost, and latency, since an agent that reaches the answer inefficiently may be impractical to deploy at scale.\n\nThe broader context is a rapidly maturing ecosystem of tools that make this kind of testing feasible. Hugging Face has invested in agent-oriented libraries, and frameworks such as smolagents, LangChain, and LlamaIndex provide the scaffolding to connect models to tools. The Model Context Protocol, introduced to standardize how models access external tools and data, is one industry move that appears aimed at reducing the format fragmentation described above. On the evaluation side, public efforts like the Berkeley Function-Calling Leaderboard and various agent benchmarks offer useful reference points, though the article's argument is that these should complement, not replace, a custom suite tailored to your domain.\n\nFor teams choosing among open models, the practical guidance is to treat model selection as an empirical exercise. Candidates might include instruction-tuned releases from families such as Llama, Qwen, Mistral, or specialized function-calling variants, and the right choice is likely to depend on the specific tools and task complexity rather than on parameter count alone. Smaller models that are well matched to a narrow toolset can sometimes outperform larger general-purpose ones while costing less to run, which is especially relevant for local or self-hosted deployments where hardware budgets are fixed.\n\nBuilding an in-house benchmark does carry costs. It requires effort to author representative tasks, maintain them as tools evolve, and guard against the evaluation becoming stale or overfit. There is also a risk of measuring what is easy to measure rather than what matters most to users. Still, the reproducibility and relevance of a custom harness generally outweigh these drawbacks for production systems. The overarching message is that agentic capability is not a single number but a profile of behaviors, and measuring it against your own environment is the most dependable way to decide whether an open model is ready for the job.",
       "model": "claude-opus-4.8",
       "generatedAt": "2026-07-12T00:51:57.985Z"
+    },
+    "5fa22693df37fad2": {
+      "bodyJa": "Zedエディター v1.20.2が2026年9月17日に公開された。外部モデル提供元の支払いエラー表示と、同じ言語向けのスニペット拡張が互いに打ち消し合う問題の2点が修正されている。\n\n## 支払いエラー\n\nZed以外のモデル提供元で支払いエラーが発生した際、従来は本来のエラー内容ではなく、Zed Proへの変更を促す表示が誤って出ることがあった。v1.20.2ではこの挙動が修正され、元のモデル提供元が返したエラーメッセージを表示するようになった。\n\nこれにより、支払いの問題が外部の提供元から返されたものであることや、その具体的なエラー内容を利用者が確認できる。Zed Proへの変更を促す案内へ置き換えられないため、問題の原因をより正確に把握できると説明されている。\n\n## スニペット拡張\n\n同じ言語を対象とする異なるスニペット拡張が、互いをキャンセルしてしまう不具合も修正された。対象は、単一の言語に対して複数の異なるスニペット拡張が存在する場合に生じていた問題である。\n\n今回の修正により、それらが同じ言語向けであることを理由に相互に打ち消し合う挙動が解消された。\n\n## GitHubの署名\n\nこのリリースに対応するコミットはGitHub.com上で作成され、GitHubの検証済み署名が付けられている。リリースでは、支払いエラー表示の修正が#64354、スニペット拡張の修正が#64314として示されている。",
+      "bodyEn": "## Zed v1.20.2\n\nZed v1.20.2 addresses payment-error handling for third-party model providers and a conflict involving snippet extensions. The changes matter because users can now see the provider’s original payment error, while different snippet extensions for the same language no longer cancel each other.\n\nThe release was published on September 17, 2026. Its associated commit was created on GitHub.com and signed with GitHub’s verified signature.\n\n## Payment errors\n\nPreviously, payment errors from non-Zed model providers could incorrectly prompt users to upgrade to Zed Pro. That prompt replaced the original error message from the provider, making the source of the payment problem less clear.\n\nWith v1.20.2, Zed displays the original provider error instead of steering the user toward a Zed Pro upgrade. This allows users to identify that the failure comes from the third-party model provider and to see the provider’s own description of the issue. The payment-error correction is tracked as issue #64354.\n\nThe change is specifically about how these provider-side payment failures are presented. It corrects the misleading upgrade prompt and preserves the original error information rather than substituting a Zed Pro message.\n\n## Snippet extensions\n\nThe release also fixes an issue affecting different snippet extensions associated with the same language. Before this correction, those extensions could cancel each other.\n\nZed v1.20.2 changes that behavior so different snippet extensions for one language no longer cancel one another. This fix is tracked as issue #64314.\n\nTogether, the two fixes focus on presenting the correct payment failure information and preventing conflicts between snippet extensions that target the same language.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "v1.20.2で、支払いエラーなのにZed Proへの変更を促す表示が直ったんだね。これって大きいこと？",
+          "en": "In v1.20.2, Zed stopped suggesting Zed Pro when a payment error came from another provider. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "この修正では、誤った案内ではなく提供元の元のエラーが表示されます。原因を正確に把握しやすくなる変化です。",
+          "en": "The fix shows the provider’s original error instead of the wrong prompt. That should make the cause of the payment problem easier to identify."
+        },
+        {
+          "s": "a",
+          "ja": "「外部モデル提供元」って、Zedとは別にモデルを提供しているところ、ってこと？",
+          "en": "Does “third-party model provider” mean a service providing models separately from Zed?"
+        },
+        {
+          "s": "b",
+          "ja": "うん、ここでは「Zed以外のモデル提供元」という意味です。その提供元側の支払いエラー内容を見せる修正です。",
+          "en": "Yes, here it means a model provider other than Zed. The update now displays that provider’s payment error."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、表示された内容を見て、まず支払い問題の原因を確かめたいな。もうProに変えなくていいの？",
+          "en": "I’d read the message and check what caused the payment issue first. Does that mean I no longer need to switch to Pro?"
+        },
+        {
+          "s": "b",
+          "ja": "今回直ったのは、外部提供元の支払いエラーで誤ってZed Proを促す動きです。Proへの変更が常に不要だとは、この記事では述べていません。",
+          "en": "This release fixes incorrect Zed Pro prompts for third-party payment errors. It doesn’t say switching to Pro is never necessary."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:08:06.103Z"
+    },
+    "1390eb9cea179028": {
+      "bodyJa": "## EC2 G7正式提供\n\nAmazon Elastic Compute Cloud（Amazon EC2）のG7インスタンスが正式提供を開始した。AIインファレンス、グラフィックス、データ分析の各ワークロードに向け、高性能なGPUアクセラレーションを提供する。\n\n## Blackwell GPU\n\nG7インスタンスは、NVIDIA RTX PRO 4500 Blackwell Server Edition GPUを採用する。GPUによる処理加速を通じて、AIインファレンス、グラフィックスレンダリング、分析ワークロードで強化されたアクセラレーションと高い処理能力をもたらすと説明されている。",
+      "bodyEn": "## General availability\n\nAmazon Elastic Compute Cloud G7 instances are now generally available. The release matters for workloads that need GPU acceleration across AI inference, graphics rendering, and data analytics.\n\nThe instances are designed to deliver high-performance processing for these uses through accelerated GPU capabilities.\n\n## NVIDIA RTX PRO 4500\n\nEC2 G7 instances are powered by NVIDIA RTX PRO 4500 Blackwell Server Edition GPUs. According to the announcement, this hardware brings enhanced acceleration to AI inference, graphics, and analytics workloads.\n\nThe general availability release makes the GPU-based G7 instance offering formally available for these compute-intensive applications.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "G7は、AI推論もグラフィックスもデータ分析も速くするの？そこが気になった！",
+          "en": "Does G7 accelerate AI inference, graphics, and data analytics? That caught my attention!"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、RTX PRO 4500 Blackwell Server Edition GPUを搭載し、その3用途を高い処理能力で支えると紹介されているよ。",
+          "en": "The post says G7 uses NVIDIA RTX PRO 4500 Blackwell Server Edition GPUs to deliver high-performance acceleration across those three workloads."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、AIの推論や描画、分析をEC2で動かしたい人に役立つ、ってことかな？",
+          "en": "So it could help people running AI inference, rendering, or analytics on EC2?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。そうした処理をEC2で動かす人が、GPUの処理能力を各ワークロードに使える位置づけだね。",
+          "en": "Yes. It’s positioned for people who want GPU acceleration for those workloads on EC2."
+        },
+        {
+          "s": "a",
+          "ja": "G7が正式に使えるようになって、3つの用途をGPUで加速できるようになったんだね。",
+          "en": "Got it—G7 is now generally available, with GPU acceleration aimed at those three kinds of work."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただ、紹介されている対象はAI推論・グラフィックス・データ分析で、あらゆる処理への効果を示す話ではないよ。",
+          "en": "Right. The stated focus is AI inference, graphics, and data analytics—not a claim about accelerating every kind of workload."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:13:04.387Z"
+    },
+    "6ee6eacc69d2e60c": {
+      "bodyJa": "## 使用状況分析\n\nOpenAIはChatGPT Enterpriseに、詳細な使用状況アナリティクスと支出制御機能を追加した。組織がAI関連コストを把握し、確実に管理しながら利用を拡大するための強化だ。\n\n## 支出制御\n\n使用状況の可視性が高まることで、企業はコストをより正確に確認できる。あわせて、柔軟に更新された支出制御により、AI関連の支出を厳密に管理し、コストの最適化につなげられると説明されている。",
+      "bodyEn": "## Usage analytics\n\nOpenAI has introduced enhanced usage analytics for ChatGPT Enterprise, giving organizations better visibility into usage and AI-related costs. The added detail matters because it enables enterprises to manage and optimize costs more accurately as they scale AI use.\n\n## Spend controls\n\nChatGPT Enterprise also receives updated, flexible spend controls. Together with the analytics changes, these controls are intended to provide tighter management over spending and help organizations manage costs with greater confidence. The announcement presents the update as a combined approach: clearer information about usage alongside more direct control over enterprise spending.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「使用状況アナリティクス」って、何が分かりやすくなるの？",
+          "en": "What does “usage analytics” make easier to understand?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、ChatGPT Enterpriseの利用状況を詳しく把握し、AI関連のコストを見えやすくする機能として紹介されているよ。",
+          "en": "It’s presented as a way to see ChatGPT Enterprise usage in more detail and gain clearer visibility into AI-related costs."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、企業が使い方と支出を見ながら、コストを調整しやすくなるのかな？",
+          "en": "So organizations can review usage and spending, then manage costs more precisely?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。柔軟な支出制御も加わり、企業がコストをより正確に管理・最適化しながらAIを拡大しやすくなる、とされているよ。",
+          "en": "Yes. Updated spend controls are meant to help organizations manage and optimize costs more precisely as they scale AI use."
+        },
+        {
+          "s": "a",
+          "ja": "利用状況を見えるようにして、支出も細かく管理できるようになったんだね。",
+          "en": "Got it—usage becomes more visible, while spending can be managed more closely."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただし対象はChatGPT Enterpriseで、コスト削減そのものを保証する機能としては説明されていないよ。",
+          "en": "Right. But this is for ChatGPT Enterprise, and it isn’t described as a guarantee of lower costs."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:13:26.782Z"
+    },
+    "7ff96fa315614a27": {
+      "bodyJa": "## 常時稼働エージェント\n\nCursor Automationsが強化され、常時稼働のエージェントによる反復的なタスクの自動化を、より幅広い方法で開始できるようになりました。今回追加されたのは、/automateスキル、GitHubとSlackの新しいトリガー、コンピュータ使用のサポートです。\n\n## /automateスキル\n\n/automateを使うと、ローカルエージェントのセッションから直接、自動化を作成できます。利用者が自動化したいタスクを自然な言葉で説明すると、Cursorが実行に必要なトリガー、指示、ツールを設定します。個別の設定項目を順番に組み立てるのではなく、実行したい内容の説明を起点に自動化を準備できる仕組みです。\n\n## GitHubとSlack\n\nSlackでは、指定した絵文字でメッセージにリアクションすることで、自動化を開始できます。Cursor自身も、Slack上から特定の自動化を直接トリガーするために、この方法を利用しています。\n\nGitHubについては、5つのトリガーが新たにサポートされました。また、すぐに使い始められるよう、失敗したGitHub Actionsのトリアージと、PRレビューコメントの自動修正に利用できる新しいテンプレートがCursorマーケットプレイスに追加されています。\n\n## コンピュータ使用\n\n自動化によって起動されたクラウドエージェントは、作業のデモやアーティファクトを生成するために、専用のコンピュータを使用できるようになりました。コンピュータ使用ツールは、すべての自動化でデフォルトで有効です。作業内容のデモを含めたい場合は、その旨を指示で伝えます。利用を開始するにはCursorを最新バージョンへ更新し、詳細はドキュメントで確認できます。",
+      "bodyEn": "## Cursor Automations\n\nCursor Automations now adds the /automate skill, new GitHub and Slack triggers, and computer-use support. These capabilities expand how always-on agents can automate repetitive developer workflows and save time.\n\nThe release brings automation creation closer to the work performed in local agent sessions while adding more ways to start workflows and generate demonstrations or artifacts.\n\n## /automate skill\n\nThe /automate skill lets users create an automation directly within a local agent session. To set one up, the user describes the task to automate in natural language.\n\nCursor then configures the automation’s triggers, instructions, and tools. This approach allows the automation to be defined through a task description rather than requiring each of those elements to be set up separately.\n\n## GitHub and Slack triggers\n\nAn automation can now be started by reacting to a Slack message with a specified emoji. Cursor uses this capability to trigger particular automations directly from Slack.\n\nThe release also adds support for five GitHub triggers for automations. The individual triggers are not specified, but the addition broadens the available GitHub-based starting points.\n\nNew templates are available in the Cursor marketplace to help users get started. They cover triaging failed GitHub Actions and automatically fixing PR review comments.\n\n## Computer-use support\n\nCloud agents launched by automations can now use a dedicated computer to produce demonstrations of their work or generate artifacts. The computer-use tool is enabled by default for every automation.\n\nTo have an agent include a demonstration of its work, users can add that requirement to the automation’s instructions. This connects the agent’s computer use directly to the requested output.\n\nTo access these additions, users need to update Cursor to the latest version. Further information is available in the documentation.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事で同じ作業を何度もしてるけど、これは普段の何が変わるの？",
+          "en": "I repeat the same tasks at work a lot. What could this change in my day-to-day routine?"
+        },
+        {
+          "s": "b",
+          "ja": "自然な言葉で作業を伝えると、Cursorがトリガーや指示、ツールを設定してくれるよ。SlackやGitHubから自動化を始められるんだ。",
+          "en": "You can describe a task naturally, and Cursor sets up the triggers, instructions, and tools. Automations can then start from Slack or GitHub."
+        },
+        {
+          "s": "a",
+          "ja": "前はできなかったの？ それとも、作り方や始め方が増えたってこと？",
+          "en": "Couldn’t it do that before, or are there just more ways to build and start automations now?"
+        },
+        {
+          "s": "b",
+          "ja": "今回は、/automateでの作成、Slackの絵文字リアクション、5つのGitHubトリガーが新たに加わったよ。コンピューター操作にも対応したんだ。",
+          "en": "This release newly adds creation through /automate, Slack emoji-reaction triggers, five GitHub triggers, and computer-use support."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ一番の収穫は、繰り返し作業を言葉で自動化にして、いつもの場所から動かしやすくなったことだね。",
+          "en": "So the big takeaway is that repetitive work is easier to turn into an automation with words and launch from familiar places."
+        },
+        {
+          "s": "b",
+          "ja": "うん。まずCursorを最新版にして、失敗したGitHub Actionsの整理やPRレビューコメントの自動修正テンプレートを試せるよ。",
+          "en": "Right. Update Cursor to the latest version, then you can try templates for triaging failed GitHub Actions or automatically fixing PR review comments."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T17:14:07.220Z"
+    },
+    "ed744c789037c203": {
+      "bodyJa": "## ReviewBench\n\nReviewBenchは、AIコードレビューを行うエージェントの比較検証を支援する公開ベンチマークだ。代表的なGitHubプルリクエストを基に、開発者や研究者がレビューエージェントを公平に評価できる枠組みを提供する。\n\n## 複数情報源の正解\n\n評価セットには、複数の情報源から得た正解データとラベルが用いられる。レビュー結果を照合するための情報を複数の情報源に基づいて構成し、比較検証に利用できるようにしている。\n\n## 実運用に沿う指標\n\n評価手法とスコアリングは調整済みで、実運用に沿った指標を備える。代表的なプルリクエスト、複数情報源の正解、調整済みの評価、実運用を意識した指標を組み合わせ、レビューエージェントを共通の条件で評価できるよう設計されている。",
+      "bodyEn": "## ReviewBench\n\nReviewBench is an open benchmark for AI code review. It matters because it gives developers and researchers a shared evaluation set for comparing and validating code review agents.\n\nThe benchmark is built on representative GitHub pull requests. This provides a common basis for assessing agents against code review material drawn from GitHub pull requests.\n\n## Multi-source ground truth\n\nReviewBench uses ground truth and labels from multiple sources rather than relying on a single source. It also applies calibrated evaluation methods and scoring to support fair assessment of review agents.\n\n## Production-aligned metrics\n\nThe benchmark includes metrics aligned with production use. Representative pull requests, multi-source labels, calibrated scoring, and production-aligned metrics together form its evaluation approach.\n\nAs an open benchmark, ReviewBench is intended to help developers and researchers compare and verify the performance of AI code review agents using the same evaluation set and assessment framework.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "正解データが一つじゃなくて、複数の情報源から作られてるんだ。これって大きいこと？",
+          "en": "The ground truth comes from multiple sources, not just one. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、公平にレビューエージェントを評価する土台の一つとして扱っているよ。比較検証を支える工夫なんだね。",
+          "en": "The post presents it as part of a fair way to assess review agents. It’s designed to support meaningful comparisons."
+        },
+        {
+          "s": "a",
+          "ja": "「調整済みの評価」って、点数をあとから都合よく変えること？",
+          "en": "Does “calibrated evaluation” mean changing the scores afterward to get the result you want?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、評価の物差しを整えて、結果を比べやすくするという意味だよ。",
+          "en": "Here, it means tuning the evaluation yardstick so results can be compared more consistently."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、いくつかのレビューエージェントを並べて、どれが合いそうか比べてみたいな。",
+          "en": "I’d line up a few review agents and compare which one might suit me best."
+        },
+        {
+          "s": "b",
+          "ja": "その使い方に近いね。GitHubの代表的なプルリクエストを基にし、実運用に沿う指標で比べる公開ベンチマークだよ。",
+          "en": "That’s close to its intended use. It’s an open benchmark based on representative GitHub pull requests, using metrics aligned with production."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T12:37:57.149Z"
+    },
+    "801b24fe3b176db2": {
+      "bodyJa": "AIコーディング支援ツール「Claude Code」を使っていて、トークン量の割に請求額が抑えられていると感じたことはないだろうか。その背景には「プロンプトキャッシュ（prompt caching）」と呼ばれる仕組みが深く関わっており、これを理解することがコスト最適化の第一歩になる。\n\nプロンプトキャッシュは、Anthropicが提供するAPI機能の一つだ。大規模言語モデル（LLM）は本来、リクエストのたびに入力トークン全体を処理する必要があるが、コーディング作業では同じシステムプロンプトやファイル内容、会話履歴が繰り返し送られる場面が多い。キャッシュはこの共通部分をサーバー側に一時保存し、次回以降の再処理を省くことで、応答速度と課金を同時に改善する狙いがある。\n\n課金構造を具体的に見ると、キャッシュには「書き込み」と「読み込み」で異なるトークン単価が設定されている。一般に、キャッシュへの書き込みは通常の入力トークンよりやや割高になる一方、キャッシュからの読み込みは大幅に安価とされる。Anthropicの公開情報では、キャッシュ読み込みが通常入力の10分の1程度になる場合があるとされ、繰り返しの多い長時間セッションほど恩恵が大きくなる。\n\nClaude Codeがこのキャッシュを積極的に活用しているとみられる点は重要だ。プロジェクト全体のコンテキストを保持しながら対話を続ける同ツールの性質上、キャッシュが効かなければ入力トークンが膨張し、コストが跳ね上がる可能性がある。逆に言えば、キャッシュヒットが続く限り、実際の請求はトークン量から素朴に想像するより低く抑えられる。\n\nただしキャッシュには有効期限（TTL）があり、標準では数分程度とされる。一定時間操作が途切れると失効し、再度書き込みコストが発生する点には留意したい。作業を細切れにするより、集中して連続的に進めるほうがキャッシュ効率の面では有利になると考えられる。\n\n同様の仕組みはOpenAIやGoogleなど他社のAPIでも導入が進んでおり、プロンプトキャッシュは今やLLM活用のコスト設計における前提知識になりつつある。Claude Codeの請求明細を眺める際も、キャッシュ関連の項目に目を向けることで、料金の増減を合理的に説明できるようになるだろう。",
+      "bodyEn": "Prompt caching has quietly become one of the most consequential factors in the cost of running Claude Code, Anthropic's terminal-based agentic coding assistant. For developers who use the tool intensively, understanding how caching interacts with token billing is often the difference between a predictable monthly bill and an unexpectedly large one, which is why it deserves closer attention than most usage guides give it.\n\nAt its core, prompt caching addresses a structural inefficiency in how large language models handle repeated context. Every time an API request is made, the model normally reprocesses the full prompt from scratch, including system instructions, tool definitions, and any accumulated conversation history. In an agentic coding session, that context can be enormous and largely unchanged from one turn to the next. Caching lets the provider store the processed representation of a prompt prefix so that later requests can reuse it rather than recomputing it.\n\nThe economics are what make this important. Anthropic's pricing separates tokens into several categories: standard input tokens, cache write tokens, and cache read tokens. Writing to the cache typically costs more than a normal input token, commonly around 25 percent more for the default five-minute cache window, because the system must process and store the content. Reading from the cache, however, is dramatically cheaper, often priced at roughly one-tenth of the standard input rate. Output tokens are billed separately and are unaffected by caching. There is also a longer one-hour cache option, which appears to carry a higher write premium in exchange for a longer time-to-live.\n\nThis asymmetry explains why prompt caching sits at the center of Claude Code's billing structure. A coding session repeatedly sends a large, stable block of context—the system prompt, tool schemas, files that have been read, and prior exchanges—on top of a small amount of new input. Without caching, that entire block would be billed at full input rates on every turn. With caching, the bulk of it is written once and then read back at a fraction of the cost for the duration of the cache window. Because interactive coding tends to produce frequent, closely spaced requests, cache hits are common, and the savings compound over the length of a session.\n\nUnderstanding this behavior has practical consequences. Actions that invalidate or fail to reuse the cache tend to be the expensive ones. Long pauses that let the cache expire, edits that change an early part of the context and therefore break the reusable prefix, or workflows that repeatedly restructure the beginning of a prompt can all force fresh cache writes. Keeping stable content at the front of the context and volatile content toward the end is likely to improve hit rates, since caching generally works on shared prefixes.\n\nIt helps to place this in the broader landscape. Prompt caching is not unique to Anthropic; OpenAI and Google have introduced comparable mechanisms, and the general trend across providers is toward pricing that rewards reusing context rather than resending it. Claude Code competes with tools such as GitHub Copilot, Cursor, Aider, and OpenAI's Codex-style agents, many of which grapple with the same cost pressure from large, repeated context windows. For subscription-based access through Claude's Pro and Max plans, the caching mechanics are handled behind the scenes, but for developers working directly against the API or through pay-as-you-go billing, they translate directly into money.\n\nThe prerequisite concept worth emphasizing is that tokens, not requests, are the unit of cost, and that not all tokens are priced equally. Once that distinction is clear, the value of caching becomes intuitive: the goal is to maximize inexpensive cache reads while minimizing full-price input processing and unnecessary cache writes. Anthropic exposes cache-related token counts in its API responses, so usage can be measured rather than guessed.\n\nFor teams budgeting around agentic coding, the takeaway is that cost optimization is less about limiting how much you use Claude Code and more about structuring interactions so the cache does as much work as possible. Treating prompt caching as a first-class part of the workflow, rather than an implementation detail, appears to be the most reliable path to keeping API spending in check.",
+      "model": "chat-backfill:gpt-5.6-sol",
+      "generatedAt": "2026-08-30T16:07:31.499Z"
     }
   }
 }

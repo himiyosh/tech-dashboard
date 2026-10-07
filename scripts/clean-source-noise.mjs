@@ -42,9 +42,10 @@ import {
 } from "../harness/publishers/archive-core.ts";
 import { buildStatsPayload } from "../harness/publishers/stats-core.ts";
 import {
+  buildCanonicalBodyAliases,
   isRealBody,
   mergeBodiesWithGuards,
-  pruneInvalidBodyRecords,
+  reconcileBodyIdentity,
 } from "../worker/src/bodies-file.ts";
 import {
   DEFAULT_BODY_RETENTION_DAYS,
@@ -888,15 +889,7 @@ export function migrateArchiveEntries(label, entries, referenceAt, report) {
 }
 
 export function buildOriginalLiveAliases(originalEntries, finalEntries) {
-  const winnersByCanonical = new Map(
-    finalEntries.map((entry) => [statsEntryKey(entry), entry.id]),
-  );
-  const aliases = new Map();
-  for (const entry of originalEntries) {
-    const winnerId = winnersByCanonical.get(statsEntryKey(entry));
-    if (winnerId && winnerId !== entry.id) aliases.set(entry.id, winnerId);
-  }
-  return aliases;
+  return buildCanonicalBodyAliases(originalEntries, finalEntries);
 }
 
 export function reconcileBodiesPayload(
@@ -905,24 +898,17 @@ export function reconcileBodiesPayload(
   referenceAt,
   aliases = new Map(),
   sourceEntries = [],
+  retainedEntries = [],
 ) {
-  const sanitizedBodies = pruneInvalidBodyRecords(
+  const identity = reconcileBodyIdentity(
     existingBodies,
-    sourceEntries,
+    aliases,
+    liveIds,
     referenceAt,
+    sourceEntries,
+    retainedEntries,
   );
   const transferredBodies = [];
-  for (const [loserId, winnerId] of aliases) {
-    const record = sanitizedBodies.payload.bodies[loserId];
-    if (!isRealBody(record)) continue;
-    transferredBodies.push({
-      id: winnerId,
-      bodyJa: record.bodyJa,
-      bodyEn: record.bodyEn,
-      model: record.model,
-      cachedAt: record.generatedAt,
-    });
-  }
   for (const entry of sourceEntries) {
     const targetId = liveIds.has(entry.id) ? entry.id : aliases.get(entry.id);
     if (!targetId || !isRealBody(entry)) continue;
@@ -935,16 +921,16 @@ export function reconcileBodiesPayload(
     });
   }
   const merged = mergeBodiesWithGuards(
-    sanitizedBodies.payload,
+    identity.payload,
     transferredBodies,
     liveIds,
     referenceAt,
-    sourceEntries,
+    retainedEntries.length > 0 ? retainedEntries : sourceEntries,
   );
   return {
     ...merged,
-    pruned: sanitizedBodies.pruned + merged.pruned,
-    changed: sanitizedBodies.changed || merged.changed,
+    pruned: identity.pruned + merged.pruned,
+    changed: identity.changed || merged.changed,
   };
 }
 
@@ -1173,14 +1159,14 @@ export async function main(argv = process.argv.slice(2)) {
     ),
   );
   const liveIds = new Set(bodyRetentionEntries.map((entry) => entry.id));
-  const originalAliases = buildOriginalLiveAliases(index.entries, dedupedLive);
-  const bodyAliases = new Map([...originalAliases, ...liveDedupe.aliases]);
+  const bodyAliases = buildOriginalLiveAliases(index.entries, dedupedLive);
   const bodyMerge = reconcileBodiesPayload(
     bodies,
     liveIds,
     referenceAt,
     bodyAliases,
     index.entries,
+    bodyRetentionEntries,
   );
   // Apply the SAME byte-budget enforcement as the Publisher runtime
   // (worker/src/index.ts's runBodyPipeline) so migration never leaves

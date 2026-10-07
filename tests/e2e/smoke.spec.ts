@@ -662,7 +662,11 @@ test.describe("TECH Dashboard smoke", () => {
       "desktop ranked Top-3 stays above the fixed footer in the first viewport",
     ).toBeLessThanOrEqual(desktopDensity.visibleBottom - 8);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
+    await expect(
+      page.locator("button[data-search-trigger]:visible").and(
+        page.getByRole("button", { name: /検索/ }),
+      ),
+    ).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
     await expect(page.locator("section.stats")).toHaveCount(0);

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T00:30:49.646Z",
-  "count": 1160,
+  "generatedAt": "2026-10-07T01:07:50.416Z",
+  "count": 1159,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -39294,44 +39294,6 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-23T06:06:41.927Z"
     },
-    "8a94d8275f5d9bc0": {
-      "bodyJa": "GitHub Copilotアプリが、企業管理の設定を通じたOpenTelemetry（OTel）の構成に対応した。管理者はエージェントの活動データを組織の互換性のある監視ツールへ送り、セッションの分析や実行経路の調査に利用できる。\n\n## OTel対応\n\nOTelは、オープンソースの可観測性フレームワークだ。GitHub Copilotアプリでは、企業が管理する設定からOTelを構成し、エージェントがどのように動作し、モデルやツールとどのようにやり取りしたかを監視できる。活動データの出力先には、組織が利用する対応済みの監視ツールを指定する。\n\n## セッション分析\n\n管理者は、エージェントのセッション内で発生した処理の流れを追跡できる。記録の対象には、AIモデルへのリクエストや、エージェントが使用したツールが含まれる。これにより、セッション全体の流れと、モデル呼び出しやツール利用の関係を監視基盤上で確認できる。\n\n## 実行経路の調査\n\n予期しない動作が発生した場合は、エージェント実行のトレースを段階ごとに確認できる。組織が既に利用している互換性のある監視ツールへデータを送ることで、個々の処理をたどりながら実行経路を調査できる。\n\n## 企業での一元管理\n\nテレメトリー設定はチームをまたいで適用でき、開発者が個別に構成する必要はない。利用するには、企業のmanaged-settings.jsonファイルでtelemetryプロパティを設定する。そこでデータのエクスポートを有効にし、受信先となるエンドポイントを指定する。",
-      "bodyEn": "## OpenTelemetry Configuration\n\nThe GitHub Copilot app now supports OpenTelemetry configuration through enterprise-managed settings. This matters because administrators can export agent activity data to compatible monitoring tools, giving teams a centralized way to examine how Copilot agents perform and interact with models and tools.\n\nOpenTelemetry, also called OTel, is an open source observability framework. In this implementation, it can send agent traces to an organization’s existing monitoring tools. Those traces provide information about agent execution, including requests to AI models and the tools used during a session.\n\n## Analyze Agent Sessions\n\nTeams can use the exported activity data to follow the flow of an agent session. The records show the sequence of activity across model requests and tool use, allowing teams to examine the path taken during execution within their monitoring systems.\n\nThe same step-by-step traces can help teams investigate unexpected agent behavior. Rather than reviewing activity separately from their established monitoring setup, organizations can receive the data at a specified endpoint and examine it through compatible tools already used for monitoring.\n\n## Manage Monitoring Centrally\n\nAdministrators can apply telemetry settings across teams through the enterprise-managed configuration. This avoids requiring each developer to configure telemetry individually and provides centralized oversight of how agent activity data is exported.\n\nTo enable the export, an administrator configures the telemetry property in the enterprise’s managed-settings.json file. The configuration also specifies the endpoint that will receive the data. Once applied, these managed settings determine how agent traces are sent to the organization’s compatible observability systems for session analysis, execution-path investigation, and monitoring across teams.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "仕事でCopilotエージェントを使うとき、普段の管理や調査は何が変わるの？",
-          "en": "When teams use Copilot agents at work, what changes in day-to-day monitoring and troubleshooting?"
-        },
-        {
-          "s": "b",
-          "ja": "管理者がモデル呼び出しやツール利用の記録を監視基盤へ送り、実行の流れを追えるようになるんじゃ。OpenTelemetryは観測データを扱うオープンソースの仕組みじゃよ。",
-          "en": "Admins can send model calls and tool-use records to monitoring systems, then trace how sessions unfold. OpenTelemetry is an open-source framework for handling observability data."
-        },
-        {
-          "s": "a",
-          "ja": "前はできなかったの？ チームごとに設定していた感じ？",
-          "en": "Wasn’t that possible before? Did each team have to configure it separately?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、開発者が個別設定する代わりに、企業の管理設定をチーム横断で適用できる点が違いとして示されておる。以前の詳しい仕様までは触れていないのう。",
-          "en": "The stated difference is centralized enterprise settings across teams instead of individual developer configuration. It doesn’t spell out the earlier setup in more detail."
-        },
-        {
-          "s": "a",
-          "ja": "つまり一番の収穫は、エージェントの動きをまとめて追えて、想定外の挙動も調べやすくなることだね。",
-          "en": "So the big win is seeing agent activity in one place and making unexpected behavior easier to investigate."
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。次はmanaged-settings.jsonでテレメトリを有効化し、送信先エンドポイントをどう指定するかに注目じゃよ。",
-          "en": "Exactly. Next, focus on enabling telemetry in managed-settings.json and specifying the endpoint that receives the exported data."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-23T09:07:03.178Z"
-    },
     "1d4bc0f821a13eed": {
       "bodyJa": "## OpenHands\n\nOpenHands v1.23.0が2026年9月23日にリリースされた。macOS向け配布物と表示テーマの追加に加え、Canvas、チャット、スクリプト自動化の実行ログなど、日常的な操作や確認に関わる修正が盛り込まれている。\n\n## macOS DMG\n\nデスクトップ向けには、アーキテクチャ別のランタイムを同梱したmacOS用ユニバーサルDMGが追加された。単一のユニバーサルDMGという形を取りながら、ランタイムはアーキテクチャごとに用意される構成となっている。\n\n## テーマとCanvas\n\n表示テーマにはLight+とSolarized Lightが加わり、選択できる外観が増えた。Agent Canvasのテレメトリーには、デプロイメントの種類を示すタグが付与される。また、Canvasの画像パッケージを更新する修正も行われている。\n\n## チャットとログ\n\nチャットでは、change-agentボタンのモードラベルが11px表示へ戻された。変更されていない過去のMarkdownを再レンダリングしないようにし、送信したメッセージが戻ってきた後は「Failed to send」の吹き出しを消す修正も含まれる。\n\nスクリプト自動化では、実行ログを読み込み、対象のスクリプトを表示できるよう修正された。テストについては、30回のイベントループを待つ方式ではなく、MSWで処理中のリクエストを完了させる方式へ変更されている。",
       "bodyEn": "## OpenHands v1.23.0\n\nOpenHands v1.23.0 was released on September 23, 2026, with desktop features and fixes spanning macOS packaging, themes, Canvas, automation logs, chat, and Markdown rendering. The changes are intended to make desktop use more comfortable, particularly through updated distribution and display options alongside targeted interface fixes.\n\n## Universal macOS DMG\n\nThe release adds a universal macOS DMG with bundled runtimes for each architecture. This provides a single universal package while retaining architecture-specific runtimes within it.\n\nOpenHands v1.23.0 also adds support for the Light+ and Solarized Light themes, expanding the available visual options for users. Another feature tags Agent Canvas telemetry according to deployment kind.\n\n## Canvas Image Packages\n\nSeveral corrections focus on Canvas and script automation. Canvas image packages are refreshed, while logs now load for script automation runs. The interface also shows the script associated with those runs.\n\nThe release notes additionally describe a testing fix that drains MSW’s in-flight requests instead of waiting for 30 event-loop turns. This replaces the prior event-loop-based behavior with explicit handling of requests that remain in flight.\n\n## Historical Markdown\n\nChat-related changes address rendering, labels, and message status. OpenHands now avoids re-rendering historical Markdown when that content has not changed. The change targets unnecessary updates to unchanged historical Markdown rather than altering the content itself.\n\nThe 11px mode label on the change-agent button has also been restored. In addition, a “Failed to send” bubble is cleared once the corresponding message is echoed back. Together with the Canvas, logging, and packaging updates, these fixes aid desktop users across common display and interaction paths.",
@@ -39483,44 +39445,6 @@
       ],
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-23T20:52:10.433Z"
-    },
-    "774f1617db93954c": {
-      "bodyJa": "## ローカルサンドボックス\n\nGitHub Copilotアプリに、ローカルサンドボックスが導入された。意図しないコマンドが実行された場合に備え、マシン上のファイル、ネットワークリソース、認証情報へのアクセスを制限し、潜在的な影響を抑えるための仕組みだ。\n\n設定はプロジェクト単位で行い、ローカルリポジトリと作業ツリーのセッションに適用する。すべてのプロジェクトへ一律に適用するのではなく、それぞれの条件に合わせてアクセス方針を指定できる。\n\n## ファイルと通信\n\nファイルシステムについては、追加で読み書きを許可するフォルダー、読み取り専用で許可するフォルダー、アクセスを拒否するフォルダーのリストを設定できる。これにより、セッションから操作できる範囲と、変更を認めない範囲を分けられる。\n\nネットワークでは、外部インターネットへの送信通信と、ローカルネットワークへの接続に関する設定を用意する。ファイル操作だけでなく、コマンドがアクセス可能な通信先も制御対象となる。\n\n## 認証情報\n\n認証情報へのアクセスも個別に扱われる。認証済みHTTPSによるGit操作で使うGit認証情報と、GitHub CLIの認証に使うGitHub CLI認証情報が対象だ。サンドボックス内のセッションに、これらの認証情報の利用をどこまで認めるかをプロジェクト設定として指定する。\n\n## 適用ポリシー\n\nプロジェクト設定は、サンドボックス化されたセッションの開始時にアプリが要求するポリシーを表す。企業管理の設定が適用される場合、実際に有効となるポリシーは、プロジェクト側の指定より厳しくなることがある。\n\nOSが要求されたポリシーを強制できない場合、サンドボックスなしで処理を続けるのではなく、サンドボックス化されたシェルはエラーで失敗する。ローカルサンドボックスは初期状態では無効であり、利用にはプロジェクトごとの設定が必要となる。",
-      "bodyEn": "## Local sandboxing\n\nThe GitHub Copilot app adds local sandboxing that can be configured per project for local repository and working tree sessions. It matters because limiting access to files, network resources, and credentials can reduce the potential impact of unintended commands on a user’s machine.\n\nLocal sandboxing is off by default. When enabled and configured for a project, its settings define the policy that the app requests whenever a sandboxed session starts.\n\n## Filesystem and network\n\nFilesystem controls allow projects to specify additional read/write folders, additional read-only folders, and denied folders. These lists determine which additional locations a sandboxed session requests permission to modify, which it can only read, and which it cannot access.\n\nNetwork controls cover both outbound internet access and local network access. Together with the filesystem restrictions, these settings let each project describe the access required for its local repository or working tree sessions, rather than applying one configuration across every project.\n\n## Git credentials\n\nCredential controls cover two specific forms of authentication. Git credentials can be made available for authenticated HTTPS Git operations, while GitHub CLI credentials can be provided for GitHub CLI authentication.\n\nThese options place credential access within the project’s requested sandbox policy. Combined with file and network controls, they limit the resources available to commands during a sandboxed session.\n\n## Effective policy\n\nThe policy configured for a project is the policy requested by the app when the session begins. The effective policy may be more restrictive when enterprise-managed settings apply, so a project’s requested access does not necessarily determine the full access ultimately granted.\n\nEnforcement also depends on the operating system. If the operating system cannot enforce the requested policy, the sandboxed shell fails with an error instead of running without a sandbox.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "GitHub Copilotアプリに、プロジェクトごとのローカルサンドボックスが入ったんだね。これって大きいこと？",
-          "en": "The GitHub Copilot app now has local sandboxing for each project. Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、意図しないコマンドの影響を、ファイル・通信・認証情報の制限で抑えられるとしておる。プロジェクト別に決められるのがポイントじゃ。",
-          "en": "The article says it can reduce harm from unintended commands by restricting files, networks, and credentials. The key change is that the policy can be set per project."
-        },
-        {
-          "s": "a",
-          "ja": "サンドボックスって、つまりどういうこと？アプリを箱の中に閉じ込める感じ？",
-          "en": "What does “sandbox” mean here? Is it like keeping the app inside a box?"
-        },
-        {
-          "s": "b",
-          "ja": "言葉の意味としては、処理を限られた範囲に閉じ込める仕組みじゃ。今回は、フォルダーや通信、認証情報へのアクセスを絞るのう。",
-          "en": "Broadly, a sandbox keeps a process within set boundaries. Here, it limits folder access, network connections, and access to credentials."
-        },
-        {
-          "s": "a",
-          "ja": "自分なら、必要なフォルダーだけ読み書き可にして、通信も絞って使いたいな。これなら安心して試せそう！",
-          "en": "I’d allow read and write access only for the folders I need, then restrict networking too. That sounds more reassuring to try!"
-        },
-        {
-          "s": "b",
-          "ja": "ただし、記事だと初期状態ではオフじゃ。OSが方針を強制できなければエラーで止まり、企業管理の設定でさらに厳しくなる場合もあるぞ。",
-          "en": "One caveat: the article says it’s off by default. If the OS can’t enforce the policy, the sandboxed shell errors out, and enterprise-managed settings may make it stricter."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-09-23T20:52:52.804Z"
     },
     "74d79f268b0ba471": {
       "bodyJa": "## 2つのボット\n\nCursorは、コードリリースの最終工程を担う2つのボットとして、RolloutsとSecurity Reviewの提供を開始した。Rolloutsはデプロイ中の変更を環境ごとに監視し、Security ReviewはすべてのPRを確認して、悪用可能なバグを報告する。どちらもTeamsプランと企業プランで利用できる。\n\n## Rollouts\n\nRolloutsはすべてのPRにモニターを割り当て、変更がデプロイされる過程を追跡する。FiretigerのChange MonitorsをBot Development Kitで再構築したCursor版の機能とされる。ダッシュボードから有効化し、ソース管理、デプロイシステム、テレメトリプロバイダーを接続すると、次のPRから監視が始まる。\n\n## モニタリングプラン\n\nPRがオープンされると、Rolloutsはdiffと、変更が影響するシステムを読み取り、モニタリングプランをPRコメントとして投稿する。プランには、特定されたリスク、変更が意図する効果、確認対象のシグナル、検証を難しくする計測上の不足点が記載される。PR上で内容を編集した場合は、編集後のプランが使われる。\n\n## 環境ごとの判定\n\n変更のコミットに対応するデプロイイベントをきっかけに、Rolloutsはログ、メトリクス、トレースを対象としてプランを実行する。判定は環境ごとに行われ、結果は「正常を確認済み」「リグレッションを検出」「判定不能」のいずれかで報告される。このため、ステージングで検証済みでも、本番環境では問題として検出される場合がある。\n\nRolloutsはエラーやレイテンシーのシグナルに加え、変更が意図した効果を発揮しているかも確認し、判定時点でPRへ結果を報告する。リグレッションを検出した場合は、原因と疑われる変更を特定し、その作成者へ通知する。Security Reviewは、PR内の悪用可能な欠陥を探す役割を担う。",
@@ -43816,7 +43740,45 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-06T23:37:06.103Z"
     },
-    "ed744c789037c203": {
+    "7c4ffa17c821c2a6": {
+      "bodyJa": "## 未公開モデル\n\nOpenAIは、未公開の最先端モデルが導いた数学上の成果を、722本の論文として公開した。長年にわたる未解決問題への解答を含むとされ、AIによる数学研究の進展を研究者が検証し、活用するためのまとまった材料となる。\n\n## 722本の論文\n\n公開された論文は、関連する論文をまとめた372の結果群を扱っている。つまり、722本の論文がそれぞれ完全に独立した成果として数えられているのではなく、互いに関係する内容が「結果群」という単位で整理されている。これらの中には、長年未解決だった複数の数学問題に対する解答が含まれ、「数百」の未解決問題を対象としていると説明されている。\n\n成果を生み出したのは、現時点で公開されていない最先端モデルとされる。モデル自体ではなく、多数の論文という形で数学的な結果が提示されたことで、研究者はAIが導いた内容を具体的に検討できる。\n\n## 数学界の反応\n\n今回の公開は、OpenAIによる一連の数学上のブレークスルーをさらに広げるものと位置付けられている。これまでの成果は数学界の一部に強い印象を与える一方、不安も生じさせてきたとされる。\n\nまた、AIが生み出した数学研究をめぐり、研究倫理や学術上の行動についての問いも提起されている。722本の論文と372の結果群は、数学的成果そのものに加え、AIによる数学的発見を研究者が評価する対象として公開された。",
+      "bodyEn": "## Mathematical breakthroughs\n\nOpenAI has released a large collection of mathematical work produced by an unreleased frontier model. The publication matters because it gives researchers material to assess AI-driven mathematical discovery, including claimed answers to longstanding open problems.\n\nThe batch presents solutions to a number of long-running mathematics problems. Solutions to “hundreds” of open questions are said to be included, although the collection organizes its contents by manuscripts and related families of results rather than only by individual questions.\n\n## 722 manuscripts\n\nThe release consists of 722 manuscripts covering 372 result families. Those families group related papers, providing a structure for the mathematical results generated by the unreleased model.\n\nThe collection expands the body of mathematical work attributed to the model by making the manuscripts available for researchers to examine and potentially use. Its scale also means the release covers substantially more than a single result or one isolated problem: it brings together hundreds of manuscripts across hundreds of grouped result families.\n\nThe central claim is not merely that the model produced mathematical material, but that the batch includes answers to open questions that have remained unresolved for long periods. These results are presented as part of an extended run of breakthroughs.\n\n## Mathematical community\n\nThe work has both impressed and unsettled parts of the mathematical community. The manuscripts now provide material through which researchers can assess the claimed advances and the role of AI in producing them.\n\nAt the same time, the release has raised questions about research ethics and academic conduct. Those concerns sit alongside the mathematical claims: the collection is presented as a set of significant results generated by an unreleased frontier model, while the research community is left to evaluate both the work itself and the circumstances surrounding AI-driven mathematical discovery.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "722本の論文で、結果は372群もあるんだね。これって大きいこと？",
+          "en": "There are 722 manuscripts covering 372 result families. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "長年の未解決問題への答えも含むとされ、研究者がAIによる数学研究を検証できる規模の公開だね。",
+          "en": "The release reportedly includes answers to longstanding open problems, giving researchers a substantial body of AI-generated math to examine."
+        },
+        {
+          "s": "a",
+          "ja": "「結果群」って、ひとつの答えが何本にも分かれているの？",
+          "en": "What’s a “result family”? Is one answer split across several papers?"
+        },
+        {
+          "s": "b",
+          "ja": "ここでは、関連する論文をひとまとめにした単位だよ。372個の大きなテーマ箱に整理した感じだね。",
+          "en": "Here, it means a group of related papers—like organizing them into 372 broad topic boxes."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、気になる問題に近い箱から読んで、答えを確かめてみたいな。",
+          "en": "I’d start with the box closest to a problem I care about and try to check the answer."
+        },
+        {
+          "s": "b",
+          "ja": "研究者が検証や活用を進められそうだね。ただ、使われた最先端モデルは未公開で、研究倫理や学術的行為への疑問も出ているよ。",
+          "en": "Researchers can assess and build on the work. But the frontier model remains unreleased, and the release has also raised questions about research ethics and academic conduct."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T00:37:30.192Z"
+    },
+    "571c8c47df881aa3": {
       "bodyJa": "ReviewBenchは、AIコードレビューを担うエージェントを比較・検証するための公開ベンチマークだ。代表的なGitHubプルリクエストを土台とし、公平な評価と実運用に沿った検証を支える。\n\n## 評価セット\n\n評価セットには、代表的なGitHubプルリクエストが使われる。コードレビューの対象に即した材料を基に、レビューエージェントを共通の条件で確かめられる仕組みとされ、開発者や研究者による比較検証を支援する。\n\n## 複数情報源\n\n正解データのラベルは、単一ではなく複数の情報源から構成される。採点には調整済みの評価手法を採用し、レビューエージェントを公平に評価できるよう設計されている。\n\n## 実運用の指標\n\n評価には、実運用に沿った指標も組み込まれる。公開の評価セット、複数情報源の正解データ、調整済みの採点、実運用に合わせた指標を組み合わせた点が、ReviewBenchの特徴だ。",
       "bodyEn": "## ReviewBench\n\nReviewBench is an open benchmark for AI code review agents. It matters because it gives developers and researchers a shared evaluation set for comparing and validating review agents through a fair assessment process.\n\n## Representative GitHub pull requests\n\nThe benchmark is built on representative GitHub pull requests. It uses multi-source ground truth, also described as multi-source labels, as the reference data for evaluating review agents.\n\nThis combination provides a common set of pull requests and labels for comparative testing. Developers and researchers can use that shared basis when assessing different review agents.\n\n## Calibrated evaluation\n\nReviewBench combines calibrated evaluation and scoring with production-aligned metrics. These elements are intended to support fair assessment while keeping the evaluation connected to production use.\n\nAs an open benchmark, ReviewBench brings its representative pull requests, multi-source labels, calibrated scoring, and production metrics into one evaluation framework for AI code review agents.",
       "chat": [
@@ -43854,7 +43816,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-05T19:38:21.495Z"
     },
-    "ed204fd38e64c798": {
+    "11814c13f8eb0837": {
       "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
       "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
       "chat": [
@@ -43892,7 +43854,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:36:46.380Z"
     },
-    "3e5e727e385d3f8c": {
+    "93db8516427cde42": {
       "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
       "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
       "chat": [
@@ -43930,7 +43892,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:19.430Z"
     },
-    "c45ef450c3820855": {
+    "4c9d688cf44b534e": {
       "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
       "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
       "chat": [
@@ -43968,7 +43930,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:32.042Z"
     },
-    "655fd12194d5c751": {
+    "3109af25bedf6259": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
       "chat": [
@@ -44006,7 +43968,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:50.296Z"
     },
-    "2576bf8a180858a9": {
+    "8156421f827a3dc7": {
       "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
       "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
       "chat": [
@@ -44044,7 +44006,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:38:10.006Z"
     },
-    "433004a6bd914ded": {
+    "b310b2c06dbd9321": {
       "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
       "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
       "chat": [

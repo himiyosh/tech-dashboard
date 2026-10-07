@@ -2,11 +2,133 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  countBudgetExcludedIds,
   deriveQueueDisplay,
+  displayableBodyDrainHours,
   summaryQueueCardCopy,
 } from "../web/src/lib/queue-health.ts";
 
 describe("deriveQueueDisplay", () => {
+  it("budget exclusions are a validated persistent set, not this-run prune count", () => {
+    expect(countBudgetExcludedIds(undefined)).toBeNull();
+    expect(countBudgetExcludedIds([])).toBe(0);
+    expect(countBudgetExcludedIds(["a", "b", "a"])).toBe(2);
+    expect(countBudgetExcludedIds(["a", null])).toBeNull();
+    expect(countBudgetExcludedIds(["a", "  "])).toBeNull();
+    expect(countBudgetExcludedIds(3)).toBeNull();
+  });
+
+  it("suppresses the public body ETA for nonempty or malformed exclusion telemetry", () => {
+    expect(displayableBodyDrainHours(20, undefined)).toBe(20);
+    expect(displayableBodyDrainHours(20, [])).toBe(20);
+    expect(displayableBodyDrainHours(20, ["a", "a", "b"])).toBeNull();
+    expect(displayableBodyDrainHours(20, [null])).toBeNull();
+    expect(displayableBodyDrainHours(null, [])).toBeNull();
+  });
+
+  it("shows total backlog and budget exclusions without promising full drain", () => {
+    expect(
+      deriveQueueDisplay({
+        mode: "enabled",
+        backlog: 588,
+        drainEstimateHours: 20,
+        budgetExcludedCount: 322,
+        runTone: "ok",
+      }),
+    ).toMatchObject({
+      state: "active",
+      tone: "warn",
+      backlog: 588,
+      showBacklog: true,
+      labelJa: "全件の完了見込みなし · 本文待ち 588 件 · 保存容量の上限で 322 件は本文生成対象外",
+      labelEn: "no full-backlog ETA · 588 awaiting explainers · storage limit excludes 322 from explainer generation",
+    });
+  });
+
+  it("retains the active estimate for zero or unrecorded budget exclusions", () => {
+    for (const budgetExcludedCount of [0, null, undefined]) {
+      expect(
+        deriveQueueDisplay({
+          mode: "enabled",
+          backlog: 588,
+          drainEstimateHours: 20,
+          budgetExcludedCount,
+          runTone: "ok",
+        }),
+      ).toMatchObject({
+        state: "active",
+        labelJa: "現在値で約 20h",
+        labelEn: "about 20h at current throughput",
+      });
+    }
+  });
+
+  it.each([
+    ["disabled", "paused", "queue paused"],
+    ["missing-binding", "unavailable", "binding unavailable"],
+    ["error", "error", "queue error"],
+    [null, "unknown", "snapshot unavailable"],
+  ] as const)("mode=%s keeps its operational state while showing exclusions", (mode, state, labelEn) => {
+    const display = deriveQueueDisplay({
+      mode,
+      backlog: 588,
+      drainEstimateHours: 20,
+      budgetExcludedCount: 322,
+      runTone: "ok",
+    });
+    expect(display).toMatchObject({ state, labelEn: expect.stringContaining(labelEn) });
+    expect(display.labelJa).toContain("322 件は本文生成対象外");
+    expect(display.labelEn).not.toContain("20h");
+  });
+
+  it("waiting-for-run preserves its state and shows exclusions without an ETA", () => {
+    expect(
+      deriveQueueDisplay({
+        mode: "enabled",
+        backlog: 588,
+        drainEstimateHours: 20,
+        budgetExcludedCount: 322,
+        runTone: "err",
+        runState: "late",
+      }),
+    ).toMatchObject({
+      state: "waiting-for-run",
+      tone: "neutral",
+      labelJa: expect.stringContaining("収集再開待ち · 本文待ち 588 件 · 保存容量の上限で 322 件"),
+      labelEn: expect.stringContaining("waiting for a successful run · 588 awaiting explainers"),
+    });
+  });
+
+  it("does not mark an inconsistent zero backlog clear when exclusions remain", () => {
+    expect(
+      deriveQueueDisplay({
+        mode: "enabled",
+        backlog: 0,
+        drainEstimateHours: 0,
+        budgetExcludedCount: 1,
+        runTone: "ok",
+      }),
+    ).toMatchObject({
+      state: "active",
+      labelJa: expect.stringContaining("保存容量の上限で 1 件は本文生成対象外"),
+    });
+  });
+
+  it("does not present a disabled queue's placeholder zero backlog as measured coverage", () => {
+    const display = deriveQueueDisplay({
+      mode: "disabled",
+      backlog: 0,
+      drainEstimateHours: 0,
+      budgetExcludedCount: 17,
+      runTone: "ok",
+    });
+    expect(display).toMatchObject({
+      state: "paused",
+      showBacklog: false,
+      labelJa: "停止中 · 保存容量の上限で 17 件は本文生成対象外",
+    });
+  });
+
   it("enabled queueだけ backlog 0をclearとして扱う", () => {
     expect(
       deriveQueueDisplay({

@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { pathToFileURL } from "node:url";
@@ -19,9 +19,17 @@ import {
 } from "../web/src/lib/publication-gate.ts";
 import { normalizeTagKey } from "../web/src/lib/tag-normalize.ts";
 import { TAG_PAGE_MIN_ENTRIES } from "../web/src/lib/route-inventory.ts";
+import {
+  BODY_SHARD_PATHS,
+  LEGACY_BODY_PATH,
+  assertBodyStorageMode,
+  loadBodyStorage,
+  type BodyStorageMode,
+} from "../web/src/lib/body-shards.ts";
+import { assertBodyShardDigests } from "../web/src/lib/body-shard-integrity.ts";
 
 export const PUBLISHER_DATA_PATH_RE =
-  /^data\/(?:index\.json|bodies\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json|updates\/(?:_index|\d{4}-\d{2})\.json)$/;
+  /^data\/(?:index\.json|bodies(?:-[0-3])?\.json|stats\.json|archive\/(?:_index|\d{4}-\d{2})\.json|updates\/(?:_index|\d{4}-\d{2})\.json)$/;
 
 export const MAX_DETAIL_ROUTE_GROWTH_PER_RUN = 250;
 export const MAX_TAG_BASE_ROUTE_GROWTH_PER_RUN = 100;
@@ -141,13 +149,32 @@ function entryRecords(path: string, content: string | null): PublisherImpactEntr
   });
 }
 
-function bodiesById(path: string, content: string | null): Map<string, unknown> {
-  const parsed = parseJson(path, content);
-  if (parsed === null) return new Map();
-  if (!isRecord(parsed) || !isRecord(parsed.bodies)) {
-    throw new Error(`publisher impact expected bodies in ${path}`);
+function isBodyStoragePath(path: string): boolean {
+  return path === LEGACY_BODY_PATH || BODY_SHARD_PATHS.some((shard) => path === shard);
+}
+
+function bodiesById(
+  files: ReadonlyMap<string, string | null>,
+): { mode: BodyStorageMode | null; records: Map<string, unknown> } {
+  const legacy = parseJson(LEGACY_BODY_PATH, files.get(LEGACY_BODY_PATH) ?? null);
+  const shards = BODY_SHARD_PATHS.map((path) => parseJson(path, files.get(path) ?? null));
+  const index = parseJson("data/index.json", files.get("data/index.json") ?? null);
+  const health = isRecord(index) && isRecord(index.health) ? index.health : null;
+  if (legacy === null && shards.every((value) => value === null)) {
+    if (health) assertBodyStorageMode("legacy", health);
+    return { mode: null, records: new Map() };
   }
-  return new Map(Object.entries(parsed.bodies));
+  const { mode, payload } = loadBodyStorage(legacy, shards);
+  if (health) {
+    assertBodyStorageMode(mode, health);
+    if (mode === "shards-v1") {
+      assertBodyShardDigests(
+        BODY_SHARD_PATHS.map((path) => files.get(path)!),
+        health.bodyShardDigests,
+      );
+    }
+  }
+  return { mode, records: new Map(Object.entries(payload.bodies)) };
 }
 
 function changedRecordIds(
@@ -285,16 +312,18 @@ function incrementalPlan(
   afterFiles: ReadonlyMap<string, string | null>,
   beforeGate: PublicationGate,
   afterGate: PublicationGate,
+  bodyStorageChanged: boolean,
 ): PublisherIncrementalPlan {
   const bodyOnly =
-    changedPaths.length === 1
-    && changedPaths[0] === "data/bodies.json";
+    changedPaths.length > 0
+    && changedPaths.every(isBodyStoragePath)
+    && !bodyStorageChanged;
   const changesEntryCollections = changedPaths.some(
     (path) =>
       path === "data/index.json"
       || path === "data/archive/_index.json"
       || /^data\/archive\/\d{4}-\d{2}\.json$/.test(path),
-  );
+  ) || bodyStorageChanged;
   const beforeAddressable = addressableEntries(beforeFiles, beforeGate);
   const afterAddressable = addressableEntries(afterFiles, afterGate);
   const candidateIds = new Set([...changedEntryIds, ...changedBodyIds]);
@@ -321,6 +350,7 @@ function incrementalPlan(
   if (searchMode === "global") {
     blockers.add("pagefind-requires-global-reconciliation");
   }
+  if (bodyStorageChanged) blockers.add("body-storage-migration-requires-full-reconciliation");
   for (const path of changedPaths) {
     if (path === "data/stats.json") blockers.add("aggregate-pages-depend-on-stats");
     if (path === "data/archive/_index.json") {
@@ -377,26 +407,14 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
   const afterChangedEntries: PublisherImpactEntry[] = [];
   const routeFamilies = new Set<string>();
   const fullReasons = new Set<string>();
+  const beforeBodies = bodiesById(options.beforeFiles);
+  const afterBodies = bodiesById(options.afterFiles);
+  const bodyStorageChanged = beforeBodies.mode !== afterBodies.mode;
 
   for (const path of changedPaths) {
     const beforeContent = options.beforeFiles.get(path) ?? null;
     const afterContent = options.afterFiles.get(path) ?? null;
-    if (path === "data/bodies.json") {
-      for (const id of changedRecordIds(
-        bodiesById(path, beforeContent),
-        bodiesById(path, afterContent),
-      )) {
-        changedBodyIds.add(id);
-      }
-      routeFamilies.add("detail-pages");
-      routeFamilies.add("search-index");
-      // A body appearing or disappearing now moves the entry in or out of
-      // sitemap.xml (web/src/lib/detail-indexability.ts), so a body-only run is
-      // no longer sitemap-neutral.
-      routeFamilies.add("sitemap");
-      fullReasons.add("search-index-requires-a-global-rebuild");
-      continue;
-    }
+    if (isBodyStoragePath(path)) continue;
 
     if (path === "data/index.json" || /^data\/archive\/\d{4}-\d{2}\.json$/.test(path)) {
       const beforeEntries = entryRecords(path, beforeContent);
@@ -454,6 +472,14 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
     }
   }
 
+  if (changedPaths.some(isBodyStoragePath)) {
+    for (const id of changedRecordIds(beforeBodies.records, afterBodies.records)) {
+      changedBodyIds.add(id);
+    }
+    for (const family of ["detail-pages", "search-index", "sitemap"]) routeFamilies.add(family);
+    if (bodyStorageChanged) fullReasons.add("body-storage-migration-requires-full-reconciliation");
+    else fullReasons.add("search-index-requires-a-global-rebuild");
+  }
   if (changedEntryIds.size > 0 || changedBodyIds.size > 0) {
     routeFamilies.add("detail-pages");
   }
@@ -493,6 +519,7 @@ export function buildPublisherImpactPlan(options: BuildImpactOptions): Publisher
       options.afterFiles,
       beforeGate,
       afterGate,
+      bodyStorageChanged,
     ),
   };
   assertPublisherImpactGrowth(plan);
@@ -515,7 +542,8 @@ function pathsAtRef(root: string, baseRef: string): string[] {
       baseRef,
       "--",
       "data/index.json",
-      "data/bodies.json",
+      LEGACY_BODY_PATH,
+      ...BODY_SHARD_PATHS,
       "data/stats.json",
       "data/archive",
       "data/updates",
@@ -551,7 +579,8 @@ export function planPublisherImpactFromRepository(
   for (const path of changedOverlay.keys()) assertDataPath(path);
   const allPaths = new Set([
     "data/index.json",
-    "data/bodies.json",
+    LEGACY_BODY_PATH,
+    ...BODY_SHARD_PATHS,
     "data/stats.json",
     "data/archive/_index.json",
     ...archivePathsFromWorktree(options.root),
@@ -566,7 +595,9 @@ export function planPublisherImpactFromRepository(
     const overlay = changedOverlay.get(path);
     afterFiles.set(
       path,
-      overlay ?? readFileSync(resolve(options.root, path), "utf8"),
+      overlay ?? (existsSync(resolve(options.root, path))
+        ? readFileSync(resolve(options.root, path), "utf8")
+        : null),
     );
   }
   const manifestPath = resolve(options.root, PUBLICATION_MANIFEST_PATH);

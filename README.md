@@ -14,12 +14,14 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 |---|---|---|---|---|
 | ソース収集 (registry sources) | GitHub Actions `Publisher` (Node 22) | Cron `0 * * * *` (毎時) を 6 batch ローテーション | データ更新が止まる。runtime fingerprint または snapshot 不一致時は publish を自動停止 | Publisher workflow / `/status` |
 | 日本語/英語要約 (`summary*`) | Publisher → OIDC bridge → Queue `tech-dashboard-summarizer` → Copilot Enterprise (claude-sonnet-5) | 検証済み publish 後に最大 `ENQUEUE_MAX_NEW` 件/run を投入、consumer は 1 message/invocation | 既存表示は維持。LLM 失敗時は deterministic fallback で空欄を防止 | `health.fallbackTotal` / `health.summaryQueueBacklog` / `health.summaryQueueDrainEstimateHours` |
-| 記事本文 (`data/bodies.json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離 (LL-115)。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を retention 対象にし、さらに実運用の byte budget (`DEFAULT_BODY_BUDGET_TARGET_BYTES` = 9MB、`tests/data-schema.test.ts` の 10MB hard ceiling には 1MB の余裕) を必ず超えないよう importance 1 (直近のみ) → 2 → 3 → evergreen の順で最古から deterministic に prune する (evergreen は最優先=最後に prune、絶対的な免除ではない、LL-411)。consumer が JA/EN を 2 call で生成して publisher が sidecar へ merge | 対象外・budget 超過で prune・本文無しの記事は要約主役の表示にフォールバック (原文リンクは維持、偽の生成予告は出さない) | `health.bodyBacklog` / `health.bodyQueueDrainEstimateHours` / `health.bodiesTotal` / `health.bodyBudgetBytes` / `health.bodyBudgetTargetBytes` / `health.bodyBudgetPruned` |
+| 記事本文 (`data/bodies-[0-3].json`) | Publisher → OIDC bridge → Queue `tech-dashboard-body` → Copilot (claude-opus-4.8, reasoning=max) | 本文は index と分離し、記事 ID の hash で4 shardへ配置する。evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日を保持候補にし、合計18MB・各9MBの運用targetを超える時だけ importance 1 → 2 → 3 → evergreen の順で最古から pruneする (LL-411)。旧 `data/bodies.json` は初回のlossless移行後も復旧用に凍結して保持 | 対象外・budget prune・本文無しの記事は要約と原文リンクを表示 | `health.bodyBacklog` / `health.bodyBudgetBytes` / `health.bodyShardBytes` / `health.bodyShardDigests` |
 | summary deterministic fallback | Publisher / `scripts/apply-summary-cache.mjs` | data commit 前、または緊急修復時 | LLM timeout / 旧 cache 欠落時でも live index の summary 欠落を防止 | `health.summaryFallbacks` / `tests/data-schema.test.ts` |
 | og:image 取得 | Publisher → OIDC bridge → KV | 毎時最大 1 件。data 検証と push 成功後だけ `og.v1` を更新 | サムネが no-image fallback になる | `health.ogCached` |
 | `data/index.json` / `data/archive/*` / `data/stats.json` 更新 commit | Publisher workflow → built-in `GITHUB_TOKEN` | 全品質ゲート後、差分があるときのみ data allowlist を 1 commit にまとめる | サイトに反映されない、記事数推移が古いまま | GitHub Actions `Publisher` |
 | サイト build / deploy | Cloudflare Pages (Git Integration) | `main` の push 検知 | サイトが古いまま | Cloudflare Pages dashboard |
 | Worker コード deploy 補助 | `scripts/git-hooks/pre-push` | `RUN_WORKER_DEPLOY=1 git push` かつ `main` push に `worker/` 差分あり | Worker 側のロジック修正が反映されない | push 時の出力 (deploy 成功後 `node scripts/verify-worker-deploy.mjs` で fingerprint 伝播を bounded polling 確認、非 blocking) |
+
+本文 Queue の `health.bodyBacklog` は本文待ちの件数、`health.bodyBudgetEvictedIds` は保存容量の上限により**run をまたいで生成対象から除外中**の ID 集合です（今回 prune した件数ではありません）。Status は両方を区別して表示します。`/metrics.json.bodyQueueBudgetExcludedCount` は未記録なら `null`、空集合なら `0`、除外中なら重複を除いた件数です。除外がある間、`/metrics.json.bodyQueueDrainEstimateHours` は `null` とし、Status でも全件が処理されるかのような有限 ETA を出しません。Publisher が保存する `health.bodyQueueDrainEstimateHours` は変更しません。
 
 ### 手動運用 (年 1 回程度)
 
@@ -30,7 +32,7 @@ AI 関連アップデート (Copilot / Claude / Codex / Gemini / Editor / Cline 
 | (緊急) 手動収集 | `npm run collect` | バックログ滞留時 (例: 1h に 5 件以上の新着) |
 | (緊急) cache 済み要約の再反映 | `npm run summaries:apply-cache` | `data/_summary-cache.json` に有効な bilingual summary があるのに `data/index.json` 側が未反映の時 |
 | (緊急) 不足要約のバルク補充 | `SUMMARIZE_MAX_NEW=400 npx tsx --env-file-if-exists=.env.local scripts/resummarize.mjs` | 過去エントリの `summaryJa` / `summaryEn` がまとめて欠けている時 |
-| (migration) 旧 index 本文の sidecar 移行 | `npm run body:migrate` | `data/index.json` の旧 `bodyJa` / `bodyEn` を `data/bodies.json` へ移して index を本文フリーにする時 |
+| (migration) 旧 index 本文の sidecar 移行 | `npm run body:migrate` | **4 shard導入前だけ**。導入後は旧単一ファイルへの書戻しを拒否 |
 | (緊急) og:image バックフィル | `node scripts/backfill-og.mjs` | `image.source = "fallback"` が大量に残る時 |
 | (緊急) リリースタイトル整形バックフィル | `node --experimental-strip-types scripts/backfill-release-titles.mjs` | バージョン番号のみのタイトルを補正したい時 |
 
@@ -130,6 +132,9 @@ npm run build                # dist/ に静的ビルド + Pagefind インデッ�
 # ============ 品質監査 ============
 npx tsx .claude/skills/quality-audit/run.ts
 #   → data/_runs/audit-<ts>.md に Markdown レポート出力
+npx tsx .claude/skills/quality-audit/run.ts --stdout --no-write
+#   → 9 観点の完全な Markdown レポートを標準出力へ表示。data/_runs/ に書き込まない
+# --stdout 単独は表示と保存の両方。--no-write 単独・未知/重複引数はエラー。
 
 # ============ AI Scrum 開発運用 ============
 # Claude Code / Copilot Agent から /skill ai-scrum を実行
@@ -159,7 +164,7 @@ npx -y modern-web-guidance@latest retrieve "accessibility,css,performance,securi
 | Unit | `npm test` | Vitest による関数単位の検証 (要約 JSON パース、Web ロジック、`data/index.json` スキーマ) | 速い (~1s) |
 | Web build | `npm run build:web` | Cloudflare Pages と同じ Astro + Pagefind build を実行し、30秒 heartbeat、phase別 CPU/RSS・route familyを記録。Cloudflare Freeの20,000 filesから2,000 filesの安全余裕を引いた18,000 files、20分build ceilingから2分の余裕を引いた18分、sitemap/canonical HTML parity (`noindex` 宣言ページのみ非収録を許容し、逆に `noindex` が sitemap にいる場合は失敗)、redirect除外、内部detail link実在をfail-closedで検証 | 中程度 |
 | E2E | `npm run test:e2e` | Playwright (Chromium) でトップ表示・記事詳細・言語切替を検証 | 中程度 (~30s + build) |
-| 5分判断ジャーニー | `node --import tsx scripts/measure-decision-journey.ts` | production Web buildを1回だけ生成してPlaywright previewへ再利用し、desktop/mobileのHome判断面、exact検索または正直な0件回復、RSS/OPML発見、実404回復、optionalな要約待ち状態を計測。step到達、操作上限、document navigation列、viewport/scroll、正確な回復経路を合否判定に使います。経過msは現行runのstdout JSONにだけ情報値として出し、履歴baselineへ保存、過去runと比較、delta警告・失敗には使いません。JSONは64KiB以下、`fieldData:false`でありfield dataやCore Web Vitalsではありません。検証済みの`web/dist`を再利用する場合だけ`--reuse-build`を指定 | 中程度 |
+| 5分判断ジャーニー | `node --import tsx scripts/measure-decision-journey.ts` | production Web buildを1回だけ生成してPlaywright previewへ再利用し、desktop/mobileのHome判断面、sitemap掲載済み（本文がありindexableな）Timeline記事のexact検索または該当記事が無い場合の正直な0件回復、RSS/OPML発見、実404回復、optionalな要約待ち状態を計測。indexableな記事が検索で見つからなければ失敗します。step到達、操作上限、document navigation列、viewport/scroll、正確な回復経路を合否判定に使います。経過msは現行runのstdout JSONにだけ情報値として出し、履歴baselineへ保存、過去runと比較、delta警告・失敗には使いません。JSONは64KiB以下、`fieldData:false`でありfield dataやCore Web Vitalsではありません。検証済みの`web/dist`を再利用する場合だけ`--reuse-build`を指定 | 中程度 |
 | Secret scan | `npm run secrets:scan` | tracked file の secret / private key / 高リスクファイル名を検証 | 速い |
 | Worktree secret scan | `npm run secrets:scan:worktree` | tracked + untracked non-ignored file を検証し、ignored local secret store は値を読まず path だけ警告 | 速い |
 | Dependency audit | `npm run audit:all` | root / web の npm advisory を確認。既知 advisory がある間は CI では soft gate として扱う | 速い |
@@ -172,9 +177,11 @@ Git hook は `bash scripts/install-hooks.sh` で 1 回有効化します。
 | Hook | 実行内容 | スキップ |
 |---|---|---|
 | `pre-commit` | `main` / `master` / `develop` への直接 commit 拒否 → staged file の secret scan → `.ts/.tsx` がステージされていれば `npm run typecheck` | Typecheck のみ `SKIP_TYPECHECK=1 git commit` |
-| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
+| `pre-push` | protected branch への直接 push 拒否 → push 対象 commit range の secret scan → `npm test` (unit) → `npm run build:web` → Publisher Playwright E2E (生成Home・記事詳細・metrics・Archive・404) → `RUN_WORKER_DEPLOY=1` の場合のみ `wrangler deploy`。develop 向けの文書・規則のみの PR は下記の鮮度警告を適用。warm/cold・exact tag・navを含む全PlaywrightはPR CIで必須 | `SKIP_TESTS=1` / `SKIP_WEB_BUILD=1` / `SKIP_E2E=1`。Worker deploy は `RUN_WORKER_DEPLOY=1 git push` |
 
 Secret scan は値を表示せず、検出種別・ファイル位置・ハッシュだけを出します。ローカル作業ツリー全体を確認する場合は `npm run secrets:scan:worktree`、全履歴を手動確認する場合は `npm run secrets:scan:history` を使います。
+
+ローカルの `pre-push` に限り、単一の作業ブランチからの差分が**現在の `origin/develop` を祖先とする文書・規則のみ**なら、古い develop index の36時間超過を明示的な警告に留めます。対象はルートの Markdown、`docs/`・`.github/agents|instructions|knowledge/`・`.claude/knowledge|rules|skills/` の Markdown と、鮮度ポリシー自身の `scripts/git-hooks/pre-push`、`scripts/pre-push-data-freshness.mjs`、`tests/data-schema.test.ts`、`tests/pre-push-data-freshness.test.ts` だけです。hook は remote develop の実 SHA と追跡 ref、push ref、作業ツリー、**develop からの累積 PR 差分**を照合し、判定できない場合や `data/**`、Web・Publisher・Worker 等の code / unknown path が含まれる場合は通常の36時間 gate を維持します。secret scan は従来どおり push 対象 commit range で実行し、unit の他の schema 検査、Web build、該当 E2E も省きません。`ALLOW_STALE_DATA=1` は hook から unit test へ渡しません。
 
 protected branch への直接 commit / push は通常禁止です。当該セッションでユーザーが直接書き込みを明示承認した場合だけ、`ALLOW_PROTECTED_BRANCH_WRITE=1` を指定できます。作業ブランチと PR を使う通常作業では指定しません。
 
@@ -217,7 +224,7 @@ SUMMARIZE_MAX_TOKENS=1600           # titleJa + summaryJa + summaryEn の出力�
 
 ## デプロイ & 自動更新 (GitHub Actions Publisher + Cloudflare Pages)
 
-通常運用では GitHub Actions Publisher が `data/index.json`、`data/bodies.json`、`data/archive/*`、`data/stats.json` を検証して main に commit し、Cloudflare Pages の Git Integration が更新を検知してサイトを build / deploy します。Queue / KV effects は data 検証と push の成功後だけ、GitHub Actions OIDC で認証した Free bridge へ送信します。
+通常運用では GitHub Actions Publisher が `data/index.json`、`data/bodies-[0-3].json`、`data/archive/*`、`data/stats.json` を検証して main に commit し、Cloudflare Pages の Git Integration が更新を検知してサイトを build / deploy します。初回移行に限り同一main SHAの旧 `data/bodies.json` から全件を4 shardとindexのSHA-256 inventoryへ同一data-only commitで移し、旧sourceは変更・削除しません。Queue / KV effects は data 検証と push の成功後だけ、GitHub Actions OIDC で認証した Free bridge へ送信します。
 
 ```
 [GitHub Actions Publisher] ──毎時 (6 batchローテーション)──→ [data-only commit]
@@ -421,7 +428,11 @@ Publisher workflow は `0 * * * *` (毎時) で起動し、`17 2 * * *` (毎日 
 
 毎時のdata差分runはsecret scan、data schema、Publisher/impact regression、route-family growth、snapshot CASを通し、生成対象のdata fileだけをstageしてnon-force pushします。impact manifestは変更detail/body ID、archive月、category/tag、全件再計算が必要なaggregate familyを`$RUNNER_TEMP`へ記録します。毎日・manual full reconciliationは追加でroot/Worker typecheck、全unit、Astro + Pagefind build、Publisher E2Eを実行します。Queue と `og.v1` KV write は `$RUNNER_TEMP` の bundleへ遅延し、data push成功後だけ bridgeへ flushします。data差分がない runも final snapshot CASとcontract確認後に Queue / KV effectsだけをflushできます。collapse guardやCAS失敗時は effects bundleを保存しません。新しい repository secretは不要です。GitHub commitは built-in `GITHUB_TOKEN`、bridgeは専用 audienceのGitHub Actions OIDCを使います。
 
-Copilot要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cacheに保存します。Queue consumerは summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とします。本文は `data/bodies.json` に分離し、evergreen、importance 2/3、直近30日だけを retention 対象にします。さらにその中でも実バイト予算 (`worker/src/bodies-budget.ts` の `DEFAULT_BODY_BUDGET_TARGET_BYTES`、既定 9,000,000 bytes) を必ず超えないよう、importance 1 (直近のみ) → importance 2 → importance 3 → evergreen の順に最古から決定論的に prune します。evergreen は最優先 (最後に prune される) ですが、他の全 tier を prune してもなお target を超える場合は evergreen も last-resort として prune され、「保護」は「絶対に prune しない」ではなく「最後に prune される」を意味します (LL-411)。`tests/data-schema.test.ts` の hard ceiling (10,000,000 bytes) はこの target より大きい安全網として維持され、target 自体は上げません。同じ policy を Publisher runtime と `npm run noise:clean -- --apply` の両方が共有します。
+Copilot要約は `worker-summarizer/` が 1 message / invocation で生成し、per-URL KV cacheに保存します。Queue consumerは summary-only contract (`titleJa + summaryJa + summaryEn`) に合わせて `SUMMARIZE_TIMEOUT_MS=60000`、`SUMMARIZE_MAX_TOKENS=1600` とします。本文は `data/bodies-0.json`〜`data/bodies-3.json` に分離し、同じ記事IDは常に同じshardへ入ります。evergreen、importance 2/3、直近30日の保持gateとは別に、**合計18,000,000 bytes (hard 20,000,000)・各shard 9,000,000 bytes (hard 10,000,000)** を実serial化で測り、importance 1 → 2 → 3 → evergreen の順に決定論的にpruneします。evergreenは最後にpruneされますが免除ではありません (LL-411)。Publisher、Web build、手動data migrationは4 shardの完全性、index.healthの保存modeと**実ファイルbytes**のSHA-256 inventoryを検証します。移行前だけ旧単一ファイルをWebが読み、indexが4 shardを宣言した後は全shardが消えても旧本文へfallbackしません。旧単一ファイルは凍結して復旧用に残します。旧9MBのbudget-evicted IDは初回移行時に解除し、新しい枠内で通常のbounded Queueへ戻します。
+
+**移行の検証・release順序:** `node --import tsx scripts/verify-body-shard-migration.mts --main-sha <git ls-remoteで得た40桁のmain SHA> --measure-pack` は同一immutable mainのlegacy record全件を投影し、本文・6発言chat・model・生成日時を含む各recordのSHA-256と集合を照合します。`--measure-pack`は直近13 snapshotを**リポジトリ外の2つの一時git repoだけ**で再生し、両方へ`git gc`してpack sizeを比較します (試算であり実repoの将来容量ではない)。旧sourceを消さず、初回の承認済みPublisher runが4 shardとindex healthを**1つのCAS commit**で生成し、次runから本文を取り込みます。PRはdevelopへ統合してもproduction Workerをdeployしません。別途承認したdevelop→main releaseではR-027に従いQueue consumer→旧in-flight drain→main merge→旧writer停止確認→別承認のFree bridge更新→Publisher・Pagesのread-back順です。新shardのlossless parityとproduction build成功を確認するまで旧 `data/bodies.json` は削除しません。rollback時も新規本文を失う旧9MB版へ黙って戻さず、最新main SHAのshardを検証したうえで別の承認済み復旧手順を取ります。Cloudflare accountのbuild件数・費用はローカル計測から断定しません。
+
+4 shardへの切替後、単一ファイルへ直接書く旧 `npm run body:migrate` と `scripts/backfill-bodies.mjs` は書戻しを拒否します。本文の追加はPublisherのbounded Queue、既存本文の修復は4 shard対応のtransaction migrationを使い、凍結した旧sourceへ新しい本文を戻しません。
 
 Copilot 要約は summarizer Worker 側の `SUMMARIZE_TIMEOUT_MS` (既定 60000 ms) で timeout します。Queue retry と次回 Publisher run の cache 再読みにより、一時的な API timeout / 5xx による欠落を次 run へ持ち越しにくくしています。
 

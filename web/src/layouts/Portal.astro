@@ -135,6 +135,7 @@ const footerBodyQueue = deriveQueueDisplay({
   mode: DASHBOARD_METRICS.bodyQueueMode,
   backlog: DASHBOARD_METRICS.bodyQueueBacklog,
   drainEstimateHours: DASHBOARD_METRICS.bodyQueueDrainEstimateHours,
+  budgetExcludedCount: DASHBOARD_METRICS.bodyQueueBudgetExcludedCount,
   runTone: footerRun.tone,
   runState: footerRun.state,
 });
@@ -613,6 +614,7 @@ const footerLastRunRelative = footerLastRunAt
           data-body-queue-state={footerBodyQueue.state}
           data-body-queue-backlog={footerBodyQueue.showBacklog ? footerBodyQueue.backlog : "unknown"}
           data-body-queue-drain-hours={DASHBOARD_METRICS.bodyQueueDrainEstimateHours ?? "unknown"}
+          data-body-queue-budget-excluded-count={DASHBOARD_METRICS.bodyQueueBudgetExcludedCount ?? "unknown"}
           data-health-scope="site-wide-pipeline"
         >
           <span class="footer-scope-label">
@@ -721,13 +723,19 @@ const footerLastRunRelative = footerLastRunAt
             runTone: run.tone,
             runState: run.state,
           });
+          const budgetExcludedCount = numberValue(link.dataset.bodyQueueBudgetExcludedCount);
+          const bodyQueueBudgetLimited = budgetExcludedCount !== null && budgetExcludedCount > 0;
           const bodyQueue = deriveQueueDisplay({
             mode: link.dataset.bodyQueueMode,
             backlog: numberValue(link.dataset.bodyQueueBacklog),
-            drainEstimateHours: numberValue(link.dataset.bodyQueueDrainHours),
+            drainEstimateHours: bodyQueueBudgetLimited ? null : numberValue(link.dataset.bodyQueueDrainHours),
+            budgetExcludedCount,
             runTone: run.tone,
             runState: run.state,
           });
+          if (bodyQueueBudgetLimited) {
+            link.dataset.bodyQueueDrainHours = "unknown";
+          }
 
           link.dataset.runState = run.state;
           link.dataset.runDetail = run.detail;

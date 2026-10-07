@@ -18,6 +18,10 @@ const DEFAULT_DATA_WARN_AGE_MINUTES = 360;
 const DEFAULT_DATA_MAX_AGE_MINUTES = 24 * 60;
 const DEFAULT_PUBLIC_DEPLOY_WAIT_MS = 0;
 const DEFAULT_PUBLIC_DEPLOY_POLL_MS = 15_000;
+// GitHub's branch=main runs query has returned stale results. Fetch a bounded
+// unfiltered page; isPublishingRun() checks head_branch locally.
+export const DEFAULT_PUBLISHER_RUNS_URL =
+  "https://api.github.com/repos/himiyosh/tech-dashboard/actions/workflows/publisher.yml/runs?per_page=40";
 const PUBLISHER_APPLY_RUN_TITLES = new Set([
   "Publisher / publish",
   "Publisher / reconcile",
@@ -44,7 +48,7 @@ const endpoints = {
     "https://tech-dashboard-summarizer.himiyosh.workers.dev/health",
   publisherRuns:
     process.env.PUBLISHER_RUNS_URL ??
-    "https://api.github.com/repos/himiyosh/tech-dashboard/actions/workflows/publisher.yml/runs?branch=main&per_page=10",
+    DEFAULT_PUBLISHER_RUNS_URL,
   index:
     process.env.PUBLISHER_INDEX_URL ??
     "https://raw.githubusercontent.com/himiyosh/tech-dashboard/main/data/index.json",

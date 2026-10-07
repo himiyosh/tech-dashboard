@@ -1,47 +1,27 @@
 /**
  * worker/src/bodies-budget.ts
  *
- * Deterministic byte-budget enforcement for data/bodies.json (body-file
- * architecture, LL-115). isBodyRetentionEligible() in body-queue.ts is a
- * boolean GATE (evergreen / importance>=2 / recent-only for importance==1):
- * it decides which entries are ALLOWED to have a body at all. It has no
- * concept of total payload size, so as long as content keeps flowing into the
- * eligible set (importance>=2 entries never age out while live), the file
- * grows without bound and can exceed the operational size budget.
- *
- * This module adds a SEPARATE, additional layer: given the merged bodies
- * payload, prune the deterministic lowest-priority records (oldest within the
- * lowest eligible tier first) until the EXACT serialized byte length is at or
- * under a target budget -- independent of, and always at least as strict as,
- * the boolean retention gate. Evergreen entries are the HIGHEST-priority tier
- * (pruned only as an absolute last resort, after every other tier has already
- * been fully removed and the payload is STILL over budget) but they are NOT
- * exempt: enforceBodiesBudget() guarantees the result fits at or under
- * targetBytes for any realistic positive target (in particular, always for
- * the production DEFAULT_BODY_BUDGET_TARGET_BYTES), matching R-012's
- * "evergreen is prioritized, not unconditionally unbounded" intent.
- * "Protected" here means "pruned last", not "never pruned" (LL-411
- * follow-up). The only theoretical exception is a target smaller than the
- * minimal possible JSON envelope itself, which never occurs in production.
+ * Deterministic pruning shared by the legacy sidecar and four-shard storage.
+ * Retention is a separate boolean gate in body-queue.ts. All tiers, including
+ * evergreen last, remain subject to the byte budget (LL-411).
  *
  * Cloudflare-type-free (no @cloudflare/workers-types import) so it can be
  * unit-tested directly, same as body-queue.ts / bodies-file.ts.
  */
 import { dateMs } from "./body-queue.ts";
 import { serializeBodies, type BodiesPayload, type BodyRecord } from "./bodies-file.ts";
+import {
+  BODY_SHARD_TARGET_BYTES,
+  BODY_TOTAL_TARGET_BYTES,
+  serializeBodyShards,
+} from "../../web/src/lib/body-shards.ts";
 
 /**
- * Operational target for data/bodies.json (LL-411). Kept well below the much
- * larger `tests/data-schema.test.ts` hard ceiling (10,000,000 bytes,
- * unchanged) so this target is the thing that actively keeps the file small,
- * while the hard ceiling remains a safety net that can absorb many runs'
- * worth of growth even if this enforcement were ever skipped. Chosen at the
- * upper end of the operator-suggested 8.5-9.0MB range to minimize one-time
- * pruning of existing content while still leaving a full 1,000,000 byte
- * (10%) margin below the hard ceiling -- multiple times the largest observed
- * single-run growth (~185,000 bytes, the incident that motivated this file).
+ * Aggregate operational target. Each of the four shards has its own 9MB
+ * target; the corresponding hard ceilings are 20MB total and 10MB per file.
  */
-export const DEFAULT_BODY_BUDGET_TARGET_BYTES = 9_000_000;
+export const DEFAULT_BODY_BUDGET_TARGET_BYTES = BODY_TOTAL_TARGET_BYTES;
+export const LEGACY_BODY_BUDGET_TARGET_BYTES = 9_000_000;
 
 export interface BodyBudgetPriorityInput {
   id: string;
@@ -126,12 +106,27 @@ export function serializedByteLength(payload: BodiesPayload): number {
   return new TextEncoder().encode(serializeBodies(payload)).byteLength;
 }
 
+export function serializedShardByteLengths(payload: BodiesPayload): number[] {
+  return serializeBodyShards(payload)
+    .map(({ content }) => new TextEncoder().encode(content).byteLength);
+}
+
+export function bodyBudgetTarget(value: string | undefined, maximum = BODY_TOTAL_TARGET_BYTES): number {
+  const parsed = value === undefined ? maximum : Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
+    throw new Error(`body budget target must be a positive integer at most ${maximum}`);
+  }
+  return parsed;
+}
+
 export interface EnforceBodiesBudgetResult {
   payload: BodiesPayload;
   /** Ids removed by this enforcement pass, in the order they were pruned. */
   prunedIds: string[];
   /** Exact serialized byte length of the returned payload. */
   bytes: number;
+  /** Exact serialized sizes of the output file(s). */
+  fileBytes: number[];
   changed: boolean;
 }
 
@@ -150,7 +145,7 @@ export interface EnforceBodiesBudgetResult {
  * many as strictly necessary. This guarantees the returned payload's bytes
  * are always at or under targetBytes for any REALISTIC target -- in
  * particular, always for the production `DEFAULT_BODY_BUDGET_TARGET_BYTES`
- * (9,000,000 bytes) -- there is no "accepted over-target" outcome once every
+ * (18,000,000 bytes across four shards) -- there is no "accepted over-target" outcome once every
  * tier including evergreen is on the table (LL-411 follow-up: an earlier
  * version left evergreen unconditionally exempt, which meant the operational
  * size guarantee could be violated forever once the evergreen corpus alone
@@ -168,15 +163,27 @@ export interface EnforceBodiesBudgetResult {
  * result is always measured against the real serialized payload (what will
  * actually be committed), envelope and multi-byte UTF-8 bytes included.
  */
-export function enforceBodiesBudget(
+function enforceBudget(
   payload: BodiesPayload,
   entries: readonly BodyBudgetPriorityInput[],
   targetBytes: number,
+  measure: (payload: BodiesPayload) => number[],
+  fileTargetBytes: number,
 ): EnforceBodiesBudgetResult {
-  const currentBytes = serializedByteLength(payload);
+  const initialFileBytes = measure(payload);
+  const currentBytes = initialFileBytes.reduce((sum, bytes) => sum + bytes, 0);
+  const fits = (sizes: readonly number[]) =>
+    sizes.reduce((sum, bytes) => sum + bytes, 0) <= targetBytes
+    && sizes.every((bytes) => bytes <= fileTargetBytes);
   const presentIds = Object.keys(payload.bodies);
-  if (presentIds.length === 0 || currentBytes <= targetBytes) {
-    return { payload, prunedIds: [], bytes: currentBytes, changed: false };
+  if (presentIds.length === 0 || fits(initialFileBytes)) {
+    return {
+      payload,
+      prunedIds: [],
+      bytes: currentBytes,
+      fileBytes: initialFileBytes,
+      changed: false,
+    };
   }
 
   const entryById = new Map(entries.map((entry) => [entry.id, entry]));
@@ -222,18 +229,48 @@ export function enforceBodiesBudget(
   let hi = pruneOrder.length;
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2);
-    const bytes = serializedByteLength(buildWithoutFirst(mid));
-    if (bytes <= targetBytes) hi = mid;
+    if (fits(measure(buildWithoutFirst(mid)))) hi = mid;
     else lo = mid + 1;
   }
 
   const finalPayload = buildWithoutFirst(lo);
+  const fileBytes = measure(finalPayload);
   return {
     payload: finalPayload,
     prunedIds: pruneOrder.slice(0, lo),
-    bytes: serializedByteLength(finalPayload),
+    bytes: fileBytes.reduce((sum, bytes) => sum + bytes, 0),
+    fileBytes,
     changed: lo > 0,
   };
+}
+
+/** Retained only for a pre-migration legacy sidecar; never raise its 9MB cap. */
+export function enforceBodiesBudget(
+  payload: BodiesPayload,
+  entries: readonly BodyBudgetPriorityInput[],
+  targetBytes: number,
+): EnforceBodiesBudgetResult {
+  return enforceBudget(payload, entries, targetBytes, (next) => [serializedByteLength(next)], targetBytes);
+}
+
+/** Enforce both the 18MB aggregate and the 9MB per-file operational targets. */
+export function enforceShardedBodiesBudget(
+  payload: BodiesPayload,
+  entries: readonly BodyBudgetPriorityInput[],
+  targetBytes = DEFAULT_BODY_BUDGET_TARGET_BYTES,
+): EnforceBodiesBudgetResult {
+  bodyBudgetTarget(String(targetBytes));
+  const result = enforceBudget(
+    payload,
+    entries,
+    targetBytes,
+    serializedShardByteLengths,
+    BODY_SHARD_TARGET_BYTES,
+  );
+  if (result.bytes > targetBytes || result.fileBytes.some((bytes) => bytes > BODY_SHARD_TARGET_BYTES)) {
+    throw new Error("body shard envelope exceeds configured byte budget");
+  }
+  return result;
 }
 
 /**

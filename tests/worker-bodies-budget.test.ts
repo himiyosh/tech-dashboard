@@ -9,12 +9,23 @@ import { describe, it, expect } from "vitest";
 import {
   bodyBudgetPriorityRank,
   bodyBudgetPruneOrder,
+  bodyBudgetTarget,
   carryForwardBudgetEvictedIds,
   DEFAULT_BODY_BUDGET_TARGET_BYTES,
   enforceBodiesBudget,
+  enforceShardedBodiesBudget,
+  LEGACY_BODY_BUDGET_TARGET_BYTES,
   serializedByteLength,
+  serializedShardByteLengths,
   type BodyBudgetPriorityInput,
 } from "../worker/src/bodies-budget.ts";
+import {
+  BODY_SHARD_HARD_BYTES,
+  BODY_SHARD_TARGET_BYTES,
+  BODY_TOTAL_HARD_BYTES,
+  BODY_TOTAL_TARGET_BYTES,
+  bodyShardIndex,
+} from "../web/src/lib/body-shards.ts";
 import { serializeBodies, type BodiesPayload, type BodyRecord } from "../worker/src/bodies-file.ts";
 
 function record(seed: string, len = 200): BodyRecord {
@@ -165,10 +176,90 @@ describe("serializedByteLength (LL-411): 正確なバイト計測", () => {
 });
 
 describe("DEFAULT_BODY_BUDGET_TARGET_BYTES vs hard ceiling (LL-411)", () => {
-  const HARD_CEILING_BYTES = 10_000_000; // tests/data-schema.test.ts, unchanged safety net
-  it("target は hard ceiling より十分小さい (1MB 以上の余裕)", () => {
-    expect(DEFAULT_BODY_BUDGET_TARGET_BYTES).toBeLessThan(HARD_CEILING_BYTES);
-    expect(HARD_CEILING_BYTES - DEFAULT_BODY_BUDGET_TARGET_BYTES).toBeGreaterThanOrEqual(1_000_000);
+  it("aggregate 18/20MB と各 shard 9/10MB は独立した上限を持つ", () => {
+    expect(DEFAULT_BODY_BUDGET_TARGET_BYTES).toBe(18_000_000);
+    expect(BODY_TOTAL_TARGET_BYTES).toBe(18_000_000);
+    expect(BODY_TOTAL_HARD_BYTES).toBe(20_000_000);
+    expect(BODY_SHARD_TARGET_BYTES).toBe(9_000_000);
+    expect(BODY_SHARD_HARD_BYTES).toBe(10_000_000);
+    expect(LEGACY_BODY_BUDGET_TARGET_BYTES).toBe(9_000_000);
+    expect(BODY_TOTAL_HARD_BYTES - DEFAULT_BODY_BUDGET_TARGET_BYTES).toBe(2_000_000);
+    expect(BODY_SHARD_HARD_BYTES - BODY_SHARD_TARGET_BYTES).toBe(1_000_000);
+  });
+  it("rejects an override above 18MB or a non-integer instead of raising the budget", () => {
+    expect(bodyBudgetTarget(undefined)).toBe(18_000_000);
+    expect(bodyBudgetTarget("12000000")).toBe(12_000_000);
+    for (const value of ["18000001", "0", "NaN", "1.5", "Infinity"]) {
+      expect(() => bodyBudgetTarget(value)).toThrow(/body budget target/);
+    }
+  });
+});
+
+describe("four-shard byte-budget enforcement", () => {
+  function largeBody(bytes: number): BodyRecord {
+    return {
+      bodyJa: "本文。",
+      bodyEn: "x".repeat(bytes) + ".",
+      generatedAt: "2026-07-25T00:00:00.000Z",
+      model: "test",
+    };
+  }
+
+  it("prunes on the real 18MB aggregate even while each shard remains under 9MB", () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 100 && ids.length < 4; i += 1) {
+      const id = `test-aggregate-${i}`;
+      if (!ids.some((current) => bodyShardIndex(current) === bodyShardIndex(id))) ids.push(id);
+    }
+    expect(ids).toHaveLength(4);
+    const bodies = Object.fromEntries(ids.map((id) => [id, largeBody(4_500_000)]));
+    const payload: BodiesPayload = {
+      generatedAt: "2026-07-25T00:00:00.000Z", count: 4, bodies,
+    };
+    const entries = ids.map((id, index) =>
+      priorityEntry({ id, importance: index === 0 ? 1 : 3 }),
+    );
+    const before = serializedShardByteLengths(payload);
+    expect(before.every((bytes) => bytes < BODY_SHARD_TARGET_BYTES)).toBe(true);
+    expect(before.reduce((sum, bytes) => sum + bytes, 0)).toBeGreaterThan(BODY_TOTAL_TARGET_BYTES);
+    const result = enforceShardedBodiesBudget(payload, entries);
+    expect(result.prunedIds).toEqual([ids[0]]);
+    expect(result.bytes).toBeLessThanOrEqual(BODY_TOTAL_TARGET_BYTES);
+    expect(result.fileBytes).toEqual(serializedShardByteLengths(result.payload));
+  });
+
+  it("prunes an overloaded shard even when the aggregate is below 18MB", () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 100 && ids.length < 3; i += 1) {
+      const id = `test-per-shard-${i}`;
+      if (ids.length < 2 && (ids.length === 0 || bodyShardIndex(id) === bodyShardIndex(ids[0]!))) {
+        ids.push(id);
+      } else if (ids.length === 2 && bodyShardIndex(id) !== bodyShardIndex(ids[0]!)) {
+        ids.push(id);
+      }
+    }
+    expect(ids).toHaveLength(3);
+    const payload: BodiesPayload = {
+      generatedAt: "2026-07-25T00:00:00.000Z",
+      count: 3,
+      bodies: {
+        [ids[0]!]: largeBody(4_600_000),
+        [ids[1]!]: largeBody(4_600_000),
+        [ids[2]!]: largeBody(1_000_000),
+      },
+    };
+    const before = serializedShardByteLengths(payload);
+    expect(before.reduce((sum, bytes) => sum + bytes, 0)).toBeLessThan(BODY_TOTAL_TARGET_BYTES);
+    expect(before[bodyShardIndex(ids[0]!)])
+      .toBeGreaterThan(BODY_SHARD_TARGET_BYTES);
+    const result = enforceShardedBodiesBudget(payload, [
+      priorityEntry({ id: ids[0]!, importance: 3 }),
+      priorityEntry({ id: ids[1]!, importance: 1 }),
+      priorityEntry({ id: ids[2]!, importance: 3 }),
+    ]);
+    expect(result.prunedIds).toEqual([ids[1]]);
+    expect(result.fileBytes.every((bytes) => bytes <= BODY_SHARD_TARGET_BYTES)).toBe(true);
+    expect(result.bytes).toBeLessThanOrEqual(BODY_TOTAL_TARGET_BYTES);
   });
 });
 
@@ -265,7 +356,7 @@ describe("enforceBodiesBudget (LL-411)", () => {
     // JSON envelope itself ({"generatedAt":...,"count":0,"bodies":{}})
     // cannot be satisfied by any amount of pruning -- there is nothing left
     // to remove below the envelope. This never happens with the production
-    // DEFAULT_BODY_BUDGET_TARGET_BYTES (9,000,000), which is many orders of
+    // The legacy sidecar target (9,000,000), which is many orders of
     // magnitude larger than the envelope, but a misconfigured
     // BODY_BUDGET_TARGET_BYTES override should still behave safely (prune
     // everything, report the real byte count, no crash/hang) rather than
@@ -528,4 +619,3 @@ describe("carryForwardBudgetEvictedIds (LL-411 follow-up: cross-run state loss)"
     expect(a).toEqual(["aaa", "zzz"]);
   });
 });
-

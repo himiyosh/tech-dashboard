@@ -52,12 +52,14 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import {
-  DEFAULT_BODY_BUDGET_TARGET_BYTES,
   bodyBudgetPriorityRank,
   carryForwardBudgetEvictedIds,
-  enforceBodiesBudget,
-  serializedByteLength,
 } from "../worker/src/bodies-budget.ts";
+import {
+  enforceWorktreeBodyBudget,
+  planBodyStorageWrites,
+  readBodyStorageWorktree,
+} from "./body-storage-worktree.ts";
 import { applyDeterministicContentFallback } from "../worker/src/content-fallback.ts";
 
 export { synchronizeArchiveTagsFromLive };
@@ -996,6 +998,9 @@ export function synchronizeBodyHealth(
     next.bodyBudgetBytes = budget.bytes;
     next.bodyBudgetPruned = budget.pruned;
     next.bodyBudgetEvictedIds = budget.evictedIds;
+    next.bodyStorageMode = budget.mode;
+    next.bodyShardBytes = budget.fileBytes;
+    if (budget.mode === "shards-v1") next.bodyShardDigests = budget.digests;
   }
   return next;
 }
@@ -1156,11 +1161,8 @@ export async function main(argv = process.argv.slice(2)) {
     referenceAt,
   );
 
-  let bodiesWrite = null;
-  const bodiesExisted = existsSync(bodiesPath);
-  const rawBodies = bodiesExisted
-    ? readJson(bodiesPath)
-    : { generatedAt: referenceAt, count: 0, bodies: {} };
+  const bodyStorage = readBodyStorageWorktree(".", index.health);
+  const rawBodies = bodyStorage.payload;
   const bodies = validateBodiesPayload(rawBodies, bodiesPath);
   const referenceMs = Date.parse(referenceAt);
   const bodyRetentionEntries = dedupedLive.filter((entry) =>
@@ -1180,10 +1182,6 @@ export async function main(argv = process.argv.slice(2)) {
     bodyAliases,
     index.entries,
   );
-  const bodyBudgetTargetBytes = Math.max(
-    1,
-    Number(process.env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
-  );
   // Apply the SAME byte-budget enforcement as the Publisher runtime
   // (worker/src/index.ts's runBodyPipeline) so migration never leaves
   // data/bodies.json above the operational target even if prior runs (or a
@@ -1192,10 +1190,11 @@ export async function main(argv = process.argv.slice(2)) {
   // is NOT exempt -- if every lower tier is already gone and the payload is
   // still over target, evergreen is pruned too, as a last resort (LL-411
   // follow-up 2).
-  const bodyBudget = enforceBodiesBudget(
+  const { targetBytes: bodyBudgetTargetBytes, result: bodyBudget } = enforceWorktreeBodyBudget(
+    bodyStorage,
     bodyMerge.payload,
     bodyRetentionEntries,
-    bodyBudgetTargetBytes,
+    process.env.BODY_BUDGET_TARGET_BYTES,
   );
   const bodyEntryById = new Map(bodyRetentionEntries.map((entry) => [entry.id, entry]));
   const bodyBudgetPrunedByTier = { evergreen: 0, importance3: 0, importance2: 0, importance1: 0, orphan: 0 };
@@ -1216,9 +1215,10 @@ export async function main(argv = process.argv.slice(2)) {
   const bodyBacklog = bodyRetentionEntries.filter((entry) =>
     needsBody(entry, bodyPresentIds)
   ).length;
-  const bodyCountDrift = rawBodies.count !== bodyBudget.payload.count;
-  if (!dryRun && (!bodiesExisted || bodyMerge.changed || bodyBudget.changed || bodyCountDrift)) {
-    bodiesWrite = { path: bodiesPath, payload: bodyBudget.payload };
+  const writePlan = planBodyStorageWrites(".", bodyStorage, bodyBudget.payload);
+  if (bodyStorage.mode === "shards-v1"
+    && writePlan.fileBytes.reduce((sum, bytes) => sum + bytes, 0) !== bodyBudget.bytes) {
+    throw new Error("body shard byte budget differs from staged migration files");
   }
   // Carry forward the previously recorded budget-evicted ids (from the
   // existing index.health, before this migration overwrites it) using the
@@ -1282,6 +1282,9 @@ export async function main(argv = process.argv.slice(2)) {
         bytes: bodyBudget.bytes,
         pruned: bodyBudget.prunedIds.length,
         evictedIds: persistedBodyBudgetEvictedIds,
+        mode: bodyStorage.mode,
+        fileBytes: writePlan.fileBytes,
+        digests: writePlan.digests,
       },
     );
   }
@@ -1297,7 +1300,7 @@ export async function main(argv = process.argv.slice(2)) {
       ),
     },
     { path: statsPath, value: statsPayload },
-    ...(bodiesWrite ? [{ path: bodiesWrite.path, value: bodiesWrite.payload }] : []),
+    ...writePlan.writes,
   ];
   writeJsonTransaction(filesToWrite, {
     journalPath,

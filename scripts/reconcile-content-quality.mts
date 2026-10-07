@@ -35,10 +35,13 @@ import {
   needsBody,
 } from "../worker/src/body-queue.ts";
 import {
-  DEFAULT_BODY_BUDGET_TARGET_BYTES,
   carryForwardBudgetEvictedIds,
-  enforceBodiesBudget,
 } from "../worker/src/bodies-budget.ts";
+import {
+  enforceWorktreeBodyBudget,
+  planBodyStorageWrites,
+  readBodyStorageWorktree,
+} from "./body-storage-worktree.ts";
 import { hasSufficientBodySourceGrounding } from "../harness/pipeline/source-grounding.ts";
 import {
   hasForeignScriptContamination,
@@ -100,9 +103,8 @@ if (typeof index.generatedAt !== "string" || !Array.isArray(index.entries)) {
 const referenceMs = Date.parse(index.generatedAt);
 if (!Number.isFinite(referenceMs)) fail("data/index.json generatedAt is not a date");
 
-const storedBodies = validateBodiesPayload(
-  JSON.parse(readFileSync(bodiesPath, "utf8")),
-) as {
+const bodyStorage = readBodyStorageWorktree(root, index.health);
+const storedBodies = validateBodiesPayload(bodyStorage.payload) as {
   generatedAt: string;
   count: number;
   bodies: Record<string, { bodyJa?: unknown; bodyEn?: unknown }>;
@@ -172,20 +174,22 @@ const retainedBodies: Record<string, unknown> = {};
 for (const [id, record] of Object.entries(keptBodies)) {
   if (retentionIds.has(id)) retainedBodies[id] = record;
 }
-const budgetTargetBytes = Math.max(
-  1,
-  Number(process.env.BODY_BUDGET_TARGET_BYTES ?? DEFAULT_BODY_BUDGET_TARGET_BYTES),
-);
-const budget = enforceBodiesBudget(
+const { targetBytes: budgetTargetBytes, result: budget } = enforceWorktreeBodyBudget(
+  bodyStorage,
   {
     generatedAt: storedBodies.generatedAt,
     count: Object.keys(retainedBodies).length,
     bodies: retainedBodies,
-  } as Parameters<typeof enforceBodiesBudget>[0],
-  retentionEntries as unknown as Parameters<typeof enforceBodiesBudget>[1],
-  budgetTargetBytes,
+  } as Parameters<typeof enforceWorktreeBodyBudget>[1],
+  retentionEntries as unknown as Parameters<typeof enforceWorktreeBodyBudget>[2],
+  process.env.BODY_BUDGET_TARGET_BYTES,
 );
 const nextBodies = budget.payload;
+const bodyWrites = planBodyStorageWrites(root, bodyStorage, nextBodies);
+if (bodyStorage.mode === "shards-v1"
+  && bodyWrites.fileBytes.reduce((sum, bytes) => sum + bytes, 0) !== budget.bytes) {
+  fail("body shard byte budget differs from the staged data");
+}
 const bodyPresentIds = new Set(Object.keys(nextBodies.bodies));
 const bodyBacklog = retentionEntries.filter((entry) =>
   needsBody(entry as unknown as NormalizedEntry, bodyPresentIds)
@@ -211,6 +215,9 @@ const nextHealth = synchronizeBodyHealth(
     bytes: budget.bytes,
     pruned: budget.prunedIds.length,
     evictedIds,
+    mode: bodyStorage.mode,
+    fileBytes: bodyWrites.fileBytes,
+    digests: bodyWrites.digests,
   },
 );
 const entriesChanged = liveEntries.some((entry, i) => !isDeepStrictEqual(entry, index.entries![i]));
@@ -229,9 +236,7 @@ const writes: { path: string; value: unknown }[] = [];
 if (entriesChanged || !isDeepStrictEqual(index.health, nextHealth)) {
   writes.push({ path: indexPath, value: nextIndex });
 }
-if (storedBodies.count !== nextBodies.count || prunedGrounding.length + prunedProvenance.length > 0 || budget.changed) {
-  writes.push({ path: bodiesPath, value: nextBodies });
-}
+writes.push(...bodyWrites.writes);
 if (writes.length === 0) {
   console.log("Nothing to write: data is already consistent.");
   process.exit(0);

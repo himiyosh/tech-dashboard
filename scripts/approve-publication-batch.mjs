@@ -21,10 +21,10 @@
  *                                              [--now <iso>] [--dry-run]
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { readBodyStorageFromDisk } from "./body-storage-node.mjs";
 
 const MANIFEST = "data/approved-entries.json";
 const INDEX = "data/index.json";
-const BODIES = "data/bodies.json";
 
 function arg(name, fallback = null) {
   const index = process.argv.indexOf(`--${name}`);
@@ -53,7 +53,7 @@ if (!Number.isInteger(limit) || limit < 1) {
 }
 
 const index = JSON.parse(readFileSync(INDEX, "utf8"));
-const bodies = JSON.parse(readFileSync(BODIES, "utf8")).bodies ?? {};
+const bodies = readBodyStorageFromDisk().bodies;
 
 // The approval clock must move forward: the manifest is append-only and the
 // parser rejects an approvedAt that precedes the previous row.

@@ -176,6 +176,12 @@ function applyCacheToBodies(cache) {
 
 // --- main -------------------------------------------------------------------
 async function main() {
+  // The historical backfill writes a single file directly and cannot commit
+  // four related shards with the Publisher's main-SHA CAS.
+  if (Array.from({ length: 4 }, (_, index) =>
+    fs.existsSync(`data/bodies-${index}.json`)).some(Boolean)) {
+    throw new Error("local single-file body backfill is retired after shard migration; use the Publisher body Queue");
+  }
   const applyOnly = process.argv.includes("--apply-only");
   const cache = loadCache();
 

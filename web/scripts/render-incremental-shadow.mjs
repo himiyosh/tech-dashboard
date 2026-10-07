@@ -19,6 +19,13 @@ import {
 } from "../functions/_shared/localized-metadata.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../../worker/src/publisher-contract.ts";
 import {
+  BODY_SHARD_PATHS,
+  LEGACY_BODY_PATH,
+  assertBodyStorageMode,
+  loadBodyStorage,
+} from "../src/lib/body-shards.ts";
+import { assertBodyShardDigests } from "../src/lib/body-shard-integrity.ts";
+import {
   MAX_INCREMENTAL_SEARCH_DELTA_BYTES,
   applyDetailAssetShell,
   assertDetailHtmlParity,
@@ -280,7 +287,22 @@ async function renderBundle(values, fullDetailSnapshot) {
   }
 
   const index = readJson(path.join(ROOT, "data/index.json"));
-  const bodies = readJson(path.join(ROOT, "data/bodies.json"));
+  const shardContents = BODY_SHARD_PATHS.map((shard) =>
+    existsSync(path.join(ROOT, shard))
+      ? readFileSync(path.join(ROOT, shard), "utf8")
+      : null
+  );
+  const bodyStorage = loadBodyStorage(
+    existsSync(path.join(ROOT, LEGACY_BODY_PATH))
+      ? readJson(path.join(ROOT, LEGACY_BODY_PATH))
+      : null,
+    shardContents.map((content) => content === null ? null : JSON.parse(content)),
+  );
+  assertBodyStorageMode(bodyStorage.mode, index.health);
+  if (bodyStorage.mode === "shards-v1") {
+    assertBodyShardDigests(shardContents, index.health?.bodyShardDigests);
+  }
+  const bodies = bodyStorage.payload;
   const entriesById = new Map(index.entries.map((entry) => [entry.id, entry]));
   const searchRecords = impact.incremental.searchDeltaIds.map((id) => {
     const entry = entriesById.get(id);

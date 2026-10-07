@@ -3,7 +3,7 @@
 このリポジトリで Copilot / agent が作業する際の絶対ルールと、過去事象から得た Lessons Learned を集約する。
 新しい知見を得たら **同一セッション内で本ファイルに追記** すること（ユーザーから指摘される前に行う）。
 
-> **共通ルールの参照**: 探索・計画・検証・ブランチ運用・UI 品質・セキュリティ・依存管理など**プロジェクト横断の作業ルール**は `.github/knowledge/agentic-rules/agentic-engineering-rules.md`、応答スタイル・言語・自己改善・エンコーディングなど**振る舞いルール**は `.github/knowledge/agentic-rules/agent-persona-rules.md` に集約している。常時適用の短い安全契約は `.github/instructions/agentic-core.instructions.md` にあり、詳細 2 文書は必要な作業に入る時だけ読む（Progressive Disclosure）。共通ルールの導入元は himiyosh/agentic-rules の `v0.6.1` (`5792d8bb3ea23d3812e10c5b7f4ced214ac73753`)、platform `copilot` / profile `core`。本ファイルは、それらと重複しない **本プロジェクト固有の絶対制約 (R-xxx)** と **障害履歴 (LL-xxx)** だけを保持する。共通ルールと矛盾する場合は、より安全な側（確認必須・破壊回避）を採用し、判断が割れる箇所はユーザーに確認する。
+> **共通ルールの参照**: 探索・計画・検証・ブランチ運用・UI 品質・セキュリティ・依存管理など**プロジェクト横断の作業ルール**は `.github/knowledge/agentic-rules/agentic-engineering-rules.md`、応答スタイル・言語・自己改善・エンコーディングなど**振る舞いルール**は `.github/knowledge/agentic-rules/agent-persona-rules.md` に集約している。常時適用の短い安全契約は `.github/instructions/agentic-core.instructions.md` にあり、詳細 2 文書は必要な作業に入る時だけ読む（Progressive Disclosure）。共通ルールの導入元は himiyosh/agentic-rules の `0.10.0` (`1650f399966b64bddf60890730392d950e2dc7be`)、platform `copilot` / profile `core`。本ファイルは、それらと重複しない **本プロジェクト固有の絶対制約 (R-xxx)** と **障害履歴 (LL-xxx)** だけを保持する。共通ルールと矛盾する場合は、より安全な側（確認必須・破壊回避）を採用し、判断が割れる箇所はユーザーに確認する。
 
 ---
 
@@ -31,6 +31,7 @@
 - GitHubのdefault branchはscheduled Publisherをmainから実行するため `main` のまま維持する。PR作成時は `--base develop` を明示し、CIのbranch-flow jobで誤ったbase/headをfail-closedに拒否する。
 - Publisherのdata-only commitはR-001b/R-026の限定例外としてmainへ直接入る。developへ毎時data commitを複製せず、release mergeはmain側の最新dataを保持する。data conflictがある場合はreleaseを止め、別のworking branchで解消してdevelopへ戻す。
 - developとPRのCIでは36時間の鮮度gateを緩めず、同一のimmutableなremote main SHAの生成dataをunit/Web/E2Eへ配布する。PRが生成dataを明示変更した場合は上書きを拒否し、trackerの新規`data/updates` seedは保持する。main pushは当該commit自身のdataを検証する。
+- ローカルpre-pushに限り、単一の作業branchが現在のremote `origin/develop`を祖先に持ち、**developからの累積PR差分**がroot/docs/agent rulesのMarkdownまたは鮮度policyの明示4ファイルだけなら、古いdevelop indexの36時間超過をWARNとして許容する。remote SHAとtracking ref、push先/HEAD、差分・file modeを証明できない場合、data/**、WebやPublisher等のアプリ・data生成コード、未知path、main/releaseのpushは厳格な36時間gateに戻す。secret scanは従来のpush rangeのまま、全unitの他のassertion、Web build、該当E2Eは維持し、`ALLOW_STALE_DATA=1`をhookから渡さない (LL-495)。
 - fingerprintを変える変更はdevelopへのintegration merge時にはproduction Workerをdeployしない。consumer-first / bridge-lastのR-027 rolloutは `develop -> main` releaseのexact headに対して実施する。
 
 ### R-002: Cloudflare Pages project 設定の固定値
@@ -100,20 +101,20 @@
 - `npm run summaries:apply-cache` は品質 gate を通過した title / summary / importance / tags だけを `data/index.json` に反映する。本文を index へ書き戻してはならない。
 - index に旧 `bodyJa` / `bodyEn` が残る migration では、実本文を `data/bodies.json` へ移してから index を空にする。完了前に `tests/data-schema.test.ts` の summary 必須、index 本文なし、bodies schema の各 gate を通す。
 
-### R-012: live index は要約のみ・本文は別ファイル (body-file architecture / LL-115)
+### R-012: live index は要約のみ・本文はID-hashの4 shard (LL-115/411)
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
-- **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は `data/bodies.json` (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, model, generatedAt} } }`) に entry id をキーに格納する。index は本文フリーで軽量維持し CI サイズ予算 (8MB, LL-112) を超えない。完了前に `tests/data-schema.test.ts` の「live index は本文を持たない」ゲートを通す。
-- 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し `data/bodies.json` に蓄積する。生成は I/O 主体で Cloudflare の CPU 予算に当たらない (LL-115)。決定論的 filler body は**生成・格納しない** (LL-112)。
+- **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は記事IDのUTF-8 FNV-1a hashで `data/bodies-0.json`〜`data/bodies-3.json` の4 JSON shardに分配する (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, chat?, model, generatedAt} } }`)。indexは本文フリーで8MB予算を守り、保存mode・各shardの実ファイルbytesのSHA-256を同じcommitのindex healthへ保存する。移行後は一部だけでなく4件全部が欠落しても旧sourceへのfallbackで隠さない。移行前のみ旧 `data/bodies.json` を読み、移行後は復旧用に凍結して削除しない。
+- 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し、Node Publisherが4 shardへ反映する。生成はI/O主体でCloudflareのCPU予算に当たらない (LL-115)。決定論的filler bodyは**生成・格納しない** (LL-112)。
 - 本文の保持対象は **evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日**に限定する。対象外の古い低重要度本文は `scripts/clean-source-noise.mjs` が prune し、要約と原文リンクは維持する。Worker、migration、`tests/data-schema.test.ts` は `worker/src/body-queue.ts` の同じ retention helper を使う。
-- 上記の retention 判定 (boolean gate) とは**別に**、`data/bodies.json` は実バイト量の運用 target (`worker/src/bodies-budget.ts` の `DEFAULT_BODY_BUDGET_TARGET_BYTES`、既定 9,000,000 bytes) を**必ず**超えない (`enforceBodiesBudget()` は record が 1 件でも残る限り `bytes <= targetBytes` を保証する、LL-411)。target 超過時は importance 1 (直近のみ) → importance 2 → importance 3 の順で同 tier 内は最古から prune し、evergreen は最優先 (pruned last) だが**絶対的に免除されるわけではない**。全ての低優先 tier を prune してもなお target を超える場合は evergreen も last-resort として同じ決定論的順序 (最古から) で prune する。「保護」とは「最後に prune される」であって「決して prune されない」ではない (LL-411 follow-up)。`tests/data-schema.test.ts` の 10MB hard ceiling は据え置き、この target より大きい安全網として維持する (target 自体を上げて hard ceiling へ寄せない)。Publisher runtime (`worker/src/index.ts` の `runBodyPipeline`) と `scripts/clean-source-noise.mjs` の migration は同じ `enforceBodiesBudget()` を共有する。
-- 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(id)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
-- 既存本文の index→bodies.json 移行は `npm run body:migrate` (`scripts/migrate-bodies-to-file.mjs`)。
+- retention boolean gateと別に、**合計18,000,000 bytes (hard 20,000,000)・各shard 9,000,000 bytes (hard 10,000,000)**の実serial化byte予算を同時に守る。`enforceShardedBodiesBudget()` は importance 1 → 2 → 3 → evergreenを同tier最古から最小件数だけpruneし、evergreenもlast-resort対象から除外しない。Publisherとmigrationは同じhelperを使う。旧source単体には従来の9MB target/10MB hard ceilingを維持し、旧sourceの上限を黙って引き上げない。初回移行はimmutableな同一main SHAから本文・chat・metadataを完全複製してindex healthと4 shardを1 data-only CAS commitで書き、旧9MB予算による除外IDだけ次runのbounded Queue選定へ戻す。data-only生成物をdevelop PRへ直接同梱しない。
+- 記事詳細の本文表示は `web/src/lib/bodies.ts` の `bodyForEntry(entry)` を使う。本文が無いエントリは要約を主役にし原文リンクを出す (偽の生成予告を出さない)。`isDeterministicFallbackEntry` (web 分類) は本文を見ない。
+- 旧index→単一sidecarの `npm run body:migrate` は4 shard導入前だけ使用する。4 shard移行後は書戻しを拒否する。
 
 ### R-013: publisher は publish 前に summary fallback を適用し、index を本文フリーに保つ
 - production Node publisher は `data/index.json` を commit する前に deterministic **summary** fallback を全 live entry に適用し、`summaryJa` / `summaryEn` のいずれかが空の payload を publish しない (両言語必須)。本文は fallback 対象にしない。
 - summary/body Queue job は収集元の `contentSnippet` を保持し、sparse/title-only inputで十分なsource groundingがないentryを生成対象にしない。公式title/snippetから決定論的に抽出できるbounded profile（料金plan・対象地域・価格/決済、または既存productのnamed platform展開）の範囲でmaterially矛盾する生成title/summary/bodyは、consumer書込み、cache read、Publisher最終化、bodies sidecar mergeの全境界で共通のdeterministic contractにより拒否し、summaryはsource excerptを伴うpendingへ戻す。不合格cacheは採用せず、十分なgroundingがある場合だけ再生成対象へ戻す。
 - `titleEn` が空で、実 `summaryEn` の先頭文から安全に導出できる場合は publish 前に自動補完する。pending / contaminated / bare title echo の要約や source-language title のコピーを `titleEn` へ書かず、手動 `titleen:fill` と Publisher は `harness/pipeline/title-en.ts` の同じ品質契約を使う。
-- publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない (LL-073 family: stale cache 由来の本文混入で index を再肥大化させない)。本文は `data/bodies.json` 経路でのみ更新する。
+- publisher は publish 時に index entry の `bodyJa` / `bodyEn` を**必ず空にする** (LL-115)。`s:` cache hit が旧 body を持っていても index には載せない。本文は4 shard経路でのみ更新し、旧単一sourceは凍結する。
 - 英語タイトルのみの entry でも `summaryJa` は決定的な日本語テンプレートで埋める。逆も同様。JA / EN UI で cross-language fallback バッジを出さないこと (LL-028)。
 - `isDeterministicFallbackEntry` (web) / `needsGeneratedContent` (worker) はいずれも**要約のみ**で fallback 判定する。本文の有無で publishable を切り替えない (LL-107/LL-112)。
 - publisher runtime contract は `scripts/run-publisher.ts` と `worker/src/**` で共有する。bridge / Queue consumer の品質修正後は、明示承認を得て対象 Worker を deploy し、`publisher.yml` の次 run と data schema gate で本文が index に戻らないことを確認する。
@@ -713,7 +714,7 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 ### LL-072: UX merge で data artifact を古い状態へ巻き戻さない
 - **事象**: `chore(data): update tech dashboard 2026-05-24T23:00:46.610Z` で `data/index.json` は 1419 件まで更新されていたが、その直後の UX / taxonomy merge commit で `data/index.json` が 980 件・`generatedAt=2026-05-23T05:00:49.636Z` に巻き戻り、本番表示が「記事更新停止」に見えた。`data/stats.json` はより新しい時刻のまま残り、artifact 間の generatedAt が乖離していた。
 - **根本原因**: 大きな merge conflict 解消時に UI / taxonomy 差分と data artifact 差分を同時に扱い、最新 `origin/main` の worker-generated data を構造的に保持する確認が不足した。既存 `tests/data-schema.test.ts` は schema / body coverage は見ていたが、`generatedAt` の鮮度と `index` / `stats` / `archive` 間の時刻整合性を検査していなかった。
-- **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、緊急時のみ `ALLOW_STALE_DATA=1`) と artifact generatedAt skew (6h 以内) のゲートを追加する。
+- **対策**: 復旧時は最新正常 worker commit (`48bf5ad`) の `data/index.json` / `data/archive/*` / `data/stats.json` をローカルに戻す。`tests/data-schema.test.ts` に `generatedAt` の古さ (既定 36h、手動の緊急検査のみ `ALLOW_STALE_DATA=1`、hookは渡さない) と artifact generatedAt skew (6h 以内) のゲートを追加する。文書だけのdevelop pre-push例外はLL-495の限定条件による。
 - **教訓**: UI / taxonomy merge では data files を「ついでに解決」しない。完了前に `git log -- data/index.json` と generatedAt / count を確認し、最新 worker commit より古い data を main に載せない。data artifact は index / stats / archive の時刻整合性まで CI で守る。
 
 ### LL-073: taxonomy 修正後に Worker を deploy しないと古い分類で再汚染される
@@ -3268,3 +3269,52 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: R-027のbridge-last順序では、旧bridgeが新版Publisherのfingerprintを拒否する。main mergeと別承認のbridge置換が終わる前は新版jobを処理できず、post-releaseの実結果をpre-mergeに要求すると達成不能な循環gateになる。1 runのbounded repair telemetryも全件進捗の証拠ではない。
 - **対策**: PRE-MERGEはimmutable diff、旧binaryの新job echoを含むRED→GREEN、全chat ingressのコード上の拒否、既存sidecar6発言の保持、別途承認されたconsumerのpublic revision read-backに限定する。POST-MERGE/bridge置換後は実cacheと同じIDのsidecar反映・修復進捗・既存本文の不変を確認し、不能ならproduction完了宣言と追加反映を停止して承認済みrollbackを検討する。provider read-backが無ければ前段で旧drain代替を承認しない。
 - **教訓**: staged rolloutのgateは各段階で実際に観測可能な事実だけを前提にする。code-safetyとproduction livenessを分け、後段でしか起きない副作用を前段の通過条件へ持ち込まない。bounded telemetryを全件の実証に読み替えない。
+
+### LL-494: 保存予算で除外中の本文 Queue に全件の有限 ETA を示さない
+- **事象**: `data/bodies.json` が9MBの保存上限にほぼ達した本番snapshotで、持ち越された`bodyBudgetEvictedIds`に322件あり本文Queueの候補から除外されていた。それでも`bodyBacklog=588`と1 runの上限30件から`bodyQueueDrainEstimateHours=20`が保存され、公開Statusは全件が20時間ほどで処理されるように見えた。直近の実送信は6件だった。
+- **根本原因**: 生成器のcapによる割算は、容量制限による永続的な候補除外も実送信数の変動も考慮しない。保存済みの数値をそのまま公開ETAにすると、Queueが動いていても処理対象外の本文に完了時刻を約束する。
+- **対策**: Webは今回のprune数ではなく持ち越し済みの除外ID集合を検証・重複排除して数える。除外がある間は本文待ちと除外件数を別々に示し、Statusとmetricsの有限ETAを抑止する。未記録と空集合を区別し、Queueの停止・障害・収集再開待ちは従来の状態を保つ。生成器・Queue設定・保存済みartifactは変更しない。
+- **教訓**: throughputからの見込みは、対象の全件が実際に処理可能な場合だけreader-facingに出す。eligibilityと保存budgetはcapとは別のgateであり、持ち越し除外が1件でもあれば全件ETAを隠す。未記録を0件へ補完せず、見込みの有無、待機件数、除外件数、ARIA/機械可読値を同じsnapshotで揃える。
+
+### LL-495: developの古い生成dataは文書だけのpre-pushを止めず、変更範囲で鮮度を判定する
+- **事象**: Publisherのdata-only commitをdevelopへ複製しない方針の下、developのindexは約334時間前で、文書・規則だけのPRでもローカルpre-pushの全unit中の36時間鮮度検査が失敗した。他のdata-schema 56件は通過し、PR CIは既にimmutableな最新main dataを使っていた。
+- **根本原因**: developへ同期しない生成dataと、ローカルhookが無条件にcheckoutのindex時刻を検査する条件が矛盾した。一方、secret scan用の`origin/main..HEAD`は新規branchで過去のdevelop Web変更も含むため、そのpush rangeを文書だけのPR適格判定へ流用すると誤分類する。
+- **対策**: hookとdata-schema testは単一の共有helperで、remote `origin/develop`の実SHA、追跡ref、HEAD/remote push、祖先関係、クリーンなtracked tree、developからの累積diffとfile modeを確認する。文書・規則Markdownとpolicy自身の4ファイルだけが古いindexの**時刻検査のみ**WARNになる。未知path・data・アプリ/生成コード・main/release・ambiguous ref・Git errorはstrictに戻し、secret scanのpush range、全unitの他の検査、Web build、E2E、CI側の36時間gateは変えない。
+- **教訓**: feature→developとmainの生成data更新を分離したbranch topologyでは、ローカル鮮度検査の適用範囲もPRの実差分で限定する。例外を設ける場合はpushで増えたcommitだけでもmainとの差分でもなく、検証済みdevelop baseからの**全PR差分**を見る。baseが動いた時や判定不能時は例外を取り消し、少なくとも一つの受入条件を黙って省いた成功形にしない。
+- **追補**: 共有worktreeで`GIT_`prefixの環境変数を全削除したremote照合は、実環境がremote通信へ使う`GIT_CONFIG_*`や`GIT_ASKPASS`まで消して`ls-remote`を失敗させた。一時repoのtestではこれらを消す必要があっても、本番hookの子processは`GIT_DIR`・`GIT_WORK_TREE`・`GIT_INDEX_FILE`などrepository-pinning変数だけを除き、通信設定を維持する。推測で認証値を表示せず、sanitized subprocessのexit codeで切り分ける。
+
+### LL-496: shard 全欠落と再シリアライズしたハッシュを移行済みsnapshotの証拠にしない
+- **事象**: 4 shardの一部欠落は検出できたが、indexが移行済みを宣言した後に全4件が欠落すると、Web、Publisher、plain Node readerが凍結済み旧本文を正常な現行値として読み得た。WebはJSON importを再シリアライズしてSHA-256を照合したため、実ファイルbytesが変更されても同じJSON値ならindexのdigestと一致し得た。
+- **根本原因**: ファイルの有無だけでlegacy/shard modeを決め、同じcommitのindex healthが宣言する保存modeを入力にしていなかった。また、JSONとして等価な内容とGitへcommitする正確なbyte列を同一視した。
+- **対策**: 旧modeとshard modeをindex healthへ照合し、shard modeで全件欠落した場合もfail-closedにする。Webはraw importの実bytesをdigest検査し、Publisherとmigration、plain Node reader、CI snapshotも同じmode・全件inventory・digestを検証する。旧sourceは削除せず復旧に必要な明示手順だけで利用する。
+- **教訓**: 非原子的な表示側fallbackで保存形式の移行を隠さない。旧fileが残っていても新modeが確定したら新集合の完全性が必須であり、indexが宣言したmode・個数・hashを実bytesで検証する。JSONの再シリアライズは元fileのintegrity proofにならない。
+
+### LL-497: Web unitの旧file mockは実shard globと独立にしないとfull suiteだけ失敗する
+- **事象**: legacy modeでは通るWebのunit testが、4 shardを一時配置して全unitを実行した時に5件失敗した。indexを旧fixtureだけでmockしたtestは実shardと保存modeが一致せず、旧`bodies.json`だけをmockしたtestは実shardが優先され、想定した5件でなく現行1,156件を読んだ。
+- **根本原因**: JSON importのmockは`import.meta.glob`が見つける別の実ファイルを隔離しない。片方のstorage modeしか持たない開発データで成功したことを、移行前後の全unitで成功する証拠として扱った。
+- **対策**: synthetic indexを使うcollection testは本文reader自体をmockし、本文の品質・出典判定はstorage入力を受けるpure helperへ独立fixtureを渡す。実readerのmode、index marker、raw shard digestは別のschema/Publisher/Web build testで検証する。legacyと4 shardの双方で同じfull suiteを実行する。
+- **教訓**: 保存形式の移行でfixtureを旧fileだけへ差し込むと、globや自動発見した新fileがmockをすり抜ける。生成dataの任意modeに依存しないunit fixtureを作り、productionのfail-closed guardをtest環境だけで無効化しない。
+
+### LL-498: 新しいworktreeではunitが通ってもhookのroot Playwright binaryが無い場合がある
+- **事象**: 4 shardのWeb build、全unit、全Playwrightを個別に通した後、通常のpre-push hookはunitとbuildを通過したが`node_modules/.bin/playwright: No such file or directory`でPublisher E2E開始前にpushを中断した。rootの`node_modules`には`@playwright/test`がなく、`npm test`の`pretest`はWeb依存だけを復元していた。
+- **根本原因**: 新設worktreeへrootの全devDependencyは自動復元されず、直接起動したhookはrootのbinary pathを要求する。別の実行経路でPlaywrightが見つかっても、そのpathの存在は保証されない。
+- **対策**: 失敗したpushの前に保全したdataは承認どおり原bytesとSHA-256へ復元し、rootで`npm ci --no-audit --no-fund`を実行して`@playwright/test`と実行ファイルを確認する。検査skipは使わず、同じfresh-data手順と通常hookで再試行する。
+- **教訓**: 新しいworktreeのpush前には`pretest`が復元する対象とhookが直接参照するbinaryを別々に確認する。unitのPASSや`npm run test:e2e`の成功をroot `node_modules/.bin`の存在証明と読み替えず、missing dependencyはmanifestを変えず`npm ci`で再現可能に復元する。
+
+### LL-499: GitHub Actionsのbranch-filtered runs一覧をPublisher鮮度の正本にしない
+- **事象**: Worker Healthが`publisher run is stale`で失敗した時、`publisher.yml/runs?branch=main&per_page=10`は9月のrunを先頭に返した。同時刻のunfiltered `?per_page=40`には10月5日のmainで成功した`Publisher / reconcile`が含まれ、同じvalidatorはunfiltered一覧でエラー0件、filtered一覧で約39,600分の誤った遅延を報告した。
+- **根本原因**: GitHub APIのserver-side `branch=main`検索が観測時には新しいmain runを返さず、古い部分集合を鮮度判定へ入力した。API内部でなぜその差が生じたかは未確認である。`isPublishingRun()`は既に各runの`head_branch === "main"`を確認していたため、server-side filterへの依存は不要だった。
+- **対策**: workflow-runs APIから上限40件のunfiltered一覧を取得し、mainのscheduled runまたは明示されたpublish/reconcile dispatchだけをローカルで選ぶ。developなど他branchとdiagnostic dry-runは除外し、mainのrunが無い、失敗した、または本当に古い場合のfail-closed判定と180分閾値は維持する。実APIのfiltered/unfiltered対照に加え、混在runとmain不在の回帰testで固定した。
+- **教訓**: 監視APIのfilter付き結果が古いと疑う場合は、同時刻のboundedなunfiltered結果とrun単位のbranch/eventを比較してから原因を切り分ける。アラート閾値を緩めて隠すのではなく、取得量を制限した上でローカルの既存適格判定を適用し、別branchやdry-runの成功で本番失敗を覆わない。
+
+### LL-500: 合成exact検索はsitemap掲載対象だけを選び、候補ありの失敗を隠さない
+- **事象**: 5分判断ジャーニーがHomeの内部`/e/`リンクを検索候補にした結果、本文なしで`noindex`・sitemap非掲載の記事を選び、Pagefindの索引に無い記事のexact検索で失敗した（#357）。
+- **根本原因**: 内部記事リンクと検索index収録を同一視した。LL-464の表示バッジ除去・識別子の除外では、候補記事が実際に索引可能かを保証できなかった。
+- **対策**: built `/sitemap.xml`のcanonical記事pathを検証し、Home Timeline内でsitemap掲載済みかつ検索に適したタイトルの候補を選ぶ。該当候補なしの場合だけ一致しないqueryで真の0件と3回復リンクを確認し、候補ありなら選んだhrefの可視exact hitを必須とし、見つからなければstepを失敗させる。本文なし/noindex先頭と全候補非掲載をfixtureで固定した。
+- **教訓**: synthetic検索の「候補なし」は正当な空状態だが「選定済み候補が検索で見つからない」は回帰である。両分岐を明確に分け、内部linkやtitle条件を検索索引の代理にしない。
+
+### LL-501: quality-audit CLI の型は root typecheck の検査範囲外
+- **事象**: `npm run typecheck` が成功しても、監査 CLI と回帰testを指定して直接TypeScript検査すると、Knowledge entry の `title` が optional である型と、カテゴリ件数の未定義可能な添字にエラーが出た。今回の stdout/no-write 追加でCLIを直接検査して初めて判明した。
+- **根本原因**: root `tsconfig.json` の `include` は `harness/**/*.ts` のみで、`.claude/skills/quality-audit/run.ts` と `tests/quality-audit-cli.test.ts` は対象外だった。Vitestによる実行成功も型の整合性を証明しない。
+- **対策**: 監査entryの必須titleを型に明示し、カテゴリ集計は既存値の未定義可能性を扱った。root typecheckに加えて、CLIとテストを明示指定した`tsc --noEmit`（rootのstrict/noUncheckedIndexedAccess等と同じ設定）を実行し、固定時計のfixtureで既定保存と読み取り専用の同一レポートを検証した。
+- **教訓**: package/scriptの型検査範囲を先に確認し、root typecheckが含まないTypeScript CLIを編集したら、そのCLIと対応testを明示指定して検査する。runtime testのPASSやroot typecheckのPASSを、対象外ファイルの型安全性の証拠にしない。

@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
+import { readBodyStorageFromDisk } from "../../scripts/body-storage-node.mjs";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
 import {
   effectiveTitleLanguage,
@@ -661,7 +662,11 @@ test.describe("TECH Dashboard smoke", () => {
       "desktop ranked Top-3 stays above the fixed footer in the first viewport",
     ).toBeLessThanOrEqual(desktopDensity.visibleBottom - 8);
     await expect(page.getByRole("link", { name: /今日の重要記事/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /検索/ })).toBeVisible();
+    await expect(
+      page.locator("button[data-search-trigger]:visible").and(
+        page.getByRole("button", { name: /検索/ }),
+      ),
+    ).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /カテゴリ/ })).toBeVisible();
     await expect(page.locator(".banner-quick-links").getByRole("link", { name: /arXiv/ })).toBeVisible();
     await expect(page.locator("section.stats")).toHaveCount(0);
@@ -1013,6 +1018,127 @@ test.describe("TECH Dashboard smoke", () => {
     await expect(footerRun).toHaveAccessibleName(
       new RegExp(stateCopy[runState as keyof typeof stateCopy]),
     );
+  });
+
+  test("body budget exclusions suppress the full-backlog ETA across Status, footer, and metrics", async ({ page, request }) => {
+    const response = await request.get("/metrics.json");
+    expect(response.ok()).toBe(true);
+    const metrics = await response.json();
+    expect(metrics).toHaveProperty("bodyQueueBudgetExcludedCount");
+    if (metrics.bodyQueueBudgetExcludedCount !== null) {
+      expect(Number.isSafeInteger(metrics.bodyQueueBudgetExcludedCount)).toBe(true);
+      expect(metrics.bodyQueueBudgetExcludedCount).toBeGreaterThanOrEqual(0);
+      if (metrics.bodyQueueBudgetExcludedCount > 0) {
+        expect(metrics.bodyQueueDrainEstimateHours).toBeNull();
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/status/");
+    const card = page.locator('[data-health-scope="body-queue"]');
+    const footer = page.locator("footer .footer-run-link");
+    const recordedCount = metrics.bodyQueueBudgetExcludedCount ?? "unknown";
+    await expect(card).toHaveAttribute("data-body-queue-budget-excluded-count", String(recordedCount));
+    await expect(footer).toHaveAttribute("data-body-queue-budget-excluded-count", String(recordedCount));
+    if (typeof recordedCount === "number" && recordedCount > 0) {
+      await expect(card).toHaveAttribute("data-body-queue-drain-hours", "unknown");
+      await expect(card.locator("[data-queue-label-ja]")).toContainText(
+        `保存容量の上限で ${recordedCount} 件は本文生成対象外`,
+      );
+      await expect(page.locator('[data-metric-scope="body-backlog"] .page-hero-metric-detail')).toContainText(
+        `保存容量の上限で ${recordedCount} 件は本文生成対象外`,
+      );
+    }
+
+    const runAt = new Date().toISOString();
+    const applySnapshot = async (excludedCount: string, nowMs = Date.parse(runAt)) => {
+      await page.evaluate(({ excludedCount, runAt, nowMs }) => {
+        const hero = document.querySelector<HTMLElement>("section.status-hero[data-live-run-health]");
+        const footer = document.querySelector<HTMLElement>("footer .footer-run-link");
+        const card = document.querySelector<HTMLElement>('[data-health-scope="body-queue"]');
+        const backlog = card?.querySelector("strong");
+        if (!hero || !footer || !card || !backlog) throw new Error("Queue surfaces missing");
+        for (const node of [hero, footer]) {
+          node.dataset.runLastAt = runAt;
+          node.dataset.runCopilotOk = "true";
+          node.dataset.runSourcesFailed = "0";
+          node.dataset.runSourcesAttempted = "2";
+          node.dataset.runSourcesOk = "2";
+          node.dataset.runFallbackPercent = "0";
+          node.dataset.runPendingSummaries = "0";
+        }
+        backlog.textContent = "42";
+        for (const node of [card, footer]) {
+          node.dataset.bodyQueueMode = "enabled";
+          node.dataset.bodyQueueBacklog = "42";
+          node.dataset.bodyQueueDrainHours = "20";
+          if (excludedCount === "missing") {
+            node.removeAttribute("data-body-queue-budget-excluded-count");
+          } else {
+            node.dataset.bodyQueueBudgetExcludedCount = excludedCount;
+          }
+        }
+        card.dataset.bodyQueueEnqueueCap = "30";
+        document.dispatchEvent(new CustomEvent("techdb:clocktick", { detail: { nowMs } }));
+      }, { excludedCount, runAt, nowMs });
+    };
+
+    await applySnapshot("17");
+    await expect(card).toHaveAttribute("data-body-queue-state", "active");
+    await expect(card).toHaveAttribute("data-body-queue-backlog", "42");
+    await expect(card.locator("strong")).toHaveText("42");
+    await expect(card).toHaveAttribute("data-body-queue-drain-hours", "unknown");
+    await expect(footer).toHaveAttribute("data-body-queue-drain-hours", "unknown");
+    await expect(footer).toHaveAttribute("data-body-queue-budget-excluded-count", "17");
+    await expect(card.locator("[data-body-queue-cap-ja]")).toHaveText("");
+    await expect(card.locator("[data-body-queue-cap-en]")).toHaveText("");
+    await expect(card.locator("[data-queue-label-ja]")).toContainText(
+      "全件の完了見込みなし · 本文待ち 42 件 · 保存容量の上限で 17 件は本文生成対象外",
+    );
+    await expect(card).toHaveAccessibleDescription(/本文待ち 42 件.*保存容量の上限で 17 件/);
+
+    await applySnapshot("17", Date.parse(runAt) + 7 * 3_600_000);
+    await expect(card).toHaveAttribute("data-body-queue-state", "waiting-for-run");
+    await expect(footer).toHaveAttribute("data-body-queue-state", "waiting-for-run");
+    await expect(card.locator("[data-queue-label-ja]")).toContainText(
+      "収集再開待ち · 本文待ち 42 件 · 保存容量の上限で 17 件",
+    );
+    await expect(card).toHaveAttribute("data-body-queue-drain-hours", "unknown");
+
+    await applySnapshot("17");
+    await page.locator('.lang-btn[data-lang="en"]').click();
+    await expect(card).toHaveAccessibleName("AI explainer queue");
+    await expect(card).toHaveAccessibleDescription(/42 awaiting explainers.*storage limit excludes 17/);
+    await expect(card.locator("small > .i18n-ja")).toBeHidden();
+    await expect(card.locator("small > .i18n-en")).toBeVisible();
+    await expect(card.locator("[data-queue-label-en]")).toHaveText(
+      "no full-backlog ETA · 42 awaiting explainers · storage limit excludes 17 from explainer generation",
+    );
+    for (const width of [390, 768]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      const geometry = await card.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          scrollWidth: document.documentElement.scrollWidth,
+          viewportWidth: window.innerWidth,
+        };
+      });
+      expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+      expect(geometry.left).toBeGreaterThanOrEqual(0);
+      expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth);
+    }
+
+    await applySnapshot("0");
+    await expect(card.locator("[data-queue-label-en]")).toHaveText("about 20h at current throughput");
+    await expect(card.locator("[data-body-queue-cap-en]")).toContainText("30/run cap");
+    await expect(card).toHaveAttribute("data-body-queue-drain-hours", "20");
+    await expect(footer).toHaveAttribute("data-body-queue-drain-hours", "20");
+    await applySnapshot("missing");
+    await expect(card.locator("[data-queue-label-en]")).toHaveText("about 20h at current throughput");
+    await expect(card).not.toHaveAttribute("data-body-queue-budget-excluded-count");
+    await expect(footer).not.toHaveAttribute("data-body-queue-budget-excluded-count");
   });
 
   test("pending cards share the summary queue state and suppress stale ETAs", async ({ page }) => {
@@ -2545,7 +2671,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: SummaryFixtureEntry[];
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, unknown>;
     };
     const summaryOnlyEntry = index.entries.find(
@@ -2589,7 +2715,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     // web/src/lib/bodies.ts suppresses a stored body whose entry carries no
@@ -2727,7 +2853,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string; title?: string; contentSnippet?: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     // Same render-guard derivation as the provenance test above: the previous
@@ -4240,6 +4366,7 @@ test.describe("TECH Dashboard smoke", () => {
     const bodyQueueMerged = await bodyQueueMetric.getAttribute("data-body-queue-merged");
     const bodyQueueEnqueued = await bodyQueueMetric.getAttribute("data-body-queue-enqueued");
     const bodyQueueEnqueueCap = await bodyQueueMetric.getAttribute("data-body-queue-enqueue-cap");
+    const bodyBudgetExcluded = await bodyQueueMetric.getAttribute("data-body-queue-budget-excluded-count");
     expect(summaryQueueMode).toMatch(/^(enabled|disabled|missing-binding|error|unknown)$/);
     expect(summaryQueueState).toMatch(
       /^(active|clear|waiting-for-run|paused|unavailable|error|unknown)$/,
@@ -4277,13 +4404,23 @@ test.describe("TECH Dashboard smoke", () => {
           `applied to body file +${bodyQueueMerged}`,
         );
       }
-      if (bodyQueueEnqueueCap !== "unknown") {
+      if (bodyQueueEnqueueCap !== "unknown" && (!bodyBudgetExcluded || bodyBudgetExcluded === "unknown" || bodyBudgetExcluded === "0")) {
         await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
           `上限 ${bodyQueueEnqueueCap}件/run基準`,
         );
         await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
           `based on a ${bodyQueueEnqueueCap}/run cap`,
         );
+      }
+      if (bodyBudgetExcluded && bodyBudgetExcluded !== "unknown" && Number(bodyBudgetExcluded) > 0) {
+        await expect(bodyQueueMetric).toHaveAttribute("data-body-queue-drain-hours", "unknown");
+        await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
+          `保存容量の上限で ${bodyBudgetExcluded} 件は本文生成対象外`,
+        );
+        await expect(bodyQueueMetric.locator("small > .i18n-en")).toContainText(
+          `storage limit excludes ${bodyBudgetExcluded} from explainer generation`,
+        );
+        await expect(bodyQueueMetric.locator("[data-body-queue-cap-ja]")).toHaveText("");
       }
       if (bodyQueueEnqueued === "unknown") {
         await expect(bodyQueueMetric.locator("small > .i18n-ja")).toContainText(
@@ -7161,6 +7298,10 @@ test.describe("TECH Dashboard smoke", () => {
     expect(metrics.totalCategories).toBeGreaterThan(0);
     expect(metrics.bodyQueueBacklog === null || Number.isFinite(metrics.bodyQueueBacklog)).toBeTruthy();
     expect(metrics.bodyQueueDrainEstimateHours === null || Number.isFinite(metrics.bodyQueueDrainEstimateHours)).toBeTruthy();
+    expect(metrics.bodyQueueBudgetExcludedCount === null || Number.isSafeInteger(metrics.bodyQueueBudgetExcludedCount)).toBeTruthy();
+    if (metrics.bodyQueueBudgetExcludedCount > 0) {
+      expect(metrics.bodyQueueDrainEstimateHours).toBeNull();
+    }
     expect(metrics.bodyQueueEnqueued === null || Number.isFinite(metrics.bodyQueueEnqueued)).toBeTruthy();
     expect(metrics.bodyQueueMerged === null || Number.isFinite(metrics.bodyQueueMerged)).toBeTruthy();
     expect(metrics.bodyQueueEnqueueCap === null || Number.isFinite(metrics.bodyQueueEnqueueCap)).toBeTruthy();
@@ -8778,7 +8919,7 @@ test.describe("TECH Dashboard smoke", () => {
         contentSnippet?: string;
       }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, unknown>;
     };
     const withBody = index.entries.find(
@@ -8814,7 +8955,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<DetailAddressableEntry & { id: string; tags?: string[] }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { bodyJa?: string; bodyEn?: string }>;
     };
     const escapeTagRegex = (value: string): string =>
@@ -12907,7 +13048,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const hasChat = (entry: { id: string }) => (
@@ -13239,7 +13380,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: Array<{ s: "a" | "b"; ja: string; en: string }> }>;
     };
     const address = index.entries.find((entry) =>
@@ -13273,7 +13414,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodyFile = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodyFile = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const chatEntry = index.entries.find((entry) => (
@@ -13303,7 +13444,7 @@ test.describe("TECH Dashboard smoke", () => {
     const index = JSON.parse(readFileSync("data/index.json", "utf8")) as {
       entries: Array<{ id: string }>;
     };
-    const bodies = JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+    const bodies = readBodyStorageFromDisk() as {
       bodies: Record<string, { chat?: unknown }>;
     };
     const entry = index.entries.find((item) => (

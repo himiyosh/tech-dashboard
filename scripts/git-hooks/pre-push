@@ -71,6 +71,14 @@ if [ "$secret_scan_ran" = "0" ]; then
   fi
 fi
 
+# Only a verified, cumulative docs/rules/policy diff against current origin/develop
+# may relax the local index age check. Never reuse the origin/main secret-scan range:
+# it includes older develop code changes unrelated to this PR.
+develop_docs_only=0
+if printf '%s\n' "$input" | node "$ROOT/scripts/pre-push-data-freshness.mjs" "$remote" "$url"; then
+  develop_docs_only=1
+fi
+
 # ---------- テスト実行 ----------
 if [ "${SKIP_TESTS:-}" = "1" ]; then
   echo "[pre-push] SKIP_TESTS=1 → npm test をスキップします"
@@ -80,7 +88,11 @@ else
   # ローカルでも再現しやすくなる。
   rm -rf "$ROOT/node_modules/.vite" "$ROOT/node_modules/.cache" 2>/dev/null || true
   echo "[pre-push] npm test を実行しています..."
-  if ! npm --prefix "$ROOT" test; then
+  test_env=(env -u ALLOW_STALE_DATA -u PRE_PUSH_DEVELOP_DOCS_INPUT -u PRE_PUSH_DEVELOP_DOCS_URL)
+  if [ "$develop_docs_only" = "1" ]; then
+    test_env+=(PRE_PUSH_DEVELOP_DOCS_INPUT="$input" PRE_PUSH_DEVELOP_DOCS_URL="$url")
+  fi
+  if ! "${test_env[@]}" npm --prefix "$ROOT" test; then
     echo "[pre-push] ERR: テスト失敗。push を中断します"
     echo "[pre-push] テストをスキップして push したい場合: SKIP_TESTS=1 git push"
     exit 1
@@ -130,6 +142,15 @@ else
       exit 1
     fi
     echo "[pre-push] OK: E2E PASS"
+  fi
+fi
+
+# A long Web build/E2E can outlive a change to develop or the remote feature
+# branch. Do not push under a stale docs-only exemption after that change.
+if [ "$develop_docs_only" = "1" ]; then
+  if ! printf '%s\n' "$input" | node "$ROOT/scripts/pre-push-data-freshness.mjs" "$remote" "$url"; then
+    echo "[pre-push] ERR: develop base, pushed refs, or docs-only scope changed during verification"
+    exit 1
   fi
 fi
 

@@ -30,6 +30,10 @@ const dryRun = process.argv.includes("--dry-run");
 const root = process.cwd();
 const indexPath = join(root, "data", "index.json");
 const bodiesPath = join(root, "data", "bodies.json");
+if (Array.from({ length: 4 }, (_, index) =>
+  existsSync(join(root, "data", `bodies-${index}.json`))).some(Boolean)) {
+  throw new Error("legacy index-to-body migration cannot write after four-shard migration");
+}
 
 const index = JSON.parse(readFileSync(indexPath, "utf8"));
 const entries = Array.isArray(index.entries) ? index.entries : [];

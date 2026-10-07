@@ -16,6 +16,7 @@ import {
 } from "./data.ts";
 import { SOURCE_META } from "./source-meta.ts";
 import { STATS } from "./stats.ts";
+import { countBudgetExcludedIds, displayableBodyDrainHours } from "./queue-health.ts";
 
 export interface DashboardMetrics {
   generatedAt: string;
@@ -52,6 +53,7 @@ export interface DashboardMetrics {
   bodyQueueMode: string | null;
   bodyQueueBacklog: number | null;
   bodyQueueDrainEstimateHours: number | null;
+  bodyQueueBudgetExcludedCount: number | null;
   bodyQueueEnqueued: number | null;
   bodyQueueMerged: number | null;
   bodyQueueCandidates: number | null;
@@ -97,6 +99,9 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
       ? null
       : Math.max(0, numeric);
   };
+  const bodyQueueBudgetExcludedCount = countBudgetExcludedIds(
+    WORKER_HEALTH?.bodyBudgetEvictedIds,
+  );
 
   return {
     generatedAt: latestIso([GENERATED_AT, STATS.generatedAt, WORKER_HEALTH?.lastRunAt ?? null]),
@@ -145,10 +150,14 @@ export function buildDashboardMetrics(now = new Date()): DashboardMetrics {
       ? WORKER_HEALTH.bodyQueueMode
       : null,
     bodyQueueBacklog: optionalMetric(WORKER_HEALTH?.bodyBacklog),
-    bodyQueueDrainEstimateHours: optionalMetric(
-      WORKER_HEALTH?.bodyQueueDrainEstimateHours
-      ?? WORKER_HEALTH?.bodyDrainEstimateHours,
+    bodyQueueDrainEstimateHours: displayableBodyDrainHours(
+      optionalMetric(
+        WORKER_HEALTH?.bodyQueueDrainEstimateHours
+        ?? WORKER_HEALTH?.bodyDrainEstimateHours,
+      ),
+      WORKER_HEALTH?.bodyBudgetEvictedIds,
     ),
+    bodyQueueBudgetExcludedCount,
     bodyQueueEnqueued: optionalMetric(WORKER_HEALTH?.bodyEnqueued),
     bodyQueueMerged: optionalMetric(WORKER_HEALTH?.bodyMerged),
     bodyQueueCandidates: optionalMetric(WORKER_HEALTH?.bodyEnqueueCandidates),

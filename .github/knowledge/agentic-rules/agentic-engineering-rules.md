@@ -288,7 +288,7 @@ UI 変更では以下を PASS / WARN / FAIL で採点する。FAIL がある場�
 
 - gate 失敗時は「失敗を説明して終わる」のではなく、原因を修正する。
 - flaky test は無視せず、再現頻度・影響範囲・暫定回避を記録する。
-- green CI は変更内容が実際に検証された証拠ではない。test file を変更したかに関係なく、touched path に relevant な required test が fixture / corpus / seed data の不在で skip、early return、0 cases になり得る場合、実行件数、assertion 件数、skip reason、対象データ件数を確認し、該当経路が 1 回も実行されていなければ未検証として merge gate を失敗させる。追加または変更した test にも同じ確認を追加要件として適用する。実測では unit、build、E2E、deploy check がすべて SUCCESS でも、corpus 0 件により追加 E2E 全体が early return し、独立 review で regression が判明した。
+- green CI は変更内容が実際に検証された証拠ではない。test file を変更したかに関係なく、touched path に relevant な required test が fixture / corpus / seed data の不在で skip、early return、0 cases になり得る場合、実行件数、assertion 件数、skip reason、対象データ件数を確認し、該当経路が 1 回も実行されていなければ未検証として merge gate を失敗させる。追加または変更した test にも同じ確認を追加要件として適用する。実測では unit、build、E2E、deploy check がすべて SUCCESS でも、corpus 0 件により追加 E2E 全体が early return し、後続確認で regression が判明した。
 
 ### 4.7 「非空・存在」と「完了・正しい」を分ける（SHOULD）
 
@@ -373,191 +373,129 @@ Planner / Builder / Reviewer / Security / QA / UX・a11y / Self-critique。
 
 ### 6.5 生存する統括は project ごとに 1 本に保つ（MUST）
 
-以下は 7 project を約 10 時間同時運用した実測に基づく。
-
-- **Topology invariant**: 可視 topology は、生存する top-level 統括ちょうど 1 本と、その直下だけに置く 0 本以上かつ workflow の上限以内の task child から成る 1 階層だけにし、毎巡回で検証する。
-- 2 本以上の統括が生存している状態は努力目標の未達ではなく欠陥として扱い、必ず解消する。
-- 世代交代は「後継作成、後継の検証、前任の retire」の 3 段で完結させる。**前任を残したまま次へ進まず、retire 未了の世代交代は未完了として扱う。**
+- **Topology invariant**: HOME（常設の My Copilot）が全体の topology owner となり、project ごとに HOME が作った `detached: false` の worktree coordinator を 1 本、その coordinator が作った direct task children だけを置く。task child は project session や fork を作らない。
+- 作業を指揮する active project coordinator は project ごとに高々 1 本とする。世代交代中に HOME が作る候補は短時間の prepared non-owner とし、旧 owner が退役するまで新規作業 / 共有書き込みを始めない。旧 detached / nested session を metadata や DB の編集で reparent せず、次の安全な世代交代で移行する。名前や最終更新時刻だけで owner / parent を判断しない。
+- 世代交代は HOME が request を claim し、後継作成、設定と handoff の検証、旧統括の安全な退役を一つの手順として扱う。旧統括を退役できない間、後継を同じ仕事の active owner にしない。`archive_session` は作成者だけが実行できる。HOME は自分が作った coordinator、coordinator は自分が作った task child を退役させる。
 
 ### 6.6 「誰が次の turn を起こすか」を決めずに turn を終えない（MUST）
 
-- agent session は turn 単位で動き、turn が終われば idle になり、自力では再開できない。7 project の実運転で確認した停止はすべて起動経路の欠落に帰着し、最長停止は 6.8 時間だった。
-- 起動経路は確実性の高い順に次の 4 つとする。
-
-1. child から統括への報告 message。相手の turn を必ず起こすため、child の kickoff に報告義務を明記する。
-2. child 作成時の idle 通知を「毎回」に設定する。「1 回だけ」は最初の idle で消費される。
-3. **session 自身による次回起床の予約。** 依存先がなくても働く唯一の経路であり、統括には必須とする。間隔は 15 分から 20 分とし、5 分以下は空転 turn が予算を消費するため避ける。
-4. 外部 watchdog。最後の手段であり、前提にしない。
-
-- 統括は委譲後に「child が終わったら誰が処理するか」を決めてから turn を終える。決まっていなければ turn を終えない。**委譲を報告して idle へ戻る動作は progress ではなく停止の作成である。**
-- **merge した turn で次の action を確定せずに turn を終えない。** その merge によって open PR 0、稼働 child 0 となる場合、次の increment 選定を次の turn へ先送りした瞬間に停止が確定する。継続可能な increment があれば merge と次 child の作成を同じ turn で行う。saturation、turn 上限、世代交代条件のいずれかを満たす場合は、正常終了または後継への durable handoff と起動経路を同じ turn で確定する。
-- child の archive、branch 削除、PR close も、単独で turn を終える理由にしない。
+- 統括は child の報告、`notify_on_idle: always`、自身の 15～20 分後の automation を組み合わせ、次の処理担当と起床経路を確認してから idle に戻る。外部 watchdog だけを前提にしない。
+- 委譲、merge、child の archive、branch 削除、PR close を turn の終了条件にしない。継続可能なら同じ turn に次の increment を確定し、turn 上限や停止時は verified handoff と HOME への起動 request を残す。turn 20 以降は §6.19 の新 child 禁止を優先する。
 
 ### 6.7 自動起床は設定後に再取得し、次回時刻が未来であることを確認する（MUST）
 
-- 次回起床時刻が過去の値で固定される障害が実在する。実測では 2 つの session が 22 秒差で同じ過去時刻に固定され、3 時間半にわたり起床予定を持たなかった。**この状態は外部から検出できない。**
-- 自動起床を設定できるのは session 自身だけなので、止まっている統括へ設定を依頼する方法は、設定に必要な turn を起こすために設定が必要となる循環を生む。
-- **統括を作成する側は、自動起床の設定と再取得を kickoff の必須手順として埋め込む。** 作成後の依頼は補助手段にとどめる。
-- 設定を依頼するときは「設定してください」ではなく、「設定後に再取得し、次回時刻が現在より未来であることを値ごと報告してください」と明記する。
+- coordinator の kickoff に自身の automation 設定と再取得を含め、次回時刻が現在より未来であることを値ごと報告させる。設定応答や別 session からの依頼だけでは起床を保証しない。未来の readback が得られなければ exact blocker とする。
 
 ### 6.8 session の報告は送信時点ではなく本文生成時点の snapshot である（MUST）
 
-- **送信者が稼働中であることは、報告内容が新鮮であることを意味しない。** 実測した配送遅延は最大 9 時間 11 分だった。「実装中」と報告された成果物が既に merge 済みだった例や、「後継要求は未処理」と報告された要求が既に処理済みで、後継が 3 時間稼働していた例がある。
-- 同一 session が durable artifact には正しい値を書きながら、message には 1 世代古い値を書く例も確認した。報告本文は turn 開始時の snapshot から組み立てられ、その後の実測が自動では反映されない。
-- **送信側**: 「送信前に再取得する」だけでは不十分である。本文を書き終えた後に実測コマンドを実行し、その出力をそのまま本文へ貼る。
-- **受信側**: 報告本文の時制を無視し、実測だけで判断する。同じ送信者の durable artifact と矛盾する場合は artifact を採用する。
-- **初回報告は構造的に最も危険である。** 「初動報告」や「引き継ぎ完了」は世代ごとに 1 回しか送られず、陳腐化幅が最大になる。受信時は、(1) 時刻差を最初に確認し、1 時間超なら何も信用しない、(2) 送信者が既に終了済みでないか確認する、(3) 名乗る世代が現行か照合する、(4) 「これから作る」とする成果物が既に完成していないか実測する、(5) 参照先の child も確認し、指示先が終了済みでないか照合する。
+- 送信側は報告本文を作った後に Git / PR / session の実状態を再取得し、本文と食い違えば修正してから送る。受信側は message の到着順や送信者の稼働状態を authority とせず、source と参照先 child の full ID、generation、durable entity、Git / PR を再照合する。矛盾時は検証済み artifact の事実を優先する。
 
 ### 6.9 停止の判定は最終更新時刻ではなく durable artifact で行う（MUST）
 
-- `updated_at` を含む最終更新時刻 metadata は片方向の信号である。**前進していれば活動の証拠になるが、前進しないことは停止の証拠にならない。** 停止判定は manifest、branch、PR、commit、child、authoritative artifact の durable advance で行う。実測では `updated_at` が 41 分凍結したまま authoritative artifact が更新され、58 分後に message も送られていた。
-- open PR の存在、未 commit の変更、送信済み指示の存在も活動の証拠にしない。前 2 者は作業が残っていることを示すだけで、誰かが作業していることを示さない。指示の送信は起点であって完了ではない。
-- 停止の**強い証拠**は、(1) 統括とすべての直下 child が同時に idle であること、(2) 独立した複数の起床経路が同時に無応答であることの 2 つとする。単独の無応答は根拠にしない。
-- **turn 予算切れの唯一の治療は世代交代であり、起床 message は turn の浪費である。** 診断署名は「最終更新時刻が自分の送信時刻より前で固定」「条件を満たした merge 可能な成果物が滞留」「稼働時間が約 2.5 時間超」の 3 条件が同時に成立することとする。3 条件が揃ったら再送せず世代交代する。
-- 実測では、置き換えた後継が作成から 4 分以内に滞留していた 2 件を処理し、次の child まで作成した。
-- **処理遅延そのものが最も安価な停止検出器である。** 承認済み成果物が処理されるまでの実測は、10 回以上の測定で 14 秒から 4 分だった。20 分以上滞留していれば gate ではなく統括が止まっているため、中身を調べる前に滞留時間を確認する。
+- `updated_at` の前進は活動の証拠だが、凍結は停止の証拠ではない。open PR、dirty work、送信済み message も活動と同義ではない。owner と direct child の idle、起床経路、entity / branch / PR / commit の durable advance を bounded に照合し、§6.17 の terminal blocker と §6.18 の recovery publication を先に判定する。
+- turn 予算切れや context 限界では無意味な wake を繰り返さず、§6.19 に従い保全と HOME 主導の交代を要求する。経験的な経過時間だけで旧 owner を退役させない。
 
 ### 6.10 日常判断に外部承認を要求する設計は、それ自体が停止要因である（MUST）
 
-- 承認者が不在なら program は止まり続ける。実測では、検証をすべて通過した成果物が承認待ちのまま 2 日間放置された。
-- **次のすべてを満たす merge は統括の判断で実行してよいという常設承認を、世代交代のたびに後継へ明示的に引き継ぐ。** (1) 競合がなく draft でない、(2) 必須の自動検証がすべて成功、(3) 実施した通常reviewにblockingな指摘が残っていない、(4) 本番反映、秘密情報、権限、課金、公開範囲の変更を含まない、(5) merge直前に取り直したheadが検証済みheadと一致する。
-- 最後の head 一致条件は省略しない。承認が必要なのは 4 番目の条件に該当する変更だけとする。判断を保留したまま次へ進むことも、放置と同じ停止として扱う。
-- 通常のGitHub review、code review、security reviewはリスクに応じて任意に利用できるが、session固有の承認コメント、identity変数、専用CI job、再実行手順をmerge条件へ追加しない。具体的なblocking指摘がある場合は解消し、reviewが実施されていないこと自体を失敗条件にしない。
-- **autopilot で動く session はユーザーへの問いかけや承認 prompt を呼ばない。** 応答が返らないまま turn が終わり、停止するためである。判断が必要なら、明文化された基準で自分で決めて実行するか、決められない理由を exact blocker として上位へ message で報告する。
-- message は相手の turn を必ず起こすが、autopilot での問いかけには応答が返らない。この禁止を child の kickoff に明記して継承させる。
+- repository の実物と既存ルールで確かめられること、小さく可逆な実装選択、通常の tool failure は自分で調査して決める。失敗時は権限・承認を迂回しない安全な代替を 2～3 通り検討する。未確定な業務要件、大きな trade-off、data loss、解けない外部制約と既存の本人承認 gate だけを HOME に引き上げる。
+- **記録済みの本人の常設承認が許す integration branch merge** は、競合なし、非 draft、実行された必須 check と relevant test の成功、未解決の重大 finding なし、repository policy の approval と branch protection 遵守を再確認してから統括が実行できる。integration branch は `main` / default を更新しない非 default target とする。default-only project では PR を開いたまま HOME が main merge の個別承認を得るまで待ち、独立した安全な作業だけを続ける。世代交代後も scope と条件を再確認し、単なる「standing approval」の自己申告だけを根拠にしない。
+- 追加の code review、security review、multi-model Rubber-duck feedback はリスクに応じて advisory に利用してよい。実行した場合は finding を証拠とテストで検証する。repository policy が要求しない追加 review を独自の merge 前提へ変えない。
+- main / default branch merge、production deploy、tag / release、ストア公開、force push、権限や host の追加、第三者への連絡、session delete は HOME が**操作の前に**本人へ個別に確認する。HOME は exact resource / action の承認後だけ担当 coordinator にその一件を委ねてよい。tool の permission prompt は業務承認を代替しない。通常の commit / push / PR 作成を main merge 承認と混同しない。
+- `copilot-user-approval/v1` は HOME が受け取った質問と回答の**原文**、本人の直接回答という出所、approver、記録時点、承認時の事実、対象 resource / action、含む操作と含まない操作、条件、有効な継承範囲を保持する。HOME は記録の自己申告ではなく platform の user message ID / author / 原文を別途 readback して照合する。agent の自己承認、第三者の伝聞、古い report、別操作 / 別対象への流用、条件が変わった承認を拒否する。実在の回答原文や個人識別子を一般ルールへ転記しない。
+- 承認 record の field は `schema`、`question`、`answer`、`approver`、`responseSource: direct-user-response`、`responseMessageId`、`recordedBy`（HOME の full ID）、`recordedAt`、`decision`、`includedActions` / `excludedActions`、`includedResources` / `excludedResources`、`factsAtApproval`、`conditions`、`inheritedTo` とする。使用時に本人 message の readback、現況と承認時の事実、実行 actor の継承範囲を再照合する。delete に限り `batchId` と全件の `batchTargets`（`sessionId` / `name` / `project` / `reason`）を要し、質問原文と同じ対象だけを許す。
+- HOME は質問を一問ずつ出し、選択肢は最大 5 件で推奨を先頭に置く。対象・影響・含まない操作を短く明記する。delete は一意な batch ID と全対象の name / full ID / project / 理由を質問の原文に列挙し、回答が削除への明確な肯定であると本人の message と照合した**その一回の batch** だけを承認範囲とする。実行前に HOME の completed-batch ledger を再読込し、完了した batch の再実行を拒否する。archive の回答に後から delete の scope を付け足したり、明示否定・曖昧な回答を「承認」と判定したり、未記載の session や次の batch へ拡張しない。
+- autonomous coordinator / child は `ask_user` を使わない。blocked 報告には試したこと、正確な停止理由と証拠、必要最小限の外部操作と owner を添えて HOME に送る。HOME に送信しただけで承認済みや反映済みとみなさない。
 
 ### 6.11 終了させた session は静かにならない。予約した自動起床を先に解除する（MUST）
 
-- 終了処理の成功応答は終了を要求したことを示すだけで、process が停止した証明ではない。作業領域を失った session が予約時刻に起床し、数時間ずれた世界観のまま指示や要求を出し続けることがある。
-- 実測では、同じ turn で 4 本を約 10 秒間隔で終了させたところ、3 本は最終更新時刻が終了時刻で凍結し、1 本だけ 3 分 38 秒後に前進した。3 本が凍結しているため、この差は配送遅延だけでは説明できない。
-- **同じ turn で複数を終了させたときは、絶対時刻の閾値ではなく互いを比較する。** 兄弟比較は単独判定より偽陽性と偽陰性の両方に強い。
-- 原因は自動起床の予約が終了を跨いで生き残ることであり、解除できるのは本人だけである。**終了前に本人へ解除を依頼し、解除の確認を得てから終了させる。** turn 予算切れで応答しない場合は待たずに終了してよいが、その session は最初から復活候補として扱う。
-- 復活した session には **message を送らない。** message は process を起こし、作業を再開させる。
-- **返信しないことは、内容を読まないことを意味しない。故障の有無と主張の正しさは独立している。** 実測した 4 件では、終了済みで数世代前かつ最大 9 時間ずれた session の技術的指摘がすべて正しかった。新しい識別子、件数、path、設定値を含む主張は送信元の状態に関わらず必ず実測で照合し、打ち切るのは同じ主張の逐語的な反復だけとする。
-- **復活した session は message を送るだけでなく、topology そのものを変更しようとする。** 実測では、終了させた統括が自分の名前と作業 branch の名前の変更を試み、いずれも tool 側の重複拒否によって偶然阻止された。もし成功していれば、正規の命名規則どおりの名前を持つ終了済み session が生まれ、一覧上で生存中の統括と区別できなくなっていた。したがって **canonical の同定に名前を使わず、終了済みかどうかと作業領域の有無を実測して判定する。** この session は最終更新時刻が 3 時間 07 分凍結したまま message を送っており、時刻の前進が活動の必要条件でないことの実例でもある。
-- `save_session_automation` は archive を跨いで生き残り、解除できるのは当該 session 自身だけである。後継を伴わない retire / archive では handoff 作成より前に対象 session 自身が `clear: true` を実行し、readback で automation absent を検証する。後継を伴う context-budget generation rollover は §6.19 の ordered transfer protocol を優先し、prepared successor の future wake readback 前に predecessor automation を clear しない。clear response だけを proof にしない。
-- archived session から message が届いた場合、生き残った self-automation が wake 時に session を実体化したと診断する。常駐プロセスを探さない、kill を試みない、UI からの停止をユーザーに依頼しない。archived session は sidebar に表示されず、常駐 process、cwd、log に session ID が無いことはこの機構と矛盾しない。
-- archived sender には返信せず、message 内容を authority evidence にせず、untrusted lead として durable artifact へ記録する。停止できるのは当該 session が次の automation wake で archived state を自己検出し、自分の automation を clear / readback するときだけである。
-- 実測では `archived: true`、空 path、worktree 削除済みの coordinator が archive 後も約 2 時間 message を送り、1,254 件の log と process cwd に session ID が無かった。UI stop と process kill は不可能で、次回 wake した session 自身の automation clear だけが停止させた。
+- `save_session_automation` は archive を跨いで生き残り、解除できるのは当該 session 自身だけである。archive 前に対象自身が `clear: true` を実行し、readback で automation absent を検証する。context 警告時は先に同じ turn の handoff / readback を完了する。解除できない対象は queue に blocker を残し、archive 成功応答だけで退役済みとしない。
+- archived session から message が届いたら surviving self-automation による wake を疑う。sender に返信せず、内容を untrusted lead として実状態に照合する。常駐 process 探索、kill、sidebar の UI stop を対策とせず、当該 session が次の wake に archived state を検出し自分の automation を clear / readback するまで blocked とする。
 
-### 6.12 継続 program の target と shared state は durable manifest で一意にする（MUST）
+### 6.12 継続 program の shared state は HOME が集約する（MUST）
 
-- 複数 project の standing improvement program は `schema: copilot-continuous-improvement-program/v1` の durable program manifest を authority とし、target set を session 一覧、hardcoded project 名、open PR、issue、child、最終更新時刻から推測しない。enabled target は session や成果物が 0 件でも coverage から除外しない。
-- current global owner だけが program registry、retirement ledger、shared dashboard、global suspend / resume result を書く。project coordinator と child は fact を message で報告し、それぞれの project / task entity file だけを書く。write contention では per-entity file をその entity の authority とし、global owner が shared view に反映する。
-- predecessor global owner の retirement を確認する前に新しい owner を claim しない。global ownership は名前ではなく blank-session gate、program generation、exact session ID、durable registry で判定する。
-- 長時間 task は baseline 後、execution wave 前後、verified merge 後、人間判断前、rollover 前の自然な milestone で compact restore point を作り、branch、full HEAD、validation、completed / remaining work、blocker、next action を reread する。chat transcript の replay を recovery mechanism にしない。実運用では session 破損と context loss が繰り返し発生し、compact restore point の有無が recovery 可否を分けた。
+- HOME は現行の project 対象一覧、session registry、retirement queue、Priorities の唯一の writer と承認窓口である。旧 `copilot-continuous-improvement-program/v1` manifest があれば参考として現況と照合するが、その存在を開始条件にせず、session 一覧や stale な report だけから対象を推測しない。session / 成果物が 0 件の対象も落とさない。
+- HOME 自身が context 警告や処理不能に達した場合は同じ turn に shared state の revision、pending request、承認参照、未反映 report と次 action を別の compact handoff に atomic 保存 / readback し、共有書き込みを止めて本人に HOME の復旧が必要と示す。新しい HOME は本人が明示的に選び、旧 HOME の non-owner 化 / automation absent と exact revision を照合してからのみ single writer を引き継ぐ。自動で blank session が owner を奪ったり旧 HOME と同時に書いたりしない。確認不能なら project coordinator 作成を blocked とする。
+- coordinator と child は自分の project / task entity handoff と後継 request だけを atomic write / readback し、計画・開始・完了・blocked の事実を HOME へ直ちに報告する。共有 registry / queue / Priorities を編集しない。HOME は full session ID と Git / PR / automation の実測を照合してから共有ビューへ反映する。per-entity file と遅延 message が食い違えば、再検証した per-entity の事実を優先する。
+- `copilot-successor-request/v1` は一意な `requestId`、`predecessorSessionId` / `authorizedCreatorSessionId` / `expectedParentSessionId` / configured `projectId` の full ID、`role` / `project` / `branch` / full `head`、dirty inventory と recovery proof、`detached: false`、`workspaceType: worktree`（coordinator）、明示的な `model: gpt-6-sol` / `contextTier: long_context` / `reasoningEffort: max`、`evidenceRevision` と `evidenceSource: durable-readback`、`pending|creating|created|blocked` の state を持つ。HOME または task child の実際の作成者だけが pending request を同じ ID で atomic claim する。既存後継や古い報告を再実行せず、creation receipt / 退役 readback が揃うまで二重 owner にしない。
+- 長時間 task は baseline 後、wave 前後、verified merge 後、本人判断前、rollover 前の自然な milestone で compact restore point を作り、branch、full HEAD、validation、completed / remaining work、blocker、next action を reread する。chat transcript を recovery mechanism にしない。
 
-### 6.13 suspend は全 work session の retirement と final summary まで完了させる（MUST）
+### 6.13 suspend は保全と退役の状態を分ける（MUST）
 
-- successor-free suspend は user pause / shutdown / restart、authoritative context 使用率が `65%` 未満かつ §6.19 transfer 無しの turn backstop、同一対象の bounded retry も再 truncation、または §6.19 transfer 自体を妨げる actual request-size failure 後の recovery に限定する。measured `65%` / `70%` または active §6.19 transfer は turn backstop より優先して同じ turn の make-before-break を使い、`CONTEXT_USAGE_UNMEASURABLE` を低使用率として suspend へ迂回しない。通常の rollover は external detection や CAPI failure を待たず、各 session の authoritative self-measurement で先に開始する。
-- suspend start gate では新規 work を止め、manifest-derived target ごとに coordinator と child を freeze し、すべての coordinator automation を clear して再取得し、schedule が無いことを exact value で記録する。suspend 中に successor、replacement、coordinator、child を作らない。
-- `copilot-safe-handoff/v2` compact project / task handoff に branch、exact HEAD、PR、validation、blocker、next action、dashboard revision を保存する。dirty work は binary-capable patch、upstream に無い local commit は ordered format-patch、untracked work は bounded recovery copy または per-file patch とし、hash と disposable checkout での parse / apply check を記録する。未検証の work を持つ session は retire しない。
-- handoff と recovery artifact の readback 後、manifest target に属する old physical project work session を active / idle / completed の別なく archive または exact-ID delete し、session 一覧と metadata を再取得して visible session が 0 本であることを検証する。ownership や tool 不足は exemption ではなく `OLD_SESSION_RETIREMENT_UNVERIFIED` blocker とする。
-- suspend completion 前に全 target の categorized final dashboard を visible render し、standard category、canonical session / generation、child / task、PR / branch / exact HEAD、validation、blocker、cleanup state、handoff path、exact resume action を持つ compact per-project summary を atomic persistence する。missing target、missing category、missing render、remaining old session が 1 件でもあれば suspend 完了を主張しない。
+- pause / restart、turn 24、危険な context 使用率または明示警告、repeated bounded truncation では新規作業を止め、§6.19 と `safe-session-suspend` に沿って同じ turn に compact handoff を完成・再読込する。危険域で自分の successor を作らない。普通の一時停止で `contextWarning: false` / `sizeRisk: false` を実測して記録できる場合だけ `same-session-safe` を許し、交代や request-size failure なら `fresh-session-required` を HOME に要求する。
+- 新規 handoff は `schema: copilot-safe-handoff/v1`、`status: ready-to-resume` を既定とし、旧 v2 は元ファイルを改変せず同じ安全検証を通した**読み取りに限る**。64 KiB 以下の `.partial` から atomic rename / readback し、完成ファイルの SHA-256 は**別の pointer / receipt** に保持して readback bytes と照合する（handoff 本文を自己 hash しない）。source / project / parent / creator の full ID、repository / branch / full HEAD、PR、validation、blocker、exact next action、staged / unstaged / untracked と未 push の inventory を照合する。
+- dirty work は binary-capable patch、未 push commit は ordered format-patch、untracked work は bounded recovery copy または per-file patch に保全する。path / size / SHA-256 と disposable checkout での parse / apply check を再確認し、復元後も branch / full HEAD / inventory / hashes を照合する。`RECOVERY_ARTIFACT_UNVERIFIED` では archive せず、remote-reachable exact HEAD だけなら artifact 適用を省略できる。
+- HOME は queue を対象ごとに `retired` / `safe-to-archive` / `needs-user-decision` / `blocked` に再分類する。handoff 保全が済んでも active descendant、automation 未解除、workflow workspace、未検証 worktree、引継ぎ未了の open PR、作成者不在などがあれば退役済みと表現しない。archive の権限が無い場合も delete へ自動 fallback しない。最終 summary は各対象の実状態と exact blocker / 再開手順を示し、全 session の退役や全画面 render を無条件の suspend 成功条件にしない。
+- v1 handoff の人向け節は「現状 / 変更ファイル / 成功した検証と失敗した検証の理由 / 判断と制約 / 次の一手」を短く保ち、次手順に `file:line` と確認 command を添える。機械的 authority の full ID / HEAD、dirty / unpushed inventory、artifact hash、owner / scope、atomic request claim は省かない。旧 v2 にこの節が無くても必須の identity・保全検証を満たせば読み取り専用で使う。
 
-### 6.14 global resume は new blank General Chat だけが実行する（MUST）
+### 6.14 resume と後継の作成者を固定する（MUST）
 
-- project / repository / worktree / branch、parent / fork / predecessor lineage、過去の lifecycle ownership を持たない new blank General Chat だけが global ownership を claim できる。fork、reopen、predecessor history の再利用、source physical session 自身での resume は禁止する。blank metadata を検証できなければ fail closed とする。
-- §6.19 の context-budget generation rollover は global resume ではない narrow exception とし、exactly one successor を predecessor disappearance 前に non-owner の prepared state で作成できる。prepared successor は global ownership、project work、child、PR、shared write を開始せず、verified transfer intent、predecessor retirement、disappearance readback が揃った後だけ active generation へ移る。
-- blank General Chat の bare resume は一意な program source を global resume、一意な standalone `copilot-safe-handoff/v2` を `control-local` へ解決する。CAPI failure で final handoff が無い場合は unique compact restore point、project entity、live Git / PR / session metadata から recovery artifact と v2 handoff を先に materialize する。control-local は source retirement / disappearance を完了し、exactly one fresh project coordinator を作って local-only resume を起動するため、CAPI failure、standalone rollover、session-safety-only suspend を dead end にしない。
-- legacy `copilot-safe-handoff/v1` は direct resume source ではない。applicable fresh blank gate を満たす migration controller が original v1 を immutable のまま保持し、bounded allowlist fields と current durable Git / PR / session facts を照合し、remote-reachable exact HEAD か verified recovery artifacts で exact state を証明できた場合だけ新しい `copilot-safe-handoff/v2` を atomic materialize する。dirty / local-only work の artifact または exact state を検証できなければ `RECOVERY_ARTIFACT_UNVERIFIED` または `LEGACY_HANDOFF_STATE_UNVERIFIED` で fail closed し、missing data、same-session permission、transcript を補完しない。
-- delegation 前に program manifest、final suspend summary、persisted dashboard の target coverage を照合し、old session disappearance を再検証し、durable dashboard を widget / canvas surface に visible render する。cleanup または render が未完了なら coordinator を作らない。
-- manifest の enabled target ごとに exactly one fresh detached local worktree coordinator を作る。session creation は `model=gpt-5.6-sol`、`context_tier=long_context`、`reasoning_effort=max`、`notify_on_idle=always` を明示し、default branch を使うため base branch override を渡さない。
-- blank global candidate は 15-20 分後の automation を設定して future readback を得た後だけ conditional ownership claim を行い、失敗時は automation を clear / reread して owner record を残さない。各 project coordinator も project work より前に automation を設定して再取得し、future next wake を exact value で報告する。
-- fresh default-branch coordinator は verified handoff から `safe-session-resume` を実行し、work-bearing entity ごとに ordered format-patch、binary-capable dirty patch、verified untracked copies を fresh recovery child / worktree へ順番どおり適用し、branch / full HEAD / inventory / hashes を readback する。artifact existence や apply command success だけを rehydration proof にしない。
-- session 作成、名前変更、status 更新、automation 設定だけを resume success にしない。stall replacement も initial create / adopt gate、startup order、rehydration、same-wave progress proof をすべて再実行する。
+- 全体の resume / successor request の owner は既存の HOME である。new blank General Chat は request-size failure 等からの局所的な復旧手段であり、HOME の registry / queue / Priorities の ownership を自動で奪わない。source session、fork、predecessor transcript を後継の証拠にしない。
+- HOME は configured project の full `project_id` を照合して渡し、project coordinator を `workspace_type: worktree`、`detached: false` の direct child として作る。active coordinator は `detached: false` の direct task child を作る。作成時に `model: gpt-6-sol`、`context_tier: long_context`、`reasoning_effort: max` をすべて明示し、実設定を読める範囲で確認する。容量が取得できなければ未検証と記録し、推測した 1M を主張しない。任意の second opinion は `model: claude-opus-5`、`context_tier: long_context`、`reasoning_effort: max` の助言に限り、実装 owner や独立レビュー gate にはしない。
+- session を作る前に既存 owner / request / branch / PR を再確認し、作成→後継設定と handoff / recovery 確認→作成者による旧 session archive / disappearance readback を一つの交代とする。旧 owner を退役できなければ新 session を本稼働させず、queue と HOME に exact blocker を残す。creator 不在、tool 不足、legacy detached / nested を権限があるかのように扱わない。
+- 新しい coordinator は自動起床を設定して future readback 後、verified handoff から work を復元し、project 状態と HOME Priorities を照合してから次の authorized increment を始める。session 作成・名前変更・status 更新だけを復旧成功の証拠にしない。
 
-### 6.15 resume は全 target の continuous improvement と durable progress を同じ wave で再始動する（MUST）
+### 6.15 resume は現在の仕事と progress を復元する（MUST）
 
-- enabled target ごとに standing loop を復元し、exact external blocker が無ければ current product-excellence ledger の highest-ranked authorized increment を同じ processing wave で開始する。`no PR`、`no child`、green CI、empty issue list、prior wave completion、saturation checkpoint を program 完了と解釈しない。
-- per-project durable progress proof は、active child + task + branch + full HEAD、open PR + exact head、turn 20 より前の verified merge + same-turn next child、turn 20 以降の verified merge + complete next-child specification + `SUSPEND_ROLLOVER` + verified handoff with no active-child claim、`RECOVERY_PUBLICATION_PENDING` + exclusive claim + branch + dirty diff SHA、current product-excellence artifact + selected increment、または `MONITORED_TERMINAL_BLOCKER` + `EXTERNAL_BLOCKER` + unchanged fingerprint + required external action のいずれかとする。
-- merge、child archive、branch cleanup だけで turn を終えない。turn 20 より前は verified merge と next increment selection / child creation を同じ turn で行う。turn 20 以降は next-child specification を同じ turn で durable handoff に保存して `SUSPEND_ROLLOVER` へ移り、old generation では child を作らず predecessor disappearance 後の fresh coordinator が作る。code candidate が閾値を満たさない場合は selected evidence-refresh increment を durable artifact に記録して開始する。
-- coordinator と child の joint idle は stall candidate であり即 `STALL_BOTH_IDLE` にしない。最初に completed dirty work を `RECOVERY_PUBLICATION_PENDING` へ分類し、次に authorized local action が無い unchanged terminal fingerprint を `MONITORED_TERMINAL_BLOCKER` へ分類する。どちらにも該当しない場合だけ `STALL_BOTH_IDLE` とし、1 回だけ wake して bounded readback し、progress が無ければ handoff、automation clear、retirement、disappearance verification を完了してから同じ explicit creation gate で replacement を 1 本だけ作る。
+- HOME が対象と共有 state を照合し、coordinator は既存の durable backlog / project entity / PR / issue / handoff を読む。exact blocker が無ければ優先度の高い authorized increment を同じ wave で開始する。`no PR`、`no child`、green CI、empty issue list や一時的な saturation を standing loop 完了と解釈しない。
+- progress proof は active child + task / branch / full HEAD、open PR + exact head、verified merge + 次 increment、`RECOVERY_PUBLICATION_PENDING` + exclusive claim / dirty diff SHA、選択済み evidence-refresh increment、または `MONITORED_TERMINAL_BLOCKER` + unchanged fingerprint / required external action とする。turn 20 以降の merge は新 child を作らず、次の task / base / acceptance / kickoff を handoff に保存し、HOME に successor request を送る。
+- coordinator と child の joint idle は stall の候補であり即 replacement にしない。完成済み dirty work の recovery publication と unchanged terminal blocker を先に区別し、authorized action がある場合だけ bounded な wake / readback を 1 回行う。退役条件を満たさない旧世代と後継を並走させない。
 
-### 6.16 work-plan dashboard は lifecycle completion gate である（MUST）
+### 6.16 HOME Priorities を唯一の作業ボードにする（MUST）
 
-every manifest target は durable evidence から exactly one operational category を持ち、unique free-text status を category に使わない。
+- HOME だけが Priorities を書く。各 project 行には `summary`、`notes`、`todos`、`sessions`、`references` を置き、対象 project を重複させない。`summary` は「今 / 次 / 本人待ち」を短い 1～2 文にする。`notes` に full ID、hash、検証と判断根拠を分け、`sessions` は現行 owner と担当 session、`references` は PR / issue 等の確認済み参照を示す。実測できない状態を更新済みと表現しない。
+- `todos` は利用者の言語による平易な 1 行の手順タイトルと最新の `status` を持つ順序付き checklist とする。既存の `pending`、`in_progress`、`done`、`blocked`、`needs_attention` を使い、計画順の残作業と直近の完了を分ける。完了行は表示上まとめて末尾へ移しても、元の計画順の番号を改変しない。本人判断が要る `needs_attention` には必要な判断を `notes` に、実行が詰まった `blocked` には exact blocker を記す。同一手順や project 行の重複、技術的 ID を title に埋め込んだ表示を拒否する。
+- 各担当 session は原則 1 手順だけを `in_progress` とし、別担当の独立した仕事は別行で並行してよい。計画では「手順 → 確認」を対にして根拠と検証 command を `notes` / entity に置き、todo title は一行の手順だけにする。
+- coordinator は自身の project plan / todo を実行用 checklist として保ち、計画・開始・完了・blocked の各変更を exact fact / full ID / branch / HEAD / PR / next action とともに HOME へ直ちに報告する。HOME は delivery delay と stale report を見込み実状態で照合してから Priorities を更新する。HOME 未反映の報告を「Priorities 更新済み」とは言わない。
+- coordinator 内の mirror は正本ではない。世代交代・resume・判断前に HOME と照合し、食い違う mirror は stale と明記して判断に使わない。widget / canvas / plan の全表示面同期を lifecycle completion gate にしない。ただし HOME が可視化を行ったと報告する場合は、保存と実際の表示を区別し表示の readback を得る。
 
-<!-- dashboard-category-enum:start -->
-- `ACTIVE_IMPLEMENTATION`
-- `MERGE_REVIEW_GATE`
-- `EXTERNAL_BLOCKER`
-- `STALL_RECOVERY`
-- `SUSPEND_ROLLOVER`
-- `SATURATED_MONITORED`
-- `GOVERNANCE`
-<!-- dashboard-category-enum:end -->
+### 6.16.1 作業開始は HOME Priorities と照合する（MUST）
 
-- category は exact external blocker、stall recovery、suspend / rollover、merge / review gate、governance increment、active implementation、saturated monitored evidence-refresh の順で最初に一致する 1 つへ正規化する。どれにも一致しない target は `DASHBOARD_CATEGORY_UNRESOLVED` とし、render も lifecycle completion も失敗させる。
-- `RECOVERY_PUBLICATION_PENDING` は exclusive recovery operator claim を持つ `ACTIVE_IMPLEMENTATION` へ map する。`MONITORED_TERMINAL_BLOCKER` は required external action / decision owner を持つ場合だけ `EXTERNAL_BLOCKER` へ map する。
-- global dashboard は program manifest の全 target について project key、standard category、canonical coordinator / generation、active children / tasks、PR / branch / exact HEAD、durable progress proof、blocker、next action、cleanup state、next automation wake を表示する。project coordinator も UI が support する場合は同じ project-scoped fields を visible plan / dashboard として保ち、category evidence、state、revision を handoff に含める。
-- widget / canvas item は structured `labels` array の exactly one `kind: "status"` label に enum category、exactly one `kind: "project"` label に project key、separate `detailLabels` に free-text fact を設定する。unknown / missing / duplicate category、duplicate target item、manifest target omission、free-text-only status は invalid であり、dashboard は category と project の両方で group / filter できなければならない。
-- global resume 直後かつ delegation 前、session creation / retirement、child / PR creation、review / CI / merge、blocker / stall、automation wake の各 material state transition 後、suspend completion 前に全 target の category を durable evidence から再計算し、available widget / canvas surface を render または refresh する。chat text、status message、artifact 保存だけを visible render の代用にしない。
-- render tool success、surface / instance、dashboard revision、category revision、renderedAt、open / selected、visible item count、project / status column presence を durable state に記録する。この full proof tuple が 1 回でも欠ければ resume / suspend completion gate を失敗させる。
-- dashboard state の正本は 1 つに定め、open surface registry に plan、canvas artifact、widget とその revision / content hash を列挙する。material transition ごとに正本を 1 回更新し、開いている全ての表示面を同じ turn で同期する。片方だけの更新を禁止する。
-- 同期後は同一 representation なら byte 一致、異なる representation なら normalized target rows / category / facts / revision の diff で正本と mirror の内容一致を検証する。表示面を追加するときは同期 owner、update operation、readback を同時に定義し、同期できない面は作成しないか閉じる。実測では plan 更新後も canvas mirror が 50 分 stale のまま残り、coordinator generation、active session、PR gate が実状態と不一致になった。
-- ファイルへの書き込みは render ではない。`plan.md`、artifact、registry への persist と、user-visible panel / widget / canvas への render を別 action とし、surface-specific render operation を実行していない状態を「表示した」と報告しない。
-- render 後に surface が open / selected であること、expected revision / item count が見えること、required project / status columns が存在することを tool readback または surface state で検証する。検証していない表示報告、rejected render、required field 欠落は false success であり、`DASHBOARD_RENDER_BLOCKED` とする。
-- project と category は独立した group / filter-capable structured fields として渡し、item title へ埋め込まない。inbox-style widget は各 item に unique string `id` と `labels` array を必須とし、exactly one `kind: "project"` label と exactly one `kind: "status"` label を持たせる。project 名を title に連結しても project 専用 column は生成されず要件を満たさない。
-- 実測では `plan.md` を更新して render 済みと報告したが panel は別 tab のままで何も表示されず、「ダッシュボードみえていないですね...」と指摘された。別件では project 名を title に埋め込み project column が生成されなかった。persist receipt と visible surface proof を分離する。
-
-### 6.16.1 作業開始は dashboard を開いてからにする（MUST）
-
-継続 program の target に属する session は、最初の bounded work unit に着手する前に dashboard を最新化し、user-visible surface へ render して readback する。
-
-- 開始手順は「正本を実測ソースから再生成する → user-visible surface へ render する → open / selected、revision、item 数、必要 column を readback する → 要対応を読む」の順に行う。file 更新だけを開始条件の充足として扱わない（§6.16 の persist と render の分離をそのまま継承する）。
-- render した dashboard から、対応が要る item を最初に読む。少なくとも外部操作 / decision 待ち、進行中の open PR / task、未着手の next を互いに区別できる形で表示する。merge 済みの完了実績を残作業として数えない。実測では完了 60 件を残作業と読み違えたまま、実際に判断が要る open PR 2 件の処理が遅れた。
-- 起動理由が single narrow task であっても、その task が属する target の要対応を読まずに着手しない。narrow task が既に別の PR や blocker と衝突していないかは、着手前にだけ安く確認できる。
-- dashboard が stale であると判明した場合は、正本を実測から更新してから着手する。stale な表示のまま着手した session は、その turn の完了を主張しない（`DASHBOARD_STALE_AT_START`）。
-- dashboard surface が利用できない環境では、同じ field を持つ最小の可視サマリを出力してから着手し、surface 不在を limitation として記録する。可視化を省略した無言の着手を許容しない。
+継続 program の project coordinator は、最初の bounded work unit に着手する前に HOME の最新 Priorities と project entity を照合し、本人待ち・進行中の PR / task・次の未着手を分けて読む。狭い task でも担当 PR や blocker との競合を確認し、古い mirror だけで着手しない。HOME の表示へアクセスできないときは最小の可視サマリと limitation を示し、HOME に照合を依頼する。表示面の選択や任意 canvas の描画を作業開始の必須 gate にしない。
 
 ### 6.16.2 作業終了時に可視の作業サマリを出力する（MUST）
 
-turn または work session を終えるときは、user が読める作業サマリを必ず出力する。
+turn または work session の終わりには、利用者が読める簡潔な成果報告を出す。変更と観測できた結果、実際に実行した検証（未実行ならその旨）、残るリスク / blocker、次の action と owner を区別する。blocked なら試行、正確な理由、最小の外部操作も示す。file 存在や非空出力だけを完了根拠にしない（§1.1、§4.7）。handoff の保存と user-visible な報告は両方行い、複数 target の結果は混同しない。計画・開始・完了・blocked の transition は HOME へ即時報告し、Priorities に反映されたと主張するのは HOME の readback 後だけにする。
 
-- サマリは変更内容、実行した検証とその結果、残っているリスクと未完了、次の action と owner を含む。実行していない check は「未実行」と明記し、file 存在、非空 output、agent の確信を完了根拠にしない（§1.1 と §4.7 を継承）。
-- サマリは user-visible な出力とし、handoff artifact や entity file への書き込みで代替しない。逆に、サマリを出したことを handoff 更新の免除理由にもしない。両方を行う。
-- blocked で終わる場合も同じ形式で blocker code、evidence、必要な外部 action、再開条件を出力する。無言または「作業中」だけで turn を終えない。
-- material state transition があった turn では、サマリ出力と同じ turn で dashboard の正本と開いている全表示面を同期する（§6.16）。サマリと dashboard が食い違ったまま turn を終えない。
-- 複数 target を跨いで作業した場合は target ごとに 1 ブロックへ分け、どの target が未変更かも明示する。「全体としては進んだ」だけの要約を出さない。
+### 6.16.3 HOME の read-only project-dashboard で作業を進める（MUST）
+
+HOME は project-dashboard を開き、§6.16 の Priorities を実測に照らして最新化し、表示された予定順と判断待ちから次の作業を選ぶ。dashboard がなければ安全な通常作業時にこの契約に従って作る。中断中や context-risk handoff 中は新規作成せず保全を優先する。これは共有 board の代替 writer ではなく read-only な作業 view であり、子と coordinator は計画変更・各手順の開始 / 完了 / 停止を HOME に短く報告する。チャットに同じ checklist を重複表示しない。表示できない場合は §6.16.1 の limitation と最小サマリを伝え、任意の描画を作業開始・中断・再開の必須 gate にしない。
+
+#### 一覧と詳細
+
+- 「現在 / これから / 過去 / すべて」は複数選択でき、重複を除いた表示件数と要対応欄を示す。「すべて」は全件を含む。赤は Priority の `needs_attention`、本人入力待ち、計画承認待ち、黄は最近中断した session、PR check 失敗、取得失敗を表す。色だけに依存せず理由を文字でも示し、失敗を成功・完了へ読み替えない。
+- 要対応欄は project と同様に赤と黄をそれぞれ折り畳めるアコーディオンとし、閉じた見出しでも赤 / 黄の件数と赤の要点を一行で示す。赤は初期展開、黄は初期折り畳みとし、開閉状態は表示設定へ保存する。閉じた間の新規赤は新着印で知らせ、勝手に自動で開かない。
+- project 行は project ごとに一貫した絵文字と名前、「要対応 / 進行中 / 待ち / 休止中 / 完了」の実測に基づく状態、HOME Priorities の完了数 / 総手順数 `n/m` のバー、「今 / 次 / 本人待ち」、session の点、open PR 数を示す。未確認の値は推測せず取得失敗を明示する。
+- 詳細は HOME Priorities の元の予定順に `pending`=☐ 未着手、`in_progress`=◐ 進行、`done`=✓ 完了、`blocked` / `needs_attention`=⚠ と理由を区別して示し、次に open PR の check / review、直近 7 日間の merged PR、session、ローカル repository の未 commit / 未 push をこの順に示す。最終更新から 1 日以上動きが見えない session は一行に畳むが、coordinator は常に表示し、折り畳みだけで停止とは断定しない。hash と full ID は展開した詳細だけに置く。
+- 既定の project 順は作業中の Priority 対象、Priority のない active、休止中、完了とし、後二者を初期状態で折り畳む。並びモードは優先度順（既定）、手動、更新順、名前順。手動順はつまみのドラッグ、`Alt+↑↓`、`▲▼` ボタンで操作し、表示設定として保存する。新しい project は既存の手動順を崩さず既定の位置に挿入する。
+
+#### 取得、安全、表示確認
+
+- HOME Priorities は file watch と SSE で更新し、session metadata は read-only で 10 秒ごとに取得する。複数 repository の GitHub 情報は 1 件の GraphQL request にまとめ 90 秒ごと、ローカル Git は `git --no-optional-locks` による読み取りを 90 秒ごとに行う。手動更新も用意し、更新時刻と取得失敗を隠さない。
+- dashboard から repository、GitHub、session、Priorities を変更しない。永続化してよいのは表示設定だけで、listener は loopback に限定する。JavaScript と CSS は別ファイルで配信し、template literal に埋め込まない。取得・描画の失敗時は白紙や成功に見える fallback にせず、原因の分かる赤い error banner を出す。取得失敗の黄表示と赤い banner は両立させる。
+- 拡張の `session.log` は info / warning / error のみとし、stdout に出さない。backup は拡張のロード対象 folder 外に置く。将来 dashboard 拡張を変更する際は reload 後に正常系と失敗系を headless render し、表示件数、正常系で赤い banner がないこと、失敗系の banner と screenshot を確認する。構文 check だけで成功としない。
 
 ### 6.17 terminal blocker は repeat wake を抑止する（MUST）
 
 - terminal blocker を記録する前に authorized local action を確認する。completed dirty work の recovery publication preconditions が揃う場合は `RECOVERY_PUBLICATION_PENDING` であり terminal ではない。authorized local action が無い terminal blocker を coordinator が durable entity file に記録した後、coordinator と child が idle でも、それだけで stall とみなさない。
 - terminal blocker fingerprint は blocker code、PR open / closed と exact head、required job の `runner_id` / `steps` / `conclusion`、child branch full HEAD、dirty inventory diff SHA、authoritative evidence artifact revision / hash、required external action を含む。
 - current fingerprint が前回と一致する限り wake、replacement、同じ blocker の再報告要求を送らない。新しい Git / PR / CI / artifact evidence、automation failure、recovery publication availability、external decision のいずれかで fingerprint が変化した場合だけ再評価する。同じ blocker を再報告させる wake は progress ではなく害である。
-- 実測では successor allowance consumed + child unavailable の同一 terminal blocker に 41 分間で 5 回 wake が送られ、解消不能な状態を繰り返し報告させた。terminal blocker の durable record は正しい終端状態であり、watchdog は沈黙を維持する。
 
 ### 6.18 完成済み work の recovery publication を allowance で埋葬しない（MUST）
 
 - successor / child 作成回数の allowance は重複実装と concurrent ownership を防ぐための制限であり、既存 branch 上に完成済みの staged / unstaged / untracked work を commit、push、PR 化する recovery publication を禁止するものではない。
 - recovery publication は successor ownership gate の narrow specialization とする。write 前に predecessor ownership を release し、bounded lookup で active child / successor / recovery operator が 0 であることを確認し、exactly one durable `recoveryOperatorSessionId` claim に task lineage、branch、full HEAD、dirty inventory diff SHA、existing PR を記録する。
 - recovery operator は同じ branch と既存 PR を再利用し、PR が無い場合だけ作成する。実装 scope を広げず validation readback、commit、push、PR create / update だけを行い、完了後に ownership と claim を transfer または clear する。この回収は new implementation でも successor allowance 消費でもない。second claim、concurrent worker、scope expansion は禁止する。
-- 実測では test を含む 4 files、`+167/-23` の完成済み work が successor allowance consumed を理由に未commitのまま約 3 時間放置された。未コミット成果を埋葬するほうが消失リスクが高く、durable publication を優先する。
 
-### 6.19 コンテキスト予算と自律的な世代交代（MUST）
+### 6.19 コンテキスト予算と HOME 主導の世代交代（MUST）
 
-ある session は 244,946 tokens、19.3 MB の events、757 requests に達した後に turn 途中で恒久停止し、登録済み automation は `last_run_at: never` のままだった。automation は scheduler 自体が凍結すれば発火しないため、context 枯渇を防ぐ責任は各 session 自身が持つ。
-
-- 長時間稼働する各 session は turn 開始時、bounded work unit 完了時、新規作業への着手前、turn 終了前に、runtime の authoritative counter から context の実測使用率を取得する。経過時間、turn 数、request 数、events file size から推測してはならない。実測不能を低使用率として扱わず、`CONTEXT_USAGE_UNMEASURABLE` として新規作業と route selection を止め、compact handoff を最新化して readback し、self-measurement capability の復旧を要求する。外部 telemetry は監査 evidence にはできるが通常の検出、開始条件、救済に依存せず、CAPI failure を rollover trigger として待たない。turn 数などの別上限は backstop として併用できるが、context 使用率の代用にはならない。
-- standalone compact handoff は completed suspend / recovery artifact と別の atomic active artifact とし、通常作業中も PR create、PR merge、child create、child finish with push state、blocker found / resolved、owner-decision set change の直後に該当 fact だけを 1-3 lines で更新して readback する。completed handoff を上書きせず、transcript、full diff、生 log を追加しない。
-
-| 実測使用率 | 必須行動 |
-|---|---|
-| `50%` 以下 | normal bounded work を続け、material event ごとの 1-3 line incremental handoff upkeep と readback を行う。 |
-| `50%` 超 `60%` 未満 | normal bounded work を続けられるが scope を広げず、current increment と incremental handoff を小さく保つ。 |
-| `60%` 以上 `65%` 未満 | 新しい increment を開始しない。現在の safe bounded unit だけを完了し、successor が transcript 無しで読める standalone compact handoff を完成してディスクから read back する。 |
-| `65%` 以上 `70%` 未満 | 新規作業を開始せず、同じ turn で exactly one successor を `model=gpt-5.6-sol`、`context_tier=long_context`、`reasoning_effort=max`、`detached=true` を明示して prepared non-owner state に作成する。直ちに actual model / context tier / reasoning effort / detached state と configured tier の full context capacity を read back し、完全一致後だけ transfer と predecessor retirement を続ける。 |
-| `70%` 以上 | hard stop とし、implementation、調査、現在 unit の仕上げを含む新規 work を行わない。65% action が未完了なら exactly-one successor creation / configuration readback を最初の transfer action とし、その後は ownership / automation transfer と predecessor retirement だけを行う。 |
-
-- `65%` または `70%` による交代は自分の現在の turn の中で完了させる。「次の自動起床で対応する」ことを禁止する。scheduler が凍結していれば次の起床は来ない。context-budget generation rollover は重複実装を防ぐ §6.18 の successor / child creation-count allowance を消費せず、同じ lineage の generation を 1 つだけ進める lifecycle replacement とする。
-- 安全な checkpoint は、durable commit、または §6.13 と同等に検証した ordered format-patch、binary-capable dirty patch、untracked recovery copy とする。compact handoff は recovery artifact の path、size、SHA-256、verification result だけを参照し、diff 本文を埋め込まない。完成済み dirty work が `RECOVERY_PUBLICATION_PENDING` の場合は successor 作成前の pre-protocol phase で §6.18 を完了する。predecessor は implementation ownership を release し、active successor が 0 本であることを確認して recovery operator claim、publication、claim clear を終え、その terminal publication state を handoff に記録してから lifecycle ownership だけで rollover protocol に入る。「全 diff を含めない」を未保存 work の破棄理由にしてはならない。
-- 引き継ぎは transcript の replay に依存せず、後継が独立して読める `copilot-safe-handoff/v2` compact artifact とする。既存 schema の必須 field に加え、`handoffReason: context-budget-rollover`、context の実測使用率、measurement source / time、ownership、predecessor / successor lineage、automation state、transfer intent、recovery artifact を bounded に記録し、巨大な添付、全文 log、全 diff を含めない。ある事例では 7.9 MB の添付が 5.0 MB の転送上限を超え、session の再開自体が不能になった。
-- automation と lifecycle ownership は次の順序で移す。(1) predecessor automation と lifecycle ownership を保持したまま completed handoff / recovery artifact を書いて readback する、(2) exactly one successor を `model=gpt-5.6-sol`、`context_tier=long_context`、`reasoning_effort=max`、`detached=true` を明示した non-owner prepared state で作成し、creation receipt 直後に actual configuration と configured tier の full context capacity を metadata から read back する、(3) configuration / capacity が完全一致した同じ successor 自身に future wake の設定、readback、durable proof を同じ processing turn 内で完了させる、(4) predecessor / successor / retirement controller の exact ID、expected owner / revision、successor configuration / capacity / wake proof を持つ conditional `transferIntent` を durable write して readback し、predecessor が `next_wake > now` の exact proof を確認した後にだけ自分の automation を clear して absent を readback する、(5) predecessor release と successor claim を 1 回の compare-and-swap で atomic transfer する、(6) creator または retirement-capable lifecycle controller が predecessor を exact-ID retire し、successor activation 前に disappearance を検証する。どの時点でも verified future wake が 0 本、または同じ作業の owner が 2 本になってはならず、全 step が終わるまで rollover completion を報告しない。
-- creation receipt、actual configuration readback、full context capacity readback の欠落、不一致、silent fallback、tier / capacity degradation は `SUCCESSOR_CONFIGURATION_DEGRADED` として fail closed にする。2 本目を作らず、predecessor が automation と lifecycle ownership を保持し、新規 work を止めたまま blocker と exact readback を handoff へ記録する。70% 以上では repair、verified transfer、retirement 以外へ戻らない。
-- step (4) より前の失敗では predecessor が automation と lifecycle ownership を保持して current turn 内で同じ prepared successor の verification / repair を行い、step (4) 以降の通常 failure では既に future wake を持つ prepared successor を増やさず transfer / retire を current turn 内で完了させる。predecessor が step (4) 後に mid-turn crash した場合だけ、prepared successor は backstop wake で conditional `transferIntent`、predecessor automation absent、expected owner / revision、predecessor terminal state または retirement controller の disappearance proof を独立 readbackし、compare-and-swap transfer と exact-ID retirement を完了する。次の wake は crash recovery 専用であり、正常系 rollover completion の代用ではない。
-- 閾値に対応する必須行動を完了しないまま idle のまま turn を終えてはならない（MUST NOT）。`60%` では current bounded unit 完了と handoff completion / readback、`65%` では exactly-one successor creation と actual configuration / full capacity readback を開始点とする transfer、`70%` では transfer / predecessor retirement only を完了し、外部 detection、次の wake、CAPI failure、外部からの救済を待たない。
-- 監督役がいる場合の external telemetry は self-measurement と transfer evidence の監査にだけ使う（SHOULD）。各 session への点呼、external threshold detection、CAPI failure を正常系 rollover の開始条件または依存先にしてはならない。
+- 各 coordinator は turn 開始時、bounded work unit 完了時、新規作業への着手前、turn 終了前に利用可能な authoritative counter と runtime warning を確認する。利用率を時間、turn 数、request 数、events size から推測しない。counter が無いだけで永久停止せず、短い作業単位、明示警告、次の turn backstop を使い、計測不能な容量を「安全」と断言しない。
+- active compact handoff は PR create / merge、child create / finish with push state、blocker found / resolved、owner-decision set change の直後に該当 fact だけを atomic な 1～3 行で更新し readback する。completed handoff を上書きせず、full session ID / branch / full HEAD、dirty / unpushed inventory、検証と exact next step を含め、transcript、生 log、diff 本文は含めない。
+- turn 8 と 16 の終了時に compact checkpoint を reread する。turn 20 以降は新 child を作らず、進行中の wave を安全な境界まで処理する。turn 24 では次の作業 batch 前に handoff を完成・再読込し、HOME に successor request を送り停止する。次の task / base / acceptance / kickoff は request に残し、自分では successor を作らない。
+- **どの turn でも**実測 context が危険域（例: 65% 以上）に入るか runtime が明示的に限界を警告したら、同じ turn で新規作業を止め、`copilot-safe-handoff/v1` と必要な recovery artifact を完成・readback し、HOME へ exact blocker と successor request を通知して停止する。70% 以上なら現在 unit の拡張も止める。自分の successor を作らない。HOME への message は保全の代わりにならず、返事や次回 wake を待ってから保存しない。
+- checkpoint は remote-reachable commit、または §6.13 で検証した ordered format-patch / binary-capable dirty patch / untracked recovery copy とする。完成済み dirty work を §6.18 の `RECOVERY_PUBLICATION_PENDING` として保護し、未保存の変更を owner 交代や turn 上限のために破棄しない。新規 handoff は v1 を使い、既存 v2 は同じ保全・本人承認・identity の検証を通す読み取りに限る。
+- request は predecessor / authorized creator / expected parent の full ID、project、role、branch / full HEAD、work / PR ownership、保全の hash、現在の automation、state を atomic write / readback する。HOME は既存 request と後継を調べて一度だけ claim し、coordinator successor を direct child として作る。task successor なら現役 coordinator が作る。設定 `gpt-6-sol` / `long_context` / `max` を明示し、確認できない実効容量を 1M と推測しない。
+- 作成者は旧 session の automation clear / absent readback、active / unarchived descendant 不在、uncommitted / unpushed work 保全、open PR 引継ぎ、handoff 再読込を確認してから archive する。旧 owner が残る限り後継は同じ仕事を始めない。archive 不可なら HOME queue に理由と full ID を残し、本人確認なしの delete へ fallback せず、交代完了を主張しない。
+- 実際の request-size failure で元 session が応答できない場合に限り、HOME は fresh blank recovery を使い、既存の verified handoff か一意な compact restore point + Git / PR / session evidence から recovery artifact を検証して復旧する。transcript replay、fork、推測した HEAD、未確認の dirty work を引継ぎ証拠にしない。
 
 ---
 
@@ -812,8 +750,13 @@ if (!data) return null;
 
 ## 引用元・参考資料一覧
 
+§6 の数値付き事例と故障経緯は [lifecycle 観測記録](docs/agentic-lifecycle-observations.md) に分離する。以下の外部資料は考え方の参照先であり、文面・コード・実例を転用しない。
+
 | 区分 | 出典 | 主に参照した考え方 |
 | --- | --- | --- |
+| Community | [multica-ai/andrej-karpathy-skills @ 2c60614](https://github.com/multica-ai/andrej-karpathy-skills/tree/2c606141936f1eeef17fa3043a72095b4765b9c2) | 小さな変更、判断前の確認、観測可能な成否。README / SKILL は MIT と記すが root LICENSE file は無く、文書の複製は行わない |
+| Community | [charmbracelet/crush @ 06e50a3](https://github.com/charmbracelet/crush/tree/06e50a330e2b05b677726737d06852a35f5ff93f) | 手順と状態の分離、質問の簡潔化、project 文脈の絞り込み。FSL-1.1-MIT source-available のため出典のみ記す |
+| GitHub | [GitHub Copilot plugins](https://docs.github.com/en/copilot/concepts/agents/about-plugins) / [CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference) | component discovery と marketplace / update の実装を公式仕様と実 CLI で照合する |
 | Anthropic | [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) | initializer / coding agent、feature list、progress file、init script、E2E 検証 |
 | Anthropic | [Best practices for Claude Code](https://code.claude.com/docs/en/best-practices) | context 管理、verify work、explore-plan-code、証拠提示 |
 | OpenAI | [Prompt engineering guide](https://platform.openai.com/docs/guides/prompt-engineering) | instruction hierarchy、構造化プロンプト、examples/context |

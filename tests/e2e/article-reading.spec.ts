@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { readBodyStorageFromDisk } from "../../scripts/body-storage-node.mjs";
 import {
   isAddressableDetailEntry,
   type DetailAddressableEntry,
@@ -20,7 +21,7 @@ interface ArticleFixture extends DetailAddressableEntry {
 const entries = (JSON.parse(readFileSync("data/index.json", "utf8")) as {
   entries: ArticleFixture[];
 }).entries;
-const bodies = (JSON.parse(readFileSync("data/bodies.json", "utf8")) as {
+const bodies = (readBodyStorageFromDisk() as {
   bodies: Record<string, { bodyJa?: string; bodyEn?: string; chat?: unknown }>;
 }).bodies;
 const hasBothBodies = (entry: ArticleFixture) =>

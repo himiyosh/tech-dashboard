@@ -1,8 +1,39 @@
 {
-  "generatedAt": "2026-10-07T03:01:10.814Z",
+  "generatedAt": "2026-10-07T04:00:58.777Z",
   "month": "2026-10",
-  "count": 89,
+  "count": 90,
   "entries": [
+    {
+      "id": "409783824fda24fa",
+      "source": "qiita-vscode",
+      "sourceType": "blog",
+      "url": "https://qiita.com/pansystar/items/4a3f21e37034a60b8557",
+      "title": "Windowsで devcontainer を使うときの settings.json 整理（Docker / Podman / WSL）",
+      "titleJa": "Windowsで devcontainer を使うときの settings.json 整理（Docker / Podman / WSL）",
+      "titleEn": "",
+      "lang": "ja",
+      "publishedAt": "2026-10-07T00:25:00.000Z",
+      "collectedAt": "2026-10-07T04:00:42.420Z",
+      "tags": [
+        "qiita",
+        "vscode"
+      ],
+      "category": "vscode",
+      "importance": 1,
+      "halfLife": "tutorial",
+      "archiveTier": "hot",
+      "contentSnippet": "Windowsで devcontainer を使うときの settings.json 整理（Docker / Podman / WSL） Windows で VS Code の Dev Containers を使うとき、コンテナランタイムの置き場所で settings.json の中身が変わります。 この記事では次の3パターンについて、必要な設定だけを整理します。 前提として、拡張機能 ms-vscode-remote.remote-containers （Dev Containers）を入れておきます。 1. Docker を Windows にインストールしている場合 Docker Desktop を入れていれば、 docker が PATH に通っているので追加設定は不要です。 \"dev.containers.dockerPath\" : \"docker\" 2. Podman を Windows にインストールしている場合 Dev Containers は docker コマンドを呼ぶので、実行ファイルを Podman に差し替えます。 \"dev.containers.dockerPath\" : \"podman\" , \"dev.containers.dockerComposePath\" : \"podman-compose\" VS Code の WSL 拡張で WSL に接続し、その中でフォルダを開きます。Dev Containers 拡張は WSL 側で動くので、WSL 内の docker がそのまま使われます。 Windows 側の設定は不要で、必要なら Remote [WSL] の設定に書きます。 \"dev.containers.dockerPath\" : \"docker\" プロジェクトは WSL のファイルシステム（ ~/work/... ）に置く。 /mnt/c/... は遅い 3-B.",
+      "feedSnippet": "はじめに Windows で VS Code の Dev Containers を使うとき、コンテナランタイムの置き場所で settings.json の中身が変わります。 この記事では次の3パターンについて、必要な設定だけを整理します。 パターン 必要な設定 ...",
+      "excerptOrigin": "article",
+      "image": {
+        "src": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTE2NjQ4JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzEzMzI2P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0xMzMxNDFlNjNlM2I5MzllOWM5NTU4N2MyZWUyYWRmZg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2373e2c3133cf544c5e724a49a550fc?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9V2luZG93cyVFMyU4MSVBNyUyMGRldmNvbnRhaW5lciUyMCVFMyU4MiU5MiVFNCVCRCVCRiVFMyU4MSU4NiVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBRSUyMHNldHRpbmdzLmpzb24lMjAlRTYlOTUlQjQlRTclOTAlODYlRUYlQkMlODhEb2NrZXIlMjAlMkYlMjBQb2RtYW4lMjAlMkYlMjBXU0wlRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04MGU4M2I2YWU3OTRmMDdlNTk5NzViYzMxODc2YjRiMg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBwYW5zeXN0YXImdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNDVmMTI3NzRiMmYzMDNhM2FkODhlMjgzYjc2ZTlmZA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b504e5b6d152af81ceef8a1559770b4a",
+        "origSrc": "https://qiita-user-contents.imgix.net/https%3A%2F%2Fqiita-user-contents.imgix.net%2Fhttps%253A%252F%252Fcdn.qiita.com%252Fassets%252Fpublic%252Farticle-ogp-background-afbab5eb44e0b055cce1258705637a91.png%3Fixlib%3Drb-4.1.1%26w%3D1200%26blend64%3DaHR0cHM6Ly9xaWl0YS11c2VyLXByb2ZpbGUtaW1hZ2VzLmltZ2l4Lm5ldC9odHRwcyUzQSUyRiUyRnFpaXRhLWltYWdlLXN0b3JlLnMzLmFtYXpvbmF3cy5jb20lMkYwJTJGMTE2NjQ4JTJGcHJvZmlsZS1pbWFnZXMlMkYxNDczNzEzMzI2P2l4bGliPXJiLTQuMS4xJmFyPTElM0ExJmZpdD1jcm9wJm1hc2s9ZWxsaXBzZSZiZz1GRkZGRkYmZm09cG5nMzImcz0xMzMxNDFlNjNlM2I5MzllOWM5NTU4N2MyZWUyYWRmZg%26blend-x%3D120%26blend-y%3D467%26blend-w%3D82%26blend-h%3D82%26blend-mode%3Dnormal%26s%3De2373e2c3133cf544c5e724a49a550fc?ixlib=rb-4.1.1&w=1200&fm=jpg&mark64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTk2MCZoPTMyNCZ0eHQ9V2luZG93cyVFMyU4MSVBNyUyMGRldmNvbnRhaW5lciUyMCVFMyU4MiU5MiVFNCVCRCVCRiVFMyU4MSU4NiVFMyU4MSVBOCVFMyU4MSU4RCVFMyU4MSVBRSUyMHNldHRpbmdzLmpzb24lMjAlRTYlOTUlQjQlRTclOTAlODYlRUYlQkMlODhEb2NrZXIlMjAlMkYlMjBQb2RtYW4lMjAlMkYlMjBXU0wlRUYlQkMlODkmdHh0LWFsaWduPWxlZnQlMkN0b3AmdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT01NiZ0eHQtcGFkPTAmcz04MGU4M2I2YWU3OTRmMDdlNTk5NzViYzMxODc2YjRiMg&mark-x=120&mark-y=112&blend64=aHR0cHM6Ly9xaWl0YS11c2VyLWNvbnRlbnRzLmltZ2l4Lm5ldC9-dGV4dD9peGxpYj1yYi00LjEuMSZ3PTgzOCZoPTU4JnR4dD0lNDBwYW5zeXN0YXImdHh0LWNvbG9yPSUyMzFFMjEyMSZ0eHQtZm9udD1IaXJhZ2lubyUyMFNhbnMlMjBXNiZ0eHQtc2l6ZT0zNiZ0eHQtcGFkPTAmcz1iNDVmMTI3NzRiMmYzMDNhM2FkODhlMjgzYjc2ZTlmZA&blend-x=242&blend-y=480&blend-w=838&blend-h=46&blend-fit=crop&blend-crop=left%2Cbottom&blend-mode=normal&s=b504e5b6d152af81ceef8a1559770b4a",
+        "alt": "Windowsで devcontainer を使うときの settings.json 整理（Docker / Podman / WSL）",
+        "width": 0,
+        "height": 0,
+        "source": "og"
+      }
+    },
     {
       "id": "dcf3a9062f05be07",
       "source": "github-changelog",
@@ -109,7 +140,7 @@
       "titleEn": "How AI decision models could change content moderation",
       "lang": "en",
       "publishedAt": "2026-10-06T20:35:20.000Z",
-      "collectedAt": "2026-10-06T22:30:39.896Z",
+      "collectedAt": "2026-10-07T04:00:42.420Z",
       "tags": [
         "ai",
         "content-moderation",
@@ -123,8 +154,8 @@
       "halfLife": "news",
       "archiveTier": "hot",
       "contentSnippet": "Last day to exhibit your breakthrough to 10,000+ tech leaders at Disrupt is on Oct 2 . Book Exhibit Table Now. Disrupt doors open Oct. 13. Get your pass and bring someone with you at 50% off. REGISTER NOW. As decision models spread across the industry, a company called Musubi has a new idea for how to put them to work: moderating content. On Tuesday, Musubi announced a lightweight decision model made for real-time moderation called PolicyLM-1.7B , released with open weights. The idea is to take a content policy written in plain English and apply it to messages in under 50 milliseconds. Musubi’s model is designed to be similar in cost and speed to the AI classifier systems that power moderation on most social platforms — but because it has the flexibility of a modern LLM, it can apply complex policies without special training.",
-      "feedSnippet": "On Tuesday, Musubi announced a lightweight decision model made for real-time moderation called PolicyLM-1.7B, released with open weights.",
       "excerptOrigin": "article",
+      "feedSnippet": "On Tuesday, Musubi announced a lightweight decision model made for real-time moderation called PolicyLM-1.7B, released with open weights.",
       "image": {
         "src": "https://techcrunch.com/wp-content/uploads/2026/10/ai-agents-chatbots-GettyImages-2243730029.jpg?resize=1200,675",
         "origSrc": "https://techcrunch.com/wp-content/uploads/2026/10/ai-agents-chatbots-GettyImages-2243730029.jpg?resize=1200,675",
@@ -230,9 +261,9 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "contentSnippet": "Co-authors: Stenal Jolly , Strategic Cloud Engineer, Google Anubhav Dhawan , Software Engineer, Google Following the landmark announcement of MCP Toolbox v1.0, we're thrilled to announce that the MCP Toolbox Java SDK has officially reached version 1.0. This release brings first-class, type-safe agent orchestration to one of the world's most widely adopted enterprise ecosystems. Java's mature architecture is purpose-built for rigorous demands, providing the high concurrency, strict transactional integrity, and robust state management required to safely scale mission-critical AI agents in production. In this post, we'll tell you about what's new in Java SDK v1.0, show you a real-world example, and help you get started with your own implementation. MCP: The universal interface Today, develope",
       "evergreen": true,
-      "knowledgeEligible": false,
-      "contentSnippet": "Co-authors: Stenal Jolly , Strategic Cloud Engineer, Google Anubhav Dhawan , Software Engineer, Google Following the landmark announcement of MCP Toolbox v1.0, we're thrilled to announce that the MCP Toolbox Java SDK has officially reached version 1.0. This release brings first-class, type-safe agent orchestration to one of the world's most widely adopted enterprise ecosystems. Java's mature architecture is purpose-built for rigorous demands, providing the high concurrency, strict transactional integrity, and robust state management required to safely scale mission-critical AI agents in production. In this post, we'll tell you about what's new in Java SDK v1.0, show you a real-world example, and help you get started with your own implementation. MCP: The universal interface Today, develope"
+      "knowledgeEligible": false
     },
     {
       "id": "92cb39524c191c70",
@@ -334,7 +365,7 @@
       "titleEn": "Attempting to Privatize Azure Cloud9 with Azure ML and VS Code Web, Then Settling on a Managed VNet",
       "lang": "ja",
       "publishedAt": "2026-10-06T16:44:07.000Z",
-      "collectedAt": "2026-10-06T22:30:39.896Z",
+      "collectedAt": "2026-10-07T04:00:42.420Z",
       "tags": [
         "azure-machine-learning",
         "managed-vnet",
@@ -348,8 +379,8 @@
       "halfLife": "tutorial",
       "archiveTier": "hot",
       "contentSnippet": "前回 と 前々回 で、Azure ML のコンピューティング インスタンスと VS Code for the Web を使って、AWS Cloud9 のようにコンソールから開けるブラウザ IDE を作りました。 今回はそのネットワーク構成を見直しました。やりたかったことは次の3つです。 結論を先に書くと、 3つ全部を同時に満たすのは無理 でした。最初に完全な閉域構成を作ってみたものの、踏み台が必要になって使い方が変わってしまったので、最終的には「マネージド VNet ＋ パブリック IP なし」の構成に落ち着いています。 インスタンスにパブリック IP が付いているのが一番気になる点です。 ローカル PC のブラウザで Studio を開くと、ワークスペースを読み込めなくなりました。 VNet の外にある Cloud Shell から、インスタンスのエンドポイントにトークン付きでアクセスしても 403 でした。ストレージも、アカウントキーを使っても拒否されます。一方、インスタンスからは NAT Gateway 経由で pip・apt・GitHub に出られました。 この構成だと、IDE を使うには「Azure ポータル → Bastion → 踏み台 VM → その中のブラウザで Studio」という手順になります。「ボタンを押すだけ」とはかけ離れていて、これでは Cloud9 っぽさがなくなってしまいます。 Studio も VS Code (Web) も、画面は Azure の中ではなく 手元のブラウザで動いています 。ボタンを押すと、手元のブラウザが Azure ML の入口に直接つなぎに行きます。 つまり「手元のブラウザでボタンを押すだけ」と「外からの経路をゼロにする」は、仕組み上どちらかしか取れません。 そこで、使い方を優先して「せめてインスタンスにパブリック IP を付けない」方針に切り替えました。自前の VNet・NAT Gateway・踏み台・Bastion はすべて削除し、Azure ML の マネージド仮想ネットワーク を使っています。",
-      "feedSnippet": "はじめに 前回と前々回で、Azure ML のコンピューティング インスタンスと VS Code for the Web を使って、AWS Cloud9 のようにコンソールから開けるブラウザ IDE を作りました。 今回はそのネットワーク構成を見直しました。やりたかったこ...",
-      "excerptOrigin": "article"
+      "excerptOrigin": "article",
+      "feedSnippet": "はじめに 前回と前々回で、Azure ML のコンピューティング インスタンスと VS Code for the Web を使って、AWS Cloud9 のようにコンソールから開けるブラウザ IDE を作りました。 今回はそのネットワーク構成を見直しました。やりたかったこ..."
     },
     {
       "id": "42bd034b4b0799b8",
@@ -603,7 +634,7 @@
       "titleEn": "Calling arduino-cli from VS Code to Compile and Run CH55xDuino Projects",
       "lang": "ja",
       "publishedAt": "2026-10-06T11:26:57.000Z",
-      "collectedAt": "2026-10-06T22:30:39.896Z",
+      "collectedAt": "2026-10-07T04:00:42.420Z",
       "tags": [
         "arduino-cli",
         "ch55xduino",
@@ -1034,8 +1065,6 @@
       "importance": 3,
       "halfLife": "architecture",
       "archiveTier": "hot",
-      "evergreen": true,
-      "knowledgeEligible": false,
       "contentSnippet": "Today, we’re announcing Google Cloud Modernize , an end-to-end transformation portfolio to help enterprises collapse multi-year roadmaps with the power of AI. Google Cloud Modernize brings together Google Cloud’s proven migration and modernization tools, including Migration Center, Google Cloud VMware Engine, Google Cloud Mainframe Modernization and our new EKS-to-GKE Migration Agent , into a single portfolio. With it, enterprise teams now have purpose-built agentic capabilities across infrastructure assessment, platform modernization, and application modernization. Central to this portfolio is Modernization Hub , a newly launched in-console experience where developers and architects can analyze source code, map dependencies, and accelerate modernization for Java, .NET, and mainframe appli",
       "image": {
         "src": "https://storage.googleapis.com/gweb-cloudblog-publish/original_images/1_7EZHDX9.gif",
@@ -1044,7 +1073,9 @@
         "width": 0,
         "height": 0,
         "source": "media"
-      }
+      },
+      "evergreen": true,
+      "knowledgeEligible": false
     },
     {
       "id": "571c8c47df881aa3",
@@ -1831,9 +1862,9 @@
       "importance": 2,
       "halfLife": "architecture",
       "archiveTier": "hot",
+      "contentSnippet": "AI agents don't just answer queries — they can autonomously issue refunds, manage inventory, execute multi-step handoffs, and orchestrate sub-agents, to name but a few complex agentic workflows. That frequently requires the agents to maintain internal state in an operational database while dispatching asynchronous actions through a separate messaging or event queue system. And unfortunately for the teams building these applications, managing two systems with disjointed commit points destroys transactional consistency in agentic systems. Today, we are excited to announce the general availability of Spanner queues : native transactional messaging embedded directly within Spanner. Designed specifically for reliable agentic execution, with Spanner queues, creating a message is simply another w",
       "evergreen": true,
-      "knowledgeEligible": false,
-      "contentSnippet": "AI agents don't just answer queries — they can autonomously issue refunds, manage inventory, execute multi-step handoffs, and orchestrate sub-agents, to name but a few complex agentic workflows. That frequently requires the agents to maintain internal state in an operational database while dispatching asynchronous actions through a separate messaging or event queue system. And unfortunately for the teams building these applications, managing two systems with disjointed commit points destroys transactional consistency in agentic systems. Today, we are excited to announce the general availability of Spanner queues : native transactional messaging embedded directly within Spanner. Designed specifically for reliable agentic execution, with Spanner queues, creating a message is simply another w"
+      "knowledgeEligible": false
     },
     {
       "id": "532e62c3ca749eed",

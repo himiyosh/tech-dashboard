@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-07T06:01:14.509Z",
-  "count": 1162,
+  "generatedAt": "2026-10-07T07:00:59.181Z",
+  "count": 1165,
   "bodies": {
     "7b752c9b3e3af2c6": {
       "bodyJa": "AIエージェントが高度化するにつれ、誤動作や悪用が発生した際の影響範囲（ブラスト半径）も拡大する。本記事はAnthropicのエンジニアリングブログに掲載され、その上限をどう設計するかという実践的な問いに答えている。\n\n対象製品はclaude.ai・Claude Code・Coworkの3つ。それぞれ異なるユースケースと権限モデルを持つ中で、共通の封じ込め原則をどう適用したかが論点と推察される。具体的な実装詳細は原文で確認することを推奨する。\n\nエージェントの安全設計に携わる開発者や、Claudeを自社プロダクトに組み込む実務者にとって参考になる内容と見られる。",
@@ -2168,82 +2168,6 @@
         }
       ]
     },
-    "d1f0774fbf5bf8a3": {
-      "bodyJa": "Anthropicが提供するコマンドライン型のAIコーディング支援ツール「Claude Code」の最新版v2.1.214が公開され、複数のpermission（権限）チェックの不備が一括で修正された。ツール実行時の権限管理が強化され、自動化ワークフローをより安全かつ予測可能に運用できるようになったとされる。\n\nClaude Codeは、ターミナル上でAIエージェントがファイルの読み書きやコマンド実行、外部ツールの呼び出しを行う仕組みを備えている。こうしたエージェント型ツールでは、AIが勝手に危険な操作を実行しないよう、ユーザーの許可を確認するpermissionの仕組みが安全性の要となる。今回の修正は、この確認プロセスにおいて本来チェックが働くべき箇所で漏れが生じていた複数の経路を塞ぐものと見られる。\n\n具体的な内訳は変更履歴（Changelog）ベースの情報にとどまるが、複数のチェックが同時に強化された点が特徴だ。permissionの穴は、意図しないファイル操作やコマンド実行、あるいは許可設定を回避した処理につながる可能性があるため、こうした不備の一括対処はセキュリティ上の意味が大きい。特にCI/CDやスクリプトによる無人実行など、人間が逐一確認しない運用では影響が出やすい領域といえる。\n\n背景として、AIエージェントに実行権限を与える動きは業界全体で広がっている。GitHub Copilotのエージェント機能やOpenAIのCodex系ツール、各種のMCP（Model Context Protocol）対応クライアントなど、外部リソースへアクセスするエージェントが増えるほど、権限境界の設計と実装の堅牢性が問われる。ツールが呼び出せる範囲を細かく制御するallowlistやdenylistの仕組み、承認ダイアログの徹底は、この種のツールに共通する重要課題となっている。\n\n利用者にとっては、まず最新版へアップデートすることが基本的な対策になる。加えて、プロジェクトごとの権限設定を見直し、不要な自動承認を避けることで、より安全な運用に近づけられるだろう。今回のようなセキュリティ修正は目立ちにくいが、エージェントを実務に組み込むうえで着実に積み重ねるべき改善といえる。",
-      "bodyEn": "Claude Code v2.1.214 is a maintenance release from Anthropic that focuses on repairing several gaps in how the tool validates permissions before executing actions on a developer's behalf. For teams that rely on Claude Code to automate coding tasks, the update matters because permission checks are the primary boundary between a helpful agent and one that touches files, runs shell commands, or reaches the network without explicit consent.\n\nAccording to the release notes, the version addresses multiple permission-check deficiencies in a single batch, tightening access control during tool execution. In practical terms, this appears to mean that certain code paths where the agent could invoke a tool without the intended approval step have been closed. The stated effect is more consistent enforcement, so that the rules a user configures are respected uniformly rather than being bypassed under specific conditions. That kind of consistency is important for predictable automation, since an agent that occasionally skips a check is harder to reason about than one that behaves the same way every time.\n\nTo understand why this is significant, it helps to recall how Claude Code's permission model works. Claude Code is an agentic command-line tool that lets a large language model read and edit files, execute shell commands, fetch web resources, and call other integrated tools. Because those capabilities can modify a system, the tool gates them behind a permission layer. Users can pre-approve categories of actions through allow and deny rules, respond to interactive prompts as the agent works, or run in a more autonomous mode for trusted environments. When a permission check has a gap, an action that should have triggered a prompt or been blocked outright might proceed silently, which is the class of issue this release is described as fixing.\n\nThe security relevance grows in automated or headless workflows, where a human is not watching every step. Continuous integration pipelines, scheduled jobs, and multi-step agent runs all lean on the permission system to keep the agent inside expected limits. A missed check in an interactive session might be caught by a vigilant developer, but in an unattended run it could allow an unintended file write or command execution to slip through. By consolidating the fixes, the update is likely intended to reduce the surface area where such slips are possible, which the summary frames as making automated workflows safer and more predictable.\n\nThis release fits a broader industry pattern around agentic developer tools, where permission and sandboxing systems are receiving increased scrutiny. Comparable products, including GitHub Copilot's agent features, Cursor, Aider, and OpenAI's Codex-style tooling, all grapple with the same tension between autonomy and control. As these agents gain the ability to run commands and edit repositories directly, the mechanisms that decide what they may do become a central part of the product's trust model. Prompt injection is a frequently cited concern in this space, because instructions hidden in files, web pages, or tool output can attempt to steer an agent toward actions the user never intended. A robust permission layer is one of the main defenses against that risk, so hardening it has value beyond fixing isolated bugs.\n\nFor users, the recommended step is straightforward: update to v2.1.214 to pick up the fixes, since permission-related changes are the kind that benefit from prompt adoption. Reviewing existing allow and deny configurations is also worthwhile, because tighter enforcement may surface cases where previously permissive behavior no longer occurs. Teams running Claude Code in shared or production-adjacent environments may want to confirm that their automation still completes as expected after the change, since actions that once passed through a gap could now correctly require approval.\n\nAnthropic ships Claude Code updates frequently, and incremental patch releases like this one typically bundle small fixes rather than headline features. The changelog framing here suggests a deliberate cleanup of permission handling rather than a single vulnerability disclosure, though the notes do not enumerate every underlying case. As with any security-oriented update, the full impact depends on how each environment configures and uses the tool, but the general direction is toward stricter, more uniform gating of the agent's capabilities.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T13:05:33.643Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "permissionチェックの「穴」って何？ ツールが勝手に動けちゃう部分があったってこと？",
-          "en": "What are “gaps” in permission checks? Does that mean tools could sometimes run without the intended controls?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、実行を許可するか確かめる処理の不備じゃな。記事によれば、v2.1.214で複数まとめて修正されたそうじゃ。",
-          "en": "Simply put, they were flaws in checks that decide whether an action is allowed. According to the article, v2.1.214 fixes several of them at once."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ 自動化するときの不安が減るってこと？",
-          "en": "What’s the practical benefit? Does it make automated workflows less worrying?"
-        },
-        {
-          "s": "b",
-          "ja": "そうじゃな。記事では、ツール実行時の権限管理が強まり、自動化をより安全で予測しやすく運用できるとしておる。",
-          "en": "That’s the idea. The article says tighter access control during tool execution makes automation safer and more predictable."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ 複数のチェック漏れを一気に直して、許可した範囲で動かしやすくしたんだね。",
-          "en": "Got it! They fixed several missed checks together, making it easier to keep tools operating within the intended permissions."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。注目点は一括修正による安全性の向上で、記事の範囲では複数の不備が直ったという内容じゃ。",
-          "en": "Exactly. The key point is improved security from this batch of fixes; the article specifically confirms that multiple permission-check flaws were addressed."
-        }
-      ]
-    },
-    "8c29e154865c1fe4": {
-      "bodyJa": "AIエージェントがWebページを読み込むとき、生のHTMLをそのまま大規模言語モデル(LLM)に渡すと、タグやスクリプト、スタイル定義といった「ノイズ」が大量のトークンを消費してしまう。この課題に着目したのが、Rustで実装されたCLIツール「WebFetch」だ。取得したHTMLをMarkdownへ変換し、さらに自動要約することで、curlをそのまま使う場合に比べてトークン消費を大幅に削減するとされる。\n\n背景には、エージェント型ワークフローの普及がある。Claudeをはじめとする対話型AIやコーディングエージェントは、外部情報を参照する際にコマンドを実行してWebページを取得することが多い。しかしcurlやwgetが返すのは整形前のHTMLであり、ナビゲーションメニューや広告、インラインスクリプトなど本文と無関係な要素まで丸ごとモデルに入力される。トークン課金制のAPIでは、これがそのままコスト増と処理速度の低下につながる。\n\nWebFetchはこの無駄を減らすため、まずHTMLから本文を抽出してMarkdownに整形し、必要に応じて要約を生成する。Markdownは見出しやリンク構造を保ちながら記述量が少ないため、モデルにとって読みやすく、かつトークン効率が高い形式とされる。実装言語にRustを選んでいる点は、起動の速さやメモリ効率の面でCLIツールとの相性がよいという狙いがあると見られる。\n\n同種の発想を持つツールは他にも存在する。ブラウザの「リーダーモード」に相当するMozillaのReadability、本文抽出ライブラリのtrafilatura、URLを渡すとLLM向けテキストを返すJina AIの「Reader」などが代表例だ。Anthropic自身もClaude向けにWebフェッチ機能を提供しており、Web取得と要約を組み合わせる流れは業界全体で一般化しつつある。WebFetchはこうした潮流を、ローカルで完結する軽量なCLIとして実装した点に特徴がある。\n\n一方で、自動要約には情報の欠落や解釈のずれが生じる可能性があり、正確さが求められる用途では元テキストの確認が欠かせない。要約の品質は対象ページの構造や抽出ロジックにも左右されるとみられる。とはいえ、コスト最適化とエージェントの実用性を両立させる試みとして、開発者にとって検討に値する選択肢と言えそうだ。",
-      "bodyEn": "When an AI agent needs to read a web page, the most obvious approach is to shell out to curl and pipe the result into a language model. That habit turns out to be surprisingly expensive. A raw HTML document is dense with markup, inline scripts, styling, tracking snippets, and boilerplate navigation, and every one of those characters becomes tokens the model has to process. WebFetch, a command-line tool written in Rust, targets exactly this problem by fetching a page, stripping it down, converting the meaningful content to Markdown, and summarizing it before it ever reaches the model.\n\nThe core idea is straightforward but practically important. In agentic workflows, where a model may fetch many pages in a single task, the cost of feeding verbose HTML directly into an LLM adds up quickly in both money and latency. Token consumption scales with input length, so a page that is mostly wrapper markup wastes budget on content the model does not need. By transforming HTML into a cleaner Markdown representation and then producing a summary, WebFetch aims to preserve the substance of a page while discarding the noise, which reduces the number of tokens the downstream model must ingest.\n\nSeveral technical choices are worth noting. Choosing Rust suggests a priority on fast startup and low overhead, which matters for a CLI that may be invoked repeatedly inside a loop. HTML-to-Markdown conversion is a well-established preprocessing step because Markdown retains structural signals such as headings, links, and lists in a far more compact form than the original DOM. The summarization layer goes a step further, trading some fidelity for brevity. That tradeoff is the crux of the tool: summarization is inherently lossy, so it appears best suited to tasks where an agent needs the gist of a page rather than exact, verbatim detail. Users who require precise extraction may still prefer full-text conversion without summarization.\n\nThe approach sits within a growing category of tools designed to make the open web more digestible for language models. Reader-style services that return clean Markdown from a URL, hosted scraping and crawling APIs, and various open-source HTML-to-text libraries all address adjacent parts of the same pipeline. Anthropic's own Claude tooling includes a capability named WebFetch that retrieves and processes page content for the model, and other agent frameworks bundle similar fetch-and-clean utilities. The shared premise across these efforts is that raw web content is a poor fit for token-based models, and that a preprocessing stage can improve both cost and answer quality by removing distracting material.\n\nFor readers less familiar with the underlying economics, the motivation comes down to how LLMs are priced and constrained. Providers typically bill per token for both input and output, and every model has a finite context window. A single content-heavy article can consume thousands of tokens once its full HTML is included, and pages with heavy JavaScript or ad infrastructure can be far worse. Reducing input size therefore has a compounding benefit: it lowers direct API cost, leaves more room in the context window for reasoning and other retrieved documents, and can shorten response time. In multi-step agent runs, these savings multiply across every page visited.\n\nThere are limitations and open questions that any evaluation should consider. Summarization quality depends on the method used, and the description does not make clear whether WebFetch summarizes locally with heuristics, calls a model to condense text, or offers configurable modes. Pages that rely heavily on client-side rendering can be difficult to fetch accurately without a headless browser, which is a common gap in lightweight fetchers. And because summaries omit detail by design, they are likely unsuitable for use cases such as legal review or data extraction where completeness is essential. As with any scraping tool, respecting robots directives, rate limits, and site terms remains the user's responsibility.\n\nStill, the tool reflects a practical and increasingly common insight: the bottleneck in agent workflows is often not the model's intelligence but the volume and messiness of the data fed into it. By positioning itself as a drop-in, agent-friendly alternative to curl, WebFetch addresses a concrete cost problem that many developers building on Claude and similar systems encounter daily. Whether it becomes a standard part of such pipelines will likely depend on how well its summaries hold up across diverse sites and how much control it gives users over the fidelity-versus-brevity balance.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T13:06:42.624Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "curlだとトークンを大量に使うって、どういうこと？ Webページを取るだけじゃないの？",
-          "en": "Why does curl use so many tokens? Isn’t it just fetching a web page?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、生HTMLには広告やメニュー、スクリプトまで入り、本文が埋もれるんじゃ。WebFetchは本文をMarkdown化して要約するそうじゃよ。",
-          "en": "According to the article, raw HTML is packed with ads, navigation, and scripts. WebFetch extracts the useful content, converts it to Markdown, and summarizes it."
-        },
-        {
-          "s": "a",
-          "ja": "それって何がうれしいの？ Markdownに変えるだけでも違うの？",
-          "en": "What’s the benefit? Does converting it to Markdown really make a difference?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、LLMへ渡す不要な文字を減らせるんじゃ。記事では、トークン消費を抑え、コスト削減と効率的な取得につながるとしておる。",
-          "en": "Simply put, it sends less unnecessary text to the LLM. The article says that reduces token usage and supports cheaper, more efficient web retrieval."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ ごちゃごちゃしたHTMLではなく、必要な本文を短くしてAIに渡すRust製CLIなんだね。",
-          "en": "Got it! It’s a Rust CLI that gives AI a concise version of the useful content instead of messy raw HTML."
-        },
-        {
-          "s": "b",
-          "ja": "その理解でよいぞ。なお、具体的な削減幅は記事情報にないので、実際の効果を判断する際はそこが確認ポイントじゃな。",
-          "en": "Exactly. One caveat: the article provides no specific reduction figures, so real-world savings are something to verify."
-        }
-      ]
-    },
     "ec6451c2ac05a08f": {
       "bodyJa": "Google DeepMindは、新たなフロンティアモデル「Gemini 3.5」を発表した。従来の言語モデルが得意としてきた推論や文章生成に加え、外部ツールを操作してタスクを自律的に完遂する「エージェント的」な行動能力を統合した点が最大の特徴とされる。\n\nエージェントAIとは、単に質問へ回答するだけでなく、目標を与えられると自ら手順を計画し、Web検索やコード実行、アプリケーション操作などを組み合わせて複数ステップの作業をこなすAIを指す。Gemini 3.5は、こうした一連の処理を大規模かつ連続的に実行できるとされ、これまで人間の逐次的な指示が必要だった複雑な業務の自動化に近づく可能性がある。\n\n背景には、ここ数年で急速に進んだAIの推論強化の流れがある。モデルが回答前に思考過程を展開する手法や、長い文脈を扱う能力の向上により、単発の応答から連続的なタスク遂行へと焦点が移りつつある。Gemini 3.5はその延長線上に位置づけられ、推論力と行動力を一体化させることで実務での実用性を高める狙いがあると見られる。\n\n同様の方向性は業界全体で共有されている。OpenAIやAnthropicもコンピュータ操作やコード生成を担うエージェント機能の開発を進めており、Microsoftは自社のCopilotにエージェント的な自動化を組み込んでいる。各社が「回答するAI」から「作業するAI」への転換を競う構図が鮮明になっている。\n\n一方で、自律的に行動するAIには固有の課題も伴う。誤った操作や意図しない副作用、判断の根拠が不透明になりやすい点などが指摘されており、実運用では人間による監視や権限制御が重要になるとみられる。Google DeepMindはこれまで安全性評価や制御機構を重視する姿勢を示してきた経緯があり、Gemini 3.5でも同様の配慮が求められる。\n\nGemini 3.5が実際の開発ツールや業務システムにどの程度組み込まれ、どこまで信頼して任せられるかは、今後の提供形態や検証結果次第となる。エージェントAIの実用化がどの段階まで進むのか、具体的な性能や対応範囲の詳細が注目される。",
       "bodyEn": "Google DeepMind has announced Gemini 3.5, positioning it as a frontier model that pairs advanced reasoning with what the company describes as agentic action capabilities. The framing matters because it signals a continued industry shift away from chatbots that merely answer questions toward systems intended to plan, decide, and carry out multi-step tasks with limited human supervision. If the capabilities perform as described, the release could accelerate the ongoing transition from conversational assistants to autonomous software agents across consumer and enterprise settings.\n\nAt the core of the announcement is the claim that Gemini 3.5 integrates high-level reasoning with the ability to execute actions rather than only generate text. In practice, agentic behavior of this kind typically means the model can break a goal into sub-tasks, invoke external tools or APIs, use a browser or code environment, observe the results of its actions, and adjust its plan accordingly. This loop of planning, acting, and reflecting is what distinguishes an agent from a standard large language model, and it is the capability Google DeepMind appears to be emphasizing as the defining feature of this generation.\n\nGemini 3.5 continues the lineage of Google's multimodal family, which has historically combined text, images, audio, and video understanding within a single model. Earlier releases in the series introduced long context windows measured in the hundreds of thousands or even millions of tokens, along with native tool use and function calling. The 3.5 designation suggests an incremental but meaningful step over prior versions rather than a wholesale architectural break, though Google DeepMind has not, in this summary, disclosed detailed benchmark figures, parameter counts, or training specifics that would allow independent verification of where it sits relative to competitors.\n\nThe move fits into a broader competitive landscape in which agentic AI has become the central battleground. OpenAI has pursued similar directions with tool-using models and its Operator and agent features, while Anthropic has promoted computer-use capabilities that let Claude interact with graphical interfaces. Startups and open-weight projects have also built orchestration frameworks that chain model calls into workflows. Against that backdrop, a first-party model designed from the outset for reliable action execution could give Google an advantage, particularly given its ability to connect such a system to Workspace, Android, Chrome, and its cloud platform.\n\nTechnically, the hardest problems in this space are less about raw reasoning and more about reliability, grounding, and control. Agents that take real actions can compound errors, misinterpret instructions, or perform irreversible operations, so vendors typically invest in guardrails, permission systems, and human-in-the-loop checkpoints. The value of a frontier model in agentic settings is likely to be judged not only on how well it solves benchmark tasks but on how consistently it completes long-horizon workflows without drifting off course. Independent testing will be important to determine whether Gemini 3.5 materially improves on these persistent failure modes.\n\nPrerequisite concepts help explain why this is difficult. Large language models generate outputs probabilistically, which makes them powerful at open-ended tasks but prone to hallucination and inconsistency. Techniques such as reinforcement learning from human feedback, tool grounding, retrieval augmentation, and structured planning have been developed to constrain that behavior. Agentic systems layer additional machinery on top, including memory to track state across steps and evaluation mechanisms to decide when a task is complete. Each addition improves capability but also expands the surface area for unexpected behavior, which is why deployment tends to be staged.\n\nThe practical implications, if the model is broadly deployed, could span software development, customer support, research assistance, and back-office automation, where multi-step tasks are common. For businesses, the appeal is delegating entire processes rather than individual prompts. For consumers, agentic features could eventually handle bookings, comparisons, and routine digital chores. However, questions around cost, latency, data privacy, and accountability for autonomous actions remain unresolved across the industry and will shape how quickly organizations adopt such systems.\n\nAs with any launch announcement, the details that matter most, including availability, pricing, rate limits, safety evaluations, and third-party benchmarks, will determine the real-world impact. Readers should treat the stated capabilities as the vendor's framing until independent evaluations and hands-on reports provide corroboration. What is clear is that Gemini 3.5 reflects the direction the leading AI labs are taking, where reasoning and action are increasingly treated as two halves of the same system rather than separate concerns.",
@@ -2431,82 +2355,6 @@
           "s": "b",
           "ja": "そうじゃな。特に注意したいのは、止まるエラーより、間違ったまま通る不具合だと記事は強調しておるよ。",
           "en": "That’s right. The article especially warns about silent failures that pass through with incorrect data, rather than errors that stop the process."
-        }
-      ]
-    },
-    "801b24fe3b176db2": {
-      "bodyJa": "AIコーディング支援ツール「Claude Code」を使っていて、トークン量の割に請求額が抑えられていると感じたことはないだろうか。その背景には「プロンプトキャッシュ（prompt caching）」と呼ばれる仕組みが深く関わっており、これを理解することがコスト最適化の第一歩になる。\n\nプロンプトキャッシュは、Anthropicが提供するAPI機能の一つだ。大規模言語モデル（LLM）は本来、リクエストのたびに入力トークン全体を処理する必要があるが、コーディング作業では同じシステムプロンプトやファイル内容、会話履歴が繰り返し送られる場面が多い。キャッシュはこの共通部分をサーバー側に一時保存し、次回以降の再処理を省くことで、応答速度と課金を同時に改善する狙いがある。\n\n課金構造を具体的に見ると、キャッシュには「書き込み」と「読み込み」で異なるトークン単価が設定されている。一般に、キャッシュへの書き込みは通常の入力トークンよりやや割高になる一方、キャッシュからの読み込みは大幅に安価とされる。Anthropicの公開情報では、キャッシュ読み込みが通常入力の10分の1程度になる場合があるとされ、繰り返しの多い長時間セッションほど恩恵が大きくなる。\n\nClaude Codeがこのキャッシュを積極的に活用しているとみられる点は重要だ。プロジェクト全体のコンテキストを保持しながら対話を続ける同ツールの性質上、キャッシュが効かなければ入力トークンが膨張し、コストが跳ね上がる可能性がある。逆に言えば、キャッシュヒットが続く限り、実際の請求はトークン量から素朴に想像するより低く抑えられる。\n\nただしキャッシュには有効期限（TTL）があり、標準では数分程度とされる。一定時間操作が途切れると失効し、再度書き込みコストが発生する点には留意したい。作業を細切れにするより、集中して連続的に進めるほうがキャッシュ効率の面では有利になると考えられる。\n\n同様の仕組みはOpenAIやGoogleなど他社のAPIでも導入が進んでおり、プロンプトキャッシュは今やLLM活用のコスト設計における前提知識になりつつある。Claude Codeの請求明細を眺める際も、キャッシュ関連の項目に目を向けることで、料金の増減を合理的に説明できるようになるだろう。",
-      "bodyEn": "Prompt caching has quietly become one of the most consequential factors in the cost of running Claude Code, Anthropic's terminal-based agentic coding assistant. For developers who use the tool intensively, understanding how caching interacts with token billing is often the difference between a predictable monthly bill and an unexpectedly large one, which is why it deserves closer attention than most usage guides give it.\n\nAt its core, prompt caching addresses a structural inefficiency in how large language models handle repeated context. Every time an API request is made, the model normally reprocesses the full prompt from scratch, including system instructions, tool definitions, and any accumulated conversation history. In an agentic coding session, that context can be enormous and largely unchanged from one turn to the next. Caching lets the provider store the processed representation of a prompt prefix so that later requests can reuse it rather than recomputing it.\n\nThe economics are what make this important. Anthropic's pricing separates tokens into several categories: standard input tokens, cache write tokens, and cache read tokens. Writing to the cache typically costs more than a normal input token, commonly around 25 percent more for the default five-minute cache window, because the system must process and store the content. Reading from the cache, however, is dramatically cheaper, often priced at roughly one-tenth of the standard input rate. Output tokens are billed separately and are unaffected by caching. There is also a longer one-hour cache option, which appears to carry a higher write premium in exchange for a longer time-to-live.\n\nThis asymmetry explains why prompt caching sits at the center of Claude Code's billing structure. A coding session repeatedly sends a large, stable block of context—the system prompt, tool schemas, files that have been read, and prior exchanges—on top of a small amount of new input. Without caching, that entire block would be billed at full input rates on every turn. With caching, the bulk of it is written once and then read back at a fraction of the cost for the duration of the cache window. Because interactive coding tends to produce frequent, closely spaced requests, cache hits are common, and the savings compound over the length of a session.\n\nUnderstanding this behavior has practical consequences. Actions that invalidate or fail to reuse the cache tend to be the expensive ones. Long pauses that let the cache expire, edits that change an early part of the context and therefore break the reusable prefix, or workflows that repeatedly restructure the beginning of a prompt can all force fresh cache writes. Keeping stable content at the front of the context and volatile content toward the end is likely to improve hit rates, since caching generally works on shared prefixes.\n\nIt helps to place this in the broader landscape. Prompt caching is not unique to Anthropic; OpenAI and Google have introduced comparable mechanisms, and the general trend across providers is toward pricing that rewards reusing context rather than resending it. Claude Code competes with tools such as GitHub Copilot, Cursor, Aider, and OpenAI's Codex-style agents, many of which grapple with the same cost pressure from large, repeated context windows. For subscription-based access through Claude's Pro and Max plans, the caching mechanics are handled behind the scenes, but for developers working directly against the API or through pay-as-you-go billing, they translate directly into money.\n\nThe prerequisite concept worth emphasizing is that tokens, not requests, are the unit of cost, and that not all tokens are priced equally. Once that distinction is clear, the value of caching becomes intuitive: the goal is to maximize inexpensive cache reads while minimizing full-price input processing and unnecessary cache writes. Anthropic exposes cache-related token counts in its API responses, so usage can be measured rather than guessed.\n\nFor teams budgeting around agentic coding, the takeaway is that cost optimization is less about limiting how much you use Claude Code and more about structuring interactions so the cache does as much work as possible. Treating prompt caching as a first-class part of the workflow, rather than an implementation detail, appears to be the most reliable path to keeping API spending in check.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T16:54:32.253Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "プロンプトキャッシュが課金の鍵って、それって何？ どうして料金が変わるの？",
-          "en": "Prompt caching is the key to billing? What is it, and why does it change the cost?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、以前のプロンプトを再利用する仕組みじゃな。記事によれば、キャッシュが当たるとAPIコストを大幅に抑えられるんじゃよ。",
-          "en": "Simply put, it reuses previously processed prompts. According to the article, cache hits can dramatically reduce API costs."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ じゃあ、キャッシュの節約効果が消えやすい操作もあるの？",
-          "en": "Wow, that’s huge! Are there actions that can wipe out those caching savings?"
-        },
-        {
-          "s": "b",
-          "ja": "記事では、途中のモデル切替、MCPを含むツールの追加・削除、重いセッションを5分以上の放置込みで延命する操作を挙げておるよ。",
-          "en": "The article flags switching models mid-session, adding or removing tools including MCP, and stretching out a heavy session with idle gaps of over five minutes."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、安いモデルを選ぶだけじゃなく、キャッシュが効く状態を崩さないことが大事なんだね！",
-          "en": "So choosing a cheaper model isn’t enough. The important part is keeping the cache effective!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事によれば、途中の変更や長い放置を避けることが、Claude Codeのコストを抑える見どころじゃな。",
-          "en": "Exactly. According to the article, avoiding mid-session changes and long idle gaps is crucial for keeping Claude Code costs down."
-        }
-      ]
-    },
-    "218d333522942047": {
-      "bodyJa": "エージェントAI（自律型AI）を実務に組み込む動きが加速している。最新のGPT-5.6とClaude Sonnet 5を「会話の相手」ではなく「作業を最後まで仕上げる道具」として運用するための設計思想と実装手法を、具体的なコード例とともに解説した入門記事が公開された。\n\n従来のLLM活用は、プロンプトを投げて応答を受け取る一問一答が中心だった。これに対しエージェント型では、モデル自身がタスクを分解し、外部ツールを呼び出し、結果を検証して次の行動を決める、という反復ループを回す。記事はこの違いを設計の起点として位置づけ、単なる応答生成から「タスクの完了」へと発想を転換する重要性を強調している。\n\n技術的な核となるのが、ツール呼び出し（function calling / tool use）の仕組みである。モデルに使用可能な関数の定義を渡し、必要に応じてファイル操作やAPI実行、コード実行などを委ねる。記事ではこうした処理を安全に扱うためのループ設計や、失敗時のリトライ、途中経過の検証といった実装パターンが紹介されているとみられる。\n\nこうした流れは特定の製品に限った話ではない。AnthropicはClaude向けにツール利用やコンピュータ操作の機能を、OpenAIも関数呼び出しやAssistants系のAPIを提供しており、エージェント実装を支える基盤は各社で整いつつある。加えてLangChainやLlamaIndex、Model Context Protocol（MCP）のように外部連携の標準化を狙う周辺ツールも登場し、モデルと外部システムをつなぐ選択肢は広がっている。\n\n一方で、自律的に動くエージェントには固有の課題もある。想定外の操作やコスト増、無限ループ、機微な情報の取り扱いといったリスクは、人間による確認（human-in-the-loop）や権限の制限、実行範囲の明確化で管理する必要がある。記事が説く「作業を仕上げる道具」という視点は、モデルの能力を過信せず、検証と制御を前提に組み込む実装姿勢とも言える。\n\nエージェントAIはまだ発展途上の領域であり、モデルの性能向上とともにベストプラクティスも移り変わる可能性が高い。基礎的な設計思想を押さえた入門記事は、実装に踏み出す開発者にとって足がかりとなりそうだ。",
-      "bodyEn": "The rapid maturation of large language models has moved the industry beyond simple question-and-answer chat toward systems that can plan, act, and finish tasks on their own. A recent introductory piece on Zenn frames this transition clearly, arguing that the latest models—referred to as GPT-5.6 and Claude Sonnet 5—are best understood not as conversation partners but as tools for completing actual work. Why this matters is straightforward: the value of an AI system increasingly depends less on the quality of a single response and more on its ability to carry a multi-step task through to a verifiable result.\n\nAt the center of the article is a distinction between response generation and task completion. In a conventional chat setup, a model receives a prompt and returns text, leaving execution to the human. An agentic setup, by contrast, wraps the model in a loop where it can call external tools, observe the results, and decide on the next action until a goal is met. The author presents this as a design philosophy rather than a single technique, emphasizing that the surrounding scaffolding—tool definitions, state management, and stopping conditions—often matters more than the raw model capability.\n\nThe technical core of most agent implementations is function calling, sometimes described as tool use. Both major model families expose structured interfaces that let a developer declare available functions, their parameters, and expected outputs, typically as JSON schemas. The model then decides when to invoke a function, and the runtime executes it and feeds the result back into the context. The article reportedly walks through concrete code examples of this pattern, showing how a task such as reading a file, querying an API, or running a calculation can be delegated to deterministic code while the model handles reasoning and orchestration. This division of labor is a common recommendation, since language models are unreliable at precise arithmetic or data retrieval but comparatively strong at planning and interpretation.\n\nContext is important for understanding where these patterns come from. Frameworks such as LangChain, LlamaIndex, and the newer generation of agent toolkits popularized many of these ideas, and Anthropic's introduction of the Model Context Protocol has pushed toward a more standardized way of connecting models to external tools and data sources. OpenAI's function calling and its Assistants and Agents tooling occupy a similar niche. The Zenn piece appears to sit within this broader movement, offering a hands-on entry point rather than proposing an entirely new architecture. Readers already familiar with prompt engineering, structured outputs, and retrieval-augmented generation will likely find the concepts build naturally on that foundation.\n\nA recurring theme in agentic design, and one the article is likely to touch on, is reliability. Autonomous loops can fail in ways that simple chat cannot: an agent may enter an infinite cycle, call the wrong tool, or confidently proceed on a flawed assumption. Practical implementations therefore add guardrails such as iteration limits, explicit verification steps, human-in-the-loop checkpoints for sensitive actions, and logging so that behavior can be audited. Treating the model as a component within a well-defined system, rather than an all-knowing oracle, is the pragmatic stance most current guidance endorses.\n\nIt is worth noting that the specific model names cited, GPT-5.6 and Claude Sonnet 5, should be read in the context of the article's forward-looking framing; the underlying patterns are largely model-agnostic and apply to earlier releases as well. The general trend the piece reflects is real: vendors are competing on tool-use accuracy, longer context windows, and lower latency precisely because these characteristics determine how well a model performs inside an agent loop. Improvements in structured output adherence and instruction following tend to reduce the amount of defensive scaffolding developers must write.\n\nFor practitioners, the takeaway is that adopting agentic AI is as much an engineering discipline as a modeling choice. Success depends on clearly scoping what a task means, defining the tools an agent may use, and building verification into the workflow. The article positions itself as a starting point for that journey, and its emphasis on finishing work rather than merely generating text captures the direction the field appears to be heading. Anyone evaluating these approaches should still validate claims against their own use cases and remain cautious about handing critical decisions to systems that can still err.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T16:57:39.331Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「エージェントAI」って何？ 普通に質問へ答えるAIとは違うの？",
-          "en": "What exactly is “agentic AI”? How is it different from an AI that just answers questions?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、ゴールを渡すと複数の手順を自律的に進め、成果物まで返す仕組みじゃよ。記事はGPT-5.6とClaude Sonnet 5で解説しておる。",
-          "en": "Put simply, it takes a goal, works through multiple steps autonomously, and returns a finished result. The article demonstrates this with GPT-5.6 and Claude Sonnet 5."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、すごい！ でも、チャットの返事ではなく作業を仕上げてくれると、何が嬉しいの？",
-          "en": "Wow, that sounds useful! But what’s the benefit of having it finish the work instead of simply replying in chat?"
-        },
-        {
-          "s": "b",
-          "ja": "記事の狙いは、AIを単なる応答生成ではなく、実際のタスクを完結させる道具として運用することじゃ。設計思想と具体的なコード例も示しておるよ。",
-          "en": "The article aims to turn AI from a response generator into a tool that completes real tasks. It also presents the design thinking and concrete code examples behind that approach."
-        },
-        {
-          "s": "a",
-          "ja": "つまり、AIにゴールを伝えて、途中の手順も進めてもらい、最後に成果物を受け取る実装を学べるんだね！",
-          "en": "So it teaches you to give AI a goal, let it handle the steps, and receive a finished result at the end!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。まずは記事の最小構成サンプルで、エージェントの基本ループをコードにする方法を見るのがポイントじゃよ。",
-          "en": "Exactly. The key is to start with the article’s minimal sample and see how the agent’s basic loop is implemented in code."
         }
       ]
     },
@@ -2852,44 +2700,6 @@
         }
       ]
     },
-    "35ed74798f660751": {
-      "bodyJa": "検索拡張生成(RAG)を手軽に構築できるオープンソースエンジンとして知られるRAGFlowだが、日本語テキストの一部を意図せず中国語(簡体字)に変換してしまう挙動に直面した開発者が、代替としてLlamaIndexで日英対応のRAGパイプラインを自作した事例を公開した。既製ツールの利便性と、その内部処理を自ら制御することの意義を考えるうえで示唆に富む内容だ。\n\nRAGは、外部の文書データベースから関連情報を取り出し、その内容を大規模言語モデル(LLM)に渡して回答を生成する仕組みで、社内文書検索やFAQ応答などで急速に普及している。RAGFlowはこの一連の処理を比較的容易に組めるツールだが、今回のケースでは日本語文書を扱う過程でテキストが中国語に置き換わる問題が報告された。\n\n漢字を共有する日本語と中国語は、文字コードや形態素解析、埋め込みモデルの学習データの偏りなどが原因で混同されやすく、多言語対応をうたうツールでも日本語特有の処理でつまずく例は少なくない。著者はこの問題を回避するため、RAGフレームワークのLlamaIndexを用い、日本語と英語の双方に対応するパイプラインをスクラッチで構築したという。\n\nLlamaIndexは、文書の読み込みからチャンク分割、ベクトル化、検索、生成までを部品として提供するライブラリで、類似のLangChainと並んでRAG開発の定番となっている。自前で組むことで、前処理や埋め込みモデルの選択、チャンク分割の粒度といった各工程を細かく調整でき、日本語の誤変換や文字化けを抑えやすくなる利点があるとみられる。記事では、こうした実装の詳細や構築を通じて得られた知見が共有されている。\n\nこの事例は、既製のRAGツールが手軽さと引き換えに内部処理のブラックボックス化を招き、特定の言語で想定外の不具合を生む可能性を示すものと言える。ローカルLLMやオープンソースのRAG基盤は選択肢が急速に増えている一方、日本語処理の品質はツールごとに差が大きいと考えられる。多言語対応と銘打たれていても実際の挙動を検証したうえで、用途に応じて既製ツールと自作を使い分ける判断が、実務では重要になりそうだ。",
-      "bodyEn": "Retrieval-augmented generation (RAG) has become one of the most common ways to ground large language models in private or domain-specific documents, but the quality of a RAG system depends heavily on how well its underlying tools handle the language of those documents. A recent Zenn post describes a case where RAGFlow, a popular open-source RAG engine, reportedly converted Japanese text into Chinese during processing, prompting the author to abandon the packaged solution and build a bilingual Japanese-English pipeline from scratch using LlamaIndex.\n\nThe reported problem sits at the intersection of a well-known challenge in natural language processing: the overlap between the Chinese and Japanese writing systems. Japanese uses kanji, characters that are largely shared with Chinese hanzi, alongside hiragana and katakana. When a processing step such as language detection, text normalization, or a tokenizer is tuned primarily for Chinese, it can misidentify or transform Japanese content, sometimes substituting characters with their simplified Chinese equivalents. The author appears to have encountered exactly this kind of silent corruption, where ingested Japanese documents no longer matched their original form, undermining the accuracy of any downstream retrieval.\n\nRAGFlow is designed as an end-to-end platform that bundles document parsing, chunking, embedding, and retrieval behind a single interface, which makes it attractive for teams that want to avoid assembling components themselves. The trade-off, as this case illustrates, is that an all-in-one system can be difficult to debug or reconfigure when one internal stage behaves unexpectedly. Rather than patch around the behavior, the author chose LlamaIndex, a data framework that gives developers explicit control over each stage of the RAG workflow.\n\nBuilding a RAG pipeline manually typically involves several distinct steps. Documents are first loaded and split into chunks of a manageable size, then each chunk is passed through an embedding model that converts text into vectors. Those vectors are stored in a vector database or index, and at query time the system retrieves the most relevant chunks and feeds them, along with the user's question, into an LLM that generates the final answer. LlamaIndex provides abstractions for each of these steps while leaving room to swap in language-appropriate components, which is central to the author's approach.\n\nFor Japanese in particular, the choice of embedding model and text-splitting strategy matters a great deal. Multilingual embedding models such as the E5 and BGE families, or Japanese-focused models, are commonly used because they preserve semantic meaning across languages and handle CJK scripts more reliably than English-centric alternatives. Chunking also requires care, since naive splitting on whitespace does not work for Japanese, which does not place spaces between words. Tokenizers such as MeCab, Sudachi, or GiNZA are often introduced to segment text sensibly. The post reportedly walks through these implementation details and the lessons learned along the way.\n\nThe account fits into a broader pattern in the local LLM community, where developers increasingly favor building on modular frameworks that they can run and inspect on their own hardware. Alongside LlamaIndex, tools such as LangChain, Haystack, and vector stores like FAISS, Chroma, and Qdrant are frequently combined to create custom retrieval stacks. Running these components locally, often with open-weight models served through runtimes such as Ollama, appeals to users concerned with data privacy, cost, or the need to support languages that hosted services may handle inconsistently.\n\nThe episode is a useful reminder that multilingual support is rarely uniform across the RAG toolchain, and that behavior which is acceptable for one language can introduce subtle errors in another. For practitioners working primarily in Japanese, verifying that text survives ingestion unchanged is a sensible early check before trusting any pipeline's output. Whether a custom build or a packaged engine is the better choice will depend on the team's priorities, but the author's experience suggests that greater control over each stage can be worth the additional effort when a language-specific issue proves hard to isolate. As open-source RAG tools continue to mature, such handling of non-English text is likely to improve, though careful validation remains advisable for anyone deploying these systems in production.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T21:54:14.130Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「日本語が中国語トークンに変わって検索が壊れる」って、つまりどういうこと？RAGもまだよく分からない！",
-          "en": "“Japanese got turned into Chinese tokens and search broke”—what does that actually mean? I’m still fuzzy on RAG too!"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うとじゃな、RAGは関連文書を探し、その内容をもとに答える仕組みじゃ。記事では、誤変換で検索が機能しなくなったそうじゃよ。",
-          "en": "Put simply, RAG finds relevant documents and answers using them. According to the article, the mistaken conversion stopped that retrieval step from working properly."
-        },
-        {
-          "s": "a",
-          "ja": "それでLlamaIndexで自作すると、何が嬉しいの？日英の文書をちゃんと使えるようになったのかな？",
-          "en": "So what’s the benefit of rebuilding it with LlamaIndex? Did that let the author use both Japanese and English documents properly?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、日英文書をbge-m3で埋め込み、Chromaで40件検索。bge-reranker-v2-m3で5件に絞り、qwen3.5:9bが根拠付きで答える形にしたんじゃ。",
-          "en": "According to the article, bge-m3 embeds bilingual documents, Chroma retrieves 40, bge-reranker-v2-m3 narrows them to five, and qwen3.5:9b answers with supporting evidence."
-        },
-        {
-          "s": "a",
-          "ja": "へえ、RAGFlowの問題を避けて、自宅PCで日英対応RAGを組み直したんだね。流れまで見えると分かりやすい！",
-          "en": "Wow, so they avoided the RAGFlow issue and rebuilt a Japanese-English RAG system on a home PC. Seeing the whole pipeline makes it click!"
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。記事は詰まった箇所と回避策も書いているので、同じ道を通る人にはそこが見どころじゃよ。",
-          "en": "Exactly. The article also lays out every sticking point and workaround, making those details especially useful for anyone following the same path."
-        }
-      ]
-    },
     "7e42e0bed340fcb8": {
       "bodyJa": "データ分析基盤を手がけるDatabricksが、新たな資金調達ラウンドで企業評価額1880億ドルに達したことが明らかになった。生成AIブームを背景に、データ基盤とAI開発を統合して提供する同社の価値が改めて評価された形で、非上場のAIインフラ企業として世界有数の規模になったとされる。\n\nDatabricksは、大量の生データを蓄積する「データレイク」と、構造化データを高速に分析する「データウェアハウス」の利点を組み合わせた「レイクハウス」という概念を掲げてきた企業だ。分散処理エンジンApache Sparkの商用化から出発し、機械学習の実験管理ツールMLflow、オープンなデータ形式のDelta Lake、統合ガバナンス機能のUnity Catalogなどを整備。企業が自社データを使ってAIモデルを構築・運用するための一連の基盤を提供している。\n\n近年はAI関連への投資を積極化しており、大規模言語モデル（LLM）の学習基盤を持つMosaicMLや、データ管理のTabularを買収するなど機能拡張を続けてきた。企業が保有する独自データをLLMと組み合わせ、自社向けの生成AIアプリケーションを開発する需要が高まる中、そうしたワークロードの受け皿として位置づけられている。\n\n競合としては、クラウド型データ基盤のSnowflakeがしばしば比較対象に挙げられるほか、Amazon、Microsoft、Googleといった大手クラウド事業者も類似サービスを展開する。各社がAI向けデータ基盤の主導権を争う構図が続いており、今回の高い評価額は、この領域に対する投資家の期待の強さを反映しているとみられる。\n\n一方で、AI関連企業の評価額をめぐっては過熱を指摘する声も一部にある。実際の収益成長が評価に見合うかどうかは、今後の焦点となりそうだ。Databricksは将来的な新規株式公開（IPO）観測も取り沙汰されており、調達した資金を製品開発や人材獲得、さらなる買収にどう振り向けるかが注目される。データとAIを結ぶ基盤の重要性が増すなか、同社の動向は業界全体の指標として見られる可能性がある。",
       "bodyEn": "Databricks has reached a valuation of $188 billion in a new funding round, according to a report from TechCrunch, a milestone that further establishes the data-and-AI company as one of the most valuable privately held businesses in the sector. The figure matters because it reflects how aggressively investors continue to back the infrastructure layer beneath the current wave of artificial intelligence, rather than only the consumer-facing models and applications that draw the most attention.\n\nThe scale of the valuation represents a steep climb for the company. Databricks closed a large late-stage round in December 2024 that valued it at roughly $62 billion, and its worth has risen sharply through subsequent financing. A move to $188 billion, if confirmed by the company, would place Databricks among a small group of private firms whose paper valuations rival or exceed those of many established public technology companies. As with all private-market valuations, the figure is set by negotiation between the company and its investors and should not be read as equivalent to a market price that public trading would produce.\n\nDatabricks built its business around what it calls the \"lakehouse\" architecture, a design that merges the low-cost, flexible storage of a data lake with the structured querying and governance features traditionally associated with a data warehouse. The company was founded by the original creators of Apache Spark, the open-source engine for large-scale data processing, and it has since contributed to or commercialized a range of related technologies, including Delta Lake for reliable data storage, MLflow for managing machine-learning workflows, and Unity Catalog for data governance. These tools position the company as a place where organizations store, clean, and analyze the large datasets that machine-learning systems depend on.\n\nThe pivot toward being described as an \"AI company\" has been deliberate and is central to the valuation story. In 2023 Databricks acquired MosaicML, a startup focused on training and deploying generative models, in a deal reported at around $1.3 billion. That acquisition became the foundation of its Mosaic AI product line, which lets customers build, fine-tune, and serve models using their own proprietary data. The strategic logic is that enterprises increasingly want to apply large language models to their internal information while keeping that data within their own governed environments, and Databricks aims to be the platform where both the data and the models live.\n\nThe company's rise plays out against intense competition. Its closest rival is Snowflake, a publicly traded data-warehousing firm that has similarly expanded into AI features and model hosting. Databricks also competes, and in some cases partners, with the major cloud providers, Amazon Web Services, Microsoft Azure, and Google Cloud, all of which offer overlapping data and AI services. To strengthen its position on open data formats, Databricks acquired Tabular, a company founded by the creators of Apache Iceberg, an increasingly popular table format, in a move that appeared aimed at bridging competing standards in the data ecosystem.\n\nThe funding also fits a broader pattern of extraordinary capital flowing into AI infrastructure. Model developers such as OpenAI and Anthropic have raised enormous sums, while chipmaker Nvidia has seen its market value surge on demand for the processors used to train and run large models. Databricks sits one layer removed from that hardware and model race, supplying the data pipelines, governance, and tooling that companies need before AI can be deployed usefully. Investors appear to be betting that this \"picks and shovels\" role will remain valuable regardless of which specific models ultimately dominate.\n\nSeveral questions remain. Large private valuations depend on continued enterprise spending on AI, which some analysts caution could moderate if returns on those investments prove slower to materialize than expected. A valuation of this size also raises expectations about an eventual initial public offering, though Databricks has not committed to a timeline, and the company has repeatedly said it prefers to remain private while it grows. For now, the round signals sustained investor confidence in the data infrastructure underpinning enterprise AI, even as the wider market weighs how durable the current spending cycle will prove to be.",
@@ -3191,44 +3001,6 @@
           "s": "b",
           "ja": "その理解でよいぞ。承認は得たが、記事情報では具体的な提供時期までは分からないので、次は実際の展開が見どころじゃな。",
           "en": "Exactly. Approval is in place, but the article gives no specific rollout date, so the actual launch is the next thing to watch."
-        }
-      ]
-    },
-    "7f5c3f7820ecc6bb": {
-      "bodyJa": "VS Code Copilot Chat 1.109で追加された8つの新機能を、Context Engineering(文脈設計)の観点から検証する解説記事が公開された。AIコーディング支援において、開発者がモデルへ渡す文脈をどこまで精密に制御できるかが焦点となっており、今回のアップデートはその流れを一段と後押しするものと位置づけられている。\n\nContext Engineeringとは、生成AIに与えるプロンプトだけでなく、参照させるファイルやディレクトリ、過去の会話履歴、ツールの実行結果といった「文脈」全体を意図的に設計する考え方を指す。単発の指示文を磨くプロンプトエンジニアリングから一歩進み、AIが何を見て何を無視するかを開発者側がコントロールすることで、出力の一貫性や再現性を高める狙いがある。大規模なコードベースほど、モデルに渡す情報の取捨選択が回答品質を左右しやすいとされる。\n\n記事では、1.109で加わった各機能を、この文脈制御の観点から一つずつ位置づけている。具体的には、チャットに含めるコンテキストの指定方法や、エージェント的にツールを呼び出す挙動、カスタム指示ファイルの扱いなどが、開発者の意図をAIへより明確に伝える手段として整理されていると見られる。どの情報を渡し、どの範囲で作業させるかを細かく調整できることが、実務での使い勝手に直結するという論旨だ。\n\n背景には、AIコーディング支援ツールをめぐる競争の激化がある。GitHub Copilotに加え、CursorやClineといったエージェント型ツール、Anthropicのモデルを組み込んだ環境などが相次いで登場し、いずれも「いかに適切な文脈を与えるか」を重要テーマに据えている。VS Codeは拡張機能として複数のモデルを切り替えられる柔軟性を持ち、Copilot Chatの更新頻度も比較的高いことから、こうした文脈制御機能は今後も継続的に拡充される可能性がある。\n\nもっとも、機能が増えるほど設定や運用の複雑さも増す。今回紹介された8機能をすべて使いこなす必要は必ずしもなく、自分の開発スタイルやプロジェクト規模に応じて取捨選択する視点が求められそうだ。Context Engineeringという枠組みは、そうした判断の指針として一定の有用性を持つと考えられる。",
-      "bodyEn": "Context Engineering, the practice of deliberately shaping the information an AI model receives before it generates a response, has become a central concern for developers who rely on coding assistants. This article looks at the release of VS Code Copilot Chat version 1.109 and examines eight of its new features through that lens, focusing on how each one gives developers more precise control over the context that surrounds a request. As models grow more capable, the quality of their output increasingly depends less on the phrasing of a single prompt and more on the surrounding material—open files, project structure, instructions, and tool results—that the assistant can see.\n\nThe central idea behind Context Engineering is that a large language model only reasons over what fits inside its context window. Everything the assistant \"knows\" about a task in the moment is assembled from sources the developer either supplies explicitly or allows the tool to gather automatically. When that assembly is left to chance, results can be inconsistent; when it is managed deliberately, the same underlying model tends to behave more predictably. The features highlighted in 1.109 appear to reflect this shift, moving the emphasis from clever wording toward reproducible context construction.\n\nSeveral of the updates concern how instructions and reusable context are declared. Recent versions of Copilot Chat have supported instruction files and prompt files stored in the workspace, which let teams codify conventions such as preferred libraries, testing patterns, or coding style so they are injected consistently rather than retyped. Improvements in this area typically make it easier to scope instructions to particular file types or folders, which reduces noise by ensuring the model sees guidance relevant to the current task and not everything at once. From a Context Engineering standpoint, this is significant because irrelevant context can dilute a model's attention as much as missing context can starve it.\n\nOther features address the mechanics of gathering context during a conversation. Context variables and references, which allow a developer to point the assistant at a specific file, selection, symbol, or the broader codebase, remain a core mechanism for controlling what the model reads. Enhancements here generally aim to make the boundaries of that context more visible and controllable, so the developer can confirm what was actually included. Agent-oriented workflows, where the assistant can run tools, read files, and make multi-step edits, raise the stakes further, because the context is being modified as the task proceeds rather than fixed at the outset.\n\nTooling and extensibility form another recurring theme. The Model Context Protocol, an open standard for connecting assistants to external data sources and tools, has been adopted across several vendors and is likely relevant to any discussion of context control in modern editors. Features that manage tool sets, permissions, and how tool output is fed back into the conversation directly affect what ends up in the window. Neatly summarizing or filtering tool results, for instance, can prevent a single verbose command output from crowding out more useful material.\n\nIt is worth placing this release in a wider industry context. Copilot Chat competes with tools such as Cursor, Cline, and JetBrains AI Assistant, many of which have converged on similar concepts: workspace-level rules, explicit context attachment, agent modes, and standardized tool interfaces. This convergence suggests that Context Engineering is becoming a shared vocabulary rather than a single product's marketing frame. The prerequisite concepts—prompt engineering, retrieval, and an understanding of context window limits—carry over across these environments, which makes learning them broadly transferable.\n\nReaders evaluating whether to adopt the new features should treat specific behavior as version-dependent, since fast-moving extensions change defaults and naming between releases, and hands-on testing remains the most reliable guide. The broader takeaway is that the assistant's usefulness is closely tied to how well its context is curated. The eight features discussed here appear designed to make that curation more explicit, repeatable, and team-friendly, which is consistent with a general trend toward treating context as something to be engineered rather than left implicit. Developers who internalize that mindset are likely to get steadier results regardless of which tool or version they use.",
-      "model": "claude-opus-4.8",
-      "generatedAt": "2026-07-19T13:04:35.548Z",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "Context Engineeringって何？ 8つの新機能とどうつながるの？",
-          "en": "What is Context Engineering? And how does it connect to these eight new features?"
-        },
-        {
-          "s": "b",
-          "ja": "簡単に言うと、AIに渡す情報や指示を整える考え方じゃな。記事では、Copilot Chat 1.109の8機能をその視点で検証しておる。",
-          "en": "Put simply, it means shaping the information and instructions given to AI. The article examines Copilot Chat 1.109’s eight features from that perspective."
-        },
-        {
-          "s": "a",
-          "ja": "それって何が嬉しいの？ AIとのやり取りが変わるってこと？",
-          "en": "So what’s the benefit? Does it change how developers interact with the AI?"
-        },
-        {
-          "s": "b",
-          "ja": "記事によれば、AI支援のコーディングを開発者がより細かく制御できるのが注目点じゃよ。各機能の活用方法も解説されておる。",
-          "en": "According to the article, the key benefit is finer developer control over AI-assisted coding. It also explains how each feature can be used."
-        },
-        {
-          "s": "a",
-          "ja": "なるほど！ 8つの機能を、AIへの情報や指示を整える道具として見るわけだね。",
-          "en": "Got it! So the eight features are viewed as tools for better shaping what information and instructions the AI receives."
-        },
-        {
-          "s": "b",
-          "ja": "その通りじゃ。見どころは、8機能それぞれが精密な制御にどう役立つと検証されているかじゃな。",
-          "en": "Exactly. The key thing to watch is how the article finds each of the eight features can support more precise control."
         }
       ]
     },
@@ -43854,45 +43626,159 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-29T16:17:09.366Z"
     },
-    "409783824fda24fa": {
-      "bodyJa": "WindowsでVS CodeのDev Containersを使う場合、settings.jsonに必要な内容は、コンテナランタイムの置き場所によって変わる。Windows上のDocker、Podman、WSLという3つの構成を区別することで、追加指定が必要な設定と省略できる設定を整理できる。\n\n## 拡張機能\n\n前提として、VS Codeに拡張機能「ms-vscode-remote.remote-containers（Dev Containers）」を導入する。以降の設定は、この拡張機能がコンテナの実行に使うコマンドを、構成に合わせて指定するものとなる。\n\n## Docker\n\nDockerをWindowsにインストールしている構成では、Docker DesktopによってdockerコマンドへのPATHが通っているため、追加設定は不要とされる。dockerPathを記述する場合の値は「dev.containers.dockerPath」に対する「docker」となる。\n\n## Podman\n\nPodmanをWindowsにインストールしている場合は、Dev Containersが呼び出すdockerコマンドの実行先をPodmanへ差し替える。dockerPathには「podman」、dockerComposePathには「podman-compose」を指定する。Docker構成とは異なり、利用するコマンドをsettings.jsonで明示する形だ。\n\n## WSL\n\nWSLを使う構成では、VS CodeのWSL拡張でWSLへ接続し、その環境内でフォルダを開く。Dev Containers拡張もWSL側で動作するため、WSL内のdockerをそのまま利用でき、Windows側の設定は不要となる。必要な場合はRemote [WSL]の設定でdockerPathに「docker」を指定する。プロジェクトは「~/work/...」のようなWSLのファイルシステムに置き、「/mnt/c/...」は遅いとされている。",
-      "bodyEn": "## Dev Containers on Windows\n\nVS Code Dev Containers settings on Windows depend on where the container runtime is installed. The relevant settings.json entries differ across Docker on Windows, Podman on Windows, and a workflow using WSL, so the configuration should match the chosen setup.\n\nThe ms-vscode-remote.remote-containers extension, identified as Dev Containers, is required for these configurations.\n\n## Docker on Windows\n\nWhen Docker Desktop is installed on Windows, the docker command is already available through PATH. No additional configuration is required to point Dev Containers to the executable.\n\nThe corresponding setting is:\n\n\"dev.containers.dockerPath\": \"docker\"\n\nThis setup leaves Dev Containers using the standard docker command available on Windows, without replacing its executable path with another runtime command.\n\n## Podman on Windows\n\nDev Containers calls the docker command, so a Windows installation using Podman requires the executable targets to be changed. In settings.json, the Docker path should point to podman, while the Docker Compose path should point to podman-compose:\n\n\"dev.containers.dockerPath\": \"podman\",\n\"dev.containers.dockerComposePath\": \"podman-compose\"\n\nThese settings replace the commands that Dev Containers would otherwise call, aligning the configuration with Podman installed on Windows.\n\n## WSL settings\n\nFor the WSL setup, connect to WSL with the VS Code WSL extension and open the project folder from within that environment. The Dev Containers extension then runs on the WSL side and can use the docker command installed there directly.\n\nNo Windows-side setting is required. If an explicit path is needed, it can be placed in the Remote [WSL] settings:\n\n\"dev.containers.dockerPath\": \"docker\"\n\nProjects should be stored in the WSL file system, such as ~/work/..., rather than under /mnt/c/..., which is slower.",
+    "42bd034b4b0799b8": {
+      "bodyJa": "## .NET版1.81.0\n\nSemantic Kernel .NET 1.81.0が2026年10月6日に公開された。中心となるのは、FileIOPluginのファイル処理、Milvusの絞り込み、プラグインのパス検証に関する更新で、ファイル操作と検索連携をより確実にする変更と説明されている。\n\n## FileIOPlugin\n\nFileIOPluginでは、ファイル処理が更新された。変更一覧では「ファイル処理の更新」とされており、開発者が同プラグインを通じて行うファイル操作の信頼性向上につながる内容として位置付けられている。\n\nあわせて、プラグインのパス検証を統一する変更も含まれる。ファイル処理の更新とは別の項目として記載されており、プラグインが扱うパスの検証方法をそろえる対応となる。\n\n## Milvusの絞り込み\n\nMilvusについては、絞り込み処理が改善された。検索時の対象を条件に沿って絞り込む部分に関する更新であり、Semantic KernelとMilvusを組み合わせた検索連携を、より確実にする変更とされる。\n\nこのリリースでは性能値や比較結果ではなく、絞り込み処理そのものの改善が変更点として示されている。\n\n## ビルドとテスト\n\n開発面では、Gitのビルド依存関係がアップグレードされた。また、OpenAIとの直接統合テストは一時的にスキップする変更が加えられている。「一時的」と明記されたテスト上の対応であり、FileIOPluginやMilvusの機能更新とは区別される。\n\nこれらに加え、.NETパッケージのバージョンを1.81.0へ引き上げる変更が行われた。変更一覧は自動生成されたものとされている。",
+      "bodyEn": "## Semantic Kernel .NET 1.81.0\n\nSemantic Kernel .NET 1.81.0 focuses on file operations, search integration, and plugin path validation. The release is intended to make file and search integrations more reliable through a set of targeted updates rather than a single new capability.\n\nThe package version is bumped to 1.81.0. The listed changes also include an upgraded Git build dependency, along with adjustments to integration testing.\n\n## FileIOPlugin file handling\n\nFile handling in FileIOPlugin has been updated. This change addresses the part of the plugin responsible for file operations and forms one of the release’s main reliability improvements for developers working with file integrations.\n\nThe release also aligns plugin path validation. Bringing path validation into alignment complements the FileIOPlugin update by making plugin-related path handling more consistent. The stated changes do not present file handling and path validation as separate products or additions; they are updates within the .NET release.\n\nTogether, the file-handling update and aligned path validation concentrate on the reliability of file operations. They are specifically identified as developer-facing improvements in Semantic Kernel .NET 1.81.0.\n\n## Improve Milvus filtering\n\nMilvus filtering has been refined in this release. The change is aimed at improving how filtering works in search integrations, contributing to more reliable integration between Semantic Kernel and Milvus.\n\nThis filtering work is listed alongside the file and path-validation changes as a core part of the release. It represents the search-focused portion of the update, while FileIOPlugin and plugin path validation cover file and plugin handling.\n\n## Integration tests and dependency\n\nThe release temporarily skips direct OpenAI integration tests. This is described as a temporary testing change rather than a removal of the integration.\n\nSemantic Kernel .NET 1.81.0 also upgrades the Git build dependency. These development and build changes accompany the functional updates to FileIOPlugin file handling, Milvus filtering, and plugin path validation.",
       "chat": [
         {
           "s": "a",
-          "ja": "PodmanをWindowsで使うとき、どうしてsettings.jsonの指定が増えるの？",
-          "en": "Why does settings.json need extra entries when using Podman on Windows?"
+          "ja": "開発でファイル操作や検索を組み込むとき、普段の作業は何が変わるの？",
+          "en": "When developers add file operations or search, what changes in their day-to-day work?"
         },
         {
           "s": "b",
-          "ja": "Dev Containersがdockerコマンドを呼ぶため、実行先をpodmanとpodman-composeに差し替えるんだ。",
-          "en": "Dev Containers calls Docker commands, so the paths are changed to podman and podman-compose."
+          "ja": "今回の更新では、FileIOPluginの処理、Milvusの絞り込み、プラグインのパス検証が改善され、連携の確実さが高まるよ。",
+          "en": "This update improves FileIOPlugin handling, Milvus filtering, and plugin path validation, making file and search integrations more reliable."
         },
         {
           "s": "a",
-          "ja": "じゃあ、Docker・Podman・WSLのどれを使うかで、必要な設定を選べるってこと？",
-          "en": "So Windows developers can choose only the settings needed for Docker, Podman, or WSL?"
+          "ja": "じゃあ、前はファイル操作や絞り込みができなかったの？",
+          "en": "So were file operations and filtering not possible before?"
         },
         {
           "s": "b",
-          "ja": "うん。Dockerは追加指定なし、Podmanは実行先を変更、WSLはWindows側の指定を省けるよ。",
-          "en": "Yes. Docker needs no extra entry, Podman needs command overrides, and WSL can skip the Windows-side configuration."
+          "ja": "できなかったとは書かれていないよ。以前との細かな差は示されず、処理の更新や改善、検証方法の統一と説明されているんだ。",
+          "en": "It doesn’t say they were impossible before. The notes only describe updated handling, improved filtering, and aligned validation, without detailing every previous behavior."
         },
         {
           "s": "a",
-          "ja": "なるほど、全部に同じ設定を書くんじゃなくて、コンテナの動く場所に合わせるんだね。",
-          "en": "Got it—not one setup for everything. The settings should match where the container runtime runs."
+          "ja": "いちばんの収穫は、新機能が増えたというより、ファイルと検索の連携をより確実にしたことなんだね。",
+          "en": "My main takeaway is that this is less about adding features and more about making file and search integrations more dependable."
         },
         {
           "s": "b",
-          "ja": "そう。WSLでは拡張機能をWSL側で動かし、プロジェクトも~/work/...に置く点に注意してね。/mnt/c/...は遅いとされているよ。",
-          "en": "Right. With WSL, run the extension there and keep projects under ~/work/.... The article notes that /mnt/c/... is slow."
+          "ja": "そう読めるね。直接OpenAI統合テストが一時的にスキップされている点も、あわせて確認しておきたいね。",
+          "en": "That’s a fair reading. It’s also worth noting that direct OpenAI integration tests are temporarily being skipped."
         }
       ],
       "model": "gpt-5.6-sol",
-      "generatedAt": "2026-10-07T05:07:28.739Z"
+      "generatedAt": "2026-10-06T22:38:25.144Z"
     },
-    "ed744c789037c203": {
+    "b5722ce63b7fe6ab": {
+      "bodyJa": "## Python 1.45.0\n\nSemantic Kernel Python 1.45.0では、Copilot Studioエージェントのサービス認証に関する破壊的変更が行われた。対象は未対応とされていた認証モードで、このバージョンから削除されている。リリースは2026年10月6日に公開された。\n\n## サービス認証\n\n今回の変更は、新しい認証モードの追加ではなく、Copilot Studioエージェントから未対応のサービス認証モードを取り除くものだ。変更項目では「Python: [Breaking] Remove unsupported service auth mode from Copilot Studio agent」と示され、#14306として記録されている。削除された認証モードの具体的な名称や、代替となる設定方法は示されていない。\n\n## 破壊的変更\n\n破壊的変更として扱われているため、Copilot Studioエージェントでサービス認証を設定している利用者は、現在の設定がPython 1.45.0と互換性を持つか確認する必要がある。特に、削除対象となった未対応の認証モードに依存している場合は、従来の設定をそのまま利用できるとは限らない。\n\n互換性の確認後、該当する設定を使用していると判明した場合には、移行が必要かどうかを判断することになる。確認の焦点は、利用中のサービス認証モードが削除対象に含まれるかどうかと、バージョン更新に伴って認証設定の見直しが必要かどうかである。",
+      "bodyEn": "## Semantic Kernel Python 1.45.0\n\nSemantic Kernel Python 1.45.0 changes authentication behavior for the Copilot Studio agent. The release removes an unsupported service authentication mode and identifies that removal as a breaking change, making authentication compatibility the central issue for users evaluating the update.\n\nThe release was published on October 6, 2026. Its Python-specific change focuses on removing the unsupported authentication option rather than continuing to expose a mode that the service does not support.\n\n## Copilot Studio agent\n\nThe affected component is the Copilot Studio agent, and the change applies specifically to its service authentication modes. Because one mode has been removed, configurations that depend on that mode may no longer remain compatible after updating to Semantic Kernel Python 1.45.0.\n\nUsers should therefore review the authentication configuration used with the agent. The relevant compatibility question is whether an existing setup relies on the unsupported service authentication mode removed in this release. If it does, users can use that finding to determine whether a migration is required.\n\nThe release information does not frame the removal as a new authentication feature. Instead, it records the deletion of an unsupported mode from the agent’s available behavior.\n\n## Breaking change\n\nThe breaking-change designation signals that this is not merely an internal adjustment. For users of the affected authentication mode, adopting version 1.45.0 requires attention to configuration compatibility.\n\nMigration planning should center on the current service authentication setup for the Copilot Studio agent. Users whose configurations do not rely on the removed mode can still verify compatibility, while those that do rely on it need to determine the required migration before proceeding with the update.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "仕事でCopilot Studioエージェントを使っていたら、普段の設定で何が変わるの？",
+          "en": "If I use a Copilot Studio agent at work, what changes in my usual setup?"
+        },
+        {
+          "s": "b",
+          "ja": "今回、未対応のサービス認証モードが削除されたよ。使っている認証設定が互換か確認し、必要なら移行を判断することになるね。",
+          "en": "This release removes an unsupported service authentication mode. Users need to check whether their authentication settings remain compatible and decide if migration is required."
+        },
+        {
+          "s": "a",
+          "ja": "前はその認証モードを選べたの？ 未対応なのに残っていたってことかな。",
+          "en": "Could people select that authentication mode before? Was it still there even though it wasn’t supported?"
+        },
+        {
+          "s": "b",
+          "ja": "以前はCopilot Studioエージェントに存在し、今回は削除されたと読めるよ。破壊的変更とされているけれど、詳しい経緯までは示されていないんだ。",
+          "en": "It previously existed in the Copilot Studio agent and has now been removed. The change is labeled breaking, but the details don’t explain its earlier status further."
+        },
+        {
+          "s": "a",
+          "ja": "いちばん大事なのは、更新前に自分の認証設定が影響を受けるか確かめることなんだね。",
+          "en": "So the key takeaway is to check whether my authentication settings are affected before updating."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、現在の設定との互換性と、移行が必要かどうかを確認したいところだよ。",
+          "en": "Right. Next, check compatibility with the current setup and whether a migration is needed."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T16:25:30.673Z"
+    },
+    "4b47098d040cb3a6": {
+      "bodyJa": "GitHubのセキュリティ概要で、組織および企業の管理者がプルリクエスト向けAI Scanの有効化状況を確認できるようになった。件数集計からリポジトリ別の状態、絞り込み、CSV出力まで、導入状況を追跡するための表示が追加されている。\n\n## セキュリティ概要\n\n確認に使うのは、セキュリティ概要のカバレッジビューだ。ここにプルリクエスト向けAI Scanの有効化状況が表示されるため、管理者は組織または企業の範囲で、機能がどこまで有効になっているかを把握できる。\n\n## 件数と個別表示\n\nCode scanningのサマリーには、AI Scanが有効なリポジトリと、有効になっていないリポジトリの件数がそれぞれ表示される。全体の件数だけでなく、リポジトリの各行にも、そのリポジトリに対して実際に適用されるAI Scanの有効化状態が示される。これにより、集計結果と個々のリポジトリの状態を同じカバレッジビューで確認できる。\n\n## フィルター\n\nカバレッジビューでは、「code-scanning-ai-scan-pr-scan:enabled」を指定すると有効なリポジトリを絞り込める。「code-scanning-ai-scan-pr-scan:not-enabled」では、有効になっていないリポジトリを抽出できる。状態ごとに対象を分けて確認できるため、有効化状況の追跡や管理に利用できる。\n\n## CSVエクスポート\n\nカバレッジのCSVエクスポートには、「Code Scanning AI Scan for pull requests」列が追加された。この列には「enabled」または「not-enabled」が入り、プルリクエスト向けAI Scanの状態をCSV上でも確認できる。画面上の集計やリポジトリ別表示に加え、出力データでも組織または企業全体の導入状況を扱えるようになった。",
+      "bodyEn": "## Security overview coverage view\n\nGitHub’s security overview now shows whether AI Scan for pull requests is enabled. This visibility helps organization and enterprise administrators track adoption and manage enablement across their organization or enterprise.\n\nThe coverage view reports AI Scan status at both summary and repository levels. Administrators can therefore review overall repository counts and see the effective enablement status for each repository.\n\n## Code scanning summary\n\nThe code scanning summary separates repositories into enabled and not enabled counts. These totals provide an organization- or enterprise-level view of how broadly AI Scan for pull requests has been enabled.\n\nRepository rows add more detail by showing each repository’s effective AI Scan enablement. Together, the summary and repository rows allow administrators to compare aggregate adoption with repository-specific status in the same coverage view.\n\n## Filter the coverage view\n\nAdministrators can filter the coverage view by AI Scan for pull requests status. The filter code-scanning-ai-scan-pr-scan:enabled limits the view to repositories where the feature is enabled.\n\nThe corresponding code-scanning-ai-scan-pr-scan:not-enabled filter shows repositories where it is not enabled. These filters make it possible to focus the coverage view on either enablement state when assessing adoption or managing enablement.\n\n## Coverage CSV exports\n\nCoverage CSV exports now include a Code Scanning AI Scan for pull requests column. The column uses enabled and not-enabled values to represent the status included in the export.\n\nThis extends the same enablement visibility beyond the on-screen summary, repository rows, and filters. Administrators can use the exported column to review AI Scan for pull requests status across repositories in an organization or enterprise. GitHub also points administrators to information about assessing adoption of security features and to the AI Scan Community discussion.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AI Scanが使えるか、リポジトリごとに分かるようになったの？",
+          "en": "Can you now tell whether AI Scan is enabled for each repository?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。セキュリティ概要で、有効・未有効の件数と各リポジトリの有効化状況を確認できるよ。",
+          "en": "Yes. The security overview shows enabled and not-enabled totals, plus each repository’s effective enablement status."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、組織や企業の管理者が、どこまで導入できているか確かめやすくなるんだね？",
+          "en": "So this helps organization and enterprise admins see how widely it has been enabled, right?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。状態で絞り込めて、CSVにも専用列が加わるから、導入状況の把握や管理に使えるよ。",
+          "en": "Right. Admins can filter by status, and CSV exports include a dedicated column, making adoption easier to track and manage."
+        },
+        {
+          "s": "a",
+          "ja": "リポジトリ別の表示、件数、フィルター、CSVで、導入状況を追えるようになったんだ。",
+          "en": "Got it—repository rows, totals, filters, and CSV exports all help track adoption."
+        },
+        {
+          "s": "b",
+          "ja": "うん。対象はプルリクエスト向けAI Scanの有効化状況で、表示は有効と未有効だよ。",
+          "en": "Exactly. This covers AI Scan for pull requests enablement, reported as enabled or not enabled."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T15:37:40.964Z"
+    },
+    "9129898dc1410423": {
+      "bodyJa": "## 新しい形式\n\nGitHub Secret Scanningが、Lovable Labs、Pydantic Services Inc.、Supabaseの新しいシークレット形式を自動検出できるようになった。リポジトリ内に認証情報が含まれていないかを確認できる対象が広がり、公開された認証情報が悪用される前の対処に役立つ更新となる。\n\n## 提携先への通知\n\nシークレットスキャン提携プログラムでは、パートナーのシークレットが公開リポジトリで見つかると、GitHubがその情報をシークレットの発行元へ自動的に報告する。通知を受けた提携先は、漏えいした認証情報を無効化したり、別の認証情報へ更新したりできる。公開リポジトリ上のシークレットを検出するだけでなく、発行元による対処につなげ、認証情報が悪用される前に対応できるようにする仕組みだ。\n\n## 検出とアラート\n\nシークレットの検出後に行われる処理は、その種類によって異なる。パートナーシークレットは、公開リポジトリで検出された場合に提携プログラムを通じて発行元へ報告される。一方、ユーザーシークレットが公開または非公開リポジトリで見つかった場合は、シークレットスキャンのアラートが生成される。\n\n対応するシークレットの全一覧やシークレットスキャンの詳細は、GitHubのドキュメントで確認できる。また、この更新に関する意見はコミュニティディスカッションで受け付けている。",
+      "bodyEn": "## New secret types\n\nGitHub Secret Scanning now recognizes new credential formats from Lovable Labs, Pydantic Services Inc., and Supabase. This matters because credentials found in public repositories can be forwarded to participating issuers, helping them revoke or rotate exposed credentials before they can be abused.\n\nThe newly supported secret types are detected automatically in repositories. The update expands the credential formats that Secret Scanning can identify and applies the service’s existing handling for partner secrets and user secrets.\n\n## Public repositories\n\nWhen Secret Scanning finds one of a partner’s secrets in a public repository, GitHub forwards the finding to that partner through the secret scanning partnership program. The partner can then revoke the credential or rotate it before misuse occurs.\n\nThe process connects detection in a public repository with notification to the organization that issued the secret. According to the announcement, partner secrets found in public repositories are reported automatically to the secret issuer through the partnership program.\n\n## Partner and user secrets\n\nThe update distinguishes between partner secrets and user secrets. Partner secrets trigger automatic reporting to the secret issuer when they are detected in public repositories.\n\nUser secrets instead generate Secret Scanning alerts. Those alerts can be created when the supported secrets are found in either public or private repositories. The relevant response therefore depends on how the detected secret is categorized: partner-secret findings in public repositories are reported to issuers, while user-secret findings generate alerts across public and private repositories.\n\n## Secret scanning documentation\n\nGitHub’s documentation provides more information about Secret Scanning and includes the full list of supported secrets. GitHub is also directing users to a community discussion to share feedback about the expanded detection support.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "コードを公開したり管理したりするとき、普段の作業は何が変わるの？認証情報が混ざったら気づけるってこと？",
+          "en": "What changes when I publish or manage code? Does this mean I can catch credentials that accidentally get included?"
+        },
+        {
+          "s": "b",
+          "ja": "GitHub Secret Scanningが3社の新形式を自動検出するよ。公開リポジトリのパートナーシークレットは発行元へ報告され、ユーザーシークレットは公開・非公開でアラートになるんだ。",
+          "en": "GitHub Secret Scanning now automatically detects new formats from three providers. Partner secrets in public repositories are reported to issuers, while user secrets trigger alerts in public or private repositories."
+        },
+        {
+          "s": "a",
+          "ja": "この3社の形式は前は見つけられなかったの？それとも、検出の仕組み自体が新しくなったのかな。",
+          "en": "Couldn’t it detect formats from these three providers before? Or is the whole detection system new?"
+        },
+        {
+          "s": "b",
+          "ja": "今回、Lovable Labs、Pydantic Services Inc.、Supabaseの新形式が検出対象に加わったよ。仕組み全体の変更や以前の対応範囲までは触れられていないんだ。",
+          "en": "This update adds new formats from Lovable Labs, Pydantic Services Inc., and Supabase. It doesn’t detail broader system changes or the exact scope of earlier support."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、公開コードで認証情報が見つかったら、発行元が無効化や更新に動けて、悪用防止につながるのが大きいんだね。",
+          "en": "So the big takeaway is that if credentials appear in public code, the issuer can revoke or rotate them before they’re misused."
+        },
+        {
+          "s": "b",
+          "ja": "うん、公開リポジトリで見つかったパートナーシークレットが対象だよ。次はドキュメントの対応シークレット一覧を確認すると、対象範囲を追いやすいね。",
+          "en": "Right—that applies to partner secrets found in public repositories. Next, check the documentation’s full list of supported secrets to understand the coverage."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T02:46:36.662Z"
+    },
+    "571c8c47df881aa3": {
       "bodyJa": "ReviewBenchは、AIコードレビューを担うエージェントを比較・検証するための公開ベンチマークだ。代表的なGitHubプルリクエストを土台とし、公平な評価と実運用に沿った検証を支える。\n\n## 評価セット\n\n評価セットには、代表的なGitHubプルリクエストが使われる。コードレビューの対象に即した材料を基に、レビューエージェントを共通の条件で確かめられる仕組みとされ、開発者や研究者による比較検証を支援する。\n\n## 複数情報源\n\n正解データのラベルは、単一ではなく複数の情報源から構成される。採点には調整済みの評価手法を採用し、レビューエージェントを公平に評価できるよう設計されている。\n\n## 実運用の指標\n\n評価には、実運用に沿った指標も組み込まれる。公開の評価セット、複数情報源の正解データ、調整済みの採点、実運用に合わせた指標を組み合わせた点が、ReviewBenchの特徴だ。",
       "bodyEn": "## ReviewBench\n\nReviewBench is an open benchmark for AI code review agents. It matters because it gives developers and researchers a shared evaluation set for comparing and validating review agents through a fair assessment process.\n\n## Representative GitHub pull requests\n\nThe benchmark is built on representative GitHub pull requests. It uses multi-source ground truth, also described as multi-source labels, as the reference data for evaluating review agents.\n\nThis combination provides a common set of pull requests and labels for comparative testing. Developers and researchers can use that shared basis when assessing different review agents.\n\n## Calibrated evaluation\n\nReviewBench combines calibrated evaluation and scoring with production-aligned metrics. These elements are intended to support fair assessment while keeping the evaluation connected to production use.\n\nAs an open benchmark, ReviewBench brings its representative pull requests, multi-source labels, calibrated scoring, and production metrics into one evaluation framework for AI code review agents.",
       "chat": [
@@ -43930,7 +43816,235 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-05T19:38:21.495Z"
     },
-    "ed204fd38e64c798": {
+    "b9a292c845dab706": {
+      "bodyJa": "npmでは、未検証の信頼済み公開設定が作成から48時間後に失効し、公開の許可に使えなくなる。リポジトリやプロジェクト名の所有者が変わった場合に、古い信頼設定が悪用されるリスクを抑えるための変更だ。\n\n## 48時間の期限\n\n新しく作成された信頼済み公開設定は、検証されないまま48時間が経過すると期限切れになる。期限切れ後、その設定を利用してパッケージを公開することはできない。再び48時間の検証期間を開始するには、設定を再作成する必要がある。\n\n## 初回公開の成功\n\n設定を使った初回の公開が成功すると、その設定は検証済みとなり、48時間の期限の対象外になる。期限が解除される条件は、最初の公開が正常に完了することだ。\n\nリポジトリまたはプロジェクトの識別情報を変更する場合は、新たな信頼関係が必要となり、改めて48時間の検証期間が設定される。一方、通常の編集では期限のカウントは最初からやり直されない。\n\n## 期限切れ設定\n\n期限切れになった設定も、信頼済み公開元の設定画面には引き続き表示される。ただし、パッケージごとに設けられた設定数の上限には含まれない。また、同じパッケージに登録されているほかの有効な設定には影響しない。\n\n## トークンの制限\n\nnpmは、GitHub Actionsのissue_commentイベントから発行された信頼済み公開トークンも拒否するようになった。これは、既存のpull_request_targetイベントに対する制限と並ぶものとなる。",
+      "bodyEn": "## 48 hours after creation\n\nUnvalidated npm trusted publishing configurations now expire 48 hours after creation and can no longer authorize publishing. The change matters because it limits the risk of trusting a repository or project name that later changes ownership.\n\nThe 48-hour deadline applies while a trusted publishing configuration remains unvalidated. Once that period ends, the configuration no longer provides publishing authorization. Expiration does not remove the configuration from view: it remains visible in trusted publisher settings.\n\n## First successful publish\n\nA configuration becomes validated after its first successful publish. At that point, it is exempt from the 48-hour expiration rule.\n\nThis means the deadline applies to the initial validation period rather than to every future use of the configuration. A successful first publish establishes the configuration as validated, so it is no longer subject to expiry under this rule.\n\n## New trust relationship\n\nChanging the repository or project identity requires a new trust relationship. That new relationship starts with a fresh 48-hour validation window.\n\nOrdinary edits do not restart the deadline. If a configuration expires before its first successful publish, it must be recreated to begin another 48-hour window.\n\nExpired configurations do not count toward per-package limits, even though they remain visible in trusted publisher settings. Other valid trusted publishing configurations associated with the package are not affected when one configuration expires.\n\n## GitHub Actions issue_comment events\n\nnpm also now rejects trusted publishing tokens from GitHub Actions issue_comment events. This restriction applies alongside the existing restriction for pull_request_target events.\n\nAs a result, trusted publishing tokens from either of those GitHub Actions event types are rejected. This token restriction is separate from the 48-hour validation window governing newly created trusted publishing configurations.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "npmでパッケージを公開する作業は、普段どう変わるの？信頼済み公開を設定したら、すぐ試す必要がある？",
+          "en": "How does this change the day-to-day job of publishing an npm package? Once I set up trusted publishing, do I need to test it right away?"
+        },
+        {
+          "s": "b",
+          "ja": "未検証の設定は作成から48時間で失効し、公開を許可できなくなるよ。最初の公開に成功すれば検証済みになり、期限の対象外になる。",
+          "en": "An unverified setup expires 48 hours after creation and can no longer authorize publishing. Once the first publish succeeds, it’s validated and no longer subject to that deadline."
+        },
+        {
+          "s": "a",
+          "ja": "前は、初回公開が遅れても設定を使えたの？それとも、今回から期限がはっきりしただけ？",
+          "en": "Before this, could you still use the setup if the first publish took longer? Or is the deadline just clearer now?"
+        },
+        {
+          "s": "b",
+          "ja": "以前の細かな扱いまでは説明されていないよ。現在は48時間が明示され、失効しても再作成すれば新しい48時間が始まる。",
+          "en": "The prior details aren’t explained here. What’s clear now is the 48-hour window, and if a setup expires, recreating it starts a fresh one."
+        },
+        {
+          "s": "a",
+          "ja": "いちばん大事なのは、設定後48時間以内に最初の公開を成功させることなんだね。間に合わなければ作り直せる、と。",
+          "en": "So the big takeaway is to get the first publish working within 48 hours. And if I miss it, I can recreate the setup."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。リポジトリやプロジェクトの識別情報を変える場合は、新しい信頼関係と48時間の検証枠が必要な点にも注目だよ。",
+          "en": "Right. Also note that changing the repository or project identity requires a new trust relationship and a fresh 48-hour validation window."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-06T02:47:15.869Z"
+    },
+    "3a66faa7796e58ad": {
+      "bodyJa": "## 強調表示\n\nGitHubは、アクセシビリティ声明を記載するACCESSIBILITY.mdをリポジトリ概要画面で強調表示する機能を提供する。利用者がリポジトリのアクセシビリティ対応状況を確認しやすくなる改善だ。\n\n## 対象ディレクトリ\n\n強調表示の対象となるのは、リポジトリのルート、.githubディレクトリ、docsディレクトリのいずれかに配置されたACCESSIBILITY.mdだ。これらの場所にファイルがある場合、リポジトリ概要画面からアクセシビリティ声明を見つけられる。声明を確認するために、利用者が各ディレクトリを個別に探す必要がなくなる。\n\n## 声明の追加\n\n公開リポジトリでは、Community Standardsページからアクセシビリティ声明を追加できるほか、声明の追加を提案することも可能になった。既存のACCESSIBILITY.mdを概要画面に表示するだけでなく、Community Standardsページを通じて声明を用意するための操作にも対応している。\n\n## 全プランで提供\n\nこの改善は、github.comの全GitHubプランで利用できる。GitHub Enterprise Serverについては、バージョン3.24で提供される予定だ。配置場所とファイル名が明確に定められ、概要画面とCommunity Standardsページの双方からアクセシビリティ声明を扱えるようになった。",
+      "bodyEn": "## Repository overview\n\nGitHub now highlights a repository’s accessibility statement directly on the repository overview. The change matters because it helps users quickly assess a project’s accessibility commitments without first navigating through its directories.\n\nThe highlighted statement is provided through a file named ACCESSIBILITY.md. When GitHub finds that file in one of the supported locations, it makes the file visible from the repository overview.\n\n## ACCESSIBILITY.md file\n\nGitHub looks for ACCESSIBILITY.md in three locations: the repository’s root, the .github directory, or the docs directory. Placing the file in any of these locations allows it to be highlighted on the overview screen.\n\nThis gives repositories flexibility over where they keep the statement. A project can place it alongside root-level repository files or within directories already used for repository or documentation material, while receiving the same overview treatment.\n\n## Community Standards page\n\nAn accessibility statement can also be added or proposed from a public repository’s Community Standards page. This provides a second way to work with the statement beyond creating ACCESSIBILITY.md directly in one of the supported directories.\n\nTogether, the overview highlighting and Community Standards option make the statement easier to surface and manage. The repository overview presents the statement to users, while the Community Standards page supports adding or proposing one for a public repository.\n\n## All GitHub plans\n\nThe improvement is available on all GitHub plans on github.com. It is also planned for GitHub Enterprise Server 3.24.\n\nGitHub provides further information in its documentation about adding an accessibility page to a repository.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ACCESSIBILITY.mdが概要画面で目立つようになったの？ どこに置けば表示されるんだろう。",
+          "en": "Is ACCESSIBILITY.md now highlighted on the repository overview? Where does it need to be placed?"
+        },
+        {
+          "s": "b",
+          "ja": "リポジトリのルート、.github、docsのどれかに置くと、概要画面で強調表示されるよ。",
+          "en": "Yes. Place it in the repository root, .github, or docs directory, and it will be highlighted on the overview."
+        },
+        {
+          "s": "a",
+          "ja": "プロジェクトを見る人が、アクセシビリティへの対応をすぐ確かめやすくなるってこと？",
+          "en": "So people viewing a project can check its accessibility commitments more quickly?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。利用者は対応状況を一目で確認しやすくなり、メンテナーは公開リポジトリのCommunity Standardsページから声明を追加・提案できるよ。",
+          "en": "Right. Users can assess that at a glance, while maintainers can add or propose a statement from a public repository’s Community Standards page."
+        },
+        {
+          "s": "a",
+          "ja": "声明を決まった場所に置けば、探し回らずに概要画面から見つけられるんだね。",
+          "en": "Got it—the statement becomes easier to find from the overview when it’s stored in one of those locations."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、github.comでは全プランで利用できる一方、GitHub Enterprise Serverは3.24で提供予定だよ。",
+          "en": "One note: it’s available on all github.com plans, while GitHub Enterprise Server support is planned for version 3.24."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-02T03:38:51.784Z"
+    },
+    "b7f3db3ca07494c2": {
+      "bodyJa": "## 保持対象の拡大\n\nGitHub Actionsの保持設定が拡張され、成果物とログだけでなく、チェック、ワークフロー実行、ステータスにも同じ保持期間が適用されるようになった。関連データを共通の設定で一元管理し、保持期限を超えた記録を自動的に整理できる変更だ。\n\n## 自動削除の範囲\n\nチェック、ワークフロー実行、ステータスは、エンタープライズ、組織、リポジトリで設定された保持期間を超えると自動的に削除される。対象には、GitHub Actionsが作成したチェックとステータスに加え、サードパーティーアプリケーションが作成したものも含まれる。\n\nこれにより、成果物やログとは別にチェックやステータスの保持期間を扱うのではなく、GitHub Actionsに関係する複数種類の記録を同じ期間設定の下で管理できる。\n\n## 設定名と上限\n\n画面上の設定名は「Check, workflow run, status, artifact and log retention」とされ、今回追加された保持対象が名称にも反映されている。リポジトリの保持期間には組織とエンタープライズの上限が引き続き適用されるため、リポジトリ単独でそれらを超える期間には設定できない。\n\nまた、公開リポジトリの保持期間は最長90日となる。必要に応じて、リポジトリの成果物とログに関する保持期間を確認または更新することになる。\n\n## 変更時の注意\n\n保持設定を変更しても、すでに削除されたデータは復元されない。期間を見直す場合は、過去の削除済み記録が戻る変更ではなく、設定後の保持と自動削除を制御するものとして扱う必要がある。拡張された保持ポリシーは、github.com上のGitHub Actionsに適用される。",
+      "bodyEn": "## GitHub Actions retention\n\nGitHub Actions now places checks, workflow runs, statuses, artifacts, and logs under the same retention policy. This matters because administrators can manage these related records through one retention setting rather than applying the policy only to artifacts and logs.\n\nThe expanded policy applies to GitHub Actions on github.com. It covers checks and statuses created both by GitHub Actions and by third-party applications.\n\n## Retention period\n\nChecks, workflow runs, and statuses are automatically cleaned up after they exceed the retention period configured for the relevant enterprise, organization, or repository. Artifacts and logs continue to be governed by that same period.\n\nThe interface labels the setting “Check, workflow run, status, artifact and log retention,” reflecting all of the record types now controlled by it. Administrators can review or update the artifact and log retention period for a repository to manage how long the covered data is kept.\n\n## Organization and enterprise caps\n\nRepository-level retention remains subject to caps established at the organization and enterprise levels. A repository therefore cannot use its own setting to exceed the applicable organization or enterprise limit.\n\nPublic repositories also have a maximum retention period of 90 days. This cap applies alongside the broader policy that now governs workflow runs, checks, statuses, artifacts, and logs.\n\n## Automatically cleaned up\n\nOnce covered records exceed the configured retention period, they are automatically removed. Changing the retention setting later does not restore data that was previously deleted.\n\nThe setting consequently governs future retention based on the configured period, while data already removed remains unavailable. Administrators reviewing the policy should account for both the applicable organization or enterprise caps and the 90-day maximum for public repositories.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "公開リポジトリは最長90日なんだね。チェックや実行履歴まで期限後に消えるのは、大きい変化？",
+          "en": "Public repositories top out at 90 days. Is it a big change that checks and workflow runs now disappear after the retention period too?"
+        },
+        {
+          "s": "b",
+          "ja": "管理対象が成果物やログだけでなく、チェック、実行、ステータスまで広がったんだ。期限後は自動削除されるよ。",
+          "en": "It broadens the policy beyond artifacts and logs to checks, runs, and statuses. They’re automatically removed after the retention period expires."
+        },
+        {
+          "s": "a",
+          "ja": "そもそも「保持設定」って、何を決めるもの？",
+          "en": "What does a “retention setting” actually control?"
+        },
+        {
+          "s": "b",
+          "ja": "データをどれだけの期間残すかを決める設定だよ。今回は複数の記録を同じ設定で管理できるようになったんだ。",
+          "en": "It sets how long data is kept. Here, one setting now governs several kinds of records together."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、必要な期間を決めて記録をまとめて整理したいな。設定を変えれば、消えたデータも戻る？",
+          "en": "I’d choose the period I need and manage those records together. If I change the setting, can deleted data come back?"
+        },
+        {
+          "s": "b",
+          "ja": "以前に削除されたデータは戻らないよ。公開リポジトリは最長90日で、組織やEnterpriseの上限にも従うんだ。",
+          "en": "Previously deleted data won’t return. Public repositories are capped at 90 days, and repository retention also follows organization and enterprise limits."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T20:41:30.516Z"
+    },
+    "b2481bf908dba05a": {
+      "bodyJa": "## 週次スキャン\n\nGitHubのコードスキャンでは、デフォルト設定とGitHub Code Qualityの週次スキャンを開始する条件が変更された。プッシュまたはプルリクエストによって解析が実行された後にのみ定期実行が始まるため、休眠状態のリポジトリに対する不要な週次スキャンを減らせる。\n\n## 開始条件\n\nこれまでは、スケジュール外で行われたあらゆるスキャンが、リポジトリの最近のアクティビティとして扱われていた。今回の変更後は、単に何らかのスキャンが実行されたというだけでは、週次スキャンの開始条件を満たさない。プッシュまたはプルリクエストを契機とする解析が実行されることが条件となる。\n\n## 初回検証\n\nデフォルト設定を初めて有効にした際には、1回限りの初回検証スキャンが実行される。また、検出された言語が変わった場合にもスキャンが発生する。従来は、こうしたスキャンもリポジトリの活動として数えられていたため、デフォルト設定の有効化や、多数のリポジトリへのセキュリティ構成の一括展開によって、休眠リポジトリがさらに6か月間アクティブに見えることがあった。その結果、想定していない週次スキャンが実行される場合があった。\n\n## 解析結果\n\nデフォルト設定を有効にした直後の動作自体は維持される。初回検証スキャンは引き続き実行され、検出結果もすぐに反映される。一方、その検証だけを理由に週次スキャンが始まることはなく、プッシュまたはプルリクエストによる解析が行われるまで定期実行は開始されない。",
+      "bodyEn": "## Weekly scheduled scans\n\nGitHub code scanning has changed when weekly scheduled scans begin for default setup and GitHub Code Quality. The change matters for dormant repositories because scheduled scanning now starts only after a push or pull request triggers an analysis, reducing needless weekly runs.\n\nOther scans no longer count as the recent activity needed to start that weekly schedule. This makes repository activity for scheduled scanning dependent specifically on analysis triggered by a push or pull request.\n\n## Previously based on any scan\n\nPreviously, repository activity was based on any unscheduled scan. That included the one-time validation scan performed when default setup was first enabled, as well as scans triggered by a change in detected languages.\n\nAs a result, scans unrelated to new pushed code or a pull request could make a repository appear active. Enabling default setup could therefore affect whether weekly scheduled scanning began, even if the repository was otherwise dormant.\n\n## Another six months\n\nThe earlier behavior was particularly relevant when default setup was enabled or a security configuration was rolled out across many repositories at once. The resulting scans could make a dormant repository look active for another six months.\n\nThat activity status could then trigger weekly scheduled scans that were not expected. Under the new behavior, those one-time or language-related scans do not by themselves start the weekly schedule.\n\n## Initial validation scan\n\nEnabling default setup still runs an initial validation scan. That scan continues to populate findings right away, so the change does not remove the immediate analysis performed during setup.\n\nThe difference is what happens afterward. The initial validation scan no longer causes weekly scheduled scanning to begin. Weekly scans start only once a push or pull request triggers an analysis, keeping dormant repositories from entering the recurring schedule solely because default setup was enabled or detected languages changed.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "週次スキャンが、プッシュかプルリクエストの解析後にだけ始まるのはなんで？",
+          "en": "Why do weekly scans now start only after a push or pull request analysis?"
+        },
+        {
+          "s": "b",
+          "ja": "休眠中のリポジトリまで動いていると見なされ、想定外の週次スキャンが続くのを減らすためだよ。",
+          "en": "It reduces unexpected weekly scans caused by dormant repositories being treated as active."
+        },
+        {
+          "s": "a",
+          "ja": "たくさんのリポジトリでデフォルト設定を有効にする人ほど、不要な実行を減らしやすいのかな？",
+          "en": "So people enabling default setup across many repositories may avoid more unnecessary runs?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。一度きりの検証や検出言語の変更によるスキャンだけでは、週次実行が始まらなくなったんだ。",
+          "en": "Yes. A one-time validation or detected-language change no longer starts weekly scanning by itself."
+        },
+        {
+          "s": "a",
+          "ja": "休眠リポジトリは、実際にプッシュかプルリクエストが来るまで週次スキャンを待つんだね。",
+          "en": "Got it—dormant repositories wait for an actual push or pull request before weekly scans begin."
+        },
+        {
+          "s": "b",
+          "ja": "ただし、デフォルト設定を有効にした直後の検証スキャンは今も実行され、結果もすぐ表示されるよ。",
+          "en": "One caveat: enabling default setup still runs an initial validation scan and shows findings right away."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T20:41:53.303Z"
+    },
+    "c57fb66e42c4feea": {
+      "bodyJa": "## CI失敗を回避\n\nGitHub Code Qualityのupload-code-coverage actionは、オープン中のプルリクエストが関連付けられていないブランチへのpushで、コードカバレッジの送信を省略するようになった。これにより、ワークフロー自体には問題がないにもかかわらず、カバレッジ送信の処理によってCIが失敗する事態を防げる。\n\n## 従来の送信処理\n\n従来、カバレッジAPIは、デフォルトではないブランチへのpushに対してプルリクエスト番号を必要としていた。しかし、この番号が存在するのはプルリクエストが開かれた後に限られる。そのため、新しいブランチを作成し、プルリクエストを開く前にpushすると、必要な番号を指定できず、コードカバレッジの送信ステップが失敗していた。\n\nこの失敗は、コードやワークフローに問題があることを意味するものではなかった。ブランチへのpushとプルリクエスト作成の順序によって、送信に必要な情報がまだ用意されていないことが原因だった。\n\n## 送信を省略\n\n変更後は、関連するプルリクエストがないブランチへのpushでactionが実行されると、エラーにするのではなくカバレッジの送信を省略する。省略した理由は、Actions noticeとstep summaryに表示されるため、送信処理が行われなかった理由を確認できる。\n\n対象となるのは、まだオープン中のプルリクエストがないブランチへのpushだ。そのブランチに対する以後のpushも、プルリクエストが開かれるまでは同様に送信が省略される。これにより、開発者は新規ブランチの作成直後から、不要なCI失敗で処理を止められることなく作業を進められる。",
+      "bodyEn": "## Code coverage uploads\n\nGitHub Code Quality’s upload-code-coverage action no longer causes CI to fail when code is pushed to a branch that does not yet have an open pull request. The change prevents an unnecessary coverage-upload failure while developers are working on a newly created branch before opening a pull request.\n\n## Pushes to new branches\n\nPreviously, the coverage API required a pull request number for every push to a non-default branch. However, a pull request number is only available after a pull request has been opened.\n\nAs a result, pushing a new branch before creating its pull request caused the coverage-upload step to fail. That failure occurred even when there was nothing wrong with the workflow itself, meaning CI could be stopped by the absence of a pull request number rather than by a workflow problem.\n\n## Skips the upload\n\nWhen the action now runs following a push to a branch without an associated pull request, it skips the code coverage upload instead of failing. This allows CI to continue without treating the unavailable pull request number as an error.\n\nThe behavior applies both to the first push to a branch that does not yet have an open pull request and to subsequent pushes to that branch. Uploads continue to be skipped until a pull request is opened.\n\n## Actions notice and step summary\n\nThe skipped upload is reported rather than left unexplained. The action provides the reason in an Actions notice and in the step summary, making clear that the branch has no associated open pull request.\n\nThis distinguishes the skipped operation from an actual workflow failure. Developers can continue working from the point when a branch is created, while the action avoids attempting an upload that the coverage API cannot associate with a pull request.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "新しいブランチへpushすると、コードカバレッジ送信を失敗ではなく省略するの？ なんで？",
+          "en": "When I push a new branch, does it skip the code coverage upload instead of failing? Why?"
+        },
+        {
+          "s": "b",
+          "ja": "開いたPRがないと、送信に必要だったPR番号もありません。今は失敗させず、送信を省略して理由を通知します。",
+          "en": "Without an open pull request, there’s no PR number for the upload. The action now skips it instead of failing and reports why."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、PRを作る前にpushする開発者が、カバレッジ送信のせいでCIを止められずに済むんだね？",
+          "en": "So developers can push before opening a PR without having CI stopped by the coverage upload?"
+        },
+        {
+          "s": "b",
+          "ja": "そう。ワークフローに問題がなくても起きていた失敗を避け、ブランチ作成直後から作業を進められます。",
+          "en": "Yes. It avoids a failure that could happen even when the workflow was fine, letting developers keep working right after creating a branch."
+        },
+        {
+          "s": "a",
+          "ja": "PRを開くまでは送信を省略して、CIは不要に失敗しない。しかも理由も分かるんだね。",
+          "en": "Got it: uploads are skipped until a PR is opened, CI avoids a needless failure, and the reason is shown."
+        },
+        {
+          "s": "b",
+          "ja": "対象は、開いたPRがないブランチへのpushです。PRが開かれるまでは、その後のpushでも送信が省略されます。",
+          "en": "This applies to pushes on branches without an open PR. Later pushes keep skipping the upload until a PR is opened."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-01T20:42:12.010Z"
+    },
+    "ca6ecd6960b68f15": {
+      "bodyJa": "## 1.7.0リリース\n\nlangchain-fireworks 1.7.0が2026年9月28日20時46分52秒に公開された。1.6.3から1.7.0への更新として記録されており、LangChain開発者がFireworks連携の更新範囲を追跡するためのリリース情報となる。\n\n## 1.6.3から更新\n\n変更履歴の基点として「langchain-fireworks==1.6.3」が示され、そこから1.7.0へ進んだことが明記されている。つまり、今回の記録で確認できるバージョン上の変化は、1.6.3から1.7.0への更新である。リリース表記には「release(fireworks): 1.7.0」が使われ、Fireworks連携に関する更新として識別できる形になっている。\n\n## プルリクエスト\n\nこの更新はプルリクエスト40889として記録された。バージョン番号とプルリクエスト番号が対応付けられているため、langchain-fireworksの1.7.0に関する更新記録を確認する際の手掛かりになる。リリース間の区切りは1.6.3以降として示されており、対象となる更新の範囲を追いやすい。\n\n## GitHub署名\n\n関連するコミットはGitHub.com上で作成され、GitHubの検証済み署名が付いていると表示されている。一方、ページには読み込みエラーと再読み込みを促す表示もあり、別のタブやウィンドウでのサインイン、サインアウト、アカウント切り替えに伴うセッション更新の案内も表示されている。",
+      "bodyEn": "## langchain-fireworks 1.7.0\n\nlangchain-fireworks has advanced from version 1.6.3 to 1.7.0. The release matters to LangChain developers who need to track the corresponding Fireworks integration update and identify the record associated with the version change.\n\nThe release was published on September 28, 2026. Its central technical detail is the transition between the two stated versions rather than the introduction of a separately named product or feature.\n\n## Changes since 1.6.3\n\nThe release identifies version 1.6.3 as the previous reference point and version 1.7.0 as the new release. This establishes the update range that developers can use when following changes to langchain-fireworks.\n\nThe recorded release wording is “release(fireworks): 1.7.0,” directly connecting the release designation with Fireworks. For developers reviewing the integration, the version pair provides the specific boundary for the update: after 1.6.3 and through 1.7.0.\n\n## Pull request #40889\n\nThe update is recorded in pull request #40889. That identifier gives LangChain developers a specific development record for tracking the Fireworks integration update associated with langchain-fireworks 1.7.0.\n\nTogether, the package name, previous version, new version, and pull request number define the release record: langchain-fireworks moves from 1.6.3 to 1.7.0 through the work recorded as #40889.\n\n## GitHub’s verified signature\n\nThe source also states that the commit was created on GitHub.com and signed with GitHub’s verified signature. This signature status is attached to the commit connected with the release record.\n\nThe page displayed several session and loading messages, including prompts to reload after an error. Those messages do not alter the stated release transition from langchain-fireworks 1.6.3 to 1.7.0 or its association with pull request #40889.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1.6.3から1.7.0に上がったんだね。これって大きいこと？",
+          "en": "It jumped from 1.6.3 to 1.7.0. Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "更新は#40889として記録されているよ。ただ、この数字だけでは変更の大きさまでは判断できないんだ。",
+          "en": "The update is recorded as #40889. But the version numbers alone don’t show how extensive the changes are."
+        },
+        {
+          "s": "a",
+          "ja": "「プルリクエスト」って、ここでは何をするもの？",
+          "en": "What does “pull request” mean here?"
+        },
+        {
+          "s": "b",
+          "ja": "変更をまとめて、確認や反映を提案する仕組みだよ。今回はFireworks連携の更新を追う手がかりになるね。",
+          "en": "It’s a way to bundle changes and propose them for review and inclusion. Here, it helps developers track the Fireworks integration update."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、更新するときに#40889を見て、何が変わったか確かめたいな。",
+          "en": "If I were updating, I’d check #40889 to see what changed."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、このページには読み込みエラーも出ているから、表示されない部分は再読み込みが必要だね。",
+          "en": "That makes sense. The page also shows loading errors, so you may need to reload it to see the missing details."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-09-29T04:36:44.230Z"
+    },
+    "11814c13f8eb0837": {
       "bodyJa": "## キャンバス\n\nGitHub Copilot appの「キャンバス」は、利用者が望む作業手順を起点に、用途に合った画面を構成できる仕組みだ。固定された画面に仕事を合わせるのではなく、利用者とエージェントが共有するカスタマイズ可能なインターフェースとして設計されている。\n\nキャンバスは「キャンバス拡張」とも呼ばれ、独自のワークフローを扱うための画面として利用できる。作業内容に応じて必要な情報や操作方法を組み合わせられる点が特徴となる。\n\n## 双方向の操作\n\nキャンバスは双方向に操作できる。エージェントは作業を進めながら画面の内容を更新でき、利用者もボタン、カード、フィルターなどのコントロールを使って変更を加えられる。\n\nそのため、エージェントが一方的に結果を表示するだけではなく、同じ画面を利用者とエージェントが共同で扱う形になる。ライブで共有するホワイトボードのように、双方の操作が画面へ反映される仕組みとして説明されている。\n\n## 用途に合う画面\n\n構成できる画面には、カンバンボード、課題整理ボード、リリースチェックリスト、ダッシュボード、フォーム、表計算などが挙げられている。決まった一種類の形式ではなく、取り組む作業に合わせてUIを形作れる。\n\nたとえば、項目をカードとして管理したり、確認事項をチェックリストにまとめたり、フィルターで必要な情報を絞り込んだりできる。チーム独自の作業手順に合わせたインターフェースを用意し、ワークフローを効率化したい場合に役立つとされる。\n\n## 作成の手順\n\nキャンバスの作成に、手作業でのコーディングやデザインは必要ない。まずエージェントセッションを開き、「/create-canvas」スキルを入力する。その後、作りたい画面や実現したい作業手順を平易な英語で説明すればよい。\n\n利用者は完成したUIを細かく設計するのではなく、必要な用途を言葉で伝える。これにより、カスタム画面の構築をエージェントとの対話から始められる。",
       "bodyEn": "## Canvases in GitHub Copilot\n\nCanvases in the GitHub Copilot app provide a way to build an interface around a preferred workflow instead of adapting work to a fixed set of screens. They matter for users and teams that want to tailor custom workflows to their needs without coding or designing the interface by hand.\n\nA canvas is also called a canvas extension. It is a customizable interface shared by the user and the agent, with its structure shaped around the work being performed.\n\n## A UI Shaped to Work\n\nA canvas can take several forms depending on the workflow. It might be a kanban board, an issue triage board, a release checklist, a dashboard, a form, or a spreadsheet.\n\nThese options allow the custom screen to reflect the specific task rather than forcing different tasks into the same predetermined interface. For example, work can be represented through cards on a kanban board, tracked through a checklist, entered through a form, or organized in a spreadsheet-style interface.\n\n## A Bidirectional Canvas\n\nThe canvas is bidirectional, meaning both the agent and the user can make changes. The agent can update the interface as it works, while the user can interact with buttons, cards, filters, and other controls to modify the canvas.\n\nThis shared interaction is described as being like a live shared whiteboard. Rather than serving only as a static display of the agent’s work, the canvas remains an interface that both sides can use and update during the workflow.\n\n## Create a Canvas\n\nCreating a canvas begins in an agent session. The user enters the /create-canvas skill and then describes the desired interface in plain English.\n\nNo coding or manual design is required. The process starts with a description of the workflow the user wants, allowing the resulting canvas to take shape around that request.",
       "chat": [
@@ -43968,7 +44082,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:36:46.380Z"
     },
-    "3e5e727e385d3f8c": {
+    "93db8516427cde42": {
       "bodyJa": "## チャットという前提\n\nLLMの登場から3年が経っても、主要な操作画面にはチャットが使われ続けている。著者はこの前提に疑問を投げかけ、少なくとも多くの場面では、チャットが適切なUIではない可能性を示している。AI体験を設計する開発者にとって、対話形式を無条件に選ばず、用途に合う操作方法を考えることが重要な論点となる。\n\n## textareaの逸話\n\n著者は、HTML仕様にtextareaコンポーネントを最初に提案したのは@pmarcaだったはずだと述べつつ、その認識自体をAIにtextareaから尋ねて得たものだと振り返る。これは確定的な事実としてではなく、AIとの接点がテキスト入力欄に強く依存している状況を表す逸話として提示されている。質問を書き込み、文章で応答を受け取る形が、LLMの標準的な利用方法になっているという指摘だ。\n\n## 用途に合うUI\n\n問題視されているのは、チャットそのものの存在ではなく、あらゆる用途でチャットを既定のUIとして扱うことだ。対話欄に入力する方式を前提にせず、それぞれの用途に適したUIを選ぶ視点が示されている。つまり、AIを組み込む際には、まずチャットを置くのではなく、実行したい作業に合う操作画面かどうかを判断する必要がある。\n\n## タスク指向のAI\n\n著者は、AIの最初の大規模な実装が、一人称で応答するチャットボットという仕掛け的な形だったことを惜しんでいる。一方で、AIをタスク指向に設計することには大きな可能性があると説明する。会話そのものを中心に据えるのではなく、利用者が取り組む作業を中心に据えることが、チャット以外のUIを検討する出発点になる。",
       "bodyEn": "## The Primary Interaction Surface\n\nThree years into the current AI wave, chat remains the primary interaction surface for LLMs. The author questions that default because developers designing AI experiences must decide whether an interface is actually suited to the task rather than relying automatically on a conversational text area.\n\nThe persistence of chat can make it seem like the natural or necessary way to use an LLM. The argument instead separates the capabilities of AI from the first-person chatbot format through which many people encounter them. An LLM-based experience does not have to begin and end with a conversation.\n\n## Chat Is the Wrong UI\n\nThe central proposal is that chat may be the wrong UI, at least most of the time. This is not presented as a claim that chat can never work. It is a challenge to the assumption that chat should remain the standard interface regardless of the intended use.\n\nThe author describes the first large-scale implementation of AI as a first-person chatbot and characterizes that implementation as something of a gimmick. That early format established chat as the familiar interaction model, but familiarity alone does not show that it fits every use. Developers can instead evaluate the purpose of an AI experience before choosing how users should interact with it.\n\n## AI Is Task Oriented\n\nThe alternative emphasized here is task-oriented AI. Rather than requiring every interaction to take place through a dialogue field, an experience can use a UI selected for its particular purpose.\n\nThat perspective shifts the design question. Instead of asking how to place an LLM inside a chat experience, developers can ask what interaction best matches the task. The article’s broader point is that AI has tremendous promise when it is task oriented, and realizing that promise may require moving beyond chat as the automatic default.",
       "chat": [
@@ -44006,7 +44120,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:19.430Z"
     },
-    "c45ef450c3820855": {
+    "4c9d688cf44b534e": {
       "bodyJa": "## 巨大な変更\n\nGitHub Copilotアプリでは、大規模な差分と長いレビュー上の議論を扱っても高速で滑らかな体験を保てるよう、プルリクエスト画面が刷新された。分割しにくい移行や広範なリファクタリングを、単一の大きな変更として確認しなければならない場面を想定した取り組みだ。\n\n## 分割しにくい変更\n\n作業を複数の小さな変更に分けるスタック型のプルリクエストは、レビューを容易にし、チームがより少ないリスクで変更を届ける方法とされる。一方、広範なリファクタリングや移行の中には、きれいに分割できず、一つの変更として反映しなければならないものもある。\n\nその場合、単一のプルリクエストは非常に大きくなり得る。さらに、レビュー中のやり取りが加わることで、確認すべき内容も増えていく。GitHub Copilotアプリの新しい画面は、差分だけでなく、その周囲に蓄積する会話も巨大になる状況を前提に再構築されている。\n\n## 2,200ファイル\n\n性能の確認には、見つけられた中で最大のプルリクエストが使われた。対象はオープンソースの変更で、2,200ファイル、100万行を超える変更、400件を超えるインラインレビューコメントを含んでいた。\n\nこの極端な規模のプルリクエストを開き、大量のファイルや変更行、レビューコメントを含む状態でも快適に確認できることを検証した。巨大な差分と長い議論を一つの画面で扱うことが、刷新されたプルリクエスト画面の中心的な要件となっている。",
       "bodyEn": "## Broad refactors and migrations\n\nThe GitHub Copilot app has rebuilt its pull request view to handle changes whose diffs and review conversations become enormous. This matters when broad refactors or migrations must land as one change and cannot be divided cleanly for review.\n\nStacked pull requests can split work into smaller changes, making reviews easier and helping teams ship with less risk. However, that approach does not fit every change. When a migration or refactoring must remain intact, teams can be left with a single pull request that is already large and continues to grow as reviewers add comments.\n\n## A single pull request\n\nThe rebuilt view was designed around the requirement that reviewing should remain fast and smooth even when both the diff and its associated conversation are extremely large. The GitHub Copilot app therefore had to support not only a substantial number of changed files and lines, but also an extensive inline discussion attached to those changes.\n\nTo test the result, the team opened the biggest pull request it could find. The open source pull request contained 2,200 files, more than a million changed lines, and over 400 inline review comments. This combined a very large code change with a substantial review history in one pull request.\n\n## Fast and smooth review\n\nAccording to the announcement, the rebuilt pull request view made even this extreme example performant. The focus is the review experience itself: navigating and examining a massive diff while also handling the conversation that accumulates around it.\n\nThe change is aimed at teams reviewing large refactors and migrations that cannot be separated cleanly. Rather than requiring every large change to be divided into smaller pull requests, the refreshed view is intended to keep the GitHub Copilot app responsive when reviewers must work through one enormous pull request.",
       "chat": [
@@ -44044,7 +44158,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:32.042Z"
     },
-    "655fd12194d5c751": {
+    "3109af25bedf6259": {
       "bodyJa": "## Rustへの移行\n\nGitHub Copilot CLI、GitHub Copilot app、GitHub Copilot SDKを支えるCopilotエージェントランタイムが、Node.js上のTypeScriptからRustへ全面的に移行した。80万行を超える本番用コードの大規模な書き換えであり、ランタイムの性能は桁違いに向上したと説明されている。\n\n## ランタイムの役割\n\nCopilotエージェントランタイムは、アプリケーションやサービスへ組み込めるエージェント型のハーネスだ。当初は、現在のGitHub Copilot cloud agent（CCA）向けに、Node.jsとV8 JavaScriptエンジン上で動くTypeScriptとして作られた。その後、ランタイムと機能が急速に拡大する間も、同じ技術構成が維持されていた。\n\n## AIエージェント\n\n今回の再実装では、GitHub Copilot appとCopilot CLIが利用された。80万行超に及ぶRustコードの大半はAIエージェントが作成しており、変更は128件のプルリクエストに分けてmainへ取り込まれた。AIエージェントを使いながら、実際の本番コードを広範囲に書き換えた形となる。\n\n## 段階的な出荷\n\n移行は、最後に一度だけ切り替える方式ではなく、変更を段階的に出荷する形で進められた。途中では避けられない少数のリグレッションも発生したが、その都度すばやく発見され、修正されたという。こうした段階的な更新を経て、CLI、アプリ、SDKの基盤となるランタイム全体がRustへ置き換えられた。",
       "bodyEn": "## Copilot agent runtime\n\nGitHub has moved the Copilot agent runtime from TypeScript on Node.js to Rust, a change that benefits users of the GitHub Copilot CLI, GitHub Copilot app, and GitHub Copilot SDK. The runtime serves as the common technical foundation behind all three.\n\nThe runtime is an agentic harness that can be embedded into applications and services. Its shared role means the migration applies to the underlying system supporting the CLI, app, and SDK rather than to only one of those products.\n\n## TypeScript on Node.js\n\nThe Copilot agent runtime was originally written in TypeScript and ran on Node.js with the V8 JavaScript engine. It was created for what is now the GitHub Copilot cloud agent, or CCA.\n\nThe runtime remained on that technology stack while both the runtime itself and its capabilities grew rapidly. GitHub has now replaced that implementation through a complete rewrite in Rust.\n\n## Production Rust\n\nThe rewritten runtime comprises more than 800,000 lines of production Rust. GitHub used the GitHub Copilot app and Copilot CLI during the rewrite, with AI agents producing most of the code.\n\nThe result was not held back for one final replacement of the existing runtime. Instead, the Rust implementation was integrated and shipped incrementally as the work progressed.\n\n## 128 pull requests\n\nThe migration spanned 128 pull requests that landed in the main branch. This incremental approach allowed the rewritten runtime to ship in stages rather than waiting for a single cutover at the end of the project.\n\nAccording to GitHub, the migration introduced a few inevitable regressions, which were discovered and fixed quickly along the way. The company also says runtime performance improved by orders of magnitude. The completed migration therefore combines a large-scale language and runtime change with an AI-agent-driven development process across the shared foundation used by the Copilot CLI, app, and SDK.",
       "chat": [
@@ -44082,7 +44196,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:37:50.296Z"
     },
-    "2576bf8a180858a9": {
+    "8156421f827a3dc7": {
       "bodyJa": "## イベント運営\n\nGitHub上でイベント運営の定型工程をコード化し、企画決定後に続く作業を自動化する実践が紹介されている。日本と韓国のマーケターが、扱うテーマや参加者の理解に集中しやすくする取り組みだ。\n\n## 企画と参加者\n\n対象となるイベントには、企業の開発者向けに繰り返し開催するウェビナーシリーズ、東京でのコミュニティミートアップ、ソウルでの招待制エグゼクティブセッションがある。企画段階では、市場の開発者が現在何を必要としているのか、どのテーマなら1時間を使う価値があるのか、誰に参加してもらうべきかを検討する。\n\n## 定型工程\n\nイベントの実施が決まると、固定された一連の作業が始まる。イベントプラットフォーム上でランディングページを複製し、チャネルごとに定められた形式のUTM付きリンクを作成する。さらに、招待メールを起草して送信担当チームへ依頼し、イベントを2つのプロジェクトボードに追加する。\n\n## フォローアップ\n\n開催日までは毎朝、登録者リストをダウンロードして内容を整理し、関係者向けの状況更新を投稿する工程も発生する。こうしたページ複製、リンク作成、招待メール依頼、フォローアップを自動化することで、運営上の反復作業と、テーマや参加者を考える企画作業を切り分けている。",
       "bodyEn": "## Events Are the Heartbeat\n\nGitHub is codifying recurring event operations so that routine steps can be automated from planning through follow-up. For marketing in Japan and Korea, the approach keeps attention on choosing useful topics, understanding participants, and deciding who should be in the room.\n\nThe events include a recurring webinar series for enterprise developers, community meetups in Tokyo, and invite-only executive sessions in Seoul.\n\n## Topics and Audiences\n\nThe planning work starts with questions about what developers in the market need at that moment. It also considers which topics are worth an hour of participants’ time and which people should attend.\n\nThose decisions remain central to the marketer’s role. Once an event is approved, however, the operational work follows a fixed sequence that can be codified on GitHub rather than handled as a fresh process each time.\n\n## A Fixed Sequence\n\nThe sequence begins by duplicating a landing page on the event platform. It then generates UTM-tagged links for each channel, with every link following its required format.\n\nThe process also covers drafting the invitation email and filing a request with the team responsible for sending it. The event must then be added to two project boards.\n\nRegistration monitoring continues every morning until the event. The registrant list is downloaded and cleaned, after which a status update is posted for stakeholders. These repeated steps form part of the event workflow being automated.\n\n## From Planning to Follow-Up\n\nBy turning these standard operations into code, the practice automates page duplication, channel-specific UTM link creation, invitation email requests, and follow-up work. The aim is to separate repeatable execution from the decisions that require direct understanding of topics and audiences.\n\nFor marketers working across Japan and Korea, that means concentrating on what developers need, how an event should use their time, and who should participate, while the established operational sequence is handled through the codified workflow.",
       "chat": [
@@ -44120,7 +44234,7 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-09-28T18:38:10.006Z"
     },
-    "433004a6bd914ded": {
+    "b310b2c06dbd9321": {
       "bodyJa": "## Copilotアプリ\n\nGitHub Copilotアプリでは、エージェントがコードを変更した後の確認、実行、結果の検証を、アプリから離れずに進められます。差分、ターミナル、ブラウザーが組み込みパネルとして並ぶため、エージェントの作業を確かめたい初心者にも一連の流れを追いやすい構成です。\n\n## 差分パネル\n\n差分は、変更前と変更後を比較するものです。差分パネルには、追加、削除、変更された行が具体的に表示されます。追加部分は緑、削除部分は赤で強調されるため、コードのどこが書き換えられたのかを区別しながら確認できます。\n\n確認後の判断も利用者が行います。変更を受け入れるだけでなく、コメントを残したり、Copilotに変更を依頼したりできます。エージェントによる編集がそのまま最終決定になるのではなく、表示された差分を見たうえで、利用者が次の対応を選べる仕組みです。\n\n## ターミナル\n\n組み込みのターミナルパネルでは、変更されたコードをアプリ内で実行できます。従来はエディター、ターミナルウィンドウ、Webブラウザーの間を行き来していた作業を、Copilotアプリ内で続けられます。差分を確認した流れのまま実行へ移れるため、エージェントの変更内容と実行結果を結び付けて確かめられます。\n\n## ブラウザー\n\nブラウザーもアプリ内のパネルとして利用でき、実行した結果の確認に使います。差分で編集箇所を把握し、ターミナルでコードを実行し、ブラウザーで結果を見るという各段階が横並びになります。これにより、エージェントの作業を確認して最終判断を下すまでのAIコーディングの流れを、GitHub Copilotアプリ内で完結できます。",
       "bodyEn": "## The AI coding loop\n\nThe GitHub Copilot app brings reviewing changes, running code, and verifying results into one place. This matters for beginners who want to check an agent’s work without moving between an editor, a terminal window, and a web browser.\n\nBuilt-in diff and terminal panels sit alongside a browser in the app. Together, these panels support the full process of examining what an agent changed, running the code, and seeing the result. Keeping these steps side by side makes it simpler to complete the AI coding loop without leaving the Copilot app.\n\n## The diff panel\n\nThe diff panel provides a before-and-after comparison of the code. It identifies exactly which lines were added, removed, or changed. Additions are highlighted in green, while deletions appear in red.\n\nThis view gives users a direct way to inspect an agent’s edits before deciding what should happen next. Rather than treating the agent’s output as final, users can review the individual changes and determine whether they match what they want.\n\nAfter reviewing the diff, users can accept the changes, leave comments, or ask Copilot to make further changes. The panel therefore combines visibility into the edits with options for responding to them.\n\n## Terminal and browser\n\nThe terminal panel allows code to be run from within the GitHub Copilot app. The browser can then be used alongside it to view and verify the results. These capabilities remove the need to bounce between separate windows for the editor, terminal, and browser during this process.\n\nBy placing the diff, terminal, and browser together, the app keeps review, execution, and verification in the same workspace. The agent can make changes, but the user remains responsible for checking its work and making the final decisions.",
       "chat": [

@@ -19,6 +19,7 @@ TECH Dashboard の利用者向け機能、データ契約、収集・公開基�
 
 ### 変更
 
+- release #364 の旧writer停止確認について、一回限りの**未適用の**R-027条項案を文書化しました。workflow停止・旧実行とQueueの残存なし・旧runnerのmain snapshot/CAS・候補bridgeの拒否を暫定置換前に独立確認し、別承認の置換後に初めて実deploy version/codeとpublic healthを読戻す2段階です。旧heartbeatの404、mock、共有本番bindingのVersion URLを本番証拠とは扱いません。通常のdrain/mismatch gate、main merge、bridge deploy、Publisher再開の別承認は維持します。今回の変更は本番操作を伴いません。
 - AI解説本文を記事IDの決定論的hashで4つのJSON shardへ分け、合計18MB (hard 20MB)・各shard 9MB (hard 10MB)の別々の容量gateで保持するようにしました。初回のPublisher runは同一main SHAの既存本文と会話をlosslessに4 shardへ移し、旧単一ファイルは復旧用に凍結して残します。Web、Publisher、CI、migrationは4 shardの完全性とindexに記録したSHA-256を照合し、初回移行後は容量不足による旧9MB除外をbounded Queueへ戻します。
 - 本文保存の容量上限で生成対象から除外中の記事がある場合、Status で本文待ちの合計と除外件数を分けて表示し、全件が一定時間で処理されるかのような見込み時刻を表示しないようにしました。`/metrics.json` の本文 Queue ETA も数値ではなく `null` にします。
 - 旧body consumerが新版jobのfingerprintを転記して生成した旧配役の対話を、新PublisherがPoko対話として取り込まないようにしました。body consumerのコード由来の会話revisionを検証し、通常本文・既存本文への追加の両方で旧cacheを拒否します。本文と保存済みのJA/EN6発言は保持し、欠けた対話は共有Queue枠内でboundedに修復します。通常の旧consumer drainは維持し、会話promptだけの変更に限る代替安全条件は別承認が必要です。

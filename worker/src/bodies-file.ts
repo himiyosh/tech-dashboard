@@ -1,10 +1,10 @@
 /**
  * worker/src/bodies-file.ts
  *
- * Pure helpers for data/bodies.json (body-file architecture, LL-115). The
- * collector reads the committed bodies.json, merges newly generated bodies
- * (from the `b:` KV cache), prunes bodies whose entry is no longer live, and
- * writes it back in the same Git Data API commit as index.json (LL-021).
+ * Pure helpers for the sharded body sidecar (body-file architecture, LL-115).
+ * The publisher reads the committed records, inherits them across canonical
+ * winner ID changes, merges new `b:` cache hits, and prunes entries no longer
+ * retained before committing the index and shards together (LL-021).
  *
  * Cloudflare-type-free so it can be unit-tested directly.
  */
@@ -16,6 +16,7 @@ import {
   hasMaterialBodyGroundingConflict,
   hasSufficientBodySourceGrounding,
 } from "../../harness/pipeline/source-grounding.ts";
+import { canonicalUrlKey } from "../../harness/pipeline/url.ts";
 import type { NormalizedEntry } from "../../harness/types.ts";
 import { validateArticleChat, type ArticleChatTurn } from "./article-chat.ts";
 import {
@@ -222,6 +223,126 @@ export function pruneInvalidBodyRecords(
       : payload,
     pruned,
     changed: pruned > 0,
+  };
+}
+
+/** Resolve previous article IDs to the final retained ID for the same canonical URL. */
+export function buildCanonicalBodyAliases(
+  previousEntries: readonly Pick<NormalizedEntry, "id" | "url">[],
+  retainedEntries: readonly Pick<NormalizedEntry, "id" | "url">[],
+): Map<string, string> {
+  const winnersByUrl = new Map<string, string>();
+  for (const entry of retainedEntries) {
+    if (!entry.id || !entry.url) throw new Error("canonical body alias requires an id and URL");
+    const key = canonicalUrlKey(entry.url) ?? entry.url;
+    const winner = winnersByUrl.get(key);
+    if (winner && winner !== entry.id) {
+      throw new Error(`ambiguous canonical body winner for ${key}: ${winner}, ${entry.id}`);
+    }
+    winnersByUrl.set(key, entry.id);
+  }
+
+  const aliases = new Map<string, string>();
+  const previousUrls = new Map<string, string>();
+  for (const entry of previousEntries) {
+    if (!entry.id || !entry.url) throw new Error("canonical body alias requires an id and URL");
+    const key = canonicalUrlKey(entry.url) ?? entry.url;
+    const previousKey = previousUrls.get(entry.id);
+    if (previousKey && previousKey !== key) {
+      throw new Error(`ambiguous previous URL for body id ${entry.id}`);
+    }
+    previousUrls.set(entry.id, key);
+    const winner = winnersByUrl.get(key);
+    if (winner && winner !== entry.id) aliases.set(entry.id, winner);
+  }
+  return aliases;
+}
+
+/** Re-key Queue state along with the body record so a source flip does not reschedule it. */
+export function mapCanonicalBodyIds(
+  ids: readonly string[],
+  aliases: ReadonlyMap<string, string>,
+): string[] {
+  return [...new Set(ids.map((id) => aliases.get(id) ?? id))];
+}
+
+function checkedStoredChat(record: BodyRecord, id: string): ArticleChatTurn[] | null {
+  if (record.chat === undefined) return null;
+  const chat = validateArticleChat(record.chat);
+  if (!chat) throw new Error(`invalid stored article chat for canonical body alias ${id}`);
+  return chat;
+}
+
+function sameStoredBody(left: BodyRecord, right: BodyRecord): boolean {
+  const fields = (record: BodyRecord) =>
+    Object.entries(record).filter(([key]) => key !== "chat").sort(([a], [b]) => a.localeCompare(b));
+  return JSON.stringify(fields(left)) === JSON.stringify(fields(right));
+}
+
+export interface BodyIdentityResult {
+  payload: BodiesPayload;
+  moved: number;
+  pruned: number;
+  changed: boolean;
+}
+
+/**
+ * Validate both identities before discarding the old ID. A distinct valid
+ * destination record is a data conflict, not a reason to choose one silently.
+ */
+export function reconcileBodyIdentity(
+  existing: BodiesPayload,
+  aliases: ReadonlyMap<string, string>,
+  retainedIds: ReadonlySet<string>,
+  generatedAt: string,
+  previousEntries: readonly BodyGuardEntry[] = [],
+  retainedEntries: readonly BodyGuardEntry[] = [],
+): BodyIdentityResult {
+  if (aliases.size === 0) {
+    return { payload: existing, moved: 0, pruned: 0, changed: false };
+  }
+  const before = pruneInvalidBodyRecords(
+    existing,
+    [...previousEntries, ...retainedEntries],
+    generatedAt,
+  );
+  const bodies = { ...before.payload.bodies };
+  let moved = 0;
+
+  for (const [oldId, winnerId] of aliases) {
+    if (!retainedIds.has(winnerId)) continue;
+    if (retainedIds.has(oldId)) {
+      throw new Error(`canonical body alias would remove a retained id: ${oldId}`);
+    }
+    const record = before.payload.bodies[oldId];
+    if (!record || !isRealBody(record)) continue;
+    const sourceChat = checkedStoredChat(record, oldId);
+    const winnerRecord = bodies[winnerId];
+    if (winnerRecord) {
+      const winnerChat = checkedStoredChat(winnerRecord, winnerId);
+      if (
+        !sameStoredBody(record, winnerRecord) ||
+        (sourceChat && winnerChat && JSON.stringify(sourceChat) !== JSON.stringify(winnerChat))
+      ) {
+        throw new Error(`conflicting stored body records for canonical winner ${winnerId} (from ${oldId})`);
+      }
+      if (sourceChat && !winnerChat) bodies[winnerId] = { ...winnerRecord, chat: record.chat };
+    } else {
+      bodies[winnerId] = record;
+    }
+    delete bodies[oldId];
+    moved += 1;
+  }
+
+  const transferred: BodiesPayload = moved > 0
+    ? { generatedAt, count: Object.keys(bodies).length, bodies }
+    : before.payload;
+  const after = pruneInvalidBodyRecords(transferred, retainedEntries, generatedAt);
+  return {
+    payload: after.payload,
+    moved,
+    pruned: before.pruned + after.pruned,
+    changed: before.changed || moved > 0 || after.changed,
   };
 }
 

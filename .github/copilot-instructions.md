@@ -104,6 +104,7 @@
 ### R-012: live index は要約のみ・本文はID-hashの4 shard (LL-115/411)
 - `data/index.json` の live entries は `summaryJa` / `summaryEn` の**両方を必ず非空**にする (両言語必須)。完了前に `tests/data-schema.test.ts` の summary 欠落ゲートを通す。
 - **本文 (`bodyJa` / `bodyEn`) は index に格納しない**。本文は記事IDのUTF-8 FNV-1a hashで `data/bodies-0.json`〜`data/bodies-3.json` の4 JSON shardに分配する (`{ generatedAt, count, bodies: { [id]: {bodyJa, bodyEn, chat?, model, generatedAt} } }`)。indexは本文フリーで8MB予算を守り、保存mode・各shardの実ファイルbytesのSHA-256を同じcommitのindex healthへ保存する。移行後は一部だけでなく4件全部が欠落しても旧sourceへのfallbackで隠さない。移行前のみ旧 `data/bodies.json` を読み、移行後は復旧用に凍結して削除しない。
+- canonical URLが同一の記事の勝者IDがfeed間で変わる場合、前回indexと最終保持対象からaliasを作り、旧IDの**検証済み本文・JA/EN 6発言・model・生成日時**を現行shard内で新IDへ移してから旧IDをpruneする。異なる有効な保存recordやchatが両IDにある場合は任意に選ばずpublishをfail-closedで停止する。Queue停止中も安全なID移行を保存し、保持対象外の本文は従来どおり削除する。凍結した旧sourceを自動fallbackにしない。
 - 本文は専用クラウド worker (Phase B: opus-4.8 reasoning=max) が生成し、Node Publisherが4 shardへ反映する。生成はI/O主体でCloudflareのCPU予算に当たらない (LL-115)。決定論的filler bodyは**生成・格納しない** (LL-112)。
 - 本文の保持対象は **evergreen、importance 2/3、直近 `BODY_RETENTION_DAYS` 日**に限定する。対象外の古い低重要度本文は `scripts/clean-source-noise.mjs` が prune し、要約と原文リンクは維持する。Worker、migration、`tests/data-schema.test.ts` は `worker/src/body-queue.ts` の同じ retention helper を使う。
 - retention boolean gateと別に、**合計18,000,000 bytes (hard 20,000,000)・各shard 9,000,000 bytes (hard 10,000,000)**の実serial化byte予算を同時に守る。`enforceShardedBodiesBudget()` は importance 1 → 2 → 3 → evergreenを同tier最古から最小件数だけpruneし、evergreenもlast-resort対象から除外しない。Publisherとmigrationは同じhelperを使う。旧source単体には従来の9MB target/10MB hard ceilingを維持し、旧sourceの上限を黙って引き上げない。初回移行はimmutableな同一main SHAから本文・chat・metadataを完全複製してindex healthと4 shardを1 data-only CAS commitで書き、旧9MB予算による除外IDだけ次runのbounded Queue選定へ戻す。data-only生成物をdevelop PRへ直接同梱しない。
@@ -3318,3 +3319,9 @@ console.log('no summaryJa:', noSumJa, 'no body:', noBody);
 - **根本原因**: root `tsconfig.json` の `include` は `harness/**/*.ts` のみで、`.claude/skills/quality-audit/run.ts` と `tests/quality-audit-cli.test.ts` は対象外だった。Vitestによる実行成功も型の整合性を証明しない。
 - **対策**: 監査entryの必須titleを型に明示し、カテゴリ集計は既存値の未定義可能性を扱った。root typecheckに加えて、CLIとテストを明示指定した`tsc --noEmit`（rootのstrict/noUncheckedIndexedAccess等と同じ設定）を実行し、固定時計のfixtureで既定保存と読み取り専用の同一レポートを検証した。
 - **教訓**: package/scriptの型検査範囲を先に確認し、root typecheckが含まないTypeScript CLIを編集したら、そのCLIと対応testを明示指定して検査する。runtime testのPASSやroot typecheckのPASSを、対象外ファイルの型安全性の証拠にしない。
+
+### LL-502: canonical勝者IDの交代前に現行shardの本文・対話を引き継ぐ
+- **事象**: `github-copilot`/`github-blog-ai`と`openai-blog`/`openai-news`が同じcanonical URLを交互に収集すると、本文のある旧IDが最終live集合から外れ、新IDは本文・対話なしで公開された。OpenAIの21:30 UTCの実runでも旧shardの4件に有効なJA/EN6発言があるのに新ID側は欠落し、凍結した旧単一sidecarには元IDが無かった。
+- **根本原因**: 記事のmergeはcanonical URLを主キーとするが、本文の保持とpruneは記事IDだけで判断した。migrationは旧IDから新IDへ本文だけを`NewBody`として渡し、chatを落としていた。単に旧IDを残しても新IDで本文を読めず、別IDに異なる有効記録があると先着順に片方を捨てる危険がある。
+- **対策**: 前回indexと今回のretention対象のcanonical URLからaliasを作り、Queue候補選択より前と最終shard反映時に共通helperで既存body/chat/model/generatedAtを検証して移す。両IDの有効な記録が異なれば例外でpublishを停止し、同内容で片方にだけchatがある場合は検証済みのchatだけを補う。migrationも同じhelperを使い、保持対象外・別URLは従来どおりpruneする。GitHub/OpenAIのfeed交代を2run・双方向で再現し、現行shardの会話を保持する。
+- **教訓**: 収集側がURLで同一性を決め保存側がIDで保持するなら、勝者ID変更はstorage migrationを伴う。破壊的pruneより前にimmutableな前回→最終snapshotのaliasを作り、保存済みrecordのprovenanceと衝突を確認する。凍結した旧sourceへのfallbackや再生成を既存本文の引き継ぎとして扱わず、Queue停止・復旧対象外・複数feedの往復を回帰fixtureに含める。

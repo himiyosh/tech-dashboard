@@ -16,23 +16,29 @@ import {
 } from "../worker/src/body-queue.ts";
 import {
   buildHeartbeatPayload,
+  mergeFreshAndPriorEntries,
   runBodyPipeline,
   selectBodyJobsToEnqueue,
   type PublisherEnv,
 } from "../worker/src/index.ts";
 import {
   bodiesPresentSet,
+  buildCanonicalBodyAliases,
   isRealBody,
+  mapCanonicalBodyIds,
   mergeBodies,
   mergeBodiesWithGuards,
   mergeBodiesWithProductGuard,
   parseBodies,
   pruneInvalidBodyRecords,
   pruneKnownProductBodyConflicts,
+  readBodyStorage,
+  reconcileBodyIdentity,
   serializeBodies,
   type BodiesPayload,
 } from "../worker/src/bodies-file.ts";
 import { serializedShardByteLengths } from "../worker/src/bodies-budget.ts";
+import { serializeBodyShards } from "../web/src/lib/body-shards.ts";
 import { validateArticleChat, type ArticleChatTurn } from "../worker/src/article-chat.ts";
 import { DEPLOYED_ARTICLE_CHAT_REVISION, type BodyCacheEntry } from "../worker/src/body-cache.ts";
 import { DEPLOYED_PUBLISHER_FINGERPRINT } from "../worker/src/publisher-contract.ts";
@@ -876,6 +882,309 @@ function baseEnv(overrides: Partial<PublisherEnv> = {}): PublisherEnv {
     ...overrides,
   };
 }
+
+describe("canonical winner body identity across Publisher runs", () => {
+  const at = "2026-10-07T12:30:00.000Z";
+  const nextAt = "2026-10-07T13:30:00.000Z";
+  const originalAt = "2026-10-07T11:30:00.000Z";
+  const chat: ArticleChatTurn[] = Array.from({ length: 6 }, (_, index) => ({
+    s: index % 2 === 0 ? "a" : "b",
+    ja: `記事の内容を確認する発言 ${index}。`,
+    en: `A source-grounded turn about the article ${index}.`,
+  }));
+  const record = {
+    ...bodyGeneratedRecordText("original"),
+    chat,
+    model: "claude-opus-4.8",
+    generatedAt: originalAt,
+  };
+  const corpus = [
+    ["GitHub", "github-copilot", "github-blog-ai", "https://github.blog/ai-and-ml/github-copilot/example-release/"],
+    ["OpenAI", "openai-news", "openai-blog", "https://openai.com/index/example-release/"],
+  ] as const;
+
+  function feedEntry(id: string, source: string, url: string, collectedAt: string) {
+    return entry({
+      id,
+      source,
+      sourceType: "blog",
+      url,
+      title: "An AI model update for developers",
+      titleJa: "開発者向けAIモデルの更新",
+      titleEn: "An AI model update for developers",
+      contentSnippet: "The official source describes a model update for developers, supported capabilities, usage details, and its rollout in the product.",
+      category: source.startsWith("openai") ? "gpt" : "copilot",
+      importance: 3,
+      archiveTier: "hot",
+      lang: "en",
+      publishedAt: "2026-10-07T10:00:00.000Z",
+      collectedAt,
+    });
+  }
+
+  it.each(corpus)("%s retains the current-shard body and chat across two feed flips", async (
+    _label, firstSource, secondSource, url,
+  ) => {
+    const first = feedEntry(`${firstSource}-id`, firstSource, url, originalAt);
+    const second = feedEntry(`${secondSource}-id`, secondSource, url, at);
+    const existing: BodiesPayload = {
+      generatedAt: originalAt,
+      count: 1,
+      bodies: { [first.id]: record },
+    };
+    const sends: BodyJob[] = [];
+    let reads = 0;
+    const env = baseEnv({
+      SUMMARY_CACHE: {
+        get: async () => { reads += 1; return null; },
+        put: async () => {},
+      },
+      BODY_QUEUE: {
+        sendBatch: async (batch: { body: BodyJob }[]) => {
+          sends.push(...batch.map((message) => message.body));
+        },
+      },
+    });
+
+    const run1Entries = mergeFreshAndPriorEntries([second], [first], new Map(), at).entries;
+    expect(run1Entries.map((item) => item.id)).toEqual([second.id]);
+    const earlyAliases = buildCanonicalBodyAliases([first], run1Entries);
+    const earlyIdentity = reconcileBodyIdentity(
+      existing, earlyAliases, new Set([second.id]), at, [first], run1Entries,
+    );
+    expect(bodyBoundExcerptPriority(run1Entries, bodiesPresentSet(earlyIdentity.payload), {
+      lookupCap: 1, previousPendingIds: [], nowMs: Date.parse(at),
+    }).bodyBatchIds).toEqual([]);
+    const run1 = await runBodyPipeline(
+      env, run1Entries, null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: existing,
+        existingStorageMode: "shards-v1",
+        previousEntries: [first],
+        nowMs: Date.parse(at),
+      },
+    );
+    expect(run1.changed).toBe(true);
+    expect(run1.payload.bodies).toEqual({ [second.id]: record });
+    expect(run1.health.bodyMerged).toBe(0);
+    expect(run1.health.bodyEnqueued).toBe(0);
+    const run1Stored = readBodyStorage(null, serializeBodyShards(run1.payload).map((file) => file.content));
+    expect(run1Stored.mode).toBe("shards-v1");
+    expect(run1Stored.payload.bodies).toEqual({ [second.id]: record });
+
+    const run2Entries = mergeFreshAndPriorEntries(
+      [feedEntry(first.id, firstSource, url, nextAt)],
+      run1Entries,
+      new Map(),
+      nextAt,
+    ).entries;
+    expect(run2Entries.map((item) => item.id)).toEqual([first.id]);
+    const run2 = await runBodyPipeline(
+      env, run2Entries, null, nextAt, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: run1Stored.payload,
+        existingStorageMode: "shards-v1",
+        previousEntries: run1Entries,
+        nowMs: Date.parse(nextAt),
+      },
+    );
+    expect(run2.changed).toBe(true);
+    expect(run2.payload.bodies).toEqual({ [first.id]: record });
+    expect(readBodyStorage(null, serializeBodyShards(run2.payload).map((file) => file.content)).payload.bodies)
+      .toEqual({ [first.id]: record });
+    expect(run2.health.bodyMerged).toBe(0);
+    expect(run2.health.bodyEnqueued).toBe(0);
+    expect(sends).toEqual([]);
+    expect(reads).toBe(0);
+  });
+
+  it("grafts a validated stored chat only when destination prose and metadata agree", () => {
+    const former = feedEntry("former", "github-copilot", "https://github.blog/example", originalAt);
+    const winner = feedEntry("winner", "github-blog-ai", "https://github.blog/example?utm_source=rss", at);
+    const aliases = buildCanonicalBodyAliases([former], [winner]);
+    expect(aliases).toEqual(new Map([["former", "winner"]]));
+    const result = reconcileBodyIdentity(
+      {
+        generatedAt: originalAt,
+        count: 2,
+        bodies: {
+          former: record,
+          winner: { bodyJa: record.bodyJa, bodyEn: record.bodyEn, model: record.model, generatedAt: record.generatedAt },
+        },
+      },
+      aliases,
+      new Set(["winner"]),
+      at,
+      [former],
+      [winner],
+    );
+    expect(result.payload.bodies).toEqual({ winner: record });
+    expect(result.moved).toBe(1);
+    expect(result.pruned).toBe(0);
+  });
+
+  it.each([
+    ["different prose", { ...bodyGeneratedRecordText("new"), model: record.model, generatedAt: record.generatedAt, chat }],
+    ["different metadata", { ...record, generatedAt: at }],
+    ["different six-turn chat", { ...record, chat: chat.map((turn) => ({ ...turn, en: `${turn.en} Changed.` })) }],
+  ])("rejects %s at a legitimate destination instead of choosing a winner", async (_label, destination) => {
+    const former = feedEntry("former", "github-copilot", "https://github.blog/example", originalAt);
+    const winner = feedEntry("winner", "github-blog-ai", former.url, at);
+    const previous: BodiesPayload = {
+      generatedAt: originalAt,
+      count: 2,
+      bodies: { former: record, winner: destination },
+    };
+    const sends: BodyJob[] = [];
+    await expect(runBodyPipeline(
+      baseEnv({
+        BODY_QUEUE: { sendBatch: async (batch: { body: BodyJob }[]) => {
+          sends.push(...batch.map((message) => message.body));
+        } },
+      }),
+      [winner], null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: previous,
+        existingStorageMode: "shards-v1",
+        previousEntries: [former],
+        nowMs: Date.parse(at),
+      },
+    )).rejects.toThrow(/conflicting stored body records for canonical winner winner/);
+    expect(sends).toEqual([]);
+    expect(previous.bodies).toEqual({ former: record, winner: destination });
+  });
+
+  it("rejects an invalid stored chat instead of inheriting unvalidated turns", () => {
+    const former = feedEntry("former", "openai-blog", "https://openai.com/index/example", originalAt);
+    const winner = feedEntry("winner", "openai-news", former.url, at);
+    expect(() => reconcileBodyIdentity(
+      { generatedAt: originalAt, count: 1, bodies: { former: { ...record, chat: chat.slice(0, 5) } } },
+      buildCanonicalBodyAliases([former], [winner]),
+      new Set([winner.id]),
+      at,
+      [former],
+      [winner],
+    )).toThrow(/invalid stored article chat for canonical body alias former/);
+  });
+
+  it("maps budget exclusions to the winner but prunes genuinely unrelated or unretained IDs", async () => {
+    const former = feedEntry("former", "github-copilot", "https://github.blog/example", originalAt);
+    const winner = feedEntry("winner", "github-blog-ai", former.url, at);
+    const unrelated = feedEntry("unrelated", "github-copilot", "https://github.blog/unrelated", originalAt);
+    expect(mapCanonicalBodyIds(
+      ["former", "former", "unrelated"],
+      buildCanonicalBodyAliases([former, unrelated], [winner]),
+    )).toEqual(["winner", "unrelated"]);
+
+    const removed = await runBodyPipeline(
+      baseEnv({ BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "0" }),
+      [winner], null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: { generatedAt: originalAt, count: 1, bodies: { unrelated: record } },
+        existingStorageMode: "shards-v1",
+        previousEntries: [former, unrelated],
+        previousBudgetEvictedIds: ["former"],
+        nowMs: Date.parse(at),
+      },
+    );
+    expect(removed.payload.bodies).toEqual({});
+    expect(removed.health.bodyPruned).toBe(1);
+    expect(removed.health.bodyBudgetEvictedIds).toEqual(["winner"]);
+
+    const stale = feedEntry("expired", "openai-blog", "https://openai.com/index/expired", "2026-05-01T00:00:00.000Z");
+    stale.importance = 1;
+    stale.publishedAt = "2026-05-01T00:00:00.000Z";
+    const replacement = { ...stale, id: "replacement", source: "openai-news", collectedAt: at };
+    const pruned = await runBodyPipeline(
+      baseEnv({ BODY_LOOKUP_CAP: "0", CHAT_LOOKUP_CAP: "0" }),
+      [replacement], null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: { generatedAt: originalAt, count: 1, bodies: { expired: record } },
+        existingStorageMode: "shards-v1",
+        previousEntries: [stale],
+        nowMs: Date.parse(at),
+      },
+    );
+    expect(pruned.payload.bodies).toEqual({});
+    expect(pruned.health.bodyPruned).toBe(1);
+    expect(pruned.health.bodyRetentionEligible).toBe(0);
+  });
+
+  it.each([
+    ["disabled", { ENABLE_BODY_QUEUE: "0" }],
+    ["missing-binding", { BODY_QUEUE: undefined }],
+  ] as const)("persists identity changes in %s Queue mode", async (mode, overrides) => {
+    const former = feedEntry("former", "github-copilot", "https://github.blog/example", originalAt);
+    const winner = feedEntry("winner", "github-blog-ai", former.url, at);
+    const result = await runBodyPipeline(
+      baseEnv(overrides),
+      [winner], null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: { generatedAt: originalAt, count: 1, bodies: { former: record } },
+        existingStorageMode: "shards-v1",
+        previousEntries: [former],
+        nowMs: Date.parse(at),
+      },
+    );
+    expect(result.health.bodyQueueMode).toBe(mode);
+    expect(result.changed).toBe(true);
+    expect(result.payload.bodies).toEqual({ winner: record });
+    expect(result.health.bodyShardBytes).toEqual(serializedShardByteLengths(result.payload));
+  });
+
+  it("preserves an inherited record when an unrelated KV read fails", async () => {
+    const former = feedEntry("former", "openai-news", "https://openai.com/index/example", originalAt);
+    const winner = feedEntry("winner", "openai-blog", former.url, at);
+    const missing = feedEntry("missing", "openai-blog", "https://openai.com/index/another", at);
+    const result = await runBodyPipeline(
+      baseEnv({
+        SUMMARY_CACHE: {
+          get: async () => { throw new Error("transient KV read failure"); },
+          put: async () => {},
+        },
+        BODY_LOOKUP_CAP: "1",
+        CHAT_LOOKUP_CAP: "0",
+      }),
+      [winner, missing], null, at, DEPLOYED_PUBLISHER_FINGERPRINT,
+      {
+        existingBodyPayload: { generatedAt: originalAt, count: 1, bodies: { former: record } },
+        existingStorageMode: "shards-v1",
+        previousEntries: [former],
+        nowMs: Date.parse(at),
+      },
+    );
+    expect(result.health.bodyQueueMode).toBe("error");
+    expect(result.changed).toBe(true);
+    expect(result.payload.bodies).toEqual({ winner: record });
+  });
+
+  it("rejects ambiguous canonical winners before touching stored records", () => {
+    const prior = feedEntry("prior", "github-copilot", "https://github.blog/example", originalAt);
+    const one = feedEntry("one", "github-blog-ai", prior.url, at);
+    const two = feedEntry("two", "github-copilot", `${prior.url}?utm_source=feed`, at);
+    expect(() => buildCanonicalBodyAliases([prior], [one, two]))
+      .toThrow(/ambiguous canonical body winner/);
+  });
+
+  it("rejects two distinct stored aliases even when the destination has no body yet", () => {
+    const first = feedEntry("first", "github-copilot", "https://github.blog/example", originalAt);
+    const second = feedEntry("second", "github-blog-ai", `${first.url}?utm_source=second`, originalAt);
+    const winner = feedEntry("winner", "github-copilot", first.url, at);
+    const aliases = buildCanonicalBodyAliases([first, second], [winner]);
+    expect(() => reconcileBodyIdentity(
+      {
+        generatedAt: originalAt,
+        count: 2,
+        bodies: { first: record, second: { ...record, bodyJa: "異なる本文を保存していた。" } },
+      },
+      aliases,
+      new Set(["winner"]),
+      at,
+      [first, second],
+      [winner],
+    )).toThrow(/conflicting stored body records for canonical winner winner/);
+  });
+});
 
 describe("old consumer echoes the new fingerprint without a chat code revision", () => {
   const at = "2026-09-28T00:00:00.000Z";

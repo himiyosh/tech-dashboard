@@ -132,6 +132,17 @@ fingerprintを変えるreleaseは次の順序を固定する。
 5. 明示承認のうえ`tech-dashboard-harness`をFree bridgeへdeployする。`wrangler deployments list`が100%を示した直後でも、release verifierからの`/health`が最大60秒ほど旧fingerprintを返すことがある。immediateな1回の応答だけで「bundleが壊れている」と判断せず、`node scripts/verify-worker-deploy.mjs` (bounded polling、既定120s timeout / 5s interval / 3回連続一致) で観測経路の安定収束を確認する。これは全edge PoPの収束証明ではない。
 6. bridge `/health`、Publisher workflow、data commit、Queue drain、Pages production、公開URLを順に確認する。
 
+### #364 の旧writer停止証拠に限る一回限りの条項案 (未適用)
+
+通常の旧harness marker mismatch観測、例外時の旧run terminal failure・merge後data commit不在・旧heartbeat非更新の全実測、consumer-firstと旧consumer drain、bridge-lastは既定のまま維持する。今回の別案は #364 のmain merge `91a8a3b713841b8d2fd9aba06e977f278101349f` と、その後に別途審査・承認されたdocs/policy-onlyの `working branch → develop → main` mergeにだけ限定する。後続mainのexact diffがdocs/policyだけで、#364からdata tree、fingerprint、全critical pathが不変であることを実refで示せなければSTOP。develop全体がmainに489 commit遅れていた事実は2026-10-09時点の観測であり、これをpolicy-only releaseの許可に読み替えない。policy自身のmain mergeがR-001c/R-027を通る根拠または別のowner判断なしに、自己例外として先行mergeしない。draft PRはrelease許可ではない。証拠の正本は [.github/copilot-instructions.md](../.github/copilot-instructions.md) R-027とする。
+
+| 段階 | 独立した証拠と実行境界 |
+| --- | --- |
+| 段階A: workflow停止中、暫定置換前 | (1) workflow ID/状態履歴、schedule/手動/bridge dispatchのprovider read-back、(2) 全旧Actions invocationのterminalとactiveなし、関連Queue/DLQ/in-flightのprovider確認、(3) exact main SHA/data treeと旧runnerのcheckout・開始時/commit直前/effects flush直前のpreflight/CAS拒否、(4) 候補bridgeの旧fingerprint Queue/KV拒否と新版markerの隔離fixture。欠測やQueue sampleの0では証明できない。全て揃いownerがpolicy適用と暫定置換を**別々に明示承認**するまで置換しない。 |
+| 段階B: 別承認の暫定bridge置換後、Publisher停止中 | (4) 実deploy version、bundle/code provenanceとpublic `/health`の新版markerへの安定read-back、旧fingerprint拒否をproviderで確認する。(1)〜(3)とmain/data/Queue/KVも再確認する。旧`heartbeat.v1`の404は非更新の証明ではない。mock/local preflight、production bindingsを共有するWorker Version URLやdeployment 100%だけではproduction code/read-backと同等にならない。いずれか未証明ならSTOPし、Publisherを動かさない。 |
+
+本番側の(4)は暫定bridge置換**後**にしか観測できないため、Aの証拠を4/4達成と報告しない。暫定置換自体はrelease gate通過でもworkflow再開でもなく、4/4の確認後もPublisher再有効化/dispatch、data/effects書込みはそれぞれ別の明示承認を要する。main mergeにも事前の別承認が必要である。暫定bridge置換を1回実行した時点で条項の置換許可は消費され、成否を問わず再置換・将来releaseへ再利用しない。既存の会話修復・POST-MERGE全ID read-backとimmutable snapshot/CASも変えず、無承認rollbackは行わない。
+
 ## Observability
 
 | Signal | Source |

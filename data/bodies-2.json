@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-28T13:30:51.747Z",
-  "count": 425,
+  "generatedAt": "2026-11-28T14:31:01.149Z",
+  "count": 427,
   "bodies": {
     "d9b0da9f34ed444d": {
       "bodyJa": "Metaは、Ray-Ban MetaやOakley Meta VanguardsといったAIスマートグラスに搭載する超細型バッテリーの設計・製造プロセスを、自社のエンジニアリングブログで明らかにした。カメラやスピーカー、AI処理、さらにはディスプレイまでを動かすための電力を、メガネのテンプル（つる）という極めて限られた空間に収める技術は、ウェアラブル端末の使い勝手を左右する重要な要素となっている。\n\nスマートグラスが抱える最大の制約は、形状そのものにある。一般的なスマートフォンが平たく比較的大きな空間を確保できるのに対し、メガネのつるは細く湾曲しており、装着感や重量バランスを損なわずに電池を組み込む必要がある。Metaによれば、こうした条件下では従来型の角張ったセルをそのまま流用することが難しく、細長い形状に最適化したバッテリーをゼロから設計する必要があったとされる。\n\nカメラ撮影やオンデバイスでのAI処理、音声アシスタントの応答といった機能は、瞬間的に大きな電力を要求する。限られた容量の中でこれらをこなしつつ、一日を通じた実用的な駆動時間を確保するには、セルの素材選定から内部構造、製造工程までを一体で見直すアプローチが求められたと見られる。同社は安全性や発熱、繰り返し充電による劣化への対応も、設計段階から織り込んでいると説明している。\n\nスマートグラス分野では、Metaのほかにもさまざまな企業が参入を模索しており、ディスプレイ搭載モデルの登場によって消費電力はさらに増す傾向にある。バッテリー技術はカメラやチップの性能と並び、製品の差別化を左右する基盤になりつつある。小型化が進むほど熱設計や安全マージンの確保は難しくなるため、各社にとって電源まわりの作り込みは今後いっそう重要性を増す可能性がある。\n\n今回の解説は、完成品の見た目からは分かりにくいハードウェア開発の舞台裏を示すものだ。Metaは近年、Ray-Banブランドとの協業を通じてスマートグラスのラインアップを広げており、こうした基盤技術の積み重ねが、より高機能な次世代モデルへの布石になっていくと考えられる。エンジニアリング情報の公開は、同領域における技術的な課題と方向性を理解するうえでの手がかりにもなりそうだ。",
@@ -11956,7 +11956,39 @@
       "bodyJa": "長文脈を扱う大規模言語モデルの推論では、アテンション計算のコストが系列長の二乗で増大することが大きな障壁となっている。arXivで公開された論文「LiteTopK」は、この課題に対し、スパースアテンションの中核処理であるインデクサーとTopK選択を単一のGPUカーネルに融合し、長文脈推論のオーバーヘッドを大幅に削減する手法を提案している。\n\nスパースアテンションは、すべてのトークン間で注意を計算するのではなく、関連性の高い一部のキーだけを選んで計算する近似手法である。一般的な実装では、まずインデクサーが各キーの関連度スコアを算出し、その後に上位k個を選ぶTopK処理を行う。この二段階はそれぞれ別のカーネルとして実行されることが多く、中間結果をメモリに書き出す往復がボトルネックになりやすい。\n\nLiteTopKの特徴は、高次元空間における「距離の集中」現象を逆手に取る点にある。次元が高くなるほど点同士の距離が平均値付近に集中するという、いわゆる次元の呪いは通常は近傍探索の妨げとされるが、本手法ではこの性質を利用して選択処理を効率化し、インデクサーとTopKを一体化した融合カーネルとして実装したと説明されている。中間データのメモリ書き込みを省くことで、帯域幅の消費と遅延を抑えられる可能性がある。\n\n背景には、FlashAttentionが処理を融合してメモリ往復を減らした発想と共通するものがある。近年はDeepSeekのNative Sparse Attention(NSA)やMoBAなど、学習・推論の双方でスパース化を前提とする研究が相次いでおり、100万トークン級の文脈を掲げるGeminiやClaudeといった商用モデルの登場もあって、長文脈の効率化は主要な研究テーマとなっている。\n\nもっとも、近似を伴う選択が精度に与える影響や、モデルやタスクによる有効性の差は慎重な検証が必要と見られる。GPUカーネルレベルの最適化は特定のハードウェア構成に依存しやすい面もあり、実運用での効果は環境によって変わる可能性がある。それでもLiteTopKは、アルゴリズムとハードウェア実装の双方から長文脈推論の効率を高める試みとして注目される。",
       "bodyEn": "Long-context language models have become a central focus of machine learning research, yet the computational cost of attention grows quadratically with sequence length, making inference over tens or hundreds of thousands of tokens expensive. A new paper titled LiteTopK proposes a GPU kernel design for sparse attention that targets one of the practical bottlenecks in this setting: the overhead of deciding which past tokens each query should attend to.\n\nSparse attention is one of the leading strategies for reducing long-context costs. Rather than computing attention over every previous token, these methods estimate which keys are most relevant to a given query and restrict the expensive attention computation to a small subset. This generally involves two stages. First, an indexer produces cheap relevance scores between a query and candidate keys, often using compressed representations, block-level summaries, or clustering. Second, a TopK selection picks the highest-scoring candidates, and only those are forwarded to the full attention kernel. In many implementations, the indexer and the TopK step run as separate operations, which means intermediate scores must be written to and read back from GPU memory.\n\nLiteTopK's central contribution, according to the summary, is fusing the indexer and the TopK selection into a single GPU kernel. Kernel fusion is a well-established optimization: FlashAttention popularized it for exact attention by keeping intermediate results in fast on-chip memory rather than materializing large matrices in slower high-bandwidth memory. LiteTopK appears to apply a similar philosophy to the selection phase of sparse attention, cutting the memory traffic and kernel-launch overhead that accumulate when the two stages execute independently. Because token selection happens repeatedly during autoregressive decoding, even modest per-step savings can compound across a long generation.\n\nThe most distinctive element of the work is how it treats the so-called curse of dimensionality. In high-dimensional spaces, a well-documented statistical phenomenon causes pairwise distances between points to concentrate, so the gap between the nearest and farthest candidate shrinks in relative terms as dimensionality grows. This is usually cited as an obstacle for nearest-neighbor search, since it makes close points harder to distinguish from distant ones. LiteTopK instead reframes the property as an asset, apparently using the predictable statistical structure of high-dimensional score distributions to make the TopK step cheaper or more approximate without materially changing which tokens are ultimately selected. If that holds across settings, it suggests the selection can rely on the regularity of the distribution rather than exhaustively comparing every score.\n\nThe work sits within a fast-moving line of research on efficient long-context inference. Methods such as Native Sparse Attention, MoBA, Quest, and H2O each propose different ways to prune or prioritize the key-value cache, and several major model developers have shipped sparse or hardware-aware attention variants in production systems. A recurring theme is that the KV cache, not raw compute, is often the binding constraint at long sequence lengths, because it grows linearly with context and must be streamed from memory at every decoding step. Techniques that reduce how much of that cache is touched per token directly ease memory-bandwidth pressure, which is frequently the limiting factor on modern accelerators.\n\nFor practitioners, the significance of a fused indexer-and-TopK kernel is largely about closing the gap between theoretical and realized speedups. Sparse attention promises to reduce the number of key comparisons, but if the selection machinery itself introduces overhead through extra memory round-trips or poor GPU occupancy, real-world gains can fall short of the analysis on paper. Consolidating the pipeline into one kernel is a direct attempt to reduce that overhead.\n\nAs with many systems-oriented papers, the practical value will depend on details that a summary cannot convey: the accuracy trade-offs of the approximation, how well the approach generalizes across model sizes and context lengths, hardware assumptions, and whether the reported efficiency gains hold on standard long-context benchmarks. Readers evaluating the method would be wise to examine those measurements directly. Still, the underlying idea, turning a statistical property usually viewed as a liability into a lever for efficiency, is a notable framing for the ongoing effort to make long-context inference more affordable.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T16:59:22.588Z"
+      "generatedAt": "2026-08-30T16:59:22.588Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Indexer-TopKって何をする操作なの？ 今のGPUのやり方だと、どこが困っているのかな？",
+          "en": "What does Indexer-TopK actually do? And where does the current GPU approach struggle?"
+        },
+        {
+          "s": "b",
+          "ja": "スコアを計算して、上位k個の候補を選ぶ操作だよ。DSAのような既存カーネルは、メモリ通信が多く、同期も重く、メモリ負担も大きいと書かれているよ。",
+          "en": "It computes scores, then picks the top-k candidates. The article says existing kernels like DSA suffer from heavy memory traffic, costly synchronization, and large memory overhead."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあLiteTopKは、その重たい部分を軽くする話なのかな？ 誰が助かるんだろう？",
+          "en": "So LiteTopK is about lightening that heavy part? Who would it help?"
+        },
+        {
+          "s": "b",
+          "ja": "この操作は、大規模言語モデルのスパースアテンションや、推薦システム、ベクトルデータベースの検索でも使われているよ。だから幅広い場面に関係しそうだね。",
+          "en": "The operation is used in sparse attention for large language models, and in recommendation systems and vector databases. So it could matter in quite a few places."
+        },
+        {
+          "s": "a",
+          "ja": "高次元で距離が似た値に集まる性質を使って、インデクサーとTopKを一つのカーネルにまとめるんだね。",
+          "en": "So it uses the way distances bunch together in high dimensions, and merges the indexer and TopK into one kernel. Got it?"
+        },
+        {
+          "s": "b",
+          "ja": "そう、その方向だね。ただ、実際にどれだけ速くなるかの数字は、ここで見た範囲では示されていないから、そこは分からないよ。",
+          "en": "Yes, that's the idea. But the article doesn't give actual speedup numbers here, so how much faster it gets is still unclear."
+        }
+      ]
     },
     "c2ee10845ae32c8d": {
       "bodyJa": "マルチモーダル大規模言語モデル（MLLM）を、データを外部に持ち出さずに各利用者へ最適化する——そんな課題に取り組む研究「PFAdapter」がプレプリントサーバーarXivで公開された。連合学習とLoRAを組み合わせ、プライバシーを守りながらクライアントごとの個人化を実現する枠組みを提案している。\n\n前提として、連合学習（Federated Learning）は、スマートフォンや病院、企業などに分散したデータを一箇所に集めず、各端末で学習した結果だけを共有してモデルを更新する手法だ。生データを外に出さないため、医療や金融といったプライバシー要件の厳しい分野で注目されてきた。一方でLoRA（Low-Rank Adaptation）は、巨大なモデル本体を凍結したまま、低ランクの小さな行列だけを追加学習することで、少ない計算量とメモリで微調整を可能にする手法として広く普及している。\n\nPFAdapterの中核にあるのは「階層的LoRA分解」と呼ばれる仕組みだ。論文によれば、LoRAのパラメータを複数の階層に分け、全クライアントで共有する汎用的な成分と、各クライアント固有の個人化成分とを切り分けることで、共通知識を活用しつつ手元のデータに合わせた適応を両立させる狙いがあると見られる。連合学習では、各クライアントが持つデータの分布が大きく異なる「データの異質性（heterogeneity）」が精度低下の要因となりやすいが、この分解によってその影響を緩和できる可能性がある。\n\n背景には、テキストだけでなく画像や音声などを扱うMLLMの急速な普及がある。GPT-4oやGemini、オープンモデルのLLaVA系など、マルチモーダル対応は業界全体の潮流だが、こうした大規模モデルを個々の利用環境に合わせて調整するにはコストとプライバシーの壁が立ちはだかる。パラメータ効率の高いLoRAと連合学習を掛け合わせるアプローチは、その解の一つとして期待される領域だ。\n\nただし、本稿は査読前のプレプリントであり、報告された有効性が多様な実環境でどこまで再現されるかは今後の検証を待つ必要がある。通信コストや悪意あるクライアントへの耐性など、連合学習特有の課題との兼ね合いも含め、実用化に向けた議論が続くとみられる。",
@@ -12082,7 +12114,39 @@
       "bodyJa": "セキュリティ調査の現場で、AIエージェントを活用して脅威ハンティングを効率化する手法が注目を集めている。今回取り上げる記事は、Anthropicのデスクトップアプリ「Claude Desktop」をMCP（Model Context Protocol）経由でClickHouse、Shodan、Anomaliと連携させ、自然言語による調査を実現する方法を解説したものだ。\n\nMCPは、Anthropicが2024年に公開したオープンな標準規格で、大規模言語モデルと外部のデータソースやツールを標準化された方式で接続するための仕組みである。従来はサービスごとに個別の連携コードを書く必要があったが、MCPサーバーを介することで、AIが共通のインターフェースを通じて各種ツールへアクセスできるようになる。\n\n今回連携させる3つのツールはそれぞれ役割が異なる。ClickHouseは大量のログを高速に集計できるカラム指向のデータベースで、通信記録やイベントログの分析に向く。Shodanはインターネットに接続された機器を検索できるサービスで、公開されたポートや脆弱なホストの調査に使われる。Anomaliは脅威インテリジェンスのプラットフォームで、既知の攻撃者情報やインジケーター（IoC）を提供する。これらをClaudeが横断的に扱うことで、調査者は複雑なクエリを手書きせずとも、自然言語で問いかけながら分析を進められるという。\n\nこうしたアプローチの利点は、専門ツールの操作に不慣れな担当者でも調査に参加しやすくなる点にある。一方で、AIが生成するクエリや解釈の妥当性は人間が検証する必要があり、機微な情報を外部モデルへ送る際のデータ管理にも配慮が求められると見られる。\n\nMCP対応のサーバーはセキュリティ分野に限らず急速に増えており、GitHubやSlack、各種データベース向けの実装が公開されている。OpenAIなど他社もツール連携の枠組みを整備しており、AIエージェントを業務システムに組み込む動きは今後さらに広がる可能性がある。今回の記事は、その具体的な適用例として参考になるだろう。",
       "bodyEn": "A recent walkthrough from the zenn-mcp blog shows how Claude Desktop can be wired to three security-focused data sources — ClickHouse, Shodan, and Anomali — through the Model Context Protocol (MCP), enabling analysts to conduct threat hunting using natural language rather than hand-written queries across multiple consoles. The demonstration matters because it illustrates a practical, reproducible pattern for turning a general-purpose AI assistant into an orchestrator that pulls together telemetry, external reconnaissance data, and curated threat intelligence in a single conversational workflow.\n\nThe Model Context Protocol is an open standard introduced by Anthropic to give language models a consistent way to reach external tools, data stores, and services. Rather than building bespoke integrations for every application, developers run small MCP servers that expose a defined set of resources and callable functions. Claude Desktop acts as the MCP client, discovering the available servers and their capabilities, then invoking them as needed while the model reasons about a task. This decoupling means the same assistant can talk to a database, a web API, and an intelligence platform without the user manually switching contexts or writing integration code.\n\nIn this setup, each of the three back-ends fills a distinct role. ClickHouse is a column-oriented analytical database widely used for storing high-volume log and event data, which makes it a natural home for security telemetry such as network flows, DNS records, or endpoint events. An MCP server for ClickHouse typically lets the model translate a plain-language request into SQL, execute it, and return summarized results, so an analyst can ask something like which internal hosts contacted a suspicious address without composing the query by hand. Shodan, by contrast, is a search engine that indexes internet-connected devices and their exposed services, useful for enriching an investigation with details about open ports, banners, or the external attack surface associated with an IP address or domain. Anomali provides threat intelligence, allowing indicators of compromise to be checked against known malicious infrastructure and campaign data.\n\nThe value of combining these sources through one interface is that threat hunting often requires pivoting between internal and external context. An investigation might start with an anomalous connection observed in ClickHouse, move to Shodan to understand what the remote host is running, and then consult Anomali to determine whether that indicator has been previously reported. Doing this manually involves multiple tools, credentials, and query languages. With MCP, the assistant can chain these steps, using the output of one lookup to inform the next, while the analyst supervises and refines the direction in conversation. The article positions this as a way to streamline routine correlation work rather than a fully autonomous system.\n\nSetting up such a pipeline generally requires installing and configuring the relevant MCP servers, supplying API keys or database credentials, and registering each server in Claude Desktop's configuration file so the client can launch and communicate with them. Because these servers can execute queries and reach external services on the user's behalf, access scope and credential handling deserve attention; granting broad database permissions or storing API keys in plaintext configuration carries real risk. Users should also remember that model-generated queries and interpretations can contain errors, so results appear best treated as leads to verify rather than definitive conclusions, particularly in a security setting where false positives and negatives both have consequences.\n\nThis example sits within a broader industry trend of connecting AI agents to operational tooling. Since MCP's release, an ecosystem of community and vendor-built servers has grown quickly, covering databases, developer platforms, cloud services, and observability tools, and other AI providers have signaled interest in interoperable tool-calling standards. In security specifically, vendors are experimenting with assistants layered over SIEM and SOAR platforms, and the ClickHouse-Shodan-Anomali combination reflects the same idea assembled from open components. Anyone reproducing the workflow will still need valid subscriptions for Shodan and Anomali and a populated ClickHouse instance, since the assistant only adds a reasoning and orchestration layer on top of data that must already exist.\n\nOverall, the piece serves as a hands-on reference for practitioners curious about applying MCP to defensive security. It does not claim to replace experienced analysts, but it demonstrates how natural-language orchestration can reduce the friction of switching between tools during an investigation. As MCP tooling matures, similar patterns are likely to appear across more of the security stack, making careful evaluation of accuracy, permissions, and auditability increasingly important.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T17:04:20.249Z"
+      "generatedAt": "2026-08-30T17:04:20.249Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ClickHouseとShodanとAnomaliを、Claude Desktopひとつにつなぐんだね。これって大きいこと？",
+          "en": "So Claude Desktop can connect to ClickHouse, Shodan, and Anomali all at once? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、MCPでつないで自然言語のまま脅威ハンティングを進めています。ツールを行き来せずに済むなら、調査が楽になるかもね。",
+          "en": "The article runs threat hunting in plain language through MCP. If it means less jumping between tools, investigations might get easier, maybe."
+        },
+        {
+          "s": "a",
+          "ja": "MCPって何？ツール同士をつなぐ橋みたいなもの？",
+          "en": "What's MCP? Like a bridge between tools?"
+        },
+        {
+          "s": "b",
+          "ja": "AIアプリと外部ツールをつなぐ共通の仕組み、くらいの意味だよ。記事ではShodan用のMCP Serverをローカルでビルドして、設定ファイルに追加しているね。",
+          "en": "Roughly, a shared way for an AI app to connect to outside tools. Here, the Shodan MCP Server is built locally and added to a config file."
+        },
+        {
+          "s": "a",
+          "ja": "もし自分が使うなら、「うちの環境に怪しいインフラが触れた証拠ある？」って聞く感じかな？",
+          "en": "If I used it, I'd ask something like, \"Is there any sign suspicious infrastructure touched our environment?\" Is that the idea?"
+        },
+        {
+          "s": "b",
+          "ja": "記事の設問も近い形だよ。ただShodanとAnomaliの有償契約や、Docker・Node・uvなどの導入が前提になっているよ。",
+          "en": "The article's own question is similar. But it assumes paid Shodan and Anomali licenses, plus Docker, Node, and uv already installed."
+        }
+      ]
     },
     "feaaa5dfdab719cc": {
       "bodyJa": "Metaでインスタグラムなどを統括するアダム・モセリ氏が、社内エンジニアごとにAI利用のトークン消費量へ上限を設ける案を検討していると示唆した。生成AIを開発現場に取り入れる企業が増えるなか、その利用コストをいかに統制するかが大規模導入の共通課題になりつつあることを映す発言だ。\n\n背景には、AIコーディング支援ツールの急速な普及がある。大規模言語モデル(LLM)は、入力と出力の文章を「トークン」と呼ぶ単位に分解して処理し、その消費量に応じて計算資源や利用料金が発生する。近年はGitHub CopilotやCursor、Claude Codeのように、コードの生成や修正、テストまでを自律的にこなす「エージェント型」のツールが登場した。こうしたツールは高性能モデルを繰り返し呼び出すため、従来の補完機能に比べてトークン消費が桁違いに膨らみやすいとされる。\n\nエンジニア単位で上限(予算)を割り当てる手法は、クラウド利用料の管理などで用いられてきた発想に近い。誰がどれだけ消費しているかを可視化し、無制限な利用を抑えることで、全社的なコストの予見性を高める狙いがあると見られる。一方で、上限が厳しすぎれば生産性向上の妨げになりかねず、開発効率とコスト抑制のバランスをどう取るかが論点になりそうだ。\n\n同様の課題は他社でも顕在化している。AnthropicやOpenAIは、企業向けに利用状況を追跡する管理機能や、用途に応じて安価な軽量モデルと高性能モデルを使い分ける選択肢を提供している。社内では、キャッシュの活用やモデルの使い分け、不要な呼び出しの削減といった最適化も進みつつあるとみられる。AIの利用料は初期には見えにくいが、全社的に広がると無視できない固定費になり得るためだ。\n\nMetaはこれまで、自社の大規模言語モデル「Llama」を公開するなど生成AIへ積極的に投資してきた企業でもある。今回のモセリ氏の発言は、あくまで検討段階の考えを示したものとされ、具体的な制度設計や導入時期が固まったかは明らかでない。ただ、AIの活用が当たり前になるほど、その「使い過ぎ」をどう管理するかという新たなガバナンスの問題が、企業にとって現実的な経営課題として浮上していることを示す一例といえる。",
@@ -13770,88 +13834,6 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T07:40:20.814Z"
     },
-    "9fcf2d5751e209ad": {
-      "bodyJa": "## ChatGPT Workとは\n\nOpenAIはChatGPTを、単なる質問応答ツールから、複雑で大規模な仕事を共同で進められるパートナーへと位置づけ直した。プロフェッショナルな業務での活用範囲が広がるとされる。\n\nこの文脈で紹介されているのが「ChatGPT Work」だ。\n\n## アプリやファイルをまたぐ動き\n\nChatGPT Workは、ユーザーのアプリやファイルをまたいで行動できるエージェントと説明されている。必要であれば数時間にわたってプロジェクトに付き添い、与えられた目標を完成した成果物へ仕上げることを担う。\n\n質問に答えるだけでなく、仕事そのものを前へ進める役割を担う点が特徴とされる。",
-      "bodyEn": "## ChatGPT Work as an agent\n\nOpenAI has repositioned ChatGPT from a simple question-answering tool into a collaborator for complex, high-stakes work. According to the announcement, this widens its role in professional settings and makes it a partner for ambitious projects.\n\n## Action across apps and files\n\nThe source describes ChatGPT Work as an agent that can take action across a user's apps and files. It can reportedly stay with a project for hours if needed, and its stated purpose is to turn a goal into finished work.\n\nThe announcement frames this as a shift beyond Q&A toward sustained, hands-on involvement in larger tasks.",
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T05:40:30.507Z"
-    },
-    "d4fcae9550ab0099": {
-      "bodyJa": "OpenAIはGPT-Liveを発表した。人とAIの自然なやり取りを目指した新世代の音声モデルで、現在はChatGPT Voiceを支えているという。\n\n## 新世代の音声モデル\n\nGPT-Liveは、リアルタイムで対話できるインタラクティブなAI体験を実現するものと位置づけられている。ユーザーはGPTモデルと、より自然でライブ感のある形でやり取りできるようになるとされる。\n\n## ChatGPT Voiceでの採用\n\nGPT-Liveは、ChatGPT Voiceを動かすモデルとして使われている。対話型AIをより身近なものにする上で重要な一歩になる、と説明されている。",
-      "bodyEn": "## GPT-Live announced\n\nOpenAI has introduced GPT-Live, described as a new generation of voice models built for natural human-AI interaction. The announcement says these models now power ChatGPT Voice, which matters because it changes how users talk with GPT.\n\n## Natural, real-time interaction\n\nAccording to the source, GPT-Live offers a real-time interactive AI experience. It is meant to let people engage with GPT models in a more natural, live way than before. The announcement frames this as a significant step for the accessibility of conversational AI.\n\nThe material does not give details on pricing, regional availability, supported platforms, or technical specifications.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "GPT-Liveって、何が新しいの？声のモデルって書いてあったよね。",
-          "en": "What's new with GPT-Live? It said something about voice models, right?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事だと、人とAIの自然なやりとりに向けた新世代の音声モデルだよ。ChatGPT Voiceを動かしているんだって。",
-          "en": "The post calls it a new generation of voice models for natural human-AI interaction. It's now powering ChatGPT Voice."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあChatGPT Voiceを使う人が、もっと自然に話せるようになるのかな？",
-          "en": "So people using ChatGPT Voice could talk to it more naturally?"
-        },
-        {
-          "s": "b",
-          "ja": "そう読めるね。リアルタイムでライブに近い対話ができる体験として紹介されているよ。",
-          "en": "That's how it reads. It's presented as a real-time, live-style conversation experience with GPT models."
-        },
-        {
-          "s": "a",
-          "ja": "GPT-Liveは、声でAIとリアルタイムに話すための新しいモデルで、ChatGPT Voiceに使われてるんだね。",
-          "en": "So GPT-Live is a new voice model for talking with AI in real time, and ChatGPT Voice uses it."
-        },
-        {
-          "s": "b",
-          "ja": "うん、その通り。どこまで自然になったかは、実際に試して確かめたいところだね。",
-          "en": "Right. How natural it really feels is something you'd want to try for yourself."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T02:32:19.093Z"
-    },
-    "dc34ba0c581f0720": {
-      "bodyJa": "## MUFGとOpenAIの提携\n\n三菱UFJフィナンシャル・グループ(MUFG)がOpenAIと提携し、業務全体にAIを深く組み込む「AIネイティブな銀行」への転換を目指す。大手金融機関によるAI基盤の全社導入として注目されている。\n\n## ChatGPT Enterpriseの活用\n\nMUFGはChatGPT Enterpriseを用いて、AIネイティブな組織づくり、ワークフローの改善、AIを活用した新たな金融サービスの大規模な提供を進めるとされる。\n\nAIを一部の業務に限らず組織全体に組み込む取り組みであり、グローバルな金融機関がAI主導の業務運営に踏み出す動きと位置づけられている。",
-      "bodyEn": "## MUFG's AI-native ambition\n\nMUFG, the Mitsubishi UFJ Financial Group, has partnered with OpenAI to pursue a transformation into an AI-native bank. The announcement presents the move as a major commitment by a global financial institution to AI-driven operations.\n\n## ChatGPT Enterprise at scale\n\nAccording to the source, MUFG uses ChatGPT Enterprise to build an AI-native organization, improve workflows, and deliver new AI-powered financial services at scale. The stated aim is to embed AI across the entire organization rather than limit it to isolated tasks. The source describes this as a company-wide rollout of an AI platform at a major financial institution.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "全社でAIを入れるって、これって大きいことなの？",
-          "en": "They're bringing AI into the whole company? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、MUFGがChatGPT Enterpriseで組織全体をAIネイティブにしていく方針が示されているよ。一部の部署だけでなく全体、という点が大きいね。",
-          "en": "The article says MUFG is using ChatGPT Enterprise to make its whole organization AI-native. Going company-wide, not just one team, is what makes it notable."
-        },
-        {
-          "s": "a",
-          "ja": "AIネイティブって、どういう意味なの？",
-          "en": "What does \"AI-native\" actually mean?"
-        },
-        {
-          "s": "b",
-          "ja": "記事に細かい定義はないけど、一般的には最初からAIを前提に仕事や組織を作る、くらいの意味だよ。",
-          "en": "The article doesn't define it, but generally it means building work and organizations with AI as the starting point."
-        },
-        {
-          "s": "a",
-          "ja": "もし私が行員なら、毎日の仕事の流れをラクにするのに使いたいな。",
-          "en": "If I worked at the bank, I'd want to use it to make my daily workflow easier."
-        },
-        {
-          "s": "b",
-          "ja": "記事でも業務改善と、新しいAI金融サービスを大規模に届けることが狙いとされているよ。使い方の詳細は、続報を待ちたいね。",
-          "en": "The article does name workflow improvement and delivering new AI-powered financial services at scale as goals. For specifics on how it's used, we'd want to wait for more details."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T02:32:32.241Z"
-    },
     "c6d7d327b3177bde": {
       "bodyJa": "Visual Studio Code 1.143では、Copilot SDKを土台にしたCopilot harnessが新規セッションの既定になりました。従来のLocal harnessは非推奨となり、2027年2月に削除される予定です。\n\n## 新規セッションの既定\n\n今回のリリースで、新しいセッションはCopilot harnessで始まります。Copilot harnessはCopilot SDKの上に構築されており、エディターとAgentsウィンドウを切り替えながら使えるとされています。\n\nリリースノートの冒頭では、Microsoft IgniteでのVS Codeのセッション録画も紹介されています。\n\n## 2027年2月に廃止\n\nLocal harnessは非推奨となり、2027年2月に削除される予定です。リリースノートはCopilot harnessへの移行について解説するページへの案内を掲げ、利用者に移行を促しています。現在Local harnessを使っている場合は、削除時期までに移行を済ませておく必要があります。\n\n## モデルを比較する\n\n新機能のひとつが、プレビュー版として提供される「Compare models」です。Agentsウィンドウで同じタスクを複数のモデルに実行させ、それぞれの解決策を比較したうえで組み合わせられると説明されています。\n\nこのほか1.143では、ストレージを回収するツール、モデルをローカルで実行する機能、ファイル変更をたどるためのナビゲーションも加わりました。それぞれの詳しい動作は、本文では個別に説明されていません。\n\n## 1.143.1の更新\n\n1.143には更新版の1.143.1も公開されており、いくつかの問題に対処しています。すでにインストール済みの場合は、VS Codeの「Check for Updates」で更新できます。今後登場する機能を先に試したい場合は、Insidersビルドを利用する方法が案内されています。",
       "bodyEn": "## Copilot harness by default\n\nVisual Studio Code 1.143 changes how new Copilot sessions start, and it sets a removal date for the older approach. According to the release notes, the Copilot harness is now the default for new sessions. It is built on the Copilot SDK and lets users switch between the editor and the Agents window.\n\n## Local harness deprecation\n\nThe notes carry a warning that the Local harness is deprecated and will be removed in February 2027. They point readers to information about moving to the Copilot harness. Anyone still relying on the Local harness has a stated deadline for making that move.\n\n## Compare models (Preview)\n\nOne new capability is labeled Preview. Compare models lets users run the same task with multiple models in the Agents window. They can then compare the resulting solutions and combine them. The release notes describe this as one of several tools added in this version.\n\n## What else the release adds\n\nThe summary of the release says it adds tools to compare models, reclaim storage, run models locally, and navigate file changes. The notes give the full description only for the Copilot harness default and for model comparison, so the other three items are named but not elaborated here.\n\nThe release also has a point update. Version 1.143.1 addresses a set of issues, which the notes link to separately. For users who already have VS Code installed, the notes say to use Check for Updates. Those who want to try upcoming features can use the Insiders build. The notes list download formats including .deb, .rpm, .tar.gz, Arm instructions, and Snap.\n\nThe notes also mention session recordings from Microsoft Ignite, which readers can watch for VS Code sessions.",
@@ -14047,44 +14029,6 @@
       ],
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T09:37:51.205Z"
-    },
-    "af58193a4eeed442": {
-      "bodyJa": "## 未解決症例で18件の新診断\n\n研究者らがOpenAIの推論モデルを使い、希少疾患の診断を支援した。これまで診断がつかなかった症例のなかから、18件の新たな診断が特定されたという。\n\n## 小児の希少遺伝性疾患への支援\n\nOpenAIは、医師が小児の希少遺伝性疾患を診断する際にAIが支援する取り組みを発表した。診断が難しい疾患を早期に見つけることにつながり、患者の予後の改善が期待されると説明されている。\n\nここで示されているのは、AIが医師による診断を支援する位置づけであるという点と、未解決だった症例で新たな診断が得られたという成果である。",
-      "bodyEn": "## AI to assist rare disease diagnosis\n\nOpenAI has announced an initiative in which AI supports physicians in diagnosing rare genetic diseases in children. Such conditions are hard to identify, so the work is aimed at earlier detection and, potentially, better outcomes for patients.\n\n## 18 new diagnoses identified\n\nAccording to the source, researchers used an OpenAI reasoning model to help diagnose rare diseases. The model helped identify 18 new diagnoses in cases that had previously gone unsolved.\n\nThe announcement frames the AI as a tool that assists doctors rather than replacing them. The benefits it describes, earlier detection and improved prognosis, are stated as expectations rather than established results.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "なかなか原因が分からない子どもの病気って、このAIで何が変わるの？",
-          "en": "For kids whose illness nobody can pin down, what actually changes with this AI?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事だと、医師が小児の希少遺伝性疾患を診断するのをAIが支援するんだ。診断が難しい病気を早く見つけられるかも、という期待が書かれているよ。",
-          "en": "The article describes AI supporting physicians in diagnosing rare genetic diseases in children. The hope is earlier detection of conditions that are hard to identify."
-        },
-        {
-          "s": "a",
-          "ja": "前は、そういう解けなかった症例は診断できなかったの？",
-          "en": "So before this, those unsolved cases just couldn't be diagnosed?"
-        },
-        {
-          "s": "b",
-          "ja": "本文では、以前は未解決だった症例で18件の新しい診断が見つかったとあるよ。従来の方法との細かい比較は、この記事だけでは分からないな。",
-          "en": "The text says 18 new diagnoses turned up in cases that were previously unsolved. How it compares with older methods in detail isn't something the article tells us."
-        },
-        {
-          "s": "a",
-          "ja": "医師を支えるAIが、未解決だった症例に18件の答えを出した。そこが一番の収穫だね！",
-          "en": "So AI backing up doctors found 18 answers in unsolved cases. That feels like the big win!"
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。あとは早期発見や患者さんの予後改善が実際にどこまで進むかが気になるところ。記事では「期待」として書かれているよ。",
-          "en": "Right. Next, watch how far earlier detection and better patient outcomes actually go. The article frames those as hopes for now."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T09:38:33.899Z"
     },
     "8f5e74f6b09e75e3": {
       "bodyJa": "AWSはAmazon Bedrock AgentCoreに、フルマネージドのツール「Web Search」を追加した。エージェントが現在のウェブ上の情報を引用付きで参照し、回答の根拠にできるようになる。\n\n## フルマネージドのWeb Search\n\nWeb Searchは、エージェントの回答を最新かつ出典付きのウェブ知識に基づかせるためのツールだ。ウェブ検索の機能を開発者が手作業で組み込む必要がなく、エージェント本体の構築に集中できると説明されている。\n\n最新の情報を引用付きで取得できるため、ハルシネーションの低減にもつながるとされる。\n\n## 環境外へ出ないデータ\n\nこのツールでは、顧客が保護しているAWS環境からのデータ流出(データエグレス)がゼロだと説明されている。データがAWS環境の外へ送られないため、コンプライアンスを重視する企業にとって利点になるとされる。",
@@ -14560,82 +14504,6 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T12:38:07.612Z"
     },
-    "3331a55ea23268f9": {
-      "bodyJa": "## 大規模コアダンプ解析\n\nOpenAIのエンジニアは、データインフラで起きる稀なクラッシュを調べるため、大規模なコアダンプ解析を用いた。この取り組みは「コアダンプの疫学」と題して紹介されている。\n\nその結果、ハードウェア障害と、長年潜んでいたソフトウェアのバグの両方が見つかったと説明されている。\n\n## 18年来のバグの修正\n\n特定されたのは、データインフラに潜んでいた18年前のバグである。エンジニアはこれを修正し、長年のシステム不安定性の根本原因を解消したとされる。\n\n個々のクラッシュを単発で追うのではなく、多数のコアダンプをまとめて分析する手法が、この原因の特定につながったとされている。",
-      "bodyEn": "## Core dump epidemiology\n\nOpenAI engineers used large-scale core dump analysis to debug rare crashes in their infrastructure. The work matters because it addressed a long-standing source of instability in the company's data systems.\n\nAccording to the source, the approach is described as core dump epidemiology. Rather than examining crashes one at a time, the engineers applied analysis techniques across core dumps at scale to investigate failures that occur only rarely.\n\n## An 18-year-old bug\n\nThe analysis uncovered two separate causes: a hardware fault and a long-standing software bug. The OpenAI blog post says engineers traced the software bug, which is 18 years old, in their data infrastructure and fixed it. According to the source, the fix removed a persistent source of system instability.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「コアダンプの疫学」って、病気の話じゃないよね？実際には何をしたのかな。",
-          "en": "\"Core dump epidemiology\" isn't about illness, right? What did they actually do?"
-        },
-        {
-          "s": "b",
-          "ja": "コアダンプは、クラッシュ時の状態の記録のことです。この記事では、それを大規模に解析して、まれなインフラのクラッシュを調べています。",
-          "en": "A core dump is a record of a system's state when it crashes. Here, the engineers analyzed them at large scale to debug rare infrastructure crashes."
-        },
-        {
-          "s": "a",
-          "ja": "たくさんのコアダンプをまとめて見る方法なんだね。それで、どんな成果があったの？",
-          "en": "So they looked at lots of core dumps together. What did that turn up?"
-        },
-        {
-          "s": "b",
-          "ja": "ハードウェアの故障と、長年残っていたソフトウェアのバグの両方が見つかったそうです。18年前のバグも修正され、不安定さの原因が解消されたと書かれています。",
-          "en": "They found both a hardware fault and a long-standing software bug. The 18-year-old bug was fixed, which removed a long-running source of instability."
-        },
-        {
-          "s": "a",
-          "ja": "まれなクラッシュも、大量のコアダンプから調べると、ハードの故障と古いバグが見えてきたんだね。",
-          "en": "So even rare crashes can be traced by studying lots of core dumps, and that revealed a hardware fault and an old bug."
-        },
-        {
-          "s": "b",
-          "ja": "そうですね。ただ原因はハードとソフトの両方だったので、どちらか一方だけの問題と決めつけないでくださいね。",
-          "en": "Right. Just don't assume it was only one or the other, since the causes included both hardware and software."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T12:38:35.732Z"
-    },
-    "7faf801be2706db2": {
-      "bodyJa": "## ゲノム分野のAI評価\n\nOpenAIは、ゲノム・生命科学分野でAIの性能を測るベンチマークスイート「GeneBench-Pro」を公開した。研究者はAIモデルの遺伝子解析能力を、標準的な指標で比較できるようになるとされる。\n\n## 複雑な実世界データ\n\nGeneBench-Proは、ゲノミクス、生物学、科学研究におけるAIの性能を、複雑な実世界のデータセットを用いて検証するものと説明されている。ゲノムや生物学的推論に関するタスクでAIモデルを評価し、遺伝子解析分野での進捗を標準的な方法で測れるようにする。",
-      "bodyEn": "## GeneBench-Pro Introduced\n\nOpenAI has launched GeneBench-Pro, a benchmark suite for evaluating how AI models perform in genomics, biology, and scientific research. It matters because it gives researchers a standardized way to measure progress in AI-driven gene analysis.\n\n## Complex, Real-World Datasets\n\nAccording to the announcement, the benchmark tests AI performance using complex, real-world datasets. The key points describe it as designed to evaluate AI models on genomics and biological reasoning tasks.\n\nThe stated aim is to let researchers compare the gene analysis capabilities of different AI models using common metrics rather than ad hoc measures. The source was published on the OpenAI blog on June 30, 2026.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "ベンチマークって、ここではAIの何を測るものなの？",
-          "en": "What does this benchmark actually measure about AI?"
-        },
-        {
-          "s": "b",
-          "ja": "ゲノムや生物学、科学研究のタスクでAIモデルの力を測る評価セットだよ。複雑な実世界のデータを使うところがポイントだね。",
-          "en": "It's a set of tests for AI models on genomics, biology, and scientific research tasks. The key point is that it uses complex, real-world datasets."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ研究者は、いろんなAIモデルを同じ物差しで比べられるってこと？",
-          "en": "So researchers can compare different AI models using the same yardstick?"
-        },
-        {
-          "s": "b",
-          "ja": "そう、標準的な指標で遺伝子解析AIの進み具合を測れるようになる、という位置づけだよ。比べる共通の基準ができるのが大きいね。",
-          "en": "Right. It gives a standardized way to measure progress in AI-driven gene analysis, so there's a common basis for comparison."
-        },
-        {
-          "s": "a",
-          "ja": "まとめると、ゲノム分野のAIを複雑な実データで共通の基準から測れるようになるんだね。",
-          "en": "So, in short: genomics AI can now be measured against a shared standard, using complex real-world data."
-        },
-        {
-          "s": "b",
-          "ja": "うん。ただ、これは測るための道具だから、実際の研究でどこまで役立つかは別に確かめる必要があるかもね。",
-          "en": "Yes. But it's a measuring tool, so how useful AI is in real research may still need to be checked separately."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T12:38:50.558Z"
-    },
     "45bc86074ef10c7d": {
       "bodyJa": "DiScoFormerは、データ点の集まりから元の分布を復元するという課題に対し、確率密度とスコアという2つの量を単一のTransformerで同時に推定する手法です。複数の分布にまたがって汎化できる点が注目されています。\n\n## 分布を復元するという課題\n\n機械学習や科学の多くの問題は、手元にあるデータ点から、それがどんな分布に由来するのかを知る作業に行き着きます。つまり、どの値がよく現れ、どの値が稀なのかを突き止めることです。\n\n分布を特定するには、密度とスコアの2つを推定する必要があります。次元が高くなるほど、このうちスコアのほうが有用になるとされています。\n\n## 密度とスコアの違い\n\n密度は、ヒストグラムをなめらかにしたものと考えられます。データ点が集まる場所では高く、少ない場所では低い値をとります。\n\nスコアは対数密度の勾配で、密度が最も急に上がる方向を指します。点をスコアに沿って動かすと、その点はより確率の高い領域へ向かいます。\n\n## 拡散モデルとスコア\n\nStable DiffusionやDALL-Eのような画像生成AIの基盤である拡散モデルは、スコアを利用しています。ランダムなノイズから出発し、スコアを繰り返したどることで、ノイズを現実的な画像へ変えていきます。スコアの推定は、生成モデルの中心的な要素でもあるわけです。\n\n## DiScoFormerの位置づけ\n\nDiScoFormerは、確率密度とスコア関数を共同で推定する統一的なTransformerとして提示されています。単一のモデルで複数の分布を扱えることから、機械学習における密度推定へのより汎用的で効率的なアプローチになると説明されています。\n\n詳細な内容は、技術レポート(arxiv.org/abs/2511.05924)で公開されています。",
       "bodyEn": "DiScoFormer is a transformer model that estimates both the density and the score of a data distribution. According to the announcement, one model handles both quantities and works across different distributions. A tech report is available on arXiv (2511.05924).\n\n## Recover the distribution\n\nMany problems in machine learning and the sciences share one task. You have a collection of data points and want to recover the distribution they came from, meaning which values are common and which are rare. The source says that pinning down a distribution means estimating two quantities: its density and its score. It describes the score as becoming more useful as dimensionality grows.\n\n## Density and score\n\nThe source explains density as the smooth version of a histogram. It is high where points cluster and low where they are scarce.\n\nThe score is the gradient of the log-density. It points in the direction in which the density rises fastest, so moving a point along the score sends it toward a more probable region.\n\nThe source ties the score to diffusion-based generative models, the technology behind AI image generators such as Stable Diffusion and DALL-E. These models start from random noise and repeatedly follow the score, turning that noise into a realistic image.\n\n## One transformer, many distributions\n\nThe title frames DiScoFormer as a single transformer for density and score \"across distributions.\" The key points describe it as a unified model that jointly estimates probability density and score functions across multiple distributions. They also say it shows generalization across those distributions.\n\nThe source characterizes this as a more general and efficient approach to density estimation in machine learning. That is the announcement's own assessment. The material here does not give benchmarks, architecture details, or training specifics, so readers who want those should consult the linked tech report.",
@@ -14711,6 +14579,246 @@
       ],
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T12:39:51.632Z"
+    },
+    "5d64d830c63fbcd8": {
+      "bodyJa": "## ChatGPT Workとは\n\nOpenAIはChatGPTを、単なる質問応答ツールから、複雑で大規模な仕事を共同で進められるパートナーへと位置づけ直した。プロフェッショナルな業務での活用範囲が広がるとされる。\n\nこの文脈で紹介されているのが「ChatGPT Work」だ。\n\n## アプリやファイルをまたぐ動き\n\nChatGPT Workは、ユーザーのアプリやファイルをまたいで行動できるエージェントと説明されている。必要であれば数時間にわたってプロジェクトに付き添い、与えられた目標を完成した成果物へ仕上げることを担う。\n\n質問に答えるだけでなく、仕事そのものを前へ進める役割を担う点が特徴とされる。",
+      "bodyEn": "## ChatGPT Work as an agent\n\nOpenAI has repositioned ChatGPT from a simple question-answering tool into a collaborator for complex, high-stakes work. According to the announcement, this widens its role in professional settings and makes it a partner for ambitious projects.\n\n## Action across apps and files\n\nThe source describes ChatGPT Work as an agent that can take action across a user's apps and files. It can reportedly stay with a project for hours if needed, and its stated purpose is to turn a goal into finished work.\n\nThe announcement frames this as a shift beyond Q&A toward sustained, hands-on involvement in larger tasks.",
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T05:40:30.507Z"
+    },
+    "882c58b2371644ca": {
+      "bodyJa": "OpenAIは新たな「OpenAI Signals」のデータをもとに、ChatGPTの普及が世界的に拡大している様子を示した。利用の広がりを具体的に追う内容とされる。\n\n## 世界で広がる利用\n\nデータでは、利用者が使う頻度を増やし、より多くの機能を試すようになっていると説明されている。成長は特定の地域に限らず、複数の地域や言語にまたがって進んでいるという。\n\n## 個人から機関まで\n\nOpenAIは、ChatGPTの採用が個人にとどまらず、企業や教育機関にも広がってきた経緯を振り返っている。活用シーンの幅も広がっており、世界規模での到達範囲の大きさが強調されている。",
+      "bodyEn": "## Adoption Is Growing Globally\n\nOpenAI has published new Signals data on how ChatGPT adoption is expanding worldwide. The release matters because it describes how people are actually using the product and how widely it has spread.\n\nAccording to the announcement, users are increasing their usage and exploring more of ChatGPT's capabilities. Growth is also being driven across regions and languages.\n\n## Individuals, Businesses, Institutions\n\nOpenAI's review frames this growth as spanning individuals, businesses, and institutions. It highlights an expanding range of use cases alongside the scale of ChatGPT's global reach.\n\nThe source presents these findings as a look back at how adoption broadened over time, rather than as a new product or feature.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ふだんの生活や仕事で、ChatGPTの使われ方って何が変わってきたの？",
+          "en": "In everyday life or work, what's actually changing in how people use ChatGPT?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、利用を増やしながらいろんな機能も試す人が増えているそうだよ。個人だけでなく、企業や教育機関にも広がっているとのこと。",
+          "en": "This piece says users are using it more and trying more capabilities. It also describes adoption spreading from individuals to businesses and educational institutions."
+        },
+        {
+          "s": "a",
+          "ja": "前は、使われる地域や言語も今ほど広くなかったの？",
+          "en": "Before this, was it not used across as many regions and languages?"
+        },
+        {
+          "s": "b",
+          "ja": "以前との比較は書かれていないから、そこは分からないな。記事で言えるのは、地域や言語をまたいで成長が進んでいる、というところまでだよ。",
+          "en": "The piece doesn't compare with earlier times, so I can't say. What it does say is that growth is happening across regions and languages."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ収穫は、人が増えただけじゃなくて、使い方もどんどん広がってることだね。",
+          "en": "So the takeaway is that it's not just more people. The ways they use it are widening too."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。次は、OpenAIのSignalsデータで、地域や言語ごとの伸びがどう示されていくかに注目したいな。",
+          "en": "Right. Next, I'd watch how OpenAI's Signals data shows growth across regions and languages."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T12:38:27.298Z"
+    },
+    "b0836e01c1557939": {
+      "bodyJa": "## 大規模コアダンプ解析\n\nOpenAIのエンジニアは、データインフラで起きる稀なクラッシュを調べるため、大規模なコアダンプ解析を用いた。この取り組みは「コアダンプの疫学」と題して紹介されている。\n\nその結果、ハードウェア障害と、長年潜んでいたソフトウェアのバグの両方が見つかったと説明されている。\n\n## 18年来のバグの修正\n\n特定されたのは、データインフラに潜んでいた18年前のバグである。エンジニアはこれを修正し、長年のシステム不安定性の根本原因を解消したとされる。\n\n個々のクラッシュを単発で追うのではなく、多数のコアダンプをまとめて分析する手法が、この原因の特定につながったとされている。",
+      "bodyEn": "## Core dump epidemiology\n\nOpenAI engineers used large-scale core dump analysis to debug rare crashes in their infrastructure. The work matters because it addressed a long-standing source of instability in the company's data systems.\n\nAccording to the source, the approach is described as core dump epidemiology. Rather than examining crashes one at a time, the engineers applied analysis techniques across core dumps at scale to investigate failures that occur only rarely.\n\n## An 18-year-old bug\n\nThe analysis uncovered two separate causes: a hardware fault and a long-standing software bug. The OpenAI blog post says engineers traced the software bug, which is 18 years old, in their data infrastructure and fixed it. According to the source, the fix removed a persistent source of system instability.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「コアダンプの疫学」って、病気の話じゃないよね？実際には何をしたのかな。",
+          "en": "\"Core dump epidemiology\" isn't about illness, right? What did they actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "コアダンプは、クラッシュ時の状態の記録のことです。この記事では、それを大規模に解析して、まれなインフラのクラッシュを調べています。",
+          "en": "A core dump is a record of a system's state when it crashes. Here, the engineers analyzed them at large scale to debug rare infrastructure crashes."
+        },
+        {
+          "s": "a",
+          "ja": "たくさんのコアダンプをまとめて見る方法なんだね。それで、どんな成果があったの？",
+          "en": "So they looked at lots of core dumps together. What did that turn up?"
+        },
+        {
+          "s": "b",
+          "ja": "ハードウェアの故障と、長年残っていたソフトウェアのバグの両方が見つかったそうです。18年前のバグも修正され、不安定さの原因が解消されたと書かれています。",
+          "en": "They found both a hardware fault and a long-standing software bug. The 18-year-old bug was fixed, which removed a long-running source of instability."
+        },
+        {
+          "s": "a",
+          "ja": "まれなクラッシュも、大量のコアダンプから調べると、ハードの故障と古いバグが見えてきたんだね。",
+          "en": "So even rare crashes can be traced by studying lots of core dumps, and that revealed a hardware fault and an old bug."
+        },
+        {
+          "s": "b",
+          "ja": "そうですね。ただ原因はハードとソフトの両方だったので、どちらか一方だけの問題と決めつけないでくださいね。",
+          "en": "Right. Just don't assume it was only one or the other, since the causes included both hardware and software."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T12:38:35.732Z"
+    },
+    "934c4ef63ae56e02": {
+      "bodyJa": "## ゲノム分野のAI評価\n\nOpenAIは、ゲノム・生命科学分野でAIの性能を測るベンチマークスイート「GeneBench-Pro」を公開した。研究者はAIモデルの遺伝子解析能力を、標準的な指標で比較できるようになるとされる。\n\n## 複雑な実世界データ\n\nGeneBench-Proは、ゲノミクス、生物学、科学研究におけるAIの性能を、複雑な実世界のデータセットを用いて検証するものと説明されている。ゲノムや生物学的推論に関するタスクでAIモデルを評価し、遺伝子解析分野での進捗を標準的な方法で測れるようにする。",
+      "bodyEn": "## GeneBench-Pro Introduced\n\nOpenAI has launched GeneBench-Pro, a benchmark suite for evaluating how AI models perform in genomics, biology, and scientific research. It matters because it gives researchers a standardized way to measure progress in AI-driven gene analysis.\n\n## Complex, Real-World Datasets\n\nAccording to the announcement, the benchmark tests AI performance using complex, real-world datasets. The key points describe it as designed to evaluate AI models on genomics and biological reasoning tasks.\n\nThe stated aim is to let researchers compare the gene analysis capabilities of different AI models using common metrics rather than ad hoc measures. The source was published on the OpenAI blog on June 30, 2026.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ベンチマークって、ここではAIの何を測るものなの？",
+          "en": "What does this benchmark actually measure about AI?"
+        },
+        {
+          "s": "b",
+          "ja": "ゲノムや生物学、科学研究のタスクでAIモデルの力を測る評価セットだよ。複雑な実世界のデータを使うところがポイントだね。",
+          "en": "It's a set of tests for AI models on genomics, biology, and scientific research tasks. The key point is that it uses complex, real-world datasets."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ研究者は、いろんなAIモデルを同じ物差しで比べられるってこと？",
+          "en": "So researchers can compare different AI models using the same yardstick?"
+        },
+        {
+          "s": "b",
+          "ja": "そう、標準的な指標で遺伝子解析AIの進み具合を測れるようになる、という位置づけだよ。比べる共通の基準ができるのが大きいね。",
+          "en": "Right. It gives a standardized way to measure progress in AI-driven gene analysis, so there's a common basis for comparison."
+        },
+        {
+          "s": "a",
+          "ja": "まとめると、ゲノム分野のAIを複雑な実データで共通の基準から測れるようになるんだね。",
+          "en": "So, in short: genomics AI can now be measured against a shared standard, using complex real-world data."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、これは測るための道具だから、実際の研究でどこまで役立つかは別に確かめる必要があるかもね。",
+          "en": "Yes. But it's a measuring tool, so how useful AI is in real research may still need to be checked separately."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T12:38:50.558Z"
+    },
+    "925f58ed988d18d1": {
+      "bodyJa": "Googleは、自律的なAIコーディングエージェント「Jules」を評価するため、従来の指標では捉えきれない部分に対応するベンチマーク手法を導入したと説明されている。エージェントが依頼を待つ存在から先回りして動く存在へ変わりつつあることが、この取り組みの前提にある。\n\n## 受け身から先回りへ\n\nAIコーディングエージェントは、プロンプトを受けてタスクを完了する反応的なアシスタントから、急速に変化しているとされる。文脈を継続的に取り込み、現れつつあるリスクを見つけ、開発者が尋ねる前に診断的な知見を示す能動的なエンジンへの移行である。\n\n## タスクではなくゴール\n\nこの変化の中心にあるのは、明確に定義されたタスクから「ゴール」への移行だ。ゴールを扱うエージェントは、コードベースを探索して何が関連するかを自ら見つけ出す必要がある。そのうえで、より高い水準の目的へ開発者を導くための診断的な観察を提示することが求められる。指示された作業を終えるだけでなく、何に注目すべきかを見極める働きが問われることになる。\n\n## SWE-Benchの射程\n\nSWE-Benchのような公開ベンチマークは、狭く定義されたバグの修正など、タスクを完了する能力を測るものだ。一方で、ゴールを対象にしたベンチマークは現時点で存在しない。探索や診断的な観察を伴う動きを評価するための公開の物差しは、まだ用意されていないということになる。\n\n## Julesの評価手法\n\nこの空白に対し、GoogleはJules向けに調整したベンチマーク手法を導入した。従来の指標ではエージェントレベルでのタスク完了を十分に捉えられないという課題に応えるものだ。これにより、開発者は実際のコーディングにおけるエージェントの性能を、より明確で行動に移しやすい形で把握できるようになるとされる。",
+      "bodyEn": "Google has published an article on how it measures what matters for Jules, its autonomous AI coding agent. The topic matters because, according to the source, the way coding agents work is changing in ways that existing evaluation approaches were not designed to capture.\n\n## From Reactive to Proactive\n\nThe source describes AI coding agents as rapidly shifting from reactive assistants, which complete tasks when prompted, to proactive engines. These engines continuously absorb context, spot emerging risks, and surface diagnostic insights before developers have to ask. In this framing, the agent no longer waits for an instruction but contributes observations on its own initiative.\n\n## From Tasks to Goals\n\nAt the center of this evolution, the source says, is a shift from well-defined tasks to goals. A goal requires the agent to explore the codebase, discover what is relevant, and surface diagnostic observations that help guide developers toward a higher-level objective. This differs from receiving a specific instruction and carrying it out, because the agent must work out for itself where to look and what deserves attention.\n\n## Public Benchmarks Fall Short\n\nThe source points to public benchmarks such as SWE-Bench, which test an agent's ability to complete tasks, for example fixing a narrowly defined bug. It states that no benchmarks currently exist for goals. That leaves a gap between what established measurements assess and the goal-oriented behavior described above.\n\nAccording to the announcement, Google is introducing tailored benchmarking approaches for Jules to address this gap. It says traditional metrics fail to capture agent-level task completion, and that the new approaches are meant to give developers clearer, more actionable insight into how coding agents perform in real-world work.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "頼まれる前に気づいて動く方向に変わってきてるんだね。これって大きい変化なの？",
+          "en": "So agents are moving from waiting to be asked to noticing things on their own? Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事ではかなり大きな転換として描かれています。しかもSWE-Benchのような公開ベンチマークはタスク向けで、ゴール向けはまだ無いそうです。",
+          "en": "The article treats it as a major shift. Public benchmarks like SWE-Bench are built for tasks, and it says none exist yet for goals."
+        },
+        {
+          "s": "a",
+          "ja": "タスクとゴールって、どう違うの？",
+          "en": "What's the difference between a task and a goal?"
+        },
+        {
+          "s": "b",
+          "ja": "タスクは「狭く決まったバグを直す」ような作業です。ゴールは、コードを探って関係する場所を見つけ、気づきを示しながら大きな目的へ導く感じですね。",
+          "en": "A task is something like fixing a narrowly defined bug. A goal means exploring the codebase, finding what's relevant, and surfacing observations that guide you toward a bigger objective."
+        },
+        {
+          "s": "a",
+          "ja": "自分のコードなら、先に「ここ気になるよ」って教えてもらう使い方になるのかな？",
+          "en": "For my own code, would that mean Jules points out \"hey, look at this\" before I even ask?"
+        },
+        {
+          "s": "b",
+          "ja": "そんなイメージですね。ただ、ゴールを測る既存の指標は無いので、Googleは専用の評価手法を導入したと説明しています。実力は慎重に見たいところです。",
+          "en": "That's the idea. But since no benchmark exists for goals, the article says Google introduced tailored benchmarking for Jules. It's worth judging its real ability with some care."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:39:56.416Z"
+    },
+    "706e14ad351360a2": {
+      "bodyJa": "## 世界の従業員へ展開\n\nSamsung Electronicsが、ChatGPT EnterpriseとCodexを世界中の従業員に展開した。OpenAIにとって最大級のエンタープライズAI導入の一つとされている。\n\n## 業務と開発での活用\n\nChatGPTとCodexは、従業員の業務効率の向上と、ソフトウェア開発の生産性向上を図る目的で社内に導入されたと説明されている。企業規模での導入であり、大手製造業におけるエンタープライズAIの活用事例として注目されている。",
+      "bodyEn": "## Enterprise Rollout to Employees\n\nSamsung Electronics is deploying ChatGPT Enterprise and Codex to employees worldwide, according to the announcement. The source describes it as one of OpenAI's largest enterprise AI rollouts, which makes it a notable example of AI adoption at a large manufacturer.\n\n## Productivity and Development Tasks\n\nThe source says Samsung has made ChatGPT and Codex available across its workforce. Employees can use the tools for general productivity and for software development tasks at enterprise scale.\n\nThe stated aim is to improve day-to-day work efficiency and software development productivity. Beyond this, the source gives no details on deployment timing, employee numbers, pricing, or specific use cases.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "世界中の従業員にChatGPT EnterpriseとCodexを入れるんだね。この二つは、何のために使うの？",
+          "en": "Samsung is giving ChatGPT Enterprise and Codex to employees worldwide. What are the two actually for?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、業務効率の向上とソフトウェア開発の生産性アップが狙いとされているよ。Codexは開発寄りの用途、と読めるね。",
+          "en": "The article points to better everyday productivity and software development. So Codex seems to be the development-side tool."
+        },
+        {
+          "s": "a",
+          "ja": "世界中の従業員ってことは、開発者だけじゃなくて、いろんな人が使えるってこと？",
+          "en": "Worldwide employees... so it's not only developers? Could all kinds of people use it?"
+        },
+        {
+          "s": "b",
+          "ja": "記事では従業員向けに世界規模で展開と書かれていて、OpenAIの中でも最大級の企業導入のひとつだそうだよ。部署ごとの使い方までは書かれていないね。",
+          "en": "It says a worldwide rollout to employees, and calls it one of OpenAI's largest enterprise deployments. It doesn't say how each department will use it."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、大きな製造業の会社が、全社規模でAIを仕事に使い始めた例ってことだね。",
+          "en": "So it's a big manufacturer starting to use AI for work company-wide. Is that the gist?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただ、導入後の成果や具体的な使われ方は書かれていないから、効果を断定するのはまだ早いかな。",
+          "en": "Yes. But the article doesn't cover results or specific usage after rollout, so it's too early to say how well it works."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:40:20.805Z"
+    },
+    "6ee6eacc69d2e60c": {
+      "bodyJa": "## ChatGPT Enterpriseの新機能\n\nOpenAIは、ChatGPT Enterprise向けに使用状況アナリティクスと支出制御機能を追加した。組織がAIにかかるコストを把握し、管理しやすくすることが狙いとされる。\n\n## 支出制御と可視化\n\n使用状況アナリティクスは、AI利用の実態をより詳細に確認できるようにする機能だ。あわせて更新された支出制御は柔軟な設定が可能とされ、コスト管理を引き締める手段になると説明されている。\n\nOpenAIは、これらによって企業がコストをより正確に管理・最適化し、自信を持ってAIを拡大できるようになるとしている。",
+      "bodyEn": "## Spend controls for ChatGPT Enterprise\n\nOpenAI has introduced new spend controls and usage analytics for ChatGPT Enterprise. The announcement says the changes are meant to help organizations manage costs and scale AI with confidence.\n\n## Usage analytics and visibility\n\nAccording to the source, the update adds detailed usage analytics alongside flexible spending controls. Together, these are described as giving organizations better visibility into AI-related costs and tighter management over them.\n\nThe announcement presents the combination as a way for companies to manage and optimize costs more accurately. No pricing, rollout schedule, or specific feature mechanics are given beyond this description.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ChatGPT Enterpriseに、使用状況アナリティクスと支出管理が加わったんだね。これって大きいことなの？",
+          "en": "ChatGPT Enterprise now has usage analytics and spend controls, right? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、AIにかかるコストが見えやすくなって、管理もしっかりできるようになる点が軸だよ。企業が安心して広げやすくなる、という位置づけだね。",
+          "en": "The article frames it as clearer visibility into AI costs and tighter control over them. The idea is helping companies scale AI with more confidence."
+        },
+        {
+          "s": "a",
+          "ja": "「使用状況アナリティクス」って、どういうものなの？",
+          "en": "What does \"usage analytics\" actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "どれくらい使われているかを集めて、見える形にするもの、くらいの意味だよ。それがコストの把握につながる、という流れだね。",
+          "en": "Roughly, it means collecting how much something is being used and showing it clearly. Here, that feeds into understanding costs."
+        },
+        {
+          "s": "a",
+          "ja": "もし私が会社で使うなら、使った分を見ながら支出を調整できるのかな？",
+          "en": "If I used it at work, could I watch usage and adjust spending along the way?"
+        },
+        {
+          "s": "b",
+          "ja": "コストを管理しながらAIを広げていく、という狙いだからね。ただ対象はChatGPT Enterpriseなので、その組織向けの話だよ。",
+          "en": "That fits the goal of managing costs while scaling AI. But this is for ChatGPT Enterprise, so it's aimed at organizations using that."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:40:38.312Z"
+    },
+    "ee1f4b7a9d3ddbc9": {
+      "bodyJa": "大規模言語モデル（LLM）を業務に導入する動きが広がる一方で、モデル単体では企業規模での実用化に限界があるとの指摘が強まっている。IBM Researchは、ツール呼び出しやワークフローの制御、意思決定を担う「エージェントロジック」の設計こそが、持続可能なAI導入の鍵になると論じている。\n\nLLMは高度な文章生成や要約に優れる一方、最新情報の参照や社内システムとの連携、複数ステップにわたる処理の一貫性といった点では単体で完結しにくい。実際の業務では、モデルが外部のAPIやデータベースを呼び出し、結果を検証しながら次の行動を決めるといった一連の流れが求められる。この「どのツールを、どの順序で、どう使うか」を制御する層がエージェントロジックであり、モデルの性能とは別に設計・運用が必要になるという。\n\n背景には、生成AIの実証実験（PoC）は数多く立ち上がる一方で、本番環境での定着に至る例が限られるという課題がある。IBM Researchは、精度や信頼性、コスト、監査可能性といった企業要件を満たすには、単に高性能なモデルを選ぶだけでなく、オーケストレーション（複数モデルやツールの連携制御）を含めた全体設計が欠かせないとの立場を示している。\n\nこうした考え方は業界全体の潮流とも重なる。Hugging Faceはエージェント構築を簡素化するライブラリ「smolagents」を公開し、LangChainやLlamaIndexといったフレームワークもツール連携や検索拡張生成（RAG）を支える基盤として広く使われている。MicrosoftやGoogle、Anthropicなども、モデルが外部ツールを安全に呼び出すための仕組みづくりを進めており、モデル単体の競争から、それを取り巻くエージェント基盤の設計へと焦点が移りつつあると見られる。\n\n企業にとっては、どのLLMを採用するかという選択に加え、権限管理やエラー処理、人間による確認をどこに組み込むかといった運用面の設計が、実導入の成否を左右する要素になりそうだ。オープンモデルの選択肢が増える中で、モデルとエージェントロジックを組み合わせて自社の要件に合わせる柔軟性が、今後さらに重要になる可能性がある。",
+      "bodyEn": "Enterprise interest in large language models has grown rapidly, but a recurring lesson from early deployments is that a capable model on its own rarely translates into reliable business value. In a recent piece published through the Hugging Face blog, IBM Research makes the case that the decisive factor for scaling AI inside organizations is not the raw power of the underlying LLM but the surrounding agent logic—the software layer responsible for tool use, orchestration, and decision-making. The argument matters because it reframes where teams should invest as they move from pilots to production.\n\nThe central claim is straightforward: deploying an LLM by itself is insufficient for enterprise scale. A model can generate fluent text, summarize documents, or answer questions, yet enterprise workflows demand more than generation. They require systems that can call external tools, query databases, invoke APIs, validate outputs, and decide what step to take next based on intermediate results. IBM Research frames this connective tissue as agent logic, and it positions well-designed agent logic as the critical variable distinguishing sustainable adoption from stalled proofs of concept.\n\nTechnically, agent logic covers several distinct responsibilities. Tool use refers to a model's ability to reach outside its own parameters—retrieving up-to-date information, executing code, or triggering business systems—rather than relying solely on knowledge encoded during training. Orchestration concerns how multiple steps, models, or services are sequenced and coordinated, including handling failures, retries, and branching paths. Decision-making addresses how an agent selects among available actions, when it should ask for clarification, and when a task is complete. When these functions are designed carefully, a comparatively modest model can perform dependable work; when they are neglected, even a frontier model tends to behave unpredictably in real workflows.\n\nThis perspective aligns with a broader industry shift often described as agentic AI. Over the past two years, a range of frameworks has emerged to support this pattern, including open-source libraries for building agents and orchestration tooling that manages prompts, memory, and tool calls. Retrieval-augmented generation, in which a model is grounded in external documents fetched at query time, is one widely adopted prerequisite technique that reduces hallucination and keeps responses current. Structured function calling, where a model emits machine-readable requests that software can execute, is another building block that many agent systems depend on. IBM has been developing its own contributions in this space, including its Granite family of open models and related tooling, which fits the emphasis on open-model deployment reflected in the article's framing.\n\nThe choice of publication venue is itself notable. Hugging Face has become a central hub for open models and the ecosystem around them, and open weights are increasingly attractive to enterprises that want control over data residency, cost, and customization. Running models locally or within private infrastructure—the theme suggested by the local-LLM category—can address governance and compliance concerns that hosted APIs sometimes complicate. In that context, the argument for strong agent logic dovetails with the appeal of open models: organizations that own their deployment stack also own the orchestration layer, and can tune it to their specific processes and risk tolerances.\n\nThere are practical reasons this framing resonates. Enterprises typically care less about benchmark scores than about reliability, auditability, and integration with existing systems. Agent logic is where guardrails, permissions, logging, and error handling live, and these are precisely the properties that determine whether a system can be trusted with sensitive operations. It also appears to be where much of the ongoing engineering effort now concentrates, as teams discover that model quality alone does not resolve issues of consistency at scale.\n\nNone of this suggests that model capability is irrelevant; stronger models generally make agent design easier and expand what is achievable. The more measured reading is that model quality and agent logic are complementary, and that the latter has been comparatively underinvested. As with many vendor-affiliated analyses, the recommendations align with IBM's own product direction, so readers may wish to weigh the claims against their own requirements. Still, the underlying observation—that durable enterprise AI depends on the system built around the model, not the model in isolation—is consistent with what many practitioners have reported as they attempt to operationalize generative AI.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-11T05:59:54.301Z"
     }
   }
 }

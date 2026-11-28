@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-28T13:30:51.747Z",
-  "count": 432,
+  "generatedAt": "2026-11-28T14:31:01.149Z",
+  "count": 442,
   "bodies": {
     "08a802224f9dfe23": {
       "bodyJa": "AIエージェントを「動かす」こと自体は、もはや難しくない。だが本番環境で精度・安全性・説明責任を担保し続けることに、多くの開発チームがつまずいている。Microsoftは「Build 2026」で、あらゆるフレームワーク上で動くAIエージェントの可観測性（オブザーバビリティ）からROI測定までを一貫して支える、Microsoft Foundryのアプローチを示した。\n\nエージェントが従来のソフトウェアと根本的に異なるのは、その挙動が非決定論的である点だ。同じ入力でも生成結果が毎回変わりうるため、従来のテストやログ監視だけでは品質を保証しきれない。大規模言語モデル（LLM）が外部ツールを呼び出し、複数ステップにわたって自律的に判断するエージェント型システムでは、どの段階でどんな根拠から結論に至ったのかを追跡する仕組みが欠かせない。\n\nそこで重要になるのが可観測性だ。各実行のトレース、ツール呼び出しの履歴、入出力の評価スコアなどを収集し、エージェントの振る舞いを可視化する。Microsoft Foundryは、こうしたトレースや評価機能を提供し、本番運用での品質劣化や安全性リスクを早期に検知できるようにすると見られる。評価の場面では、応答の正確さや根拠の妥当性、有害コンテンツの有無などを自動でスコアリングする手法が一般的になりつつある。\n\nFoundryの特徴は、特定のフレームワークに縛られない点にあるとされる。LangChainやSemantic Kernel、AutoGenなど多様なエージェント開発基盤が併存するなか、フレームワークを横断して観測・評価できることは、既存資産を活かしたい企業にとって導入のハードルを下げる可能性がある。\n\n最終的な狙いは、可観測性を投資対効果（ROI）の証明につなげることだ。エージェントが実際にどれだけ業務を効率化し、コストを削減したのかを数値で示せなければ、本番展開の継続的な承認は得にくい。同様の課題はGoogleやAWS、OpenAIなど競合各社も抱えており、エージェントの「運用と測定」をめぐる競争は今後さらに激しくなるとみられる。観測から成果へという流れを定量化できるかどうかが、エージェント活用の成否を左右する焦点になりそうだ。",
@@ -11634,7 +11634,39 @@
       "bodyJa": "Anthropicが提供するCLI型のAIコーディング支援ツール「Claude Code」が、v2.1.208からv2.1.209にかけて更新され、長時間セッションで生じていたメモリリークが修正された。新機能の追加を伴わない地味な更新だが、腰を据えた開発作業の信頼性を支える実務的な改善といえる。\n\nメモリリークとは、プログラムが確保したメモリを使い終えても適切に解放できず、稼働時間が延びるにつれて消費量が膨らんでいく不具合を指す。短時間の利用では表面化しにくいが、Claude Codeのように対話を重ねながら数時間単位でセッションを継続する使い方では、動作の緩慢化やクラッシュ、場合によっては作業中の文脈喪失につながりかねない。今回の修正は、こうした長丁場の運用で顕在化していた問題を抑える狙いがあると見られる。\n\n背景として、Claude Codeはターミナル上でコードの読解・生成・リファクタリングなどを対話的に進めるツールであり、セッションを開いたまま継続的に指示を出す使い方が想定されている。セッションが長引くほど内部で保持するデータが増えるため、メモリ管理の健全性は体感的な安定性に直結する。\n\nこうしたパッチ単位の細かな更新が積み重なる開発スタイルは、Claude Code特有のものではない。GitHub CopilotやCursor、あるいはOpenAIのCodex系ツールなど、AIコーディング支援の分野は各社が高頻度でリリースを重ねており、changelogを追わなければ変更点を把握しづらい状況が続いている。バージョン番号の刻みが細かいClaude Codeも同様で、個々の更新は小粒でも、安定性やパフォーマンスの地道な改善が積み上がっている構図だ。\n\n利用者にとっては、長時間の連続作業を予定している場合ほど早めの更新が推奨される。今回のようなバグ修正は目立ちにくいものの、日常的な開発体験の質を左右する要素であり、リリースノートに一度目を通しておく価値はあるだろう。",
       "bodyEn": "Claude Code, Anthropic's agentic command-line tool for software development, has published a pair of incremental releases, versions 2.1.208 and 2.1.209, that focus on resolving memory leaks encountered during long-running sessions. While the changes are modest in scope, they matter because developers increasingly keep such tools open for hours at a stretch, and unchecked memory growth can degrade performance or force a restart in the middle of active work.\n\nClaude Code operates as a persistent process that runs in a terminal, maintaining conversational context, file references, and the state of an ongoing task while it reads code, proposes edits, and executes commands. Because it is designed to sustain extended interactions rather than one-off prompts, the tool's behavior over time is a meaningful part of the user experience. A session that begins responsive but slows down after several hours of continuous use points to resources being allocated without being released, which is the classic signature of a memory leak.\n\nAccording to the release notes, these two versions address exactly that class of problem. Although the published summary does not enumerate the specific internal causes, memory leaks in tools of this kind typically stem from a handful of common patterns. Retained references to conversation history or intermediate results can prevent the runtime's garbage collector from reclaiming objects that are no longer needed. Event listeners or subscriptions that are registered but never removed can accumulate. Caches that grow without bounds, or buffers tied to file watching and streaming output, can also expand steadily across a session. Because Claude Code is built on a JavaScript runtime, its memory is managed automatically by garbage collection, but automatic collection only frees objects that are genuinely unreachable. When a reference lingers somewhere in the application's state, the associated memory stays allocated regardless.\n\nThe practical impact is aimed at reliability rather than new capability. Users who run marathon debugging sessions, large refactors, or continuous automated workflows are the most likely to notice a difference, since these are the scenarios in which leaked memory has the most time to accumulate. For shorter interactions, the effect is likely to be negligible, because the process is restarted before any growth becomes significant. This positions the update as a routine maintenance release, the kind that hardens an existing tool rather than expanding what it can do.\n\nThe versioning itself is worth noting as context. Claude Code has moved through a rapid sequence of patch releases, and reaching numbers like 2.1.208 reflects a cadence of frequent, small updates rather than large, infrequent milestones. That approach is common for actively developed developer tools distributed through package managers, where fixes can ship as soon as they are ready and users can pick them up with a simple upgrade command. It also means that any single release tends to be narrow in scope, and a changelog focused on a single fix is typical rather than exceptional.\n\nFor readers unfamiliar with the broader landscape, Claude Code sits among a growing set of terminal-based and editor-integrated AI coding assistants. Comparable tools include GitHub Copilot and its command-line features, OpenAI's Codex CLI, Google's Gemini CLI, and the open-source Aider, alongside editor-centric offerings such as Cursor and Windsurf. Many of these share the same architectural challenges, since they all maintain long-lived context and orchestrate multiple operations on behalf of the user. Stability under sustained use has become a differentiating concern across the category, and fixes of this type reflect the maturation of these products from experimental utilities toward dependable daily drivers.\n\nFor users, the recommended action is straightforward: update to the latest available version to benefit from the fix. Those running Claude Code in continuous or automated contexts, such as scripted pipelines or background agents, stand to gain the most, since these are precisely the settings where a slow memory leak would otherwise be most disruptive. As with any changelog entry of this nature, the improvement is incremental, but it contributes to the kind of steady reliability that extended development work depends on, and it signals ongoing attention to the tool's performance under real-world, long-duration usage.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T17:04:45.585Z"
+      "generatedAt": "2026-08-30T17:04:45.585Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "長時間つけっぱなしのセッションで、メモリリークがまとめて直ったんだね。具体的には何が溜まってたの？",
+          "en": "So the memory leaks in long-running sessions got fixed all at once. What was actually piling up?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、MCP stdioのstderrが1サーバーあたり最大64MB積まれていたことと、LSPドキュメントが開きっぱなしになっていたことが例に挙がっています。",
+          "en": "The article gives two examples: MCP stdio stderr piling up to 64MB per server, and LSP documents being left open."
+        },
+        {
+          "s": "a",
+          "ja": "一日中Claude Codeを開いてる人には助かりそう！ほかにも速くなったところはあるの？",
+          "en": "Sounds great for people who keep Claude Code open all day! Did anything else get faster?"
+        },
+        {
+          "s": "b",
+          "ja": "はい、MCPツールを多く積んだprint/SDKセッションでツール実行が最大7倍速く、編集の多いセッションではtranscriptが最大79倍小さくなったそうです。",
+          "en": "Yes. In print/SDK sessions with many MCP tools, tool execution is up to 7x faster, and transcripts in edit-heavy sessions are up to 79x smaller."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、長く使うほど重くなる問題が減って、動きも軽くなるってことかな。v2.1.209は何だったの？",
+          "en": "So the slowdown over long sessions shrinks and things run lighter. What was v2.1.209 about?"
+        },
+        {
+          "s": "b",
+          "ja": "v2.1.209は、背景セッションで/modelなどのダイアログが開けなくなった回帰を戻すhotfixです。「最大」の数字は条件しだいなので、全環境で同じ効果とは限りません。",
+          "en": "v2.1.209 is a hotfix restoring dialogs like /model in background sessions. The \"up to\" numbers depend on conditions, so results may vary."
+        }
+      ]
     },
     "233e2817bbcfc5b8": {
       "bodyJa": "Googleは、メトロポリタン美術館(The Met)と連携し、生成AIを用いて膨大な所蔵作品をより直感的に探索できる新機能を導入した。文化遺産のデジタル公開にAIを組み込む動きの一例であり、専門知識を持たない人でもアートに触れやすくする試みとして注目される。\n\n今回の取り組みは、Googleが長年運営してきた「Google Arts & Culture」プラットフォーム上で展開されるとみられる。同プラットフォームは、世界各地の美術館や博物館と協力し、高解像度の作品画像やオンライン展示を無料で提供してきた実績を持つ。The Metは約150万点ともいわれる幅広いコレクションを抱えており、従来のキーワード検索やカテゴリー分類だけでは、来館者や利用者が目的の作品や関心に合う作品にたどり着きにくいという課題があった。\n\n生成AIの活用により、利用者は自然言語による問いかけや、色・雰囲気・テーマといった曖昧な手がかりからでも作品を見つけやすくなると期待される。例えば「静けさを感じる風景画」といった抽象的な要望から関連作品を提示したり、時代や地域を横断して作品同士のつながりを示したりする機能が想定される。作品の背景や技法をわかりやすく解説する対話的な体験も、こうしたAIの得意分野とされる。\n\n背景には、文化施設におけるAI応用の広がりがある。Googleはこれまでにも、機械学習を使って類似作品を並べる「Art Selfie」や色調で作品を探せる機能などを提供してきた。他社でもMicrosoftやOpenAIなどがデジタルアーカイブや教育分野でのAI連携を進めており、大規模言語モデルや画像認識技術を文化領域に応用する流れは加速している。美術館側にとっても、来館前後の関与を高め、収蔵品の認知を広げる手段として期待が寄せられている。\n\n一方で、生成AIによる作品解説には、事実誤認や文脈の欠落といったリスクも指摘されている。歴史的・文化的に慎重な扱いを要する作品も多く、AIの出力をどこまで信頼できるかは今後の検証課題となる可能性がある。学芸員による監修や出典の明示といった仕組みが、こうした取り組みの信頼性を左右するとみられる。アート鑑賞体験の民主化に向けた一歩として、実際の利用実態や利用者の反応が注目される。",
@@ -12882,7 +12914,39 @@
       "bodyJa": "複数のAIエージェントを協調動作させる「マルチエージェント」構成を、コードで宣言的に定義する手法が注目を集めている。今回取り上げる記事は、Anthropicの「Claude Code」とOpenAIの「Codex」を題材に、自律的なワークフローをコードとして記述する「プログラマブル・オーケストレーション」の実践的な入門を解説している。\n\n背景には、単一のAIエージェントだけでは複雑なソフトウェア開発タスクをこなしきれないという課題がある。近年、コード生成やリファクタリング、テスト作成などを担うAIコーディングエージェントが急速に普及したが、大規模な開発では役割を分担させ、複数のエージェントを連携させる需要が高まっている。たとえば設計を担当するエージェント、実装を担当するエージェント、レビューを担当するエージェントを分け、それぞれが成果物を受け渡しながら作業を進める構成が考えられる。\n\nプログラマブル・オーケストレーションの要点は、こうしたエージェント間の連携やタスクの流れを、GUIの手作業ではなくコードとして宣言的に記述する点にある。宣言的な定義によって、構成のバージョン管理や再現、チーム内での共有が容易になる。また、条件分岐やループ、エラー時の再試行といった制御を組み込むことで、人手の介入を減らした自律的な処理フローを構築しやすくなると見られる。\n\n同様の発想を持つツールは他にも存在する。LangChain系の「LangGraph」やMicrosoftの「AutoGen」、複数エージェントの役割分担を扱う「CrewAI」などがあり、マルチエージェント設計は特定の製品に限らない広がりを見せている。今回の記事はその中でも、実際の開発現場で使われるClaude CodeとCodexという二つのエージェントを組み合わせる具体例に焦点を当てている点が特徴といえる。\n\n一方で、複数エージェントを連携させる構成にはコストや制御の難しさも伴う。エージェントごとにAPI呼び出しが発生するため実行コストが増える可能性があり、想定外の挙動や無限ループを防ぐ設計も欠かせない。導入にあたっては、まず小さなタスクで挙動を検証し、段階的に自律度を高めていく進め方が現実的だろう。プログラマブルな定義は、こうした試行錯誤を再現可能な形で積み重ねられる点にも意義があると考えられる。",
       "bodyEn": "As AI coding assistants mature from single-turn chat tools into semi-autonomous collaborators, developers are increasingly interested in coordinating several of them at once. A recent walkthrough describes a pattern its author calls \"programmable orchestration,\" in which the way multiple AI agents work together is defined declaratively in code rather than assembled by hand at runtime. The approach centers on two of the most widely used coding agents, Anthropic's Claude Code and OpenAI's Codex, and it matters because reproducible, version-controlled agent configurations are becoming a prerequisite for reliable automation.\n\nAt its core, the technique treats an agent topology as a configuration artifact. Instead of a person opening a terminal, prompting one assistant, copying the output, and feeding it to another, the relationships between agents, their roles, and the hand-offs between them are expressed in a code file that can be committed to a repository. This is what \"declarative\" means in this context: you describe the desired arrangement, such as which agent plans, which writes code, and which reviews, and the orchestration layer is responsible for executing that arrangement. The stated benefit is that the same setup can be re-run, shared with teammates, diffed in code review, and evolved over time like any other software.\n\nMulti-agent orchestration itself is a broader idea that predates these specific tools. The general premise is that a complex task can be decomposed into subtasks handled by specialized agents, often arranged as a supervisor that delegates to workers, or as a pipeline where each stage refines the previous one. Splitting work this way can improve results on long or ambiguous tasks and can isolate failures, but it also introduces coordination overhead, latency, and cost, since every agent invocation typically consumes tokens and time. The article's framing suggests that codifying the structure is one way to keep that complexity manageable.\n\nClaude Code and Codex are both command-line oriented agents that can read a codebase, run commands, edit files, and iterate toward a goal, which makes them natural building blocks for this kind of composition. Using them together, rather than standardizing on one, appears to reflect a practical interest in combining models with different strengths, or in cross-checking one agent's output against another's. Because each tool exposes ways to be launched non-interactively and to accept instructions programmatically, they can be driven by an external script that plays the role of conductor. The general concept described is likely applicable regardless of which specific agents are plugged in.\n\nIt helps to place this in the context of adjacent tooling. Frameworks such as LangGraph, CrewAI, AutoGen, and OpenAI's Agents SDK have popularized the notion of defining agent graphs and roles in code, and Anthropic has published guidance on agent design patterns and released the Model Context Protocol, an open standard for connecting agents to external tools and data sources. The \"programmable orchestration\" idea sits alongside these efforts rather than replacing them; it is less a new product than a way of thinking about how to wire existing agents together with the same discipline applied to infrastructure as code. Readers familiar with CI pipelines or workflow engines will recognize the underlying instinct to make process explicit and repeatable.\n\nFor anyone considering this approach, a few prerequisite concepts are worth understanding. One is idempotency and state management, because agents that edit files and run commands can produce side effects that are hard to undo, so sandboxing and version control matter. Another is cost and token budgeting, since fan-out patterns that spawn many agents can escalate spend quickly. A third is the need for evaluation and guardrails, because autonomous hand-offs can compound errors if there is no checkpoint where a human or a verifying agent inspects the output. The article's practical, introductory framing seems aimed at developers who already use these coding agents individually and want a structured path toward automation.\n\nThe broader takeaway is that the industry is gradually moving from ad hoc prompting toward engineered, declarative agent systems, and content like this reflects that shift at the practitioner level. Whether code-defined orchestration becomes a durable pattern or is absorbed into higher-level platforms remains to be seen, but the direction, treating agent coordination as software rather than manual choreography, is consistent with how other automation categories have evolved. As a hands-on introduction, the piece offers a useful entry point for teams beginning to experiment with multi-agent workflows.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T17:03:56.680Z"
+      "generatedAt": "2026-08-30T17:03:56.680Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "設計とレビューを10回繰り返してから実装する例に驚いたよ。これって大きいことなの？",
+          "en": "The example where design and review repeat 10 times before implementation surprised me. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "10回という数より、ループや条件分岐、並列実行を特別なDSLではなく普通のPythonコードで書ける点が、この記事の主眼みたいだよ。",
+          "en": "The number matters less than the point that loops, branching, and parallel runs can be written as ordinary Python, not a special DSL. That seems to be the article's focus."
+        },
+        {
+          "s": "a",
+          "ja": "Git worktreeってなに？エージェントごとに分けるのはなんで？",
+          "en": "What's a Git worktree? And why give each agent its own?"
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、同じリポジトリで作業場所を分けられる仕組みのことだよ。記事だと、元の環境やほかのエージェントの作業を汚さないために分けているんだ。",
+          "en": "Generally, it's a way to split work areas within one repository. In the article, it keeps the original environment and other agents' work from getting messed up."
+        },
+        {
+          "s": "a",
+          "ja": "自分なら、ClaudeとCodexに同じタスクを任せて、テストが通った中から一番差分が小さいのを選ばせたいな。",
+          "en": "I'd have Claude and Codex do the same task, then pick the smallest diff among the ones that pass the tests."
+        },
+        {
+          "s": "b",
+          "ja": "まさに記事のコード例がその形だね。ただ、h5i-pythonなどでワークフローをコードとして書く前提だから、流れは自分で定義することになりそうだよ。",
+          "en": "That's exactly the article's code example. But it assumes you write the workflow as code with something like h5i-python, so you'd be defining the flow yourself."
+        }
+      ]
     },
     "1072bb7aa6542d95": {
       "bodyJa": "ナレッジベースRAGプラグイン市場の開発を追う連載の第4回は、複数のReactインスタンスが共存する状況と、それを支えるマイクロフロントエンド構成の設計に踏み込んでいる。プラグインをホスト側の画面へ動的に組み込む仕組みでは、フレームワークの重複読み込みが避けがたい問題となるため、実運用に耐える設計指針が求められる。\n\n背景にあるのは、RAG（検索拡張生成）を軸にしたプラグインを、独立したチームや外部開発者が個別に配布・更新できる「マーケットプレイス」を実現したいという狙いだ。各プラグインがそれぞれReactを内包すると、ホストアプリとプラグインで異なるReactインスタンスが同時に動くことになる。Reactのフックは単一インスタンスを前提とするため、この状態では「Invalid hook call」に代表されるエラーや、コンテキストの分断が起きやすいとされる。\n\nこうした課題への一般的な対処として、記事はマイクロフロントエンドの考え方を整理していると見られる。代表的な手法はWebpack 5のModule Federationで、Reactやライブラリを共有依存（shared/singleton）として一本化し、複数バンドル間で同一インスタンスを使い回す。バージョンの不一致があると意図せぬ二重化が発生する可能性があるため、依存バージョンの固定や範囲指定が実務上の勘所になる。\n\nModule Federation以外にも、single-spaのようなルーティング統合フレームワークや、iframeによる完全な分離、Web Componentsを介した組み込みなど、選択肢は複数ある。分離を強めるほど独立性は高まる一方、状態共有やスタイルの一貫性、通信コストとのトレードオフが生じる。RAGプラグインのように検索結果やコンテキストをホストと密に受け渡す用途では、この均衡点の見極めが設計の質を左右しやすい。\n\n本連載はMCP（Model Context Protocol）関連の文脈にも位置づけられており、LLMツールとフロントエンドを橋渡しする実装として関心を集める領域だ。今回の内容は、プラグイン配布基盤を検討する開発者にとって、フレームワーク重複という古くて新しい課題を整理する手がかりになりそうだ。続く回で具体的な実装コードや検証結果がどこまで示されるかが注目される。",
@@ -14298,12 +14362,6 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T07:39:06.440Z"
     },
-    "054a7a7121d7d525": {
-      "bodyJa": "## GPT-5.6 が標準モデルに\n\nOpenAI の GPT-5.6 が、Microsoft 365 Copilot を支える標準モデルに位置づけられた。何百万人もが使う業務向けの生産性ツールに、最新の機能が届くとされる。\n\n両社の連携は、ビジネスユーザーの生産性向上に向けて一層深まったと説明されている。\n\n## Word から Cowork まで\n\nGPT-5.6 は、Word、Excel、PowerPoint、Chat、Cowork にわたって、より強力な AI 機能を提供すると説明されている。目的は、仕事をより速く、より高品質に進められるようにすることだ。",
-      "bodyEn": "## GPT-5.6 Powers Microsoft 365 Copilot\n\nOpenAI's GPT-5.6 has been designated the default model behind Microsoft 365 Copilot, according to the announcement. This matters because Copilot sits inside productivity tools that the source describes as used by millions of people in enterprises.\n\nThe announcement says the model brings stronger AI capabilities to Word, Excel, PowerPoint, Chat, and Cowork.\n\n## Faster, Higher-Quality Work\n\nThe stated aim is faster, higher-quality work for business users. The source frames the move as a deeper collaboration between OpenAI and Microsoft on productivity.\n\nThe material does not give benchmarks, rollout timing, or pricing, so the practical size of the improvement is not specified here.",
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T05:40:16.061Z"
-    },
     "b16604bccef4572d": {
       "bodyJa": "MCP Serversがv2.0.0としてリリースされた。すべてのサーバーがmodern era仕様に対応するようリファクタリングされ、legacy eraのクライアントにも従来どおり応答すると説明されている。\n\n## 全サーバーをmodern eraへ\n\n今回のリリースの中心は、全サーバーの作り直しである。すべてのサーバーをmodern era仕様に対応させるリファクタリングが行われた。\n\n一方で、legacy eraのクライアントに対しても期待どおりに応答する状態が保たれるという。新しい仕様へ合わせつつ、従来のクライアントからの利用も引き続き想定した形だ。\n\n## 公開された7パッケージ\n\n今回公開されたパッケージは7つある。npmでは @modelcontextprotocol/server-everything、@modelcontextprotocol/server-filesystem、@modelcontextprotocol/server-memory、@modelcontextprotocol/server-sequential-thinking の4つが、いずれもバージョン2.0.0として公開された。\n\nPyPIでは mcp-server-fetch、mcp-server-git、mcp-server-time の3つが公開されている。こちらのバージョンは3つとも2026.10.19で、npm側の2.0.0とは番号の付け方が異なる。\n\n## TS SDK v2への移行\n\n変更内容として挙がっているのは、TypeScript製サーバーをTS SDK v2へ移行する作業である。codemodを使った移行で、@cliffhall による #5063 として記載されている。\n\nこのリリースの管理名(Release ledger)は v2/chore/5159-release-v2.0.0 とされている。",
       "bodyEn": "## Servers refactored to modern era\n\nThe MCP Servers v2.0.0 release refactors all of the servers to support the modern era spec. This matters for anyone running these servers, because the release says it still answers legacy era clients as expected, so existing clients are not left behind.\n\n## Packages in this release\n\nThe release publishes seven packages across two registries. Four go to npm, each at version 2.0.0: @modelcontextprotocol/server-everything, @modelcontextprotocol/server-filesystem, @modelcontextprotocol/server-memory, and @modelcontextprotocol/server-sequential-thinking.\n\nThree go to PyPI under a date-based version, 2026.10.19: mcp-server-fetch, mcp-server-git, and mcp-server-time. The two registries therefore use different versioning schemes in this release. The npm packages carry the 2.0.0 number, while the PyPI packages carry the date-style number.\n\nThe release is tracked under the ledger entry v2/chore/5159-release-v2.0.0, and every package in the table is marked as published.\n\n## What's changed\n\nThe notes list the changes under the @modelcontextprotocol/server-everything 2.0.0 entry. One item is a chore to migrate the TypeScript servers to TS SDK v2 using a codemod, credited to @cliffhall in #5063. Another item refers to a v1.0.0 release audit, but the text is cut off after that point, so nothing further can be said about its contents.\n\nBased on what the release describes, the main points are the following:\n\nThe servers were refactored for the modern era spec.\n\nLegacy era clients continue to receive the responses they expect.\n\nThe TypeScript servers were moved to TS SDK v2 through a codemod.\n\nFour npm packages and three PyPI packages were published as part of this release.\n\nTaken together, the release is framed as a spec-alignment update for the full set of reference servers, with backward compatibility for older clients stated as part of the design.",
@@ -14456,44 +14514,6 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T08:41:17.195Z"
     },
-    "b600595a83e8cb7d": {
-      "bodyJa": "OpenAIは、AIガバナンスに関する「reverse federalism」(逆連邦主義)というアプローチを示した。あわせて、米国の州と連邦政府によるAI安全政策が進展していると報告している。\n\n## 州法から国の枠組みへ\nこのアプローチでは、州の法律が、安全で民主的なAIのための国家的な枠組みづくりを後押しすると説明されている。州レベルの取り組みが出発点となり、全国的な枠組みの形成につながるという構図である。\n\n## 加速する規制整備\nOpenAIは、州と連邦それぞれの取り組みが、責任あるAI開発を支える規制の枠組みを形づくりつつあると述べている。この動きが勢いを増している点も強調している。",
-      "bodyEn": "## Reverse Federalism Approach\n\nOpenAI has published a post on AI governance in the United States, arguing that safety policy is gaining momentum at both the state and federal levels. According to the source, these efforts are shaping a regulatory framework meant to ensure responsible AI development.\n\nThe post describes a \"reverse federalism\" approach. Under it, state laws help build a national framework for safe, democratic AI, rather than a national framework being set first and applied downward.\n\n## State and Federal Momentum\n\nOpenAI says state and federal initiatives are advancing together and that work on the regulatory framework is accelerating. The announcement presents this as progress toward governance that supports responsible AI development.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「リバース・フェデラリズム」って何だろう？州の法律が、国の枠組みづくりにつながるってこと？",
-          "en": "What does \"reverse federalism\" mean? Is it that state laws help build the national framework?"
-        },
-        {
-          "s": "b",
-          "ja": "そのとおり。この記事では、州の法律が土台になって、安全で民主的なAIのための全国的な枠組みを築く考え方として説明されているよ。",
-          "en": "Exactly. The post describes it as state laws helping build a national framework for safe, democratic AI."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ州と国の両方が動くことで、AIを責任をもって作るためのルールが整っていくのかな？",
-          "en": "So when both states and the federal government act, rules for building AI responsibly start to take shape?"
-        },
-        {
-          "s": "b",
-          "ja": "記事だと、州と連邦の取り組みが、責任あるAI開発を支える規制の枠組みを形づくっているとされているよ。細かい影響までは書かれていないね。",
-          "en": "The post says state and federal efforts are shaping a regulatory framework for responsible AI development. It doesn't go into detailed effects."
-        },
-        {
-          "s": "a",
-          "ja": "州の取り組みが積み重なって、国全体の安全なAIの土台になっていく、ってことだね。",
-          "en": "So state efforts add up and become the base for safe AI nationwide. Got it."
-        },
-        {
-          "s": "b",
-          "ja": "うん。ただ、これはOpenAIが示している見方だから、実際にどう進むかまでは断定できないよ。",
-          "en": "Yes. But this is OpenAI's own view, so we can't say for sure how it will actually play out."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T08:41:38.285Z"
-    },
     "1f8433e1adf8a5ff": {
       "bodyJa": "Cursorのクラウドエージェントが、作業の中で対話型のキャンバスを構築できるようになった。あわせてEnvironments APIのベータ提供が始まり、クラウドエージェント環境の対応規模と読み込み速度も改善されている。\n\n## キャンバスの構築と共有\n\nクラウドエージェントは、作業を進める過程で対話型のキャンバスを作れるようになった。結果を返すだけでなく、操作できる形の成果物をエージェント自身が組み立てられるようになる、という変更である。\n\n完成したキャンバスは、リンクを送るだけでチームと共有できる。共有のために特別な手順を踏む必要はなく、リンクを渡せば済む点が示されている。\n\n## Environments APIのベータ版\n\nEnvironments API がベータ版として利用可能になった。エージェントを実行するクラウド環境を、プログラムから作成・管理できる。環境の用意や管理を、コードを通じて扱えるようになるということだ。\n\n現時点ではベータ版の位置づけであり、正式版としての提供ではない。\n\n## 300リポジトリと読み込み5倍\n\nクラウドエージェント環境は、最大300個のリポジトリをサポートするようになった。多数のリポジトリを一つの環境にまとめて扱う場面に対応する変更とみられる。\n\nさらに、大規模な環境の読み込み速度が5倍に向上したと説明されている。リポジトリ数の上限拡大と読み込みの高速化が同時に示されており、規模の大きな環境を扱いやすくする改善として位置づけられている。",
       "bodyEn": "## Cloud agents build canvases\n\nCursor's cloud agents can now build interactive canvases as part of their work, according to the changelog. The update also touches how the cloud environments that run those agents are created and scaled, which matters for teams operating agents across many codebases.\n\nThe announcement says a finished canvas can be shared with the team simply by sending a link. No other sharing mechanism or canvas capability is described, so the update should be read as covering creation during agent work and link-based sharing.\n\n## Environments API in beta\n\nAn Environments API is now available as a beta. The changelog says it lets users create and manage the cloud environments in which agents run, and it does so programmatically rather than through manual setup.\n\nThe source does not describe the API's endpoints, authentication, or pricing, and it gives no timeline for moving out of beta. What it does establish is the scope: the API covers both creating and managing the cloud environments that host agent runs.\n\n## Up to 300 repositories\n\nCloud agent environments now support up to 300 repositories, according to the announcement. This sets a stated upper bound for how many repositories a single environment can cover.\n\nThe same update reports that loading large environments is now five times faster. The changelog does not say what baseline the five-fold figure is measured against or how \"large\" is defined, so it is best understood as the vendor's own claim about improved load speed for bigger environments.\n\n## What the update covers\n\nTaken together, the changelog describes three changes: interactive canvases that cloud agents can build and share by link, a beta API for programmatic environment management, and expanded repository support alongside faster loading of large environments. The summary notes that these additions are aimed at making operation easier for larger teams, though the source itself lists the features rather than detailing how teams would adopt them.",
@@ -14531,12 +14551,6 @@
       ],
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T09:38:16.328Z"
-    },
-    "c7fe1a4b9a11fcf4": {
-      "bodyJa": "## ドルあたりの有用な仕事\n\nOpenAIは、エージェント型AIの時代に企業がAI投資をどう管理すべきかを扱ったガイドを公開した。ROIを最大化しつつリスクを抑えてAIエージェントを導入するための、実践的な枠組みを示すものとされる。\n\n中心に置かれているのは、1ドルあたりでどれだけ有用な仕事を生み出せるかを測るという考え方だ。支出の総額そのものではなく、得られた成果との比率でAI投資を捉える視点である。\n\n## 効率改善と拡大\n\nガイドは、この指標で測定したうえで効率を高め、価値の高いワークフローを拡大していく流れを説明している。\n\nあわせて、自律的に動くAIの導入を責任ある形で統制することも目的に挙げられている。ただし、具体的な手順や数値までは示されていない。",
-      "bodyEn": "## Managing AI Investments\n\nOpenAI has published a guide on how enterprises can manage AI investments in the agentic era. It matters because, according to the source, agentic systems are becoming mainstream and organizations need a way to judge what their spending delivers.\n\nThe guide describes its approach as a strategic framework with practical guidance. It aims to help organizations maximize ROI while limiting risk when they adopt AI agents.\n\n## Useful Work per Dollar\n\nThe central measure the guide proposes is useful work per dollar. According to the source, enterprises can use it to improve efficiency and to scale high-value workflows.\n\nThe guide also addresses governance, saying organizations should deploy autonomous AI responsibly. The source gives no further detail on specific methods, figures, or tools.",
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T09:38:31.572Z"
     },
     "904ede757f684f5a": {
       "bodyJa": "量子化はLLMをより少ないメモリで動かすための定番手法だが、その代償が見えにくい形で現れる可能性がある。arXivで公開された本研究は、量子化モデルが一見もっともらしい回答を出しながら内部の推論が静かに崩壊する「中空収束(hollow convergence)」を分類・分析し、標準的なベンチマークでは捉えきれない障害モードの質的変化を明らかにした。\n\n量子化とは、モデルの重みや計算精度をFP16やBF16からINT8、INT4などの低ビット表現へ落とし、メモリ使用量や推論コストを削減する技術である。GPTQやAWQ、GGUF形式による4ビット量子化は、llama.cppやvLLMといった実行環境と組み合わせて広く使われており、消費者向けGPUやエッジ端末でのローカル推論を支えている。一般には、量子化による精度低下はわずかで実用上問題ないとされてきた。\n\nしかし本論文が指摘する「中空収束」は、こうした前提に一石を投じる。最終的な出力の見た目はほとんど変わらないのに、途中の推論過程が破綻しているという現象だ。特に多段階の論理推論や数学的問題で顕在化しやすいと見られ、モデルは正解に至る筋道を失いながらも、それらしい文章や結論を生成してしまう。\n\n問題を難しくしているのは、こうした障害が「サイレント（無自覚）」である点だ。出力が流暢で整っているため、利用者は誤りに気づきにくい。著者らは量子化がもたらす障害を単なる精度劣化としてではなく、質的に異なる「障害モードのシフト」として捉え、分類論的に整理している点が特徴的である。\n\n背景には、正答率を測る従来型ベンチマークの限界がある。最終回答のみを採点する評価では、推論過程の崩壊が数値に反映されにくい。近年はChain-of-Thoughtの検証や、推論過程そのものを評価する研究が増えており、本研究もその流れに位置づけられる。\n\n量子化モデルの実運用が広がるなか、この知見は評価手法の設計に影響を与える可能性がある。ただし対象モデルや量子化手法の範囲には留意が必要で、どの条件で中空収束が起きやすいかについては、さらなる検証が求められるだろう。",
@@ -15004,7 +15018,95 @@
       "model": "gpt-5.6-sol",
       "generatedAt": "2026-10-07T20:07:43.460Z"
     },
-    "5e51eeb6149782a6": {
+    "e33edd69f7816887": {
+      "bodyJa": "## 支援から実行へ\n\nOpenAIの調査は、企業のAI活用が単純な支援から自律的な実行へ移りつつあることを示した。ChatGPTとCodexを通じ、AIをアシスタントとして使う段階から、実行エージェントとして活用する動きが明らかになった。\n\n## 先進企業の先行\n\n調査では、企業間の採用状況にも差があるとされる。特に先進企業は、AIを自律的な実行エージェントへ移行させる採用で他の企業より大きく先行しており、支援中心の利用との違いが示されている。",
+      "bodyEn": "## From simple assistance\n\nOpenAI research examines how enterprises are adopting agentic AI through ChatGPT and Codex. The shift matters because the research describes companies moving beyond simple assistance toward AI that can perform autonomous execution.\n\n## Frontier adopters pulling ahead\n\nAccording to the research, this transition is taking place through the use of ChatGPT and Codex, with AI moving from an assistant role to an execution agent. The findings also indicate a gap in adoption: frontier firms are pulling significantly ahead of their peers as enterprises put agentic AI into use.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "AIが「支援」から「実行」に移るって、ChatGPTやCodexが何をするようになるの？",
+          "en": "When AI shifts from “assistance” to “execution,” what do ChatGPT and Codex actually start doing?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、人を支えるだけでなく、仕事を自律的に実行するエージェントとして使う流れを示しているよ。",
+          "en": "The research describes companies using them not just to assist people, but as agents that execute work autonomously."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ企業は、AIに助けてもらうだけじゃなく、仕事の実行も任せ始めているんだね？",
+          "en": "So companies are starting to let AI carry out work, rather than only asking it for help?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。ChatGPTやCodexを支援の道具から実行を担う仕組みへ広げ、先進企業ほど採用で先行しているんだ。",
+          "en": "Yes. They’re expanding ChatGPT and Codex from support tools into execution systems, with frontier firms further ahead in adoption."
+        },
+        {
+          "s": "a",
+          "ja": "AI活用が、相談相手を置く段階から、実際に動いてもらう段階へ進んでいるんだね。",
+          "en": "Got it—AI use is moving from having a helper to having something that actually carries out the work."
+        },
+        {
+          "s": "b",
+          "ja": "ただ、先進企業とほかの企業には採用の差があるから、すべての企業が同じ段階とは限らないよ。",
+          "en": "One caution: adoption differs between frontier firms and their peers, so not every company is at the same stage."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T18:10:07.705Z"
+    },
+    "e308cad69399bfa1": {
+      "bodyJa": "## AI時代のスコアカード\n\nOpenAIは、AI時代の社会・経済・安全面における進捗を評価するスコアカードの枠組みを公開した。AIの影響を可視化し、継続的に追跡する基準を設けることで、説明責任と透明性の向上を目指す取り組みだ。\n\n## ROIの測定基準\n\nOpenAIのCFOであるSarah Friarは、実用的なAIスコアカードを紹介した。ROIは、有用な仕事、成功したタスク当たりのコスト、信頼性、コンピュートに対するリターンという観点から測定する。AIの成果を単一の指標ではなく、実際の仕事や費用、安定性を含めて捉える枠組みとなっている。",
+      "bodyEn": "## Practical AI scorecard\n\nOpenAI introduced a framework for measuring and tracking AI progress across social, economic, and safety dimensions. The scorecard matters because it is intended to improve accountability and transparency around how AI development affects the world.\n\n## Measuring useful work\n\nSarah Friar, OpenAI’s CFO, presents the scorecard as a practical way to measure return on investment. Its measures include useful work, the cost per successful task, dependability, and return on compute.\n\nBy establishing criteria for tracking these areas, the framework is designed to make AI’s effects more visible and support evaluation of social, economic, and safety progress.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "ROIを4つの項目で測るんだね。これって大きい変化なの？",
+          "en": "They’re measuring ROI across four areas. Is that a big shift?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、AIの成果を複数の軸で追い、社会・経済・安全への影響と説明責任を見えやすくする試みなんだ。",
+          "en": "Here, the idea is to track AI outcomes across several dimensions, making its social, economic, and safety impact—and accountability—more visible."
+        },
+        {
+          "s": "a",
+          "ja": "「リターン・オン・コンピュート」って、どういう意味？",
+          "en": "What does “return on compute” mean?"
+        },
+        {
+          "s": "b",
+          "ja": "計算資源を使った分に対して、どれだけ役立つ成果が得られたかを見る考え方だよ。",
+          "en": "It means looking at how much useful output you get for the computing resources you use."
+        },
+        {
+          "s": "a",
+          "ja": "ぼくなら、よくする作業で、成功した回数や費用を記録してみたいな。",
+          "en": "I’d try tracking successful runs and costs for a task I do often."
+        },
+        {
+          "s": "b",
+          "ja": "いいね。成功したタスク当たりの費用だけでなく、役立つ仕事か、安定して動くかも一緒に見る枠組みだよ。",
+          "en": "That fits. The framework also considers whether the work is useful and dependable, not just the cost per successful task."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T20:10:32.501Z"
+    },
+    "51048f5bdd794dad": {
+      "bodyJa": "## AIネイティブな通信事業者\n\nDeutsche TelekomはOpenAIと提携し、AIネイティブな通信事業者への転換を進めている。通信業界における大規模なAI導入の先進事例として注目されている。\n\n## 刷新される四つの領域\n\n取り組みの対象とされているのは、顧客サポート、従業員のワークフロー、ネットワーク運用、そして音声(ボイス)の将来である。\n\nとくに顧客サポートとネットワーク運用は、AIによる刷新の例として挙げられている。いずれも通信事業者の日常業務に直結する領域であり、AIを軸に見直す対象になっている。",
+      "bodyEn": "## Becoming an AI-native telco\n\nDeutsche Telekom is working with OpenAI to become what the source calls an \"AI-native telco.\" The partnership is presented as a significant enterprise deployment of AI in the telecom sector.\n\nAccording to the source, the effort covers four areas: customer service, employee workflows, network operations, and the future of voice.\n\n## Customer service and networks\n\nThe announcement says AI is being used to transform customer service and network operations, two areas the summary highlights specifically. Employee workflows and the future of voice are also named as parts of the transformation.\n\nThe source gives no figures, timelines, or technical specifics about how these changes are implemented, so the scope is best understood as the broad direction described above.",
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T07:39:54.437Z"
+    },
+    "994629e453e69916": {
+      "bodyJa": "## GPT-5.6 が標準モデルに\n\nOpenAI の GPT-5.6 が、Microsoft 365 Copilot を支える標準モデルに位置づけられた。何百万人もが使う業務向けの生産性ツールに、最新の機能が届くとされる。\n\n両社の連携は、ビジネスユーザーの生産性向上に向けて一層深まったと説明されている。\n\n## Word から Cowork まで\n\nGPT-5.6 は、Word、Excel、PowerPoint、Chat、Cowork にわたって、より強力な AI 機能を提供すると説明されている。目的は、仕事をより速く、より高品質に進められるようにすることだ。",
+      "bodyEn": "## GPT-5.6 Powers Microsoft 365 Copilot\n\nOpenAI's GPT-5.6 has been designated the default model behind Microsoft 365 Copilot, according to the announcement. This matters because Copilot sits inside productivity tools that the source describes as used by millions of people in enterprises.\n\nThe announcement says the model brings stronger AI capabilities to Word, Excel, PowerPoint, Chat, and Cowork.\n\n## Faster, Higher-Quality Work\n\nThe stated aim is faster, higher-quality work for business users. The source frames the move as a deeper collaboration between OpenAI and Microsoft on productivity.\n\nThe material does not give benchmarks, rollout timing, or pricing, so the practical size of the improvement is not specified here.",
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T05:40:16.061Z"
+    },
+    "2fed7e04b5171bcb": {
       "bodyJa": "OpenAIは、AIがEU域内の仕事をどう変えうるかを整理した新しいレポートを公表した。欧州のAI関連雇用の現状と、職種間の移行可能性を分析した内容とされる。\n\n## 職種ごとの影響\n\nレポートは、どの職種で自動化が進みうるのか、どの職種で成長が見込まれるのか、そして業務の進め方が変わりうるのかを区別して描いていると説明されている。AIの影響を一括りにせず、職種単位で捉える構成だ。\n\n## 移行可能性と課題\n\n分析の軸には、仕事の移行可能性と、AI導入が労働市場に与える影響がある。これにより、労働市場におけるAI活用の機会と課題が明らかにされたという。個別の数値や対象職種の詳細は、ここで確認できる範囲では示されていない。",
       "bodyEn": "## Mapping AI Across EU Jobs\n\nOpenAI has released a report that maps how AI could reshape jobs across the European Union. The topic matters because the report looks at the labor market effects of AI adoption across the region.\n\nAccording to the announcement, the report highlights which occupations may face automation, growth, or changes to their workflows.\n\n## Transition Potential and Opportunities\n\nThe report also analyzes job transition potential, meaning how workers might move between roles as AI is adopted. OpenAI says the analysis covers AI-related employment in Europe and sets out both the opportunities and the challenges that AI use brings to the labor market.\n\nThe source gives no further detail on methodology, specific occupations, or figures.",
       "chat": [
@@ -15041,6 +15143,316 @@
       ],
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T12:39:17.112Z"
+    },
+    "09ac03db07c5130e": {
+      "bodyJa": "OpenAIは次世代モデル「GPT-5.6 Sol」のプレビューを公開した。同社のモデル群における注目すべき前進と位置づけられている。\n\n## 能力の強化\nコーディング、科学、サイバーセキュリティの各分野で能力が強まったと説明されている。あわせて、推論と性能の面でも大きな向上があるとされる。\n\n## 最先端の安全スタック\n今回のプレビューは、同社として最も高度な安全スタックと組み合わせて示されている。開発者や企業向けに新たな可能性を広げる重要なマイルストーンになるとされる。",
+      "bodyEn": "## OpenAI previews GPT-5.6 Sol\n\nOpenAI has announced a preview of GPT-5.6 Sol, a next-generation model. The announcement matters because it marks a notable step forward in the company's model lineup, according to the source.\n\nThe preview was published on June 26, 2026.\n\n## Stronger capabilities, safety stack\n\nAccording to the announcement, GPT-5.6 Sol offers stronger capabilities in coding, science, and cybersecurity. The source also describes significant improvements in reasoning and performance.\n\nOpenAI says the model is paired with its most advanced safety stack. The source presents the preview as opening new possibilities for developers and enterprises.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "今回は数字じゃなくて、コーディングと科学とセキュリティが強くなったって書いてあるね。これって大きいこと？",
+          "en": "No numbers this time, but coding, science, and cybersecurity all got stronger, right? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、その3分野の強化に最も高度な安全対策を組み合わせた次世代モデルとされているよ。ただ、具体的な数値までは書かれていないんだ。",
+          "en": "The article frames it as a next-gen model with stronger abilities in those three areas, plus OpenAI's most advanced safety stack. It doesn't give specific numbers, though."
+        },
+        {
+          "s": "a",
+          "ja": "「safety stack」ってなに？ 安全のための道具がいろいろ入ってるってこと？",
+          "en": "What's a \"safety stack\"? Like a bunch of safety tools all packed together?"
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、安全のための仕組みをいくつも重ねたもの、くらいの意味だよ。この記事では、それが「最も高度」だと述べているね。",
+          "en": "Generally, it means several safety measures layered together. This article says OpenAI's version is its most advanced one yet."
+        },
+        {
+          "s": "a",
+          "ja": "わたしならコードを書くときに頼ってみたいな。もう使えるのかな？",
+          "en": "I'd love to try it when I'm writing code. Can we use it already?"
+        },
+        {
+          "s": "b",
+          "ja": "今回はあくまでプレビューの発表だよ。この記事から分かるのは能力と安全面の方向性までで、使える範囲や条件は書かれていないんだ。",
+          "en": "This is a preview announcement. The article covers the capability and safety direction, but nothing about who can use it or under what conditions."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T12:39:57.874Z"
+    },
+    "b48afbec56bb8d9c": {
+      "bodyJa": "OpenHands cloud 1.39.0 がリリースされた。変更の中心は「デフォルト組織」の扱いで、ユーザーの所属、イベントの振り分け先、ワークスペースの表示に関する機能が追加されている。\n\n## 既存ユーザーの移行\n\n「move existing users into the default org when first auto-added」(#14740)は、既存ユーザーが初めて自動的に追加される際に、そのユーザーをデフォルト組織へ移す変更である。あわせて #14752 では、最初にサインインしたユーザーをデフォルト組織のオーナーにし、組織を is_default フラグで追跡する仕組みが入った。デフォルト組織かどうかをフラグで管理する形になる。いずれも @ak684 による変更として記載されている。\n\n## 未申請イベントの転送\n\n#14745 では、単一組織(single-org)のインストールにおいて、未申請(unclaimed)の自動化イベントをデフォルト組織へルーティングする機能が追加された。どの組織にも紐づいていない自動化イベントの届け先が、デフォルト組織に定まることになる。対象は単一組織のインストールに限られている点に注意したい。\n\n## 個人ワークスペースの扱い\n\n#14741 では hide_personal_workspaces フラグが追加された。説明には「org-only OHE installs」向けとあり、組織のみで運用するインストールを想定した設定とされる。フラグ名からは個人ワークスペースを非表示にするための設定と読めるが、具体的な挙動の詳細までは示されていない。\n\n## switch_acp_model の追加\n\n組織関連以外では、feat(acp) として switch_acp_model プロキシエンドポイントが cloud conversations 向けに追加された。名称からは、クラウド上の会話で ACP のモデルを切り替えるためのプロキシ用エンドポイントと受け取れる。\n\n組織管理に関する一連の変更は、既存ユーザーの移行、最初のユーザーのオーナー化、イベントの振り分け、個人ワークスペースの非表示という四つの要素で構成されている。",
+      "bodyEn": "## OpenHands cloud 1.39.0 release\n\nOpenHands cloud 1.39.0 has been published as a release, and its listed changes center on how organizations are handled. According to the release notes, the update touches how users are placed into a default organization and how automation events are directed.\n\n## Moving users into the default org\n\nOne change moves existing users into the default organization when they are first auto-added, credited to @ak684 in pull request #14740. A related change, #14752, makes the first signed-in user the default org owner and tracks the organization through an is_default flag. Together, these entries describe how a default organization is assigned and identified.\n\n## Routing automation events\n\nAnother change, #14745, routes unclaimed automation events to the default org on single-org installs. The note describes this as applying to single-organization installations. In practice, this means events that no one has claimed are sent to the default organization instead of being left unrouted, according to the wording of the release entry.\n\n## Org-only installs and ACP\n\nA further entry, #14741, adds a hide_personal_workspaces flag intended for org-only OHE installs. The release notes present it as a flag, and they do not describe its default value or how it is configured.\n\nThe notes also list an ACP-related addition: a switch_acp_model proxy endpoint for cloud conversations, labeled as feat(acp). That entry is attributed to a contributor whose name is cut off in the source, so the author cannot be confirmed here. No further detail about how the endpoint works is given.\n\nThe summary of the release says these additions streamline organization management, with the default-organization handling and unclaimed-event routing as the main examples. The release page text also includes GitHub interface messages about session reloads and a note that the commit was created on GitHub.com and signed with GitHub's verified signature, but these are page boilerplate and not part of the feature list.\n\nOverall, version 1.39.0 is described as a set of feature additions focused on default-organization behavior, with one separate ACP model-switching endpoint for cloud conversations.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "既存ユーザーを「デフォルト組織」に移すって、どういうことなの？",
+          "en": "They move existing users into the \"default org\"? What does that mean?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、既存ユーザーが初めて自動追加されたときに、デフォルト組織へ移される機能が入ったと書かれているよ。",
+          "en": "This release adds a feature where existing users get moved into the default organization the first time they're auto-added."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、未申請の自動化イベントをデフォルト組織に回すのは、どんな人の助けになるの？",
+          "en": "So routing unclaimed automation events to the default org... who does that help?"
+        },
+        {
+          "s": "b",
+          "ja": "記事では、組織が1つだけの環境で、持ち主が決まっていないイベントの行き先になるとあるよ。組織管理が整理される狙いかもね。",
+          "en": "It's for single-org installs, where unclaimed events go to the default org. Sounds aimed at tidier organization management."
+        },
+        {
+          "s": "a",
+          "ja": "つまり、ユーザーも自動化イベントも、まずデフォルト組織にまとまるってことかな？",
+          "en": "So both users and automation events end up gathered in the default org first?"
+        },
+        {
+          "s": "b",
+          "ja": "その流れは書かれているよ。ただ、細かい動作条件は記事からは分からないから、使うときは詳細を確認してね。",
+          "en": "That flow is described. But the detailed conditions aren't clear from the article, so check the specifics before relying on it."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:37:36.158Z"
+    },
+    "ba546af75496952b": {
+      "bodyJa": "旅行プラットフォームのOmioが、OpenAIのモデルを使った会話型の旅行体験を構築している。自然な対話で移動手段を探して予約できる点が特徴だ。\n\n## 会話型の旅行検索\n\n従来のフォーム型検索に代わり、ユーザーは自然言語でやり取りしながら電車、バス、フライトを探し、予約まで進められるとされる。旅行体験の利便性を高める新たなアプローチとして示されている。\n\n## AIネイティブ企業へ\n\nOmioはOpenAIの活用によって製品開発を加速させ、AIネイティブな企業へ転換を進めていると説明されている。",
+      "bodyEn": "## Conversational travel with OpenAI\n\nOmio, a travel platform, is using OpenAI's technology to build conversational travel experiences. The source describes this as part of a broader effort to speed up product development and become an AI-native company, which makes the work relevant to how travel search is designed.\n\n## Dialogue instead of forms\n\nAccording to the source, Omio is integrating OpenAI's models so users can search and book travel through natural dialogue. Rather than relying on traditional form-based search, travelers can find trains, buses, and flights by describing what they need in conversation.\n\nThe announcement presents this as a new approach to making travel more convenient. No further technical specifics are given.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "電車もバスも飛行機も、フォームじゃなくて会話で探せるの？ これって大きな変化なのかな？",
+          "en": "Wait, you can search trains, buses, and flights just by chatting, no forms? Is that a big change?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、入力フォーム中心の検索ではなく、自然な対話で探して予約する形を目指しています。探し方の入口が変わる話ですね。",
+          "en": "The piece describes moving away from form-based search to natural dialogue for finding and booking. So it's really the way you start a search that changes."
+        },
+        {
+          "s": "a",
+          "ja": "「AI-native company」って、どういう意味なんだろう？",
+          "en": "What does \"AI-native company\" actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、AIを後付けでなく土台に据える会社、くらいの意味です。この記事ではOpenAIを使って製品開発を速める話にも触れています。",
+          "en": "Generally it means a company built with AI at its core, not bolted on later. The piece also mentions using OpenAI to speed up product development."
+        },
+        {
+          "s": "a",
+          "ja": "私なら「週末に電車かバスで行けるところを探して」って話しかけてみたいな。",
+          "en": "I'd love to just say, \"Find me a weekend trip by train or bus.\" Could it work like that?"
+        },
+        {
+          "s": "b",
+          "ja": "いいですね。記事で触れているのは電車・バス・飛行機なので、実際に使うときは対応する範囲や予約の流れを確かめながら試すのがよさそうです。",
+          "en": "Nice idea. The article covers trains, buses, and flights, so when you try it, check what's supported and how booking works."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:38:25.224Z"
+    },
+    "8174c1b8eba5b30f": {
+      "bodyJa": "## クロスオリジンストレージ\n\n提案段階にあるCross-Origin Storage APIをTransformers.jsで試す、Chromeチームのゲスト記事が公開された。異なるオリジン間でキャッシュ済みのモデルファイルを共有し、重複ダウンロードをなくせる可能性があるとされる。\n\n筆者はGoogleのChromeチームでDeveloper Relations Engineerを務めるThomas Steinerだ。この試みは、ブラウザ上で動くローカルAIの体験改善につながると説明されている。\n\n## pipeline()\n\nTransformers.jsは、タスク別のパイプラインを通じて、ウェブ開発者がウェブアプリでtransformerの力を手軽に使えるようにするライブラリだ。ブラウザ内で推論を実行するには、pipeline()のインスタンスを作成し、そのパイプラインで使いたいタスクを指定する。\n\n## ASRパイプライン\n\n具体例として示されているのは、自動音声認識(ASR)パイプラインの設定だ。コードではhttps://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0からpipelineをインポートしている。そして、用意したasrに音声ファイル「jfk.wav」を渡し、awaitで結果を受け取る。\n\nタスクを指定してパイプラインを作り、入力を渡して結果を得る。この流れが、ブラウザ内推論の基本形として紹介されている。\n\n## モデルの指定\n\nこの例でモデルに指定されているのは、Xenova/whisper-tiny.en だ。筆者はこれを、一般的な英語の自動音声認識タスクに向いたとても良い選択だと述べている。\n\nモデルファイルはブラウザ側にキャッシュされて使われる。Cross-Origin Storage APIの実験は、そのキャッシュをオリジンをまたいで共有できるかを探るものだ。",
+      "bodyEn": "## Transformers.js and Cross-Origin Storage\n\nThis guest post, written by Thomas Steiner, a Developer Relations Engineer on the Chrome team at Google, looks at experimenting with the proposed Cross-Origin Storage API in Transformers.js. According to the post, the aim is to share cached model files across different web origins, which could remove redundant downloads and improve in-browser local AI performance.\n\n## Pipelines for In-Browser Inference\n\nThe post describes Transformers.js as a simple way for Web developers to use transformers in their web apps through task-specific pipelines. To run inference in the browser, a developer creates an instance of pipeline() and specifies the task the pipeline should handle.\n\nAs a concrete example, the post shows how to set up an automatic speech recognition (ASR) pipeline. The snippet imports pipeline from a jsDelivr CDN URL for the @huggingface/transformers package at version 4.2.0. It then awaits a call to the ASR pipeline with an audio file named jfk.wav and stores the output in a variable called result.\n\n## The Model Choice\n\nThe author notes that the source code specifies Xenova/whisper-tiny.en as the model. He calls it a very decent choice for common English automatic speech recognition tasks.\n\n## What the Experiment Explores\n\nThe central idea is the proposed Cross-Origin Storage API. As framed in the post, it is a way to let model files that have already been cached be reused across different origins. The stated potential benefit is fewer repeated downloads of the same model, which would improve the experience of running local AI in the browser.\n\nThe API is described as a proposal, and the post presents its use with Transformers.js as an experiment. The conclusions are therefore tentative: the post speaks of what the approach could achieve, not of an established result.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "この記事で試しているクロスオリジンストレージAPIって、何をするものなの？",
+          "en": "What does this Cross-Origin Storage API in the post actually do?"
+        },
+        {
+          "s": "b",
+          "ja": "提案中のAPIで、異なるオリジン間でキャッシュ済みのモデルファイルを共有できる可能性を探っています。Transformers.jsで実験的に使っているんです。",
+          "en": "It's a proposed API, and the post explores whether different origins could share cached model files. They try it out experimentally with Transformers.js."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、別のサイトでも同じモデルを何回もダウンロードしなくてよくなるのかな？",
+          "en": "So would different sites stop downloading the same model over and over?"
+        },
+        {
+          "s": "b",
+          "ja": "そこが狙いで、重複ダウンロードを減らせるかもしれないと書かれています。ブラウザ上のローカルAI体験の改善につながる、という位置づけですね。",
+          "en": "That's the aim. The post says redundant downloads could be reduced, which could improve in-browser local AI experiences."
+        },
+        {
+          "s": "a",
+          "ja": "ブラウザでAIを動かすWeb開発者や使う人に、ムダな待ち時間が減るかもってことだね。",
+          "en": "So web developers and users running AI in the browser might wait less. Is that right?"
+        },
+        {
+          "s": "b",
+          "ja": "その方向ですね。ただ、APIはまだ提案中で、この記事も実験の段階です。使えるようになると決まったわけではないので、そこは気をつけたいです。",
+          "en": "That's the direction. But the API is still proposed and this is an experiment, so it's not settled that you can rely on it yet."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:38:51.528Z"
+    },
+    "4a91b9d2bc5c9688": {
+      "bodyJa": "PaddleOCRの汎用OCRモデルファミリーの最新世代「PP-OCRv6」が、Hugging Face上で紹介されている。1.5Mから34.5Mパラメータまで規模の異なるモデルを揃え、50言語のテキスト検出と認識を扱える点が特徴だ。\n\n## 3つのティア構成\n\nPP-OCRv6は、tiny、small、mediumの3つのティアで構成される。パラメータ数は最小で1.5M、最大で34.5Mとされ、同じ世代のなかで規模の違うモデルを選べる。\n\n想定される対象は、文書、スクリーンショット、多言語の画像、デジタル表示、産業用ラベル、シーンテキストなど、実世界のさまざまなテキストだ。いずれも文字の検出と認識の両方を扱うと説明されている。\n\n## 50言語への対応\n\nmediumとsmallの両ティアは、50言語に対応する。内訳は簡体字中国語、繁体字中国語、英語、日本語に加え、ラテン文字を使う46言語である。日本語が明示的に含まれているため、日本語の文書や画像を扱う場面でも検討対象になる。\n\n## 公式ベンチマークの結果\n\nPaddleOCRが公式に用意した社内のマルチシナリオOCRベンチマークでは、PP-OCRv6_mediumが検出でHmean 86.2%、認識で精度83.2%に達したという。ただしこれはPaddleOCR自身の社内ベンチマークによる数値であり、ほかのティアの数値はここでは示されていない。\n\n## 3つのバックエンド\n\n導入面では、PaddlePaddle、Transformers、ONNX Runtimeのいずれかをバックエンドとして使い、軽量で実運用向けのOCRを組み込めると案内されている。また、オンラインデモが用意されており、導入前にPP-OCRv6の挙動をブラウザ上で手早く試せる。\n\n用途や環境に合わせてモデルの規模とバックエンドを選べる点が、このリリースの要点といえる。",
+      "bodyEn": "PP-OCRv6 is now on Hugging Face, according to the Hugging Face blog post. It is the latest generation of PaddleOCR's universal OCR model family, and it matters for anyone who needs text detection and recognition in a range of model sizes.\n\n## PP-OCRv6 on Hugging Face\n\nThe announcement describes PP-OCRv6 as built for real-world text detection and recognition. The listed target content includes documents, screenshots, multilingual images, digital displays, industrial labels, and scene text. The post presents it as lightweight, production-ready OCR.\n\n## 1.5M to 34.5M Parameters\n\nThe family scales from 1.5M to 34.5M parameters across three tiers: tiny, small, and medium. This gives users a choice of model size within one generation of models. The post does not break down parameter counts for each individual tier.\n\n## 50-Language OCR\n\nAccording to the post, the medium and small tiers support 50 languages. These are Simplified Chinese, Traditional Chinese, English, Japanese, and 46 Latin-script languages.\n\n## Evaluation and Integration\n\nThe post points readers to a PP-OCRv6 online demo for trying the models quickly. For integration, it names three backend options: PaddlePaddle, Transformers, or ONNX Runtime.\n\nOn benchmarks, the source cites PaddleOCR's official in-house multi-scenario OCR benchmarks. On those tests, PP-OCRv6_medium reaches 86.2% detection Hmean and 83.2% recognition accuracy. These are figures reported by the project on its own benchmarks, and the post gives no comparison results for the other tiers.\n\nIn short, the release combines a three-tier size range, 50-language coverage in the medium and small tiers, a hosted demo, and three backend options for developers who want to evaluate the models and then deploy them.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "1.5Mから34.5Mパラメータって、すごく幅があるよね。これって大きいことなの？",
+          "en": "1.5M to 34.5M parameters is a huge range, right? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、tiny・small・mediumの3段階で同じ系統のモデルが並んでいます。小さいものから大きいものまで選べる、という点が特徴ですね。",
+          "en": "The post lists three tiers: tiny, small, and medium, all in one family. So the point is that you can pick a size that fits your needs."
+        },
+        {
+          "s": "a",
+          "ja": "Hmeanって何？ 検出で86.2%って書いてあったけど、よくわからなくて。",
+          "en": "What's Hmean? It says 86.2% for detection, but I don't really get it."
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、見つけ漏れの少なさと見つけ間違いの少なさを合わせた指標です。この記事では、mediumが検出で86.2%、認識精度で83.2%とされています。",
+          "en": "Generally, it blends how few texts you miss with how few false finds you make. Here, medium hits 86.2% detection Hmean and 83.2% recognition accuracy."
+        },
+        {
+          "s": "a",
+          "ja": "日本語の画像や、ラベルの写真を読ませる用途なら、どのサイズを選べばいいのかな？",
+          "en": "If I wanted to read Japanese images or label photos, which size should I pick?"
+        },
+        {
+          "s": "b",
+          "ja": "日本語はmediumとsmallが対応で、tinyについては書かれていません。数値は公式の社内ベンチマークの結果なので、実際の画像で試すのが安心です。",
+          "en": "Japanese is supported in medium and small; tiny isn't mentioned. Those numbers come from official in-house benchmarks, so testing on your own images is safest."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:38:56.536Z"
+    },
+    "fa91af45787dd3ac": {
+      "bodyJa": "## Daybreakの発表\n\nOpenAIは、あらゆる規模の組織が高度な脅威から自組織を守れるよう、AIを活用したツール群を提供するサイバーセキュリティ向けプラットフォーム「Daybreak」を発表した。\n\n## Codex SecurityとGPT-5.5-Cyber\n\nDaybreakには、Codex SecurityとGPT-5.5-Cyberが含まれると説明されている。これらは、組織が脆弱性を大規模に見つけ、検証し、修正(パッチ適用)するのを支援するためのツールとされる。\n\n発見から検証、修正までの流れを対象にしている点が特徴で、規模を問わず組織の防御を支えることが狙いだと位置づけられている。",
+      "bodyEn": "## Daybreak security tools\n\nOpenAI has introduced Daybreak, a cybersecurity initiative that offers AI-powered tools. According to the announcement, it is meant to help organizations of all sizes detect and defend against sophisticated threats.\n\n## Find, validate, and patch\n\nThe announcement says the new Daybreak tools include Codex Security and GPT-5.5-Cyber. Their stated purpose is to help organizations find, validate, and patch vulnerabilities at scale. The source describes Daybreak as a platform for protecting organizations around the world, with the aim of making advanced defensive capabilities available regardless of an organization's size. No pricing, availability, or platform details are given.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-5.5-Cyberっていう名前が出てきたね。サイバー向けのモデルってこと？これって大きいことなのかな？",
+          "en": "There's something called GPT-5.5-Cyber here. Is that a model made for cybersecurity? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事ではCodex Securityと並んで紹介されていて、脆弱性を見つけて確かめ、直す作業を大規模に支える道具の一つという位置づけだよ。",
+          "en": "The article lists it alongside Codex Security as part of Daybreak, tools to find, validate, and patch vulnerabilities at scale. That's the role it describes."
+        },
+        {
+          "s": "a",
+          "ja": "ねえ、そもそも「脆弱性」ってなに？ 悪い人に狙われる穴みたいなもの？",
+          "en": "Wait, what's a \"vulnerability\" exactly? Is it like a hole that bad actors can go after?"
+        },
+        {
+          "s": "b",
+          "ja": "だいたいそんなイメージ。ソフトの弱点やすきまのことで、記事は「見つける、確かめる、直す」の流れで語っているよ。",
+          "en": "Pretty much. It's a weak spot in software. The article frames the work as three steps: find it, check it's real, then fix it."
+        },
+        {
+          "s": "a",
+          "ja": "小さなチームでも、まず自分たちの弱点探しをお願いできたら心強いなあ。使えるのかな？",
+          "en": "If I were on a small team, I'd love help finding our weak spots first. Could we actually use it?"
+        },
+        {
+          "s": "b",
+          "ja": "記事ではあらゆる規模の組織が対象とされているよ。ただ、使える条件や範囲の細かい話は触れられていないから、そこは公式の案内で確かめたいね。",
+          "en": "The article says it's meant for organizations of all sizes. But it doesn't spell out access terms or limits, so those are worth checking in the official details."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:39:09.299Z"
+    },
+    "3ce8d9261e142c20": {
+      "bodyJa": "Google ADKとAgent2Agent(A2A)プロトコルを使い、Pythonで書かれたエージェントとGoで書かれたエージェントを、契約コンプライアンスの一つのパイプラインとして協調させる構築例が紹介されている。言語もチームも異なるエージェントを書き直さずにつなぐ方法が主題である。\n\n## 二つのエージェントの分業\n\n登場するのは性格の異なる二つのエージェントだ。一つはデータサイエンスチームが書いたPython製の抽出エージェントで、Geminiを使って法的な契約書を解析し、主要な条項や用語を抜き出す。\n\nもう一つはセキュリティエンジニアリングチームがGoで作ったコンプライアンス検証エージェントである。こちらはすべて決定論的なロジックで動き、LLMは使わないと説明されている。高速に動作する点も特徴として挙げられている。\n\n## 書き直したくないチーム\n\nこの二つは、単体では問題なく動作している。課題は、これらを一つの連携したパイプラインとして動かす必要が出てきたときに生じる。どちらのチームも、自分たちのサービスを別の言語で書き直すことには応じない。\n\n記事は、これが本番環境のAIシステムにおける現実だとしている。チームも言語もデプロイ先も異なるという状況は避けられず、問われるのは直面するかどうかではなく、どう解決するかだという位置づけである。\n\n## ADKとA2Aによる連携\n\n解決策として示されるのがGoogle ADKとA2Aプロトコルの組み合わせだ。Pythonのオーケストレーターエージェントが、Goの専門エージェントと言語の境界を越えて協力し、契約コンプライアンスのタスクを処理する構成が取り上げられている。\n\nLLMで契約書から情報を抽出する工程と、決定論的なルールで検証する工程を、それぞれ得意な言語と実装のまま役割分担させる形である。記事はこれを、企業のマルチエージェントシステムに向けた実践的なパターンとして示している。",
+      "bodyEn": "## Cross-Language Multi-Agent Team\n\nThis article from Google's developer blog describes how to build a multi-agent system that spans programming languages, using Google's Agent Development Kit (ADK) and the Agent2Agent (A2A) protocol. It matters because, as the article frames it, production AI systems often involve different teams, different languages, and different deployment targets, so the question is how to connect agents rather than whether the problem will come up.\n\nThe worked example has a Python agent and a Go agent collaborating on contract compliance. According to the summary, a Python orchestrator agent works with a Go specialist agent across the language boundary, and the article presents this as a practical pattern for enterprise multi-agent systems.\n\n## Your Contract Compliance Pipeline\n\nThe scenario involves two teams. The data science team wrote an extraction agent in Python. It uses Gemini to parse legal contracts and pull out every key term.\n\nThe security engineering team built a compliance validator in Go. The article describes it as blazing-fast and says it relies entirely on deterministic logic, with no LLM involved.\n\nEach component works perfectly on its own. The difficulty is that the organization now needs them to operate as a single coordinated pipeline, and neither team is willing to rewrite its service in the other's language.\n\n## Agent2Agent Protocol\n\nThe article's answer is the Agent2Agent protocol, used together with Google's Agent Development Kit. A2A is the mechanism through which the Python agent and the Go agent collaborate on the compliance task, so each team can keep its own implementation while the two services still function as one pipeline.\n\nThe material also illustrates that agents in such a system need not share a design. One uses a Gemini-powered model to interpret contract text, while the other applies fixed, rule-based checks. The article's premise is that both can still take part in the same coordinated workflow.\n\nThe piece is aimed at enterprise developers who want agents written in different languages to work together without forcing a rewrite.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "契約書のチェックみたいな仕事だと、これで何が変わるの？チームごとに言語が違っても、一緒に動かせるってこと？",
+          "en": "For something like contract checking, what actually changes? Can teams using different languages still work together?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、Pythonで書かれた抽出エージェントとGoで書かれた検証エージェントを、書き直さずに一つの流れとして協調させる例が出てきます。",
+          "en": "In this piece, a Python extraction agent and a Go validation agent work as one pipeline, and neither team has to rewrite their service."
+        },
+        {
+          "s": "a",
+          "ja": "前は、言語が違うと一緒に動かすのは難しかったのかな？今回はA2Aっていうのが役に立つの？",
+          "en": "Was it hard before when languages differed? Is this A2A thing what makes it work now?"
+        },
+        {
+          "s": "b",
+          "ja": "前との細かい比較は、この記事の範囲では分からないんだ。ただ、Google ADKとA2Aプロトコルを組み合わせて言語の壁を越える、というのが主題だよ。",
+          "en": "The article doesn't compare this with earlier methods, so I can't say. Its focus is using Google ADK with the A2A protocol to cross language boundaries."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ収穫は、チームが得意な言語のまま、Geminiを使うPythonとLLMなしのGoをつなげられることかな？",
+          "en": "So the big takeaway is that teams keep their own languages, and a Gemini-based Python agent can connect with a Go one without an LLM?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。Pythonがオーケストレーター、Goが専門エージェントとして契約コンプライアンスを担う形だよ。次は、その役割分担が実際にどう組まれているかを見たいね。",
+          "en": "Right. Python acts as the orchestrator and Go as the specialist for contract compliance. Next, it's worth looking at how that division of roles is actually put together."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:39:58.730Z"
+    },
+    "2e62a5fb1b7afb28": {
+      "bodyJa": "## 健康関連の回答を改善\n\nOpenAIは、GPT-5.5 InstantによってChatGPTの健康・ウェルネス分野の回答を改善したと発表した。医療情報の精度と安全性に関わる取り組みで、日常的な健康管理に直接影響する点で重要とされる。\n\n## 医師の知見を踏まえた評価\n\n改善点として、より強い推論、より適切な文脈の扱い、分かりやすい伝達が挙げられている。いずれもChatGPTの回答の質を高めるための要素として示されている。加えて、医師の知見を取り入れた評価が行われたと説明されている。",
+      "bodyEn": "## Health and wellness responses\n\nOpenAI has announced improvements to ChatGPT's health intelligence capabilities, aiming to raise the accuracy and safety of its answers to medical and wellness questions. The announcement frames this as important because reliable health guidance from an AI assistant bears directly on users' everyday well-being.\n\n## GPT-5.5 Instant improvements\n\nAccording to the source, GPT-5.5 Instant is the model behind the changes to ChatGPT's health and wellness responses. It describes four areas of improvement: stronger reasoning, better context, clearer communication, and physician-informed evaluations. The source does not provide further technical detail on how each area was implemented or measured.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-5.5 Instantで、健康についての答えはどう良くなるの？",
+          "en": "So how does GPT-5.5 Instant make health answers better?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、推論が強くなって、文脈の汲み取りや伝え方も良くなったとあるよ。医師の知見を踏まえた評価も使っているんだって。",
+          "en": "The post says stronger reasoning, better use of context, and clearer communication. It also mentions evaluations informed by physicians."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、体調や健康のことをChatGPTに聞く普通の人に役立つってこと？",
+          "en": "So this is for everyday people who ask ChatGPT about their health, right?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。この記事では、日々の健康管理に直接関わるから、信頼できる案内が大事という位置づけだよ。正確さと安全性の向上がねらいだね。",
+          "en": "Yes. The article frames it as something that affects daily well-being, so reliable guidance matters. Accuracy and safety are the goals."
+        },
+        {
+          "s": "a",
+          "ja": "よく考えて、分かりやすく伝えて、医師の視点も入れて確かめる。そんな改善なんだね。",
+          "en": "So it thinks things through, explains clearly, and is checked with physicians' input. Got it."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。ただ、記事から分かるのは改善の方向までで、効果の大きさまでは書かれていないよ。",
+          "en": "Right. But the post only shows the direction of the improvements. It doesn't say how big the effect is."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:40:44.066Z"
+    },
+    "a8c84dad6594919f": {
+      "bodyJa": "Hugging Faceは、AIエージェントがモデルやデータセットを自律的に検索・取得できる「エージェント型リソース探索（Agentic Resource Discovery）」を発表した。膨大なリソースの中から適切なものを人手で選ぶ手間を省き、エージェント自身がワークフローに必要な素材を動的に見つけ出せるようにする試みだ。\n\nHugging Face Hubには数十万規模のモデルとデータセットが公開されており、その数は日々増え続けている。開発者にとって選択肢が豊富である一方、目的に合ったリソースを探し当てる負担も大きい。今回の機能は、この探索プロセスをエージェントに委ねる点が特徴で、タスクの要件に応じて候補を絞り込み、実際に呼び出すまでの流れを自動化する狙いがある。\n\n背景には、近年広がる「ツール利用（tool use）」型エージェントの潮流がある。大規模言語モデルに外部APIや関数を呼び出す能力を与え、与えられた目標を達成させるアプローチだ。Hugging Faceは自社の軽量エージェントライブラリsmolagentsなどを通じてこの分野に取り組んでおり、今回の探索機能もその延長線上に位置づけられると見られる。\n\n技術面では、エージェントがHubの検索インターフェースを介してモデルカードやデータセットのメタデータを参照し、タスク適合性を判断する仕組みが想定される。AnthropicのModel Context Protocol（MCP）のような、外部リソースとエージェントを標準的につなぐ枠組みが業界で整いつつあることも、こうした自律探索の実現を後押ししている可能性がある。\n\n影響としては、プロトタイピングの高速化が期待される。従来は開発者がドキュメントやランキングを確認しながら手動でモデルを選定していたが、エージェントが候補提示から検証までを担えば試行錯誤のコストは下がると考えられる。ただし、自律的な選択には最適でないモデルを選んでしまう、あるいはライセンスや品質の確認が不十分になるといったリスクも伴う。実運用では人間による監督や、選択範囲を制限するガードレールの設計が引き続き重要になるだろう。",
+      "bodyEn": "Hugging Face has introduced Agentic Resource Discovery, a capability that lets AI agents autonomously search for and retrieve models and datasets hosted on the Hugging Face Hub. The feature targets a persistent friction point in machine learning development: manually locating the right pretrained model, adapter, or dataset among the millions of artifacts now available on the platform. By delegating that search to an agent, the workflow shifts from a human browsing a catalog to a program querying it dynamically as a task unfolds.\n\nAt a technical level, the approach exposes Hub search and metadata functions as callable tools that an agent can invoke during reasoning. In a typical tool-use loop, a large language model receives a task, decides that it needs an external resource, formulates a structured query, and calls a function that returns matching results. Agentic Resource Discovery appears to formalize this pattern for the Hub, giving agents a consistent interface to filter by task type, library, license, language, download counts, and other metadata fields already surfaced by the Hub API. The agent can then evaluate candidates, select one, and proceed to download or load it without a developer hard-coding the choice in advance.\n\nThis is significant because model selection is often context dependent. A pipeline might need a summarization model for one document, a translation model for another, and a domain-specific classifier for a third. Traditionally, developers enumerate these dependencies ahead of time. An agent that can discover resources at runtime is better suited to open-ended workflows where the required tools are not known until the task is examined. That said, autonomous selection also introduces reliability questions: an agent may pick a poorly documented or low-quality model, and results are likely to vary with prompt quality and the metadata available for each resource.\n\nThe release fits within Hugging Face's broader push into agentic tooling. The company maintains smolagents, a lightweight framework for building agents that write and execute code or call functions, and it has increasingly aligned its libraries with the tool-use conventions popularized by function calling in commercial APIs. Agentic Resource Discovery can be read as connecting those agent frameworks directly to the Hub itself, so that the same platform hosting the models also becomes a searchable resource layer for the agents that use them. The underlying huggingface_hub Python client already offers programmatic search, filtering, and download methods, which likely provide the foundation for the exposed tools.\n\nThe announcement also reflects a wider industry trend toward standardized ways of connecting models to external systems. Anthropic's Model Context Protocol, along with tool-use and function-calling features from OpenAI, Google, and others, has pushed the field toward treating retrieval and action as first-class agent operations rather than bespoke integrations. Framing the Hub as a discoverable resource for agents is consistent with that direction, and it may eventually interoperate with such protocols, although the specifics of compatibility are not fully detailed.\n\nBecause the item is categorized under local LLMs, one relevant context is that agents running on self-hosted or open-weight models can benefit from this capability as much as those built on proprietary APIs. A developer running a local model through an inference server could, in principle, grant that model access to Hub search tools, letting it find and pull additional open models or datasets as needed. This keeps more of the stack under local control while still tapping the Hub's centralized catalog, which is a common priority for teams motivated by cost, privacy, or offline requirements.\n\nProspective users should weigh a few practical considerations. Autonomous downloading consumes bandwidth and storage, and pulling arbitrary models introduces supply-chain and safety concerns that typically warrant allowlists, checksum verification, or human review for sensitive deployments. Rate limits, authentication, and licensing compatibility also remain the developer's responsibility, since an agent's selection does not by itself guarantee that a model's license fits the intended use.\n\nOverall, Agentic Resource Discovery appears aimed at making the Hub a native part of agent reasoning rather than a static repository accessed by hand. Whether it meaningfully improves development efficiency will depend on the quality of the search results, the guardrails teams put in place, and how well the tools integrate with existing agent frameworks. For now, it represents an incremental but logical step in tying resource retrieval more tightly to automated workflows.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-11T08:06:40.713Z"
     }
   }
 }

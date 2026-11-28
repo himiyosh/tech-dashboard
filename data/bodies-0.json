@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-28T13:30:51.747Z",
-  "count": 419,
+  "generatedAt": "2026-11-28T14:31:01.149Z",
+  "count": 427,
   "bodies": {
     "17f496c665a12174": {
       "bodyJa": "Metaは、AIネイティブ時代に向けたプライバシー対応インフラの中核として、社内の膨大なデータアセットを正確に分類する取り組みをエンジニアリングブログで公開した。データ保持期間やアクセス制御、利用目的の制限、第三者への共有可否、匿名化といったプライバシー制御は、対象となるデータの性質を正しく把握して初めて機能するためだ。\n\n同社の出発点はシンプルである。あらゆるプライバシーコントロールは「どこに、どのようなデータが存在するか」という信頼できる理解を前提とする。たとえば特定の個人情報を一定期間で削除する保持ポリシーを適用するには、まずそのデータがどのテーブルやログ、ストレージのどこに含まれているかを機械的に判別できなければならない。分類が曖昧なままでは、制御そのものが空回りしてしまう。\n\nしかし、この前提を大規模に満たすことは容易ではない。Meta規模のサービスでは、データは無数のシステムを横断して生成・変換・複製され、形式やスキーマも多様だ。さらに生成AIや機械学習パイプラインの普及により、学習用データセットや派生データが増え、データの流れはいっそう複雑になっている。こうした環境で分類の精度と網羅性を保つには、自動化された分類基盤と継続的な検証の仕組みが欠かせない。\n\nこの課題は業界共通のものでもある。EUのGDPRや米カリフォルニア州のCCPAをはじめとする各国の規制は、データの利用目的や保持に厳格な要件を課しており、データガバナンスの基盤整備は大手テック各社にとって避けて通れない。GoogleやMicrosoftなども独自のデータ分類・カタログ化の仕組みを整えてきたとされ、Metaの今回の公開はその一つの実装例と位置づけられる。\n\nAIの普及はデータ活用の幅を広げる一方で、プライバシー保護の難度を押し上げている。データを正確に「知る」ための分類基盤は、派手さこそないが、信頼できるAIサービスを支える土台になると見られる。Metaの事例は、プライバシーを後付けではなく設計段階から組み込む「プライバシー・バイ・デザイン」の実践として参考になりそうだ。",
@@ -11912,7 +11912,39 @@
       "bodyJa": "複数の微調整済みモデルを一つに統合する「モデルマージ」は、追加の大規模な再学習なしに複数の能力を併せ持つLLMを作る手法として注目を集めている。今回arXivで公開された研究は、このマージにおいて統合対象となる専門家モデルの「訓練ステップ数」が最終的な性能を大きく左右することを示し、どの段階のモデルを選ぶべきかという見過ごされがちな論点に光を当てた。\n\nモデルマージは、共通の事前学習済みモデルから派生した複数の専門家モデルの重みを、平均やベクトル演算によって合成する。代表的な手法にはタスクごとの重み差分を足し合わせるTask Arithmetic、干渉するパラメータを間引くTIES-MergingやDAREなどがあり、Hugging Face上のmergekitといったツールを通じて広く実践されている。追加学習を必要とせず計算コストが低い点が魅力だが、どのモデルを組み合わせるかという選定基準は経験則に頼る部分が大きかった。\n\n本研究が着目したのは、各専門家をどれだけ訓練したかという時間軸の要素である。同じデータで微調整しても、訓練が浅すぎるモデルはタスク固有の能力が十分に育たず、逆に訓練しすぎたモデルは重みが事前学習時の状態から大きく離れ、他モデルと合成した際に干渉が強まる可能性がある。著者らは、適切な訓練段階のモデルを選ぶことがマージ成功の鍵になると報告している。\n\nこの知見は、単に高性能な専門家を集めればよいという直感が必ずしも正しくないことを示唆する。マージ後の性能を最大化するには、個々のモデルの絶対的な精度だけでなく、重み空間における互換性や過学習の度合いも考慮する必要があると見られる。\n\nモデルマージはオープンソースコミュニティで急速に普及しており、各種ベンチマークの上位に位置するモデルの多くがマージ由来とされる。訓練時間という比較的制御しやすい変数がマージ品質に影響するという今回の結果は、モデル選定の指針を精緻化し、より再現性の高いマージ手法の確立につながる可能性がある。",
       "bodyEn": "Model merging has quietly become one of the most practical techniques for combining the strengths of several specialized language models into a single set of weights, and a new study posted to arXiv argues that practitioners may be overlooking a decisive variable: how long each expert model was trained before it was folded into the mix. The paper investigates how the training duration of expert models shapes the quality of the merged result, and it concludes that selecting checkpoints from an appropriate training stage is critical for achieving strong post-merge performance.\n\nModel merging refers to the practice of taking two or more models that share the same base architecture and combining their parameters directly, without further gradient training on the combined objective. The appeal is straightforward. Rather than assembling a large multi-task dataset and running an expensive joint fine-tuning job, teams can fine-tune separate experts on separate tasks and then average or otherwise blend their weights. The approach requires no access to the original training data at merge time, costs little more than the arithmetic itself, and can produce a single model that inherits capabilities from each contributor. Popular methods range from simple weight averaging and task arithmetic to more elaborate schemes such as TIES-merging, DARE, and spherical interpolation, many of which are packaged in widely used open-source tooling like mergekit.\n\nThe central finding of this work is that the number of training steps an expert has undergone is not a neutral detail but a factor that materially affects how well that expert merges with others. According to the summary, models taken too early or too late in their fine-tuning trajectory can degrade the combined model, while models drawn from a suitable stage combine far more favorably. In other words, two experts that each perform well in isolation may still merge poorly if their training durations are mismatched or if they have drifted too far from the shared starting point.\n\nThis connects to a broader body of research on why merging works at all. Weight averaging tends to succeed when the models being combined remain in a compatible region of the loss landscape relative to their common initialization, a property often discussed under the heading of linear mode connectivity. As fine-tuning continues, a model's weights move progressively further from the base, and its internal representations can specialize in ways that conflict with those of a sibling model. The paper's emphasis on training duration appears consistent with this intuition: heavily trained experts may individually reach higher task accuracy yet become harder to reconcile during merging, whereas lightly trained experts may not have acquired enough task-specific capability to contribute. The result is likely a trade-off in which an intermediate checkpoint offers the best balance between specialization and mergeability.\n\nThe practical implication is that model selection deserves as much attention as the merging algorithm itself. Much of the existing discussion around merging has focused on which mathematical recipe to use, how to weight each contributor, or how to resolve sign conflicts between parameters. This study suggests that even with a fixed merging method, choosing the right checkpoint for each expert can swing the outcome substantially. That reframes a common assumption that a fully converged, best-performing expert is always the best candidate to merge. For teams that routinely save intermediate checkpoints during fine-tuning, this points toward treating training duration as a tunable hyperparameter of the merge, rather than defaulting to the final checkpoint.\n\nThe work sits alongside a growing industry interest in modular approaches to model building, including mixtures of experts, parameter-efficient adapters such as LoRA, and the assembly of model collections from public checkpoint repositories. As organizations increasingly reuse and recombine open-weight models rather than training from scratch, understanding the conditions under which combination succeeds becomes more valuable. Readers should note that findings of this kind can depend on the specific tasks, base models, and merging methods evaluated, and the degree to which the guidance generalizes across architectures and domains will need confirmation from further study. Still, the paper offers a useful and actionable reminder that in model merging, the question is not only how to merge, but which version of each model to merge in the first place.",
       "model": "chat-backfill:gpt-5.6-sol",
-      "generatedAt": "2026-08-30T16:59:52.833Z"
+      "generatedAt": "2026-08-30T16:59:52.833Z",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "チェックポイントが最適な訓練ステップの25%から500%まであるって、すごい幅だね。これって大きいこと？",
+          "en": "Checkpoints from 25% to 500% of the optimal training steps? That's a huge range. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、通常は検証損失が最良の時点でマージするけど、その常識を訓練時間という切り口で疑っているんだ。だから幅広く試したんだね。",
+          "en": "The paper challenges the usual habit of merging at the best validation loss. Testing such a wide range of training durations is how they probe that convention."
+        },
+        {
+          "s": "a",
+          "ja": "「専門家モデル」って、どんなモデルのこと？",
+          "en": "What exactly is an \"expert model\" here?"
+        },
+        {
+          "s": "b",
+          "ja": "特定の分野を重点的に訓練したモデルのことだよ。この記事だと数学、コード、指示追従、多言語、安全性の5分野だね。",
+          "en": "It's a model fine-tuned for one specific domain. In this paper, that means Math, Code, Instruction Following, Multilingual, and Safety."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、自分で分野別モデルを作って一つにまとめるなら、どのタイミングのを選べばいいのかな？",
+          "en": "If I trained my own domain models and merged them, which checkpoint should I pick?"
+        },
+        {
+          "s": "b",
+          "ja": "記事では、適切な訓練段階を選ぶことが大事だと示唆されているよ。ただ、試したのはQwen 3.5の0.8B、2B、4Bと五つの手法だから、他の条件は分からないね。",
+          "en": "The paper says picking the right training stage matters. But it tested only Qwen 3.5 at 0.8B, 2B and 4B with five merging methods, so other setups remain unknown."
+        }
+      ]
     },
     "12b67920a60929cf": {
       "bodyJa": "タスク自動化ライブラリ「Dandori」が、過剰な安全設計に起因する処理性能の問題を解消するため、「Bounded Adaptive Orchestration(境界付き適応的オーケストレーション)」と呼ぶ新しいアーキテクチャで再設計された。柔軟性とパフォーマンスの両立を狙った取り組みで、AIエージェントによるタスク実行基盤の設計に一つの示唆を与える事例と言える。\n\nDandoriは、複数のタスクを依存関係に沿って調整・実行するオーケストレーション機能を提供するライブラリだ。「段取り」を語源とする名称が示すように、処理の順序や前提条件を整理し、安全に自動化を進めることを重視して設計されていたと見られる。しかし、その安全性を担保するために課された制約が過度に保守的だったため、本来なら並行して処理できる作業まで直列化されるなど、実行の重さを招いていたという。\n\n今回導入されたBounded Adaptive Orchestrationは、安全性の境界(bounded)をあらかじめ定義したうえで、その範囲内では実行方法を状況に応じて適応的(adaptive)に変化させるという考え方に基づく。すべてを一律に厳格な制約で縛るのではなく、守るべき不変条件を明確にし、それ以外の部分では並行実行や動的な最適化を許容することで、安全性を損なわずに処理効率を高める狙いがあると考えられる。\n\nこうしたアプローチは、AIエージェントの実行制御という広い文脈とも重なる。LangChainやLlamaIndex、Microsoftのオーケストレーション関連ツールなど、複数の処理やツール呼び出しを協調させる仕組みは各所で開発が進んでおり、いずれも信頼性と実行効率のバランスが共通の課題となっている。制約を厳しくするほど予期せぬ挙動は抑えられる一方、動作が遅く硬直的になりやすいというトレードオフは、この種の基盤に付きまといがちだ。\n\nDandoriの事例は、安全設計を後から一律に緩めるのではなく、境界を再定義して適応の余地を組み込むという設計判断を示す点で参考になる。もっとも、適応的な挙動は再現性やデバッグの難しさを伴う可能性もあり、境界の設定が適切かどうかが実運用での鍵になるとみられる。今後、同様の課題を抱えるオーケストレーション基盤にとって、一つの設計パターンとして検討されていく可能性がある。",
@@ -13728,126 +13760,6 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T07:39:28.737Z"
     },
-    "7944fc8cac623dff": {
-      "bodyJa": "## 中小企業向け\n\nOpenAIは、中小企業向けの「ChatGPT for small business」プログラムを開始した。AIツールを業務へ取り入れやすくし、生産性の向上と競争力の強化を後押しする取り組みだ。\n\n## ChatGPT活用支援\n\n小規模な組織によるAIツールの導入に向けて、リソースと支援を提供する。起業家がAIスキルを身につけ、ChatGPT Workで業務を自動化し、成長につなげることを支援すると説明されている。",
-      "bodyEn": "## ChatGPT for Small Businesses\n\nOpenAI has launched a dedicated ChatGPT program for small businesses. It is intended to make AI tools easier for smaller organizations to adopt, supporting improved productivity, operational efficiency, and competitiveness.\n\n## Resources and support\n\nThe ChatGPT for Small Businesses program offers resources and support to help entrepreneurs and smaller organizations build AI skills. According to the announcement, participants can use ChatGPT Work to automate work and support growth. The program focuses on helping small businesses integrate AI tools into their operations rather than leaving them to navigate adoption without dedicated assistance.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "中小企業向けのプログラムって、ChatGPTの使い方を教えてくれるの？",
-          "en": "Is this small-business program meant to teach teams how to use ChatGPT?"
-        },
-        {
-          "s": "b",
-          "ja": "OpenAIが、AIスキルの習得や仕事の自動化を支えるリソースとサポートを提供するプログラムだよ。",
-          "en": "OpenAI describes it as a program offering resources and support to build AI skills and automate work."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、AIを仕事に取り入れたい中小企業や起業家が、業務を進めやすくするための支援なんだね？",
-          "en": "So it supports small businesses and entrepreneurs that want to bring AI into their everyday work?"
-        },
-        {
-          "s": "b",
-          "ja": "うん。業務効率や生産性を高め、事業の成長や競争力の強化を後押しする狙いがあるよ。",
-          "en": "Yes. The goal is to improve efficiency and productivity while supporting business growth and competitiveness."
-        },
-        {
-          "s": "a",
-          "ja": "ChatGPTを渡すだけじゃなくて、使う力と仕事の自動化まで支えるプログラムなんだ。",
-          "en": "So it’s not just access to ChatGPT—it also helps businesses build skills and automate work."
-        },
-        {
-          "s": "b",
-          "ja": "そうだね。対象は中小企業で、ChatGPT Workを使った成長支援として紹介されている点は押さえておこう。",
-          "en": "Right. Keep in mind that it’s presented specifically for small businesses, with support centered on growing through ChatGPT Work."
-        }
-      ],
-      "model": "gpt-5.6-sol",
-      "generatedAt": "2026-10-07T18:10:06.831Z"
-    },
-    "de3535ae2f8767a5": {
-      "bodyJa": "## AIネイティブな通信事業者\n\nDeutsche TelekomはOpenAIと提携し、AIネイティブな通信事業者への転換を進めている。通信業界における大規模なAI導入の先進事例として注目されている。\n\n## 刷新される四つの領域\n\n取り組みの対象とされているのは、顧客サポート、従業員のワークフロー、ネットワーク運用、そして音声(ボイス)の将来である。\n\nとくに顧客サポートとネットワーク運用は、AIによる刷新の例として挙げられている。いずれも通信事業者の日常業務に直結する領域であり、AIを軸に見直す対象になっている。",
-      "bodyEn": "## Becoming an AI-native telco\n\nDeutsche Telekom is working with OpenAI to become what the source calls an \"AI-native telco.\" The partnership is presented as a significant enterprise deployment of AI in the telecom sector.\n\nAccording to the source, the effort covers four areas: customer service, employee workflows, network operations, and the future of voice.\n\n## Customer service and networks\n\nThe announcement says AI is being used to transform customer service and network operations, two areas the summary highlights specifically. Employee workflows and the future of voice are also named as parts of the transformation.\n\nThe source gives no figures, timelines, or technical specifics about how these changes are implemented, so the scope is best understood as the broad direction described above.",
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T07:39:54.437Z"
-    },
-    "3b5f099ed4c45dd8": {
-      "bodyJa": "## K-12教育者向けAI Skills Jam\n\nOpenAI AcademyとWalton Family Foundationは、K-12の教育者が授業で使える実践的なAIスキルを身につけられるよう、ハンズオン形式の「AI Skills Jams」を提供する。\n\n## 教室で使える実践的スキル\n\nこのプログラムは、教師が教室でAIを効果的に取り入れるために必要な実用的なツールと知識を得られるよう支援するものと説明されている。対象は授業や業務でAIを活用したいK-12の教育者である。\n\n内容は実際に手を動かして学ぶ形式で、教育現場でのAI活用に必要なスキルの習得を目的とする。開催の時期や場所、参加方法などの詳細は示されていない。",
-      "bodyEn": "## Hands-On AI Skills Jams\n\nOpenAI Academy and the Walton Family Foundation are bringing hands-on AI Skills Jams to K–12 educators. The goal, according to the announcement, is to help teachers build practical AI skills for the classroom.\n\nThe effort matters because it targets the people who would put AI to use in schools, rather than just the tools themselves.\n\n## Practical Skills for Classrooms\n\nAccording to the source, OpenAI launched the initiative to help K–12 educators develop hands-on AI skills. The program is described as equipping teachers with practical tools and knowledge so they can integrate AI effectively into their classrooms.\n\nThe Japanese summary adds that the program also supports using AI in everyday work and lessons. The announcement focuses on hands-on learning through the Skills Jams format.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "「AI Skills Jams」ってなに？ジャムって、音楽のセッションみたいな感じなのかな？",
-          "en": "What's an \"AI Skills Jam\"? Is a jam like a music session, where everyone just plays together?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、OpenAI AcademyとWalton Family Foundationが、K–12の先生向けに実践型のAI Skills Jamsを届けると紹介されています。「hands-on」なので、手を動かして学ぶ場のようですね。",
-          "en": "The article says OpenAI Academy and the Walton Family Foundation are bringing hands-on AI Skills Jams to K–12 educators. \"Hands-on\" suggests teachers learn by actually trying things."
-        },
-        {
-          "s": "a",
-          "ja": "じゃあ、先生が授業で使えるAIのコツを、実際に試しながら学べるってこと？",
-          "en": "So teachers get to try AI themselves and pick up tips they can use in class?"
-        },
-        {
-          "s": "b",
-          "ja": "そう読めますね。狙いは、教室で使える実践的なAIスキルを身につけてもらうこと。授業や業務での活用を後押しする取り組みという位置づけです。",
-          "en": "That's how it reads. The goal is practical AI skills for the classroom, supporting teachers in using AI in lessons and day-to-day work."
-        },
-        {
-          "s": "a",
-          "ja": "K–12って、幼稚園から高校までの先生のことだよね。幅広い先生が手を動かして学べる場なんだ。",
-          "en": "K–12 means teachers from kindergarten through high school, right? So it's a hands-on place for a wide range of teachers."
-        },
-        {
-          "s": "b",
-          "ja": "うん、K–12は幼稚園から高校卒業までの学年を指す言い方だよ。ただ、授業が実際にどう変わるかは、取り組みが進んでからの話かもね。",
-          "en": "Yes, K–12 covers kindergarten through high school. But how classes actually change might only become clear once the program is underway."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T02:32:15.116Z"
-    },
-    "6f439ef95a874d8d": {
-      "bodyJa": "## AP+のChatGPTとCodex活用\n\nオーストラリアの決済インフラ企業Australian Payments Plus(AP+)が、ChatGPT EnterpriseとCodexを使い、決済の複雑さに対応しながら開発を進めている事例が紹介されている。金融インフラという重要な分野で、AIツールが実用的な成果を出していることを示す内容だ。\n\n## 時間短縮と品質、人の判断\n\nAP+はこれらのツールにより、時間の節約と品質の向上を実現したと説明されている。開発の速度や業務の効率化にも成果があったとされる。\n\n一方で、人間の判断は引き続き中心に置かれているという。AIは作業を加速させる役割を担い、最終的な判断は人が行う形で運用されていると読み取れる。",
-      "bodyEn": "## AP+ Moves Faster\n\nAustralian Payments Plus (AP+), an Australian payments infrastructure company, is using ChatGPT Enterprise and Codex to work through the complexity of payments, according to the OpenAI post. The case study matters because it shows AI tools being applied in critical financial infrastructure.\n\n## Human Judgment Stays Central\n\nThe source says AP+ saves time and improves quality with these tools. It also states that human judgment remains central to how the company works. The summary describes the adoption as accelerating software development and streamlining operations, and presents it as a practical example of AI gains in this sector.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "決済の会社がChatGPTとCodexを使うと、現場の仕事って何が変わるの？",
-          "en": "When a payments company uses ChatGPT and Codex, what actually changes in day-to-day work?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、決済の複雑さの中でも速く進めやすくなり、時間の節約や品質の向上につながったと紹介されているよ。",
-          "en": "This piece says AP+ can move faster through payments complexity, saving time and improving quality."
-        },
-        {
-          "s": "a",
-          "ja": "前はそれができなかったの？AIなしだと遅かったってこと？",
-          "en": "Couldn't they do that before? Was it just slower without AI?"
-        },
-        {
-          "s": "b",
-          "ja": "従来との細かい比較は、この記事の範囲では分からないんだ。ただ、時間と品質の両方に効果があったと書かれているよ。",
-          "en": "The article doesn't say how it compared with before, so I can't tell. It does say the gains covered both time and quality."
-        },
-        {
-          "s": "a",
-          "ja": "一番の収穫は、AIを使っても人の判断が真ん中にあるってことかな。",
-          "en": "So the big takeaway is that human judgment stays at the center, even with AI. Is that right?"
-        },
-        {
-          "s": "b",
-          "ja": "そうだね、記事でも人の判断を中心に置くと触れているよ。次は、金融インフラという重要な現場でその役割分担がどう形になるかに注目だね。",
-          "en": "Yes, the article stresses that. Next, I'd watch how that split between people and AI takes shape in critical financial infrastructure."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T02:32:33.664Z"
-    },
     "ec2b5dc833750aa5": {
       "bodyJa": "Cursorが Agent SDK の提供を本日から開始した。エージェントをコードのフォルダとして定義し、評価でテストしたうえで、Cursor または自社のインフラストラクチャにデプロイできる。\n\n## ローカルで起動する\n\n開発は npx @cursor/agent-sdk init ./my-bot でプロジェクトを作るところから始まる。続けて agent-sdk dev を実行すると、プレイグラウンド付きでボットをローカルで起動できる。\n\n--template を指定すれば、テンプレートから始めることもできる。用意されているのは、セキュリティレビュアー、オーナーポリシーに基づく承認ボット、PR 自動修正ツール、Linear または Jira のトリアージボットである。\n\n## フォルダ構成\n\nエージェントは 1 つのプロジェクトとして構成される。instructions.md がプロンプトにあたる。tools/ 内の各ファイルは、モデルが呼び出せる型付きアクション 1 つに対応する。\n\nskills/ にはモデルが必要に応じて読み込む手順を格納する。mcp-connections/ では MCP サーバーのツールを追加でき、channels/ ではボットがメッセージを受信・応答する場所を定義する。\n\nagent-sdk validate でプロジェクトを検証でき、agent-sdk info で検出された内容を出力できる。\n\n## agent-sdk deploy\n\n実運用の準備が整ったら、プロジェクトディレクトリで agent-sdk deploy を実行する。このコマンドはエージェントをビルドして URL を割り当て、Cursor のインフラストラクチャ上で起動する。\n\nシークレットや連携はダッシュボードから管理できる。ローカルで使っているログ、評価、プレイグラウンドも、デプロイ後にそのまま利用できる。\n\n## 起動のトリガー\n\nエージェントは複数のイベントをきっかけに起動する。対象は、GitHub、GitLab、Bitbucket の PR、コメント、CI イベント、Slack でのメンションや DM である。任意のプロバイダーからのウェブフックと、cron スケジュールも使える。",
       "bodyEn": "## Agent SDK Launches Today\n\nCursor has begun offering its Agent SDK, which lets teams define an agent as a folder of code, test it with evals, and then deploy it either to Cursor or to their own infrastructure. For teams that want to take a bot from development through to production, the announcement presents this as a single path.\n\n## Defining an Agent as a Project\n\nAccording to the announcement, an agent is organized as one project. The file instructions.md serves as the prompt. Each file inside tools/ corresponds to one typed action that the model can call. The skills/ directory holds procedures the model loads when it needs them. The mcp-connections/ directory is where tools from MCP servers are added, and channels/ defines where the bot receives and responds to messages.\n\nTwo commands help check the result: agent-sdk validate verifies the project, and agent-sdk info prints what was detected.\n\n## Running Locally with a Playground\n\nTo start, run npx @cursor/agent-sdk init ./my-bot, then agent-sdk dev. This launches the bot locally with a playground. Adding the --template option lets you begin from a template instead of a blank project. The listed templates are a security reviewer, an approval bot based on owner policies, a PR auto-fix tool, and a triage bot for Linear or Jira.\n\n## Deploying with agent-sdk deploy\n\nWhen an agent is ready for real use, running agent-sdk deploy in the project directory deploys it to Cursor. The announcement says the command builds the agent, assigns it a URL, and starts it on Cursor's infrastructure. Secrets and integrations are managed from a dashboard, and the logs, evals, and playground used locally remain available after deployment.\n\nThe source lists the events that can trigger a deployed agent: pull requests, comments, and CI events on GitHub, GitLab, and Bitbucket; mentions and direct messages in Slack; webhooks from any provider; and cron schedules.",
@@ -13929,44 +13841,6 @@
       ],
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T08:40:39.198Z"
-    },
-    "c376d1436e9255c9": {
-      "bodyJa": "## GPT-Redとは\n\nOpenAIは、自動化されたレッドチーミングシステム「GPT-Red」を発表した。自己対戦(セルフプレイ)を用いてAIの安全性やアラインメント、プロンプトインジェクションへのロバスト性を高める取り組みとされ、信頼性向上に向けた研究成果として位置づけられている。\n\n## 自己改善によるロバスト性\n\nGPT-Redは、モデルが自己改善の手法を活用してロバスト性を高めるものだと説明されている。レッドチーミングを自動化し、セルフプレイを通じて改善を進める点が特徴である。より信頼性が高く、耐性のあるAIシステムの構築に向けた一歩とされる。",
-      "bodyEn": "## GPT-Red: automated red teaming\n\nOpenAI has introduced GPT-Red, an automated red teaming system. According to the announcement, it uses self-play to improve AI safety, alignment, and prompt injection robustness. The topic matters because it concerns how AI systems can be made more reliable and resilient.\n\n## Self-improvement for robustness\n\nThe source describes GPT-Red as a model that leverages self-improvement techniques to enhance robustness. OpenAI presents this as a significant step toward building more dependable AI systems.\n\nThe announcement names three areas the system targets: safety, alignment, and prompt injection robustness. It identifies self-play as the mechanism behind the approach. Further technical specifics are not given here, so the scope of the method and its measured results remain unstated.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "GPT-Redって、AIが自分で強くなる仕組みなんだよね？これって大きいこと？",
-          "en": "So GPT-Red is about an AI getting stronger by itself, right? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "この記事では、OpenAIの自動レッドチーミングのシステムとして紹介されてるよ。安全性やアラインメント、プロンプトインジェクションへの強さを高める研究、という位置づけだね。",
-          "en": "Here it's presented as OpenAI's automated red teaming system, aimed at improving safety, alignment, and prompt injection robustness. So it's framed as a meaningful safety-focused step."
-        },
-        {
-          "s": "a",
-          "ja": "レッドチーミングって、なんだろう？赤いチームがいるの？",
-          "en": "What's red teaming? Is there an actual red team?"
-        },
-        {
-          "s": "b",
-          "ja": "一般的には、わざと攻撃する側の目線でAIの弱点を探すテストのことだよ。GPT-Redは、それを自動でやる仕組みってことだね。",
-          "en": "Generally, it means testing by playing the attacker to find an AI's weak spots. GPT-Red automates that process."
-        },
-        {
-          "s": "a",
-          "ja": "AIが外の文章を読むときに、変な指示にだまされにくくなるなら安心かも！",
-          "en": "If AI gets harder to fool with sneaky instructions in text it reads, that'd feel safer!"
-        },
-        {
-          "s": "b",
-          "ja": "狙いは、まさにプロンプトインジェクションへの強さだね。ただ、実際どこまで守れるかは使う場面ごとに確かめたいところかもね。",
-          "en": "Prompt injection robustness is exactly one of the goals. Still, how well it protects in practice might depend on the situation, so it's worth checking case by case."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T08:41:46.736Z"
     },
     "205d8e87e8d51cf8": {
       "bodyJa": "## 自社株5%を公益ファンドへ\n\nAnthropicは、自社株の一部を新設の「Anthropic Public Benefit Fund」に拠出すると発表した。このファンドは同社の完全子会社で、会社の成長に応じて持ち分が増える構造になっているとされる。公益への資金提供を、事業の拡大と連動させる仕組みである。\n\n## 株主承認と追加拠出の条件\n\n拠出は株主の承認を前提としている。承認が得られれば、同社の株式の5%が今回コミットされる。\n\nさらに、企業価値が設定された基準(ベースライン)を上回って50%増えるごとに、取締役会の裁量で2%が追加される。追加は自動ではなく、取締役会が判断する形だと説明されている。基準となる具体的な金額や、追加の上限については、ここでは示されていない。\n\n## 社内で担う公益活動\n\nAnthropicは公益法人(public benefit corporation)として、使命の追求に関わる活動の大半を社内で行っているという。具体例として挙げられているのは、AIの安全性や解釈可能性に関する研究、応用的な生物医学研究、そして非営利団体や科学機関向けのClaudeの割引である。\n\nこれらの活動には公益としての側面と営利上の価値の両方があるため、会社の内部に置いているとの説明だ。今回のファンドは、こうした社内の取り組みとは別に、株式を通じた公益への拠出を担う器として位置づけられている。\n\n## 成長と連動する設計\n\n要点は、拠出額が固定ではなく会社の価値の伸びに合わせて拡大する点にある。企業価値が基準から50%伸びるごとに2%が加わる設計のため、成長すれば公益に回る持ち分も増える。\n\nファンドの具体的な使途や運営体制については、ここでは明らかにされていない。現時点で確認できるのは、5%の拠出方針、株主承認という条件、そして企業価値に連動した追加拠出のルールである。",
@@ -14568,49 +14442,415 @@
       "model": "claude-sonnet-5-5",
       "generatedAt": "2026-11-28T12:38:15.836Z"
     },
-    "6441692fc8196712": {
-      "bodyJa": "OpenAIは次世代モデル「GPT-5.6 Sol」のプレビューを公開した。同社のモデル群における注目すべき前進と位置づけられている。\n\n## 能力の強化\nコーディング、科学、サイバーセキュリティの各分野で能力が強まったと説明されている。あわせて、推論と性能の面でも大きな向上があるとされる。\n\n## 最先端の安全スタック\n今回のプレビューは、同社として最も高度な安全スタックと組み合わせて示されている。開発者や企業向けに新たな可能性を広げる重要なマイルストーンになるとされる。",
-      "bodyEn": "## OpenAI previews GPT-5.6 Sol\n\nOpenAI has announced a preview of GPT-5.6 Sol, a next-generation model. The announcement matters because it marks a notable step forward in the company's model lineup, according to the source.\n\nThe preview was published on June 26, 2026.\n\n## Stronger capabilities, safety stack\n\nAccording to the announcement, GPT-5.6 Sol offers stronger capabilities in coding, science, and cybersecurity. The source also describes significant improvements in reasoning and performance.\n\nOpenAI says the model is paired with its most advanced safety stack. The source presents the preview as opening new possibilities for developers and enterprises.",
-      "chat": [
-        {
-          "s": "a",
-          "ja": "今回は数字じゃなくて、コーディングと科学とセキュリティが強くなったって書いてあるね。これって大きいこと？",
-          "en": "No numbers this time, but coding, science, and cybersecurity all got stronger, right? Is that a big deal?"
-        },
-        {
-          "s": "b",
-          "ja": "記事だと、その3分野の強化に最も高度な安全対策を組み合わせた次世代モデルとされているよ。ただ、具体的な数値までは書かれていないんだ。",
-          "en": "The article frames it as a next-gen model with stronger abilities in those three areas, plus OpenAI's most advanced safety stack. It doesn't give specific numbers, though."
-        },
-        {
-          "s": "a",
-          "ja": "「safety stack」ってなに？ 安全のための道具がいろいろ入ってるってこと？",
-          "en": "What's a \"safety stack\"? Like a bunch of safety tools all packed together?"
-        },
-        {
-          "s": "b",
-          "ja": "一般的には、安全のための仕組みをいくつも重ねたもの、くらいの意味だよ。この記事では、それが「最も高度」だと述べているね。",
-          "en": "Generally, it means several safety measures layered together. This article says OpenAI's version is its most advanced one yet."
-        },
-        {
-          "s": "a",
-          "ja": "わたしならコードを書くときに頼ってみたいな。もう使えるのかな？",
-          "en": "I'd love to try it when I'm writing code. Can we use it already?"
-        },
-        {
-          "s": "b",
-          "ja": "今回はあくまでプレビューの発表だよ。この記事から分かるのは能力と安全面の方向性までで、使える範囲や条件は書かれていないんだ。",
-          "en": "This is a preview announcement. The article covers the capability and safety direction, but nothing about who can use it or under what conditions."
-        }
-      ],
-      "model": "claude-sonnet-5-5",
-      "generatedAt": "2026-11-28T12:39:57.874Z"
-    },
     "c64f69921adf199e": {
       "bodyJa": "オープンソース開発の現場では、日々寄せられる Issue やプルリクエスト（PR）の分類・仕分け作業、いわゆるトリアージがメンテナーの大きな負担となっている。HuggingFace は自社ブログで、ローカル環境で動作するオープンな大規模言語モデル（LLM）を用いて OpenClaw リポジトリのトリアージを自動化する手法を公開した。クラウドの有料 API に頼らず、コストをかけずに運用できる点が注目を集めている。\n\n紹介された仕組みは、GitHub に新しい Issue や PR が投稿された際、その内容をローカルで動く LLM に渡し、ラベル付けや優先度の判定、重複の検出などを自動で行うというものだ。処理をすべて手元のマシンや自前のサーバーで完結させるため、外部 API の従量課金が発生せず、コードや議論の内容が第三者のサービスに送信されないという利点もある。\n\nこの手法の背景には、オープンモデルの性能向上と軽量化の進展がある。近年は Llama や Qwen、Mistral をはじめ、比較的小規模でも実用的な精度を持つモデルが増えており、量子化技術によって一般的な GPU や高性能な CPU でも動かせるようになってきた。Ollama や llama.cpp、vLLM といった推論ツールの普及も、ローカル運用のハードルを下げている。\n\nトリアージ自動化そのものは目新しい発想ではなく、これまでも GitHub Actions と OpenAI や Anthropic などのクラウド API を組み合わせる事例は存在した。今回のアプローチの特徴は、その処理をオープンモデルとローカル実行に置き換えることで、コストとプライバシーの両面の課題に対応しようとする点にあると言える。\n\n一方で、ローカルモデルはクラウドの最先端モデルと比べ、判定精度や複雑な文脈の理解で及ばない場合もあり、運用にはプロンプト設計や人間による最終確認が引き続き重要になると見られる。とはいえ、小規模なプロジェクトや予算の限られたチームにとって、無料で試せるトリアージ基盤は魅力的な選択肢となる可能性がある。今後、同様のワークフローがオープンソースコミュニティ全体に広がるかが注目される。",
       "bodyEn": "HuggingFace has published a walkthrough showing how maintainers can automate the triage of issues and pull requests in the OpenClaw repository using open models that run entirely on local hardware. The demonstration matters because triage is one of the most time-consuming and repetitive tasks in open-source maintenance, and the approach removes the recurring cost and data-sharing concerns associated with commercial cloud APIs.\n\nAt its core, the workflow uses a locally hosted large language model to read incoming issues and pull requests, then classify and route them. Typical triage actions include suggesting labels, identifying duplicates, flagging incomplete bug reports, estimating severity, and pointing contributors toward relevant documentation or code owners. Rather than sending repository content to an external service, the model processes text on the maintainer's own machine or self-managed infrastructure, which keeps private or pre-release code within the local environment. For projects with strict data-handling requirements, this is often as important as the cost savings.\n\nThe technical setup appears to rely on the now-familiar stack for running open models locally. Tools such as Ollama, llama.cpp, vLLM, and HuggingFace's own text-generation-inference make it possible to serve a quantized open model behind a simple API endpoint. Quantization formats like GGUF reduce memory requirements so that mid-sized models can run on a single consumer GPU or even a capable laptop, albeit with some trade-off in accuracy. Open model families such as Llama, Mistral, Qwen, and Gemma are commonly used for this kind of task because they are freely available and can be fine-tuned or prompted for structured output. The choice of model typically balances hardware constraints against the reasoning quality needed to make reliable triage decisions.\n\nA crucial part of any triage automation is producing machine-readable results. The workflow is likely to prompt the model to return structured output, such as JSON containing a label list, a confidence score, and a short rationale. That output is then consumed by a script or a GitHub Action that applies labels, posts a comment, or assigns reviewers through the GitHub API. Running the process inside GitHub Actions or a scheduled job means new issues and pull requests can be triaged automatically as they arrive, with a human maintainer reviewing the model's suggestions rather than starting from scratch.\n\nThe cost argument is straightforward. Cloud-based language model APIs charge per token, and a busy repository can generate a substantial volume of text to analyze over time. A local model shifts that expense to a one-time hardware investment and ongoing electricity, which can be attractive for volunteer-run or budget-constrained projects. It is worth noting, however, that local deployment is not truly free in the broader sense: it requires suitable hardware, setup effort, and maintenance, and smaller models may miss nuances that larger hosted models catch. HuggingFace's demonstration should be read as a practical template rather than a claim that local models match the strongest proprietary systems on every task.\n\nThis effort sits within a wider industry trend toward on-device and self-hosted AI. GitHub already offers commercial features such as Copilot for code assistance, and various bots have long handled mechanical triage using rule-based logic. The shift here is toward using general-purpose open models to make more context-aware judgments while avoiding vendor lock-in. HuggingFace has consistently positioned itself around open models and accessible tooling, and this blog post continues that theme by connecting its model hub and inference libraries to a concrete maintenance problem.\n\nFor teams considering a similar setup, a few prerequisites are worth understanding. Retrieval or careful prompt design helps the model reason about project-specific conventions, since a general model will not inherently know a repository's labeling scheme. Guardrails matter too: automated actions should generally be advisory or reversible, because language models can misclassify or hallucinate. Evaluating the model against a sample of past issues before enabling automation is a sensible way to gauge reliability.\n\nOverall, the OpenClaw example illustrates how far local open models have come as practical tools rather than experiments. Whether the accuracy is sufficient will depend on the project, the hardware, and the chosen model, but the pattern of combining open models, local inference, and existing automation pipelines is increasingly viable for everyday maintenance work.",
       "model": "claude-opus-4.8",
       "generatedAt": "2026-07-12T08:01:48.235Z"
+    },
+    "289a3dd4fa86a3f9": {
+      "bodyJa": "## 中小企業向け\n\nOpenAIは、中小企業向けの「ChatGPT for small business」プログラムを開始した。AIツールを業務へ取り入れやすくし、生産性の向上と競争力の強化を後押しする取り組みだ。\n\n## ChatGPT活用支援\n\n小規模な組織によるAIツールの導入に向けて、リソースと支援を提供する。起業家がAIスキルを身につけ、ChatGPT Workで業務を自動化し、成長につなげることを支援すると説明されている。",
+      "bodyEn": "## ChatGPT for Small Businesses\n\nOpenAI has launched a dedicated ChatGPT program for small businesses. It is intended to make AI tools easier for smaller organizations to adopt, supporting improved productivity, operational efficiency, and competitiveness.\n\n## Resources and support\n\nThe ChatGPT for Small Businesses program offers resources and support to help entrepreneurs and smaller organizations build AI skills. According to the announcement, participants can use ChatGPT Work to automate work and support growth. The program focuses on helping small businesses integrate AI tools into their operations rather than leaving them to navigate adoption without dedicated assistance.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "中小企業向けのプログラムって、ChatGPTの使い方を教えてくれるの？",
+          "en": "Is this small-business program meant to teach teams how to use ChatGPT?"
+        },
+        {
+          "s": "b",
+          "ja": "OpenAIが、AIスキルの習得や仕事の自動化を支えるリソースとサポートを提供するプログラムだよ。",
+          "en": "OpenAI describes it as a program offering resources and support to build AI skills and automate work."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、AIを仕事に取り入れたい中小企業や起業家が、業務を進めやすくするための支援なんだね？",
+          "en": "So it supports small businesses and entrepreneurs that want to bring AI into their everyday work?"
+        },
+        {
+          "s": "b",
+          "ja": "うん。業務効率や生産性を高め、事業の成長や競争力の強化を後押しする狙いがあるよ。",
+          "en": "Yes. The goal is to improve efficiency and productivity while supporting business growth and competitiveness."
+        },
+        {
+          "s": "a",
+          "ja": "ChatGPTを渡すだけじゃなくて、使う力と仕事の自動化まで支えるプログラムなんだ。",
+          "en": "So it’s not just access to ChatGPT—it also helps businesses build skills and automate work."
+        },
+        {
+          "s": "b",
+          "ja": "そうだね。対象は中小企業で、ChatGPT Workを使った成長支援として紹介されている点は押さえておこう。",
+          "en": "Right. Keep in mind that it’s presented specifically for small businesses, with support centered on growing through ChatGPT Work."
+        }
+      ],
+      "model": "gpt-5.6-sol",
+      "generatedAt": "2026-10-07T18:10:06.831Z"
+    },
+    "62f49d80d26acfec": {
+      "bodyJa": "OpenAIは、AIガバナンスに関する「reverse federalism」(逆連邦主義)というアプローチを示した。あわせて、米国の州と連邦政府によるAI安全政策が進展していると報告している。\n\n## 州法から国の枠組みへ\nこのアプローチでは、州の法律が、安全で民主的なAIのための国家的な枠組みづくりを後押しすると説明されている。州レベルの取り組みが出発点となり、全国的な枠組みの形成につながるという構図である。\n\n## 加速する規制整備\nOpenAIは、州と連邦それぞれの取り組みが、責任あるAI開発を支える規制の枠組みを形づくりつつあると述べている。この動きが勢いを増している点も強調している。",
+      "bodyEn": "## Reverse Federalism Approach\n\nOpenAI has published a post on AI governance in the United States, arguing that safety policy is gaining momentum at both the state and federal levels. According to the source, these efforts are shaping a regulatory framework meant to ensure responsible AI development.\n\nThe post describes a \"reverse federalism\" approach. Under it, state laws help build a national framework for safe, democratic AI, rather than a national framework being set first and applied downward.\n\n## State and Federal Momentum\n\nOpenAI says state and federal initiatives are advancing together and that work on the regulatory framework is accelerating. The announcement presents this as progress toward governance that supports responsible AI development.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "「リバース・フェデラリズム」って何だろう？州の法律が、国の枠組みづくりにつながるってこと？",
+          "en": "What does \"reverse federalism\" mean? Is it that state laws help build the national framework?"
+        },
+        {
+          "s": "b",
+          "ja": "そのとおり。この記事では、州の法律が土台になって、安全で民主的なAIのための全国的な枠組みを築く考え方として説明されているよ。",
+          "en": "Exactly. The post describes it as state laws helping build a national framework for safe, democratic AI."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ州と国の両方が動くことで、AIを責任をもって作るためのルールが整っていくのかな？",
+          "en": "So when both states and the federal government act, rules for building AI responsibly start to take shape?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、州と連邦の取り組みが、責任あるAI開発を支える規制の枠組みを形づくっているとされているよ。細かい影響までは書かれていないね。",
+          "en": "The post says state and federal efforts are shaping a regulatory framework for responsible AI development. It doesn't go into detailed effects."
+        },
+        {
+          "s": "a",
+          "ja": "州の取り組みが積み重なって、国全体の安全なAIの土台になっていく、ってことだね。",
+          "en": "So state efforts add up and become the base for safe AI nationwide. Got it."
+        },
+        {
+          "s": "b",
+          "ja": "うん。ただ、これはOpenAIが示している見方だから、実際にどう進むかまでは断定できないよ。",
+          "en": "Yes. But this is OpenAI's own view, so we can't say for sure how it will actually play out."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T08:41:38.285Z"
+    },
+    "b650078f0dc01a86": {
+      "bodyJa": "## GPT-Redとは\n\nOpenAIは、自動化されたレッドチーミングシステム「GPT-Red」を発表した。自己対戦(セルフプレイ)を用いてAIの安全性やアラインメント、プロンプトインジェクションへのロバスト性を高める取り組みとされ、信頼性向上に向けた研究成果として位置づけられている。\n\n## 自己改善によるロバスト性\n\nGPT-Redは、モデルが自己改善の手法を活用してロバスト性を高めるものだと説明されている。レッドチーミングを自動化し、セルフプレイを通じて改善を進める点が特徴である。より信頼性が高く、耐性のあるAIシステムの構築に向けた一歩とされる。",
+      "bodyEn": "## GPT-Red: automated red teaming\n\nOpenAI has introduced GPT-Red, an automated red teaming system. According to the announcement, it uses self-play to improve AI safety, alignment, and prompt injection robustness. The topic matters because it concerns how AI systems can be made more reliable and resilient.\n\n## Self-improvement for robustness\n\nThe source describes GPT-Red as a model that leverages self-improvement techniques to enhance robustness. OpenAI presents this as a significant step toward building more dependable AI systems.\n\nThe announcement names three areas the system targets: safety, alignment, and prompt injection robustness. It identifies self-play as the mechanism behind the approach. Further technical specifics are not given here, so the scope of the method and its measured results remain unstated.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-Redって、AIが自分で強くなる仕組みなんだよね？これって大きいこと？",
+          "en": "So GPT-Red is about an AI getting stronger by itself, right? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、OpenAIの自動レッドチーミングのシステムとして紹介されてるよ。安全性やアラインメント、プロンプトインジェクションへの強さを高める研究、という位置づけだね。",
+          "en": "Here it's presented as OpenAI's automated red teaming system, aimed at improving safety, alignment, and prompt injection robustness. So it's framed as a meaningful safety-focused step."
+        },
+        {
+          "s": "a",
+          "ja": "レッドチーミングって、なんだろう？赤いチームがいるの？",
+          "en": "What's red teaming? Is there an actual red team?"
+        },
+        {
+          "s": "b",
+          "ja": "一般的には、わざと攻撃する側の目線でAIの弱点を探すテストのことだよ。GPT-Redは、それを自動でやる仕組みってことだね。",
+          "en": "Generally, it means testing by playing the attacker to find an AI's weak spots. GPT-Red automates that process."
+        },
+        {
+          "s": "a",
+          "ja": "AIが外の文章を読むときに、変な指示にだまされにくくなるなら安心かも！",
+          "en": "If AI gets harder to fool with sneaky instructions in text it reads, that'd feel safer!"
+        },
+        {
+          "s": "b",
+          "ja": "狙いは、まさにプロンプトインジェクションへの強さだね。ただ、実際どこまで守れるかは使う場面ごとに確かめたいところかもね。",
+          "en": "Prompt injection robustness is exactly one of the goals. Still, how well it protects in practice might depend on the situation, so it's worth checking case by case."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T08:41:46.736Z"
+    },
+    "be0a087202162317": {
+      "bodyJa": "## GPT-5.6の位置づけ\n\nOpenAIがフロンティアモデル「GPT-5.6」を発表した。さまざまなユースケースに合わせて知能をスケールさせることを狙ったモデルとされ、開発者や企業が複雑なタスクを効率よく処理できる点が注目される。\n\n## 示された3つの訴求点\n\n発表では、「トークンごとにより多くの知能」「ドル当たりの性能の向上」「最も難しい作業に向けた、必要なときに使える能力の拡充」が掲げられている。\n\n推論能力とタスク処理能力が強化されたと説明されている。一方、具体的な性能値や価格、提供方法などは示されていない。",
+      "bodyEn": "## GPT-5.6 Frontier Intelligence\n\nOpenAI has announced GPT-5.6, described as a new frontier model. It matters because it is positioned to bring advanced reasoning to developers and enterprises handling complex tasks more efficiently.\n\n## More Intelligence Per Token\n\nAccording to the announcement, the model delivers \"more intelligence from every token, stronger performance per dollar, and more capability on demand for your hardest work.\" OpenAI says it is designed to scale intelligence across diverse use cases, with enhanced reasoning and task-handling capabilities.\n\nThe announcement was published on July 9, 2026, under the title \"GPT-5.6: Frontier Intelligence for Your Ambitions\" in its Japanese rendering. Further details on pricing, availability, or benchmarks are not given here.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "これって、普段の仕事だと何が変わるの？",
+          "en": "What would this actually change in my everyday work?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、トークンあたりの知能が増えて、ドルあたりの性能も上がると言っているよ。難しい仕事には必要な時に力を出せる、という方向だね。",
+          "en": "The post says you get more intelligence per token and better performance per dollar, plus more capability on demand for your hardest work."
+        },
+        {
+          "s": "a",
+          "ja": "前のモデルだと、それはできなかったの？",
+          "en": "So couldn't the earlier models do that?"
+        },
+        {
+          "s": "b",
+          "ja": "前のモデルとの細かい比較は、この記事からは分からないんだ。ただ、コスパと必要な時の能力を前面に出している点が特徴だね。",
+          "en": "The post doesn't give a detailed comparison, so I can't say. What it does stress is value for money and capability when you need it."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、同じお金でもっと賢く使えるようになるのが一番の収穫かな？",
+          "en": "So the big takeaway is getting more smarts for the same money, maybe?"
+        },
+        {
+          "s": "b",
+          "ja": "そう読めるね。トークンは文字のかたまりくらいの意味だよ。次は、そのコスパの良さがどう示されるかに注目したいな。",
+          "en": "That's a fair reading. A token is roughly a chunk of text. Next, I'd watch how the post shows that better value in practice."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T05:40:23.716Z"
+    },
+    "46df7ecd1742f56a": {
+      "bodyJa": "OpenAIはGPT-Liveを発表した。人とAIの自然なやり取りを目指した新世代の音声モデルで、現在はChatGPT Voiceを支えているという。\n\n## 新世代の音声モデル\n\nGPT-Liveは、リアルタイムで対話できるインタラクティブなAI体験を実現するものと位置づけられている。ユーザーはGPTモデルと、より自然でライブ感のある形でやり取りできるようになるとされる。\n\n## ChatGPT Voiceでの採用\n\nGPT-Liveは、ChatGPT Voiceを動かすモデルとして使われている。対話型AIをより身近なものにする上で重要な一歩になる、と説明されている。",
+      "bodyEn": "## GPT-Live announced\n\nOpenAI has introduced GPT-Live, described as a new generation of voice models built for natural human-AI interaction. The announcement says these models now power ChatGPT Voice, which matters because it changes how users talk with GPT.\n\n## Natural, real-time interaction\n\nAccording to the source, GPT-Live offers a real-time interactive AI experience. It is meant to let people engage with GPT models in a more natural, live way than before. The announcement frames this as a significant step for the accessibility of conversational AI.\n\nThe material does not give details on pricing, regional availability, supported platforms, or technical specifications.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "GPT-Liveって、何が新しいの？声のモデルって書いてあったよね。",
+          "en": "What's new with GPT-Live? It said something about voice models, right?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事だと、人とAIの自然なやりとりに向けた新世代の音声モデルだよ。ChatGPT Voiceを動かしているんだって。",
+          "en": "The post calls it a new generation of voice models for natural human-AI interaction. It's now powering ChatGPT Voice."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあChatGPT Voiceを使う人が、もっと自然に話せるようになるのかな？",
+          "en": "So people using ChatGPT Voice could talk to it more naturally?"
+        },
+        {
+          "s": "b",
+          "ja": "そう読めるね。リアルタイムでライブに近い対話ができる体験として紹介されているよ。",
+          "en": "That's how it reads. It's presented as a real-time, live-style conversation experience with GPT models."
+        },
+        {
+          "s": "a",
+          "ja": "GPT-Liveは、声でAIとリアルタイムに話すための新しいモデルで、ChatGPT Voiceに使われてるんだね。",
+          "en": "So GPT-Live is a new voice model for talking with AI in real time, and ChatGPT Voice uses it."
+        },
+        {
+          "s": "b",
+          "ja": "うん、その通り。どこまで自然になったかは、実際に試して確かめたいところだね。",
+          "en": "Right. How natural it really feels is something you'd want to try for yourself."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T02:32:19.093Z"
+    },
+    "e58509442c873b0d": {
+      "bodyJa": "## MUFGとOpenAIの提携\n\n三菱UFJフィナンシャル・グループ(MUFG)がOpenAIと提携し、業務全体にAIを深く組み込む「AIネイティブな銀行」への転換を目指す。大手金融機関によるAI基盤の全社導入として注目されている。\n\n## ChatGPT Enterpriseの活用\n\nMUFGはChatGPT Enterpriseを用いて、AIネイティブな組織づくり、ワークフローの改善、AIを活用した新たな金融サービスの大規模な提供を進めるとされる。\n\nAIを一部の業務に限らず組織全体に組み込む取り組みであり、グローバルな金融機関がAI主導の業務運営に踏み出す動きと位置づけられている。",
+      "bodyEn": "## MUFG's AI-native ambition\n\nMUFG, the Mitsubishi UFJ Financial Group, has partnered with OpenAI to pursue a transformation into an AI-native bank. The announcement presents the move as a major commitment by a global financial institution to AI-driven operations.\n\n## ChatGPT Enterprise at scale\n\nAccording to the source, MUFG uses ChatGPT Enterprise to build an AI-native organization, improve workflows, and deliver new AI-powered financial services at scale. The stated aim is to embed AI across the entire organization rather than limit it to isolated tasks. The source describes this as a company-wide rollout of an AI platform at a major financial institution.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "全社でAIを入れるって、これって大きいことなの？",
+          "en": "They're bringing AI into the whole company? Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、MUFGがChatGPT Enterpriseで組織全体をAIネイティブにしていく方針が示されているよ。一部の部署だけでなく全体、という点が大きいね。",
+          "en": "The article says MUFG is using ChatGPT Enterprise to make its whole organization AI-native. Going company-wide, not just one team, is what makes it notable."
+        },
+        {
+          "s": "a",
+          "ja": "AIネイティブって、どういう意味なの？",
+          "en": "What does \"AI-native\" actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "記事に細かい定義はないけど、一般的には最初からAIを前提に仕事や組織を作る、くらいの意味だよ。",
+          "en": "The article doesn't define it, but generally it means building work and organizations with AI as the starting point."
+        },
+        {
+          "s": "a",
+          "ja": "もし私が行員なら、毎日の仕事の流れをラクにするのに使いたいな。",
+          "en": "If I worked at the bank, I'd want to use it to make my daily workflow easier."
+        },
+        {
+          "s": "b",
+          "ja": "記事でも業務改善と、新しいAI金融サービスを大規模に届けることが狙いとされているよ。使い方の詳細は、続報を待ちたいね。",
+          "en": "The article does name workflow improvement and delivering new AI-powered financial services at scale as goals. For specifics on how it's used, we'd want to wait for more details."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T02:32:32.241Z"
+    },
+    "6acb5e76885ca2ed": {
+      "bodyJa": "## AP+のChatGPTとCodex活用\n\nオーストラリアの決済インフラ企業Australian Payments Plus(AP+)が、ChatGPT EnterpriseとCodexを使い、決済の複雑さに対応しながら開発を進めている事例が紹介されている。金融インフラという重要な分野で、AIツールが実用的な成果を出していることを示す内容だ。\n\n## 時間短縮と品質、人の判断\n\nAP+はこれらのツールにより、時間の節約と品質の向上を実現したと説明されている。開発の速度や業務の効率化にも成果があったとされる。\n\n一方で、人間の判断は引き続き中心に置かれているという。AIは作業を加速させる役割を担い、最終的な判断は人が行う形で運用されていると読み取れる。",
+      "bodyEn": "## AP+ Moves Faster\n\nAustralian Payments Plus (AP+), an Australian payments infrastructure company, is using ChatGPT Enterprise and Codex to work through the complexity of payments, according to the OpenAI post. The case study matters because it shows AI tools being applied in critical financial infrastructure.\n\n## Human Judgment Stays Central\n\nThe source says AP+ saves time and improves quality with these tools. It also states that human judgment remains central to how the company works. The summary describes the adoption as accelerating software development and streamlining operations, and presents it as a practical example of AI gains in this sector.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "決済の会社がChatGPTとCodexを使うと、現場の仕事って何が変わるの？",
+          "en": "When a payments company uses ChatGPT and Codex, what actually changes in day-to-day work?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、決済の複雑さの中でも速く進めやすくなり、時間の節約や品質の向上につながったと紹介されているよ。",
+          "en": "This piece says AP+ can move faster through payments complexity, saving time and improving quality."
+        },
+        {
+          "s": "a",
+          "ja": "前はそれができなかったの？AIなしだと遅かったってこと？",
+          "en": "Couldn't they do that before? Was it just slower without AI?"
+        },
+        {
+          "s": "b",
+          "ja": "従来との細かい比較は、この記事の範囲では分からないんだ。ただ、時間と品質の両方に効果があったと書かれているよ。",
+          "en": "The article doesn't say how it compared with before, so I can't tell. It does say the gains covered both time and quality."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、AIを使っても人の判断が真ん中にあるってことかな。",
+          "en": "So the big takeaway is that human judgment stays at the center, even with AI. Is that right?"
+        },
+        {
+          "s": "b",
+          "ja": "そうだね、記事でも人の判断を中心に置くと触れているよ。次は、金融インフラという重要な現場でその役割分担がどう形になるかに注目だね。",
+          "en": "Yes, the article stresses that. Next, I'd watch how that split between people and AI takes shape in critical financial infrastructure."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T02:32:33.664Z"
+    },
+    "16fe00ef808a4917": {
+      "bodyJa": "Visual Studio Code 1.126 がリリースされた。今回のテーマは、コストの見えやすさ、モデル調整の簡素化、見慣れないコードを安全に閲覧できることの3点とされている。\n\n## セッション単位のコスト\n\nチャットセッション全体にかかった合計コストを確認できるようになった。個々のやり取りではなくセッション単位で金額を見られるため、コストのかさんでいる会話を見つけやすくなると説明されている。リリースの冒頭で掲げられた「コストの透明性」に対応する機能にあたる。\n\n## 複数チャットの並行実行\n\nエージェントホスト上の Copilot セッションで、複数のチャットを横に並べて実行できるようになった。1つのセッションの中で複数の会話を同時に扱えることになる。\n\n関連する話題として、Agent Host を使って永続的かつ持ち運び可能なエージェントセッションを実現する方法が、ブログ記事で紹介されている。\n\n## ワークスペース信頼\n\n新しいフォルダーを制限モードで安全に閲覧できる点も、今回の項目のひとつだ。初めて開くフォルダーなど、なじみのないコードを扱う場面を想定した機能で、リリースの説明では「見慣れないコードを安全に閲覧する」ことが狙いとされている。制限モードの具体的な挙動の詳細までは示されていない。\n\n## 入手方法と案内\n\nダウンロードは、Windows が x64 と Arm64、Mac が Universal と Intel、Apple シリコン向け、Linux が deb、rpm、tarball、Arm、snap に対応している。\n\nVS Code は全ユーザーに段階的に展開されている。すぐに最新版を入手したい場合は、VS Code 内の「Check for Updates」を使う。\n\nあわせて、VS Code の歩みを描いた動画「The Story of VS Code」が公開されている。また、9月10日にはライブ配信イベント「GitHub Copilot Day」が開催される。",
+      "bodyEn": "Visual Studio Code 1.126 was published on June 24, 2026. According to the release notes, this version focuses on clearer cost transparency, simpler model tuning, and safer browsing of unfamiliar code. Three highlighted changes touch chat usage and how new folders are opened.\n\n## Session-level cost\n\nThe release notes describe a way to see the total cost of a chat session. The stated purpose is to help users spot expensive conversations. Cost transparency is the first theme the announcement names, and this feature is the one it lists under it. Having a session-wide total in view is meant to make it easier to tell which conversations are driving up usage.\n\n## Multiple chats per session\n\nThe notes say users can run several chats side by side within one agent host Copilot session. This sits alongside a blog post linked from the release page, which is about enabling persistent, portable agent sessions with the Agent Host. The notes present the multi-chat capability as part of working inside a single agent host session rather than opening separate sessions for each conversation.\n\n## Workspace trust\n\nFor unfamiliar code, the release notes say users can browse new folders safely in restricted mode. This is the change the announcement ties to the theme of safer browsing. In practice, it means opening a folder you have not worked with before can be done in this restricted setting.\n\n## Getting the update\n\nThe notes say VS Code is rolling out gradually to all users. Anyone who wants the release right away can use Check for Updates inside VS Code. Downloads are listed for Windows (x64 and Arm64), Mac (Universal, Intel, and silicon), and Linux (deb, rpm, tarball, Arm, and snap).\n\nThe release page also promotes a video called The Story of VS Code and announces that GitHub Copilot Day will be held live on September 10.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "チャットのセッション全体の合計コストが見られるようになるんだって。これって大きいことなの？",
+          "en": "You can now see the total cost of a whole chat session. Is that a big deal?"
+        },
+        {
+          "s": "b",
+          "ja": "この記事では、高くついた会話を見つけやすくなる点が挙げられているよ。今回はコストの見えやすさが柱のひとつみたい。",
+          "en": "The post says it helps you spot expensive conversations. Cost transparency seems to be one of the main themes this time."
+        },
+        {
+          "s": "a",
+          "ja": "「制限モード」って何？ 新しいフォルダーを安全に見られるってあるけど、どういうこと？",
+          "en": "What's \"restricted mode\"? It says you can browse new folders safely, but how does that work?"
+        },
+        {
+          "s": "b",
+          "ja": "よく知らないコードを、いきなり信用せずに開くためのモードだよ。一般には、勝手に動かさないよう慎重に扱う仕組み、くらいの意味かな。",
+          "en": "It's for opening unfamiliar code without trusting it right away. Generally, it means handling things cautiously so nothing just runs on its own."
+        },
+        {
+          "s": "a",
+          "ja": "ひとつのセッションでチャットを並べられるなら、調べ物と作業を分けて使えそう！",
+          "en": "If I can run chats side by side in one session, I could keep research and work separate!"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、agent hostのCopilotセッションで複数チャットを並べて動かせるとあるよ。ただ順次展開中だから、すぐ使いたいなら Check for Updates を試してね。",
+          "en": "The post says several chats can run side by side in an agent host Copilot session. It's rolling out gradually, so try Check for Updates to get it now."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:37:10.929Z"
+    },
+    "769fb2370fea9277": {
+      "bodyJa": "## 本番規模AIの四つの条件\n\nNVIDIAとAWSは、大規模AIの本番運用に立ちはだかる課題に、Amazon OpenSearchとAmazon EC2の両面から取り組んでいる。企業が実運用規模でAIを展開するための現実的な選択肢を広げる取り組みとされる。\n\n大規模なAIシステムの構築には、低レイテンシの推論、高速なベクトル検索、GPUの優れた価格性能、そして運用の複雑さを増やさずに拡張できるインフラが求められる。NVIDIAは、AWSとの最新の取り組みがこれらの制約のそれぞれに対応するものだと説明している。\n\n## EC2 G7インスタンス\n\n計算層では、NVIDIA RTX PRO 4500 Blackwell Server Edition GPUを搭載したEC2 G7インスタンスが挙げられている。AI、グラフィックス、動画、データ分析といったワークロード向けに、計算レイヤーを拡張するものと位置づけられている。\n\n## cuVSとベクトル検索\n\n検索層を担うのが、NVIDIA cuVSライブラリである。OpenSearch Serverlessでは、GPUによるベクトルインデックス作成がデフォルトになる。これによって、検索(リトリーバル)層が高速化されると説明されている。\n\n## Exemplar Cloudの取得\n\n学習の面では、AWSがNVIDIA GB300についてNVIDIA Exemplar Cloudのステータスを取得した。これにより顧客は、学習ワークロードで最大限に最適化された性能を得られると信頼できる、とされている。\n\n計算、検索、学習というそれぞれの層でNVIDIAのAIインフラをAWS上に組み込むことで、企業が本番規模でAIを運用するための道筋を増やす、というのが今回の取り組みの骨子である。",
+      "bodyEn": "## Production-scale AI demands\n\nNVIDIA and Amazon Web Services (AWS) have announced joint work aimed at making large-scale AI easier to run in production. The source says building AI systems at scale requires low-latency inference, fast vector search, strong GPU price-performance, and infrastructure that can grow without multiplying operational complexity. According to NVIDIA, its latest work with AWS addresses each of those constraints.\n\nThe announcement frames the effort as spanning Amazon OpenSearch and Amazon EC2, with NVIDIA AI infrastructure giving enterprises more practical paths to deploy AI at production scale.\n\n## EC2 G7 expands compute\n\nOn the compute side, the announcement points to EC2 G7 instances powered by NVIDIA RTX PRO 4500 Blackwell Server Edition GPUs. These instances expand the compute layer for AI, graphics, video, and data analytics workloads, according to the source. The description presents G7 as a broad compute option rather than a single-purpose offering, covering several workload types on the same GPU foundation.\n\n## GPU-powered vector indexing\n\nOn the retrieval side, the NVIDIA cuVS library accelerates vector indexing. The announcement states that GPU-powered vector indexing becomes the default in OpenSearch Serverless. Vector search is one of the four requirements the source lists for production AI, and this change targets that layer directly. The source does not provide performance figures for the improvement, so the extent of the speedup is not quantified here.\n\n## Exemplar Cloud status for GB300\n\nThe third element concerns training. The source says AWS has achieved NVIDIA Exemplar Cloud status for NVIDIA GB300. According to NVIDIA, this means customers can trust they are receiving peak optimized performance for their training workloads.\n\nTaken together, the announcement describes three pieces: a compute layer built on G7 instances, a retrieval layer accelerated by cuVS in OpenSearch Serverless, and a training-performance designation for GB300. NVIDIA's stated goal is to let enterprises scale AI in production while avoiding compounding operational overhead. The source presents this as a joint optimization of production AI infrastructure that combines low-latency inference, fast vector search, and GPU price-performance.",
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:37:46.789Z"
+    },
+    "d33cb088918ef6f1": {
+      "bodyJa": "Anthropicは、チームがClaudeと協働するための新しい形として「Claude Tag」を発表した。最初の対応先はSlackで、Claudeをチームメンバーとして迎え入れられる。\n\n## Claude Tagとは\n\nClaude Tagでは、Claudeに特定のチャンネルへのアクセスを付与する。あわせて、利用者が選んだツールやデータ、さらにはコードベースにも接続できる。Slackに参加したClaudeは、他のメンバーと同じ場でやり取りする存在として位置づけられている。\n\n## @Claudeを呼ぶ\n\n使い方は、チャンネル内の誰でも @Claude とタグ付けして呼び出すだけだ。依頼したタスクはClaudeに任せられるため、依頼者は別の作業に集中できると説明されている。特定の担当者だけが使う形ではなく、チャンネルに参加している全員が同じように頼める点が特徴だ。\n\n## 文脈の記憶と計画\n\nClaudeは、参加しているチャンネルから関連する情報を記憶することで文脈を築いていく。また、将来に実行するタスクの計画を立てることもできるとされる。その場限りの指示に応じるだけでなく、チャンネルでのやり取りを踏まえて動く設計だ。\n\nAnthropicは、Claude Tagを「Claude Codeの進化の始まり」と見ている。モデルをより能動的にし、チーム全体で使うほど力を発揮しやすくなるという。\n\n## 社内コードの65%\n\nAnthropic社内では、@Claudeにタグ付けして仕事を進めることが、主要な進め方の一つになっているという。同社のプロダクトチームのコードの65%は、社内版のClaude Tagによって作られていると述べられている。\n\nClaude Tagは、AIを独立した別個の場所ではなく、チームが日々使うSlackのチャンネルに置くことで、業務の流れの中に自然に組み込む取り組みだ。",
+      "bodyEn": "Anthropic has announced Claude Tag, a new way for teams to work with Claude. It starts on Slack, where Claude can join a channel as a team member, so AI participation becomes part of daily workflows rather than a separate tool.\n\n## Claude Tag on Slack\n\nAccording to the announcement, teams grant Claude access to selected channels. They can also connect it to whichever tools, data, and even codebases they choose. The access is therefore set by the team: Claude works within the channels it has been given and the resources that have been connected to it.\n\n## Tag @Claude In\n\nOnce Claude is in a channel, anyone there can tag @Claude and delegate a task to it. The stated aim is that the person delegating can then focus on other work while Claude handles the request. Because every member of the channel can do this, the capability is not limited to one individual. It is available to the whole team.\n\n## Context and Future Tasks\n\nAnthropic says Claude builds context by remembering relevant information from the channels it is in. It can also plan out tasks to complete in the future. Together, these let Claude draw on what has been discussed in its channels and schedule work ahead rather than only responding in the moment.\n\n## Evolution of Claude Code\n\nAnthropic describes Claude Tag as the beginning of an evolution of Claude Code. In its words, the change makes the model even more proactive and lets it work better with a full team.\n\nThe company also reports its own usage. It says tagging @Claude is now one of the main ways work gets done at Anthropic. It also says that 65% of its product team's code is currently created by its internal version of Claude Tag. That figure comes from Anthropic's own description of internal use, and the announcement offers no further breakdown of how it was measured.\n\nThe announcement presents Slack as the starting point, which suggests the Slack integration is the first form of Claude Tag. Beyond what is described above, it gives no further detail on how the feature is configured.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "Slackでclaudeを「チームメンバー」として入れるって、具体的にはどういうことなの？",
+          "en": "Claude as a \"team member\" on Slack. What does that actually mean?"
+        },
+        {
+          "s": "b",
+          "ja": "使いたいチャンネルへのアクセスを許可して、つなぐツールやデータ、コードベースも選べます。あとはチャンネルの誰でも@Claudeで呼び出せるそうです。",
+          "en": "You give Claude access to chosen channels and pick which tools, data, and even codebases to connect. Then anyone in the channel can tag @Claude."
+        },
+        {
+          "s": "a",
+          "ja": "じゃあ、頼んだ人は他の仕事をしながら任せられるってこと？チームみんなが使えるのもいいね。",
+          "en": "So someone can hand off a task and keep working on something else? And the whole team can use it, right?"
+        },
+        {
+          "s": "b",
+          "ja": "はい、記事でも「任せて、自分は別の作業に集中できる」と書かれています。チャンネルの情報を覚えて文脈をつくり、先の作業を計画することもできるそうです。",
+          "en": "Yes, the post says you can delegate and focus on other work. Claude also remembers relevant channel information to build context, and can plan tasks to finish later."
+        },
+        {
+          "s": "a",
+          "ja": "Claudeを別のツールとして開くんじゃなくて、いつものチャンネルにいる仲間みたいに頼めるんだね。",
+          "en": "So instead of opening a separate tool, you just ask Claude like a teammate in your usual channel."
+        },
+        {
+          "s": "b",
+          "ja": "そうですね。Anthropicでは製品チームのコードの65％を社内版のClaude Tagが作っているそうです。ただ、これは社内での数字なので、他のチームで同じ結果になるかは記事からは分かりません。",
+          "en": "Right. At Anthropic, 65% of the product team's code comes from its internal Claude Tag. That's an internal figure, though, so the post doesn't say if other teams would see the same."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:38:14.980Z"
+    },
+    "fed82c8c6bccdada": {
+      "bodyJa": "## 毎週リリースへの移行\n\nhuggingface_hubは、Hugging Faceのエコシステムの土台となるPythonクライアントである。Hubとやり取りするために、transformers、datasets、diffusers、sentence-transformersをはじめ多数のライブラリがこれに依存している。そのリリースを、Hugging Faceは単一のGitHub Actionsワークフローから毎週行う形に切り替えたという。\n\n従来のリリース間隔は4〜6週間ごとだった。次のリリースが出るまでの間、修正や新機能はmainブランチに留まったままになる。毎週出さない週は、それだけ修正や機能が届かない週になる、というのが書き手の問題意識である。\n\n## 人間が判断する一点\n\nこのワークフローは、オープンソースのツールとオープンウェイトのモデルで構築されている。人間が関与する場所は、判断が必要となる一か所に絞られているという。AIに任せる部分と人が見る部分を分け、自動化の中にレビューを組み込んだ設計だと読み取れる。\n\n何をどの段階で人が確認するのかなど、具体的な手順や構成の詳細は、ここで示された範囲からは分からない。\n\n## ベンダー契約を要しない設計\n\n記事は、ベンダーとの契約も、クローズドなモデルも、自前で動かせないインフラも必要としないと述べている。これは最初から掲げた設計目標だと説明されている。他のメンテナーがこのワークフローを取り入れ、自分たちの環境に合わせて応用できるようにすることが狙いである。\n\n## 位置づけ\n\nこの取り組みは、AIの支援、オープンソースのツール、人間による監督を組み合わせた、リリース頻度の高いライブラリ運用の実践例として紹介されている。毎週のリリースを継続するためのCI/CDの流れを示すものであり、開発速度と品質をどう両立させるかを考える材料になる。",
+      "bodyEn": "## Weekly releases from one workflow\n\nhuggingface_hub is the Python client at the base of the Hugging Face ecosystem, and its release cadence matters because of how many libraries sit on top of it. According to the source, transformers, datasets, diffusers, sentence-transformers and dozens of other libraries depend on it to talk to the Hub. The post describes how the team moved to shipping it every week.\n\n## Why cadence matters\n\nThe authors frame the problem simply: every week without a new release is a week of fixes and features stuck on main. For a long time, they say, releases came every 4 to 6 weeks. That gap meant completed work waited before reaching users.\n\nThe team now releases every week from a single GitHub Actions workflow. The post presents this as the replacement for the older, slower rhythm, and describes the whole process as living in that one workflow rather than being spread across separate manual steps.\n\n## Open tools, human in the loop\n\nAccording to the announcement, the workflow was built with open-source tools and open-weights models. The team also kept a human in the loop at the one place where judgment matters. The AI assists the process, but a person remains responsible at that decision point.\n\nThe post stresses that nothing in it requires a vendor contract, a closed model, or infrastructure that readers cannot run themselves. The authors describe this as a design goal from the start. They wanted a workflow that other maintainers could pick up and adapt to their own projects.\n\n## What the source offers\n\nThe summary of the post presents it as a practical model for high-cadence library releases, combining AI assistance, open tooling and human oversight in a streamlined CI/CD pipeline. It is positioned as an example of balancing development speed with quality, since a person still reviews the step where judgment is required.\n\nThe material available here establishes the overall approach: weekly releases, a single GitHub Actions workflow, open-source tools and open-weights models, and one deliberate human checkpoint. Readers who want to know how each stage works, which models or tools are used, or where exactly the review happens should consult the original post from the Hugging Face blog.",
+      "chat": [
+        {
+          "s": "a",
+          "ja": "huggingface_hubが毎週リリースされると、使う側や作る側には何が変わるの？",
+          "en": "If huggingface_hub ships every week, what actually changes for the people using or building with it?"
+        },
+        {
+          "s": "b",
+          "ja": "記事だと、修正や新機能がmainに溜まったままになる期間が減る、という考え方です。transformersなど多くのライブラリがこのhubに頼っているそうです。",
+          "en": "The post's logic is that fixes and features stop sitting on main for weeks. It notes that transformers and many other libraries depend on this client to reach the Hub."
+        },
+        {
+          "s": "a",
+          "ja": "前は毎週じゃなかったんだよね？どれくらい違ったの？",
+          "en": "It wasn't weekly before, right? How different was it?"
+        },
+        {
+          "s": "b",
+          "ja": "以前は4〜6週間ごとのリリースで、今は1つのGitHub Actionsワークフローから毎週出しているそうです。品質面で何がどう変わったかは、ここからは分かりません。",
+          "en": "They used to release every 4 to 6 weeks, and now do it weekly from one GitHub Actions workflow. How quality changed isn't something I can tell from this part."
+        },
+        {
+          "s": "a",
+          "ja": "一番の収穫は、判断が要る一か所だけ人が見て、あとは自動化ってところかな。しかも自分でも動かせるんだね。",
+          "en": "So my takeaway is that a human checks only the one spot that needs judgment, and the rest is automated. And others can run it too?"
+        },
+        {
+          "s": "b",
+          "ja": "そうです。オープンソースのツールとオープンウェイトのモデルで作られ、ベンダー契約も不要と書かれています。人が判断する具体的な場面が次に気になりますね。",
+          "en": "Yes, it's built with open-source tools and open-weights models, with no vendor contract needed. Next, I'd look at what that one human judgment point actually is."
+        }
+      ],
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:38:32.369Z"
+    },
+    "f4fe14d9b212ee3b": {
+      "bodyJa": "OpenAIのブログが、Codexを長時間タスクに活用する方法を紹介している。Jason Liu氏の事例をもとに、1回のプロンプトを超えて作業を続けるための使い方が語られている。\n\n## 長時間タスクの課題\n\n焦点は、複雑なプロジェクトを進める中でコンテキストを保つことだ。Jason Liu氏はCodexを使って文脈を維持し、複雑なプロジェクトを管理していると説明されている。\n\n## 単一プロンプトを超えて\n\n狙いは、単一のプロンプトで終わらせず、作業を継続させることとされる。大規模な作業の自動化や生産性向上に役立つ実践的なガイドとして位置づけられている。",
+      "bodyEn": "## Codex for Long-Running Tasks\n\nOpenAI has published guidance on using Codex for long-running, complex work. The piece matters because it addresses how work can continue beyond a single prompt rather than stopping after one exchange.\n\nThe source presents the material as best practices, with an emphasis on practical use for automating large-scale tasks and improving developer productivity.\n\n## Preserving Context in Projects\n\nAccording to the source, the guidance follows how Jason Liu uses Codex. It describes three goals: preserving context, managing complex projects, and keeping work moving across a long effort.\n\nThe announcement frames the approach as a practical guide for large tasks. No further technical specifics are given beyond these themes.",
+      "model": "claude-sonnet-5-5",
+      "generatedAt": "2026-11-28T13:39:30.669Z"
+    },
+    "9dff56a8278cee24": {
+      "bodyJa": "OpenAIは、生物学・化学・医学といった生命科学分野におけるAIモデルの能力を測定する評価ベンチマーク「LifeSciBench」を公開した。専門性の高い科学的推論をどこまで正確に扱えるかを、標準化された指標で比較できるようにする狙いがあると見られる。\n\n近年、大規模言語モデルは一般的な知識問答やプログラミングでは高い性能を示す一方、生命科学のように高度な専門知識と厳密な論理が求められる領域では、評価の枠組み自体が十分に定まっていないという課題があった。既存の医療系ベンチマークには、米国医師国家試験を題材にしたMedQAや、生物医学の質問応答を扱うPubMedQAなどがあるが、扱う領域や難易度が限定的で、実際の研究現場で必要とされる複合的な推論を十分に測れないとの指摘もあった。\n\nLifeSciBenchは、こうした個別ベンチマークを補完し、生物学・化学・医学を横断してモデルの科学的推論能力を統一的に評価することを意図しているとみられる。標準化された評価基準が整えば、モデル間の性能比較が容易になるだけでなく、どの領域で改善が必要かを開発者が把握しやすくなる可能性がある。\n\n背景には、AIを創薬やタンパク質構造の解析、臨床研究の支援に活用しようとする動きの広がりがある。DeepMindのAlphaFoldがタンパク質構造予測で大きな成果を上げたほか、各社が生命科学向けの専用モデルや評価手法の整備を進めている。信頼性の高いベンチマークは、こうしたモデルを安全かつ有効に実運用へ移す前提として重要性を増している。\n\n一方で、ベンチマークの結果はあくまで限定された条件下での指標であり、高いスコアが実際の研究や臨床での有用性を直ちに保証するものではない点には留意が必要だ。誤った回答が重大な影響を及ぼしうる医療分野では、専門家による検証を組み合わせる運用が引き続き求められると考えられる。OpenAIが今後、評価項目や対象領域をどのように拡張していくかが注目される。",
+      "bodyEn": "OpenAI has introduced LifeSciBench, a benchmark designed to evaluate how well AI models perform across life science domains, including biology, chemistry, and medicine. The release matters because life sciences have become one of the most closely watched frontiers for large language models, yet the field has lacked a standardized, publicly recognized way to measure whether a model's scientific reasoning is genuinely reliable rather than merely fluent.\n\nAccording to OpenAI, LifeSciBench aims to provide a consistent yardstick for comparing model capabilities on tasks that require domain expertise. In practice, benchmarks of this kind typically assemble curated question sets, problem scenarios, or reasoning tasks that a model must answer, with responses scored against expert-validated references. By spanning multiple disciplines rather than a single specialty, LifeSciBench appears intended to capture the breadth of knowledge and cross-domain reasoning that real scientific work often demands, from interpreting biological mechanisms to reasoning about chemical structures and clinical considerations.\n\nThe motivation behind such a benchmark is straightforward. As models are increasingly proposed as assistants for researchers, clinicians, and drug-discovery teams, developers and prospective users need dependable evidence about where the systems succeed and where they fail. General-purpose tests such as broad knowledge exams or coding challenges do not necessarily reveal whether a model can handle the specialized, high-stakes reasoning that life sciences require. A targeted evaluation is likely meant to surface those gaps more clearly, including areas where models may produce confident but incorrect answers, a persistent concern in technical domains where errors can carry real consequences.\n\nLifeSciBench enters a crowded and evolving landscape of scientific AI evaluation. Existing benchmarks such as GPQA, which probes graduate-level questions in physics, chemistry, and biology, and MedQA, which draws on medical licensing exam material, have been widely used to gauge reasoning in technical subjects. PubMedQA and MMLU subsets covering clinical and biological topics have served similar purposes. Many of these have been criticized over time for saturation, as leading models approach or exceed the scores of human experts, and for potential contamination when test material overlaps with training data. A new benchmark is often positioned to address such limitations, though independent verification is typically needed before the community can judge how rigorous and contamination-resistant it truly is.\n\nThe announcement also fits into a broader industry pattern. Model developers, including OpenAI, Anthropic, and Google DeepMind, have increasingly emphasized scientific applications, framing research assistance and discovery as major potential use cases. DeepMind's work on protein structure prediction through AlphaFold helped popularize the idea that AI can accelerate biological research, and a range of specialized tools now target molecular modeling, literature synthesis, and experimental design. Against that backdrop, a standardized benchmark could help ground marketing claims in measurable results and give the research community a shared reference point for tracking progress.\n\nSeveral important caveats apply. The categorization of this release under \"codex\" and its stated focus on scientific reasoning suggest an emphasis on evaluation rather than on any single deployed product, but the practical value of any benchmark depends heavily on details that require scrutiny: how questions were sourced and validated, whether the dataset is fully or partially public, how scoring handles nuanced or open-ended answers, and how the benchmark guards against models having seen the material during training. Benchmarks created by the same organizations that build the models can also raise questions about neutrality, which is why third-party replication and transparent methodology tend to be decisive for credibility.\n\nFor readers tracking the field, the key point is not that any single score settles the question of whether AI is ready for scientific work. Rather, LifeSciBench represents another step in the ongoing effort to make model capabilities measurable and comparable in high-expertise domains. Its ultimate influence will likely depend on adoption by outside researchers, the difficulty and durability of its tasks, and how well it distinguishes genuine reasoning from pattern matching. If it proves robust and is used consistently across different systems, it could become a useful part of the toolkit for assessing AI in biology, chemistry, and medicine. Until independent evaluations accumulate, its significance is best viewed as promising but still to be demonstrated.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-11T08:06:30.306Z"
+    },
+    "b9145b3618559fab": {
+      "bodyJa": "AIエージェントが人間の代わりにパソコンを操作する「コンピューター・ユース(computer use)」の分野で、クラウドに依存せずローカル環境で動く選択肢が広がりつつある。Hcompanyが公開したHolo3.1は、ローカルLLMを基盤にデスクトップ上の操作を自動化するエージェントで、外部サーバーへデータを送らずに高速かつプライベートな自動化を実現するとされる。\n\nコンピューター・ユース・エージェントとは、画面のスクリーンショットやUI要素を認識し、マウスのクリックやキーボード入力、アプリの起動といった一連の操作を自律的に実行するAIを指す。従来のスクリプト型自動化(RPA)が事前に定めた手順を機械的になぞるのに対し、こうしたエージェントは画面の状態を解釈しながら次の行動を判断するため、想定外の画面遷移にも柔軟に対応できる可能性がある。Holo3.1もこの流れに位置づけられるモデルと見られる。\n\n最大の特徴は、推論をローカルで完結させる点にある。クラウドAPIを介する一般的なエージェントでは、画面情報を外部に送信する必要があり、機密文書や個人情報を扱う業務ではプライバシーやコンプライアンス上の懸念が生じやすい。ローカル動作であればデータが端末外に出ないため、こうした懸念を抑えられるほか、ネットワーク往復による遅延がなくなることで応答が速くなると期待される。API利用料が発生しない点も、反復的なタスクを大量に処理する用途では利点になり得る。\n\n背景として、コンピューター・ユースは近年の生成AI競争で注目を集めている領域だ。AnthropicはClaudeに画面操作機能を統合し、OpenAIも「Operator」と呼ばれるエージェント機能を提供するなど、大手各社がクラウド前提のサービスを展開してきた。これに対しHolo3.1は、Hugging Face上で公開されるオープンモデルとして、手元のハードウェアで動かせる方向性を打ち出している点が対照的といえる。\n\n一方で、ローカル実行には相応のGPUメモリや計算資源が求められる場合が多く、クラウド上の大規模モデルと同等の精度や汎用性を得られるかは、実際の利用環境やタスクの複雑さに左右されると考えられる。誤操作のリスク管理や、対応アプリケーションの範囲といった実運用上の検証も今後の課題になりそうだ。とはいえ、プライバシーとコストを重視する開発者や企業にとって、ローカルで動くエージェントという選択肢が現実味を帯びてきたことは、この分野の多様化を示す動きとして注目される。",
+      "bodyEn": "Hcompany has released Holo3.1, an open model designed to act as a computer use agent that runs locally on a user's own machine rather than in the cloud. The release matters because computer use agents — systems that perceive a screen and drive a keyboard and mouse to complete tasks — have so far been dominated by large proprietary models accessed through remote APIs, and a capable local alternative changes the tradeoffs around cost, latency, and data privacy.\n\nA computer use agent typically works by combining a vision-language model with an action layer. The model receives a screenshot of the current desktop or browser state, reasons about what the user is asking for, and then predicts a sequence of low-level actions such as clicking a specific coordinate, typing text, scrolling, or pressing keys. A key technical challenge is \"grounding,\" the ability to map a described interface element to its precise on-screen location. Holo3.1 appears to be positioned around this workflow, emphasizing that the perception and decision loop can execute on local hardware.\n\nRunning such a model locally has several practical implications. Because screenshots of a user's desktop can contain sensitive information — documents, messages, credentials, and personal data — streaming that content to a cloud endpoint raises obvious privacy concerns. Local inference keeps that data on the device. It also removes per-call API costs and network round trips, which is significant for agents that may capture and analyze many frames while stepping through a multi-stage task. Lower latency can make the agent feel more responsive and, in some cases, more reliable, since each action depends on the freshest possible view of the screen.\n\nHolo3.1 sits within a fast-moving category. Anthropic introduced a computer use capability for its Claude models, and OpenAI has shipped an agentic browsing and control product often referred to as Operator, both cloud-based. On the open side, projects such as ByteDance's UI-TARS and various web-agent and GUI-agent research efforts have pushed toward models specifically trained on interface screenshots and action traces. Holo3.1 is described as part of the Holo lineage, suggesting an iterative series aimed at this GUI automation problem. The \"3.1\" designation implies refinements over earlier versions rather than an entirely new architecture, though the exact changes are not detailed here.\n\nFor those unfamiliar with the underlying components, a few prerequisite concepts help. Vision-language models extend large language models with an image encoder so they can interpret pixels alongside text instructions. Local inference relies on runtimes and quantization techniques — reducing the numerical precision of model weights — to fit models onto consumer GPUs or even capable laptops. Tooling from the broader ecosystem, including Hugging Face's Transformers library and various local serving stacks, generally makes it feasible to download open weights and run them offline. The distribution of Holo3.1 through Hugging Face fits this pattern of openly available weights that developers can inspect, fine-tune, and integrate.\n\nPractical deployment still involves caveats. Computer use agents remain an emerging technology, and even strong models can misclick, misread dynamic interfaces, or take unintended actions, which is why sandboxing and human oversight are commonly recommended. Performance depends heavily on the host hardware; a smaller or heavily quantized model may trade some accuracy for the ability to run on modest machines. Benchmarks for this class of system, such as those measuring success rates on web and operating-system navigation tasks, are useful but do not always translate directly to real-world reliability.\n\nThe broader significance is the continued migration of agentic capabilities from cloud-only services toward on-device execution. If a locally run agent can approach the usefulness of hosted alternatives while keeping data private and eliminating recurring costs, it lowers the barrier for individuals and organizations that cannot or prefer not to route their screen activity through external providers. Holo3.1 is one entry in that direction, and its real value will likely be judged by how consistently it completes practical tasks across diverse applications and how easily developers can adapt it to their own environments.",
+      "model": "claude-opus-4.8",
+      "generatedAt": "2026-07-11T05:58:43.287Z"
     }
   }
 }
